@@ -13,4 +13,10 @@ enum OrganizationPermission: string
 
     case CreateInvitation = 'invitation:create';
     case CancelInvitation = 'invitation:cancel';
+
+    case ManageClients = 'client:manage';
+    case ManageProjects = 'project:manage';
+
+    /** See hourly rates and amounts. */
+    case ViewRates = 'rate:view';
 }

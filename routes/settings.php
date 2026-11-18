@@ -43,6 +43,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::patch('settings/organizations/{organization}/members/{user}', [OrganizationMemberController::class, 'update'])->name('organizations.members.update');
         Route::delete('settings/organizations/{organization}/members/{user}', [OrganizationMemberController::class, 'destroy'])->name('organizations.members.destroy');
+        Route::patch('settings/organizations/{organization}/members/{user}/rate', [OrganizationMemberController::class, 'rate'])->name('organizations.members.rate');
+        Route::post('settings/organizations/{organization}/members/{user}/deactivate', [OrganizationMemberController::class, 'deactivate'])->name('organizations.members.deactivate');
+        Route::post('settings/organizations/{organization}/members/{user}/reactivate', [OrganizationMemberController::class, 'reactivate'])->name('organizations.members.reactivate');
 
         Route::post('settings/organizations/{organization}/invitations', [OrganizationInvitationController::class, 'store'])->name('organizations.invitations.store');
         Route::delete('settings/organizations/{organization}/invitations/{invitation}', [OrganizationInvitationController::class, 'destroy'])->name('organizations.invitations.destroy');

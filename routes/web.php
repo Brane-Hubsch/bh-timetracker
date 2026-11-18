@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
+use App\Http\Controllers\Projects\ProjectController;
+use App\Http\Controllers\Projects\ProjectMemberController;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +18,26 @@ Route::prefix('{current_organization}')
     ->middleware(['auth', 'verified', EnsureOrganizationMembership::class])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+        Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::get('clients/{client}', [ClientController::class, 'show'])->name('clients.show');
+        Route::patch('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::post('clients/{client}/archive', [ClientController::class, 'archive'])->name('clients.archive');
+        Route::post('clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore');
+
+        Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
+        Route::get('projects/create', [ProjectController::class, 'create'])->name('projects.create');
+        Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');
+        Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        Route::get('projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+        Route::patch('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+        Route::post('projects/{project}/archive', [ProjectController::class, 'archive'])->name('projects.archive');
+        Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
+
+        Route::post('projects/{project}/members', [ProjectMemberController::class, 'store'])->name('projects.members.store');
+        Route::patch('projects/{project}/members/{user}', [ProjectMemberController::class, 'update'])->name('projects.members.update');
+        Route::delete('projects/{project}/members/{user}', [ProjectMemberController::class, 'destroy'])->name('projects.members.destroy');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -13,12 +13,14 @@ use Illuminate\Support\Carbon;
  * @property int $organization_id
  * @property int $user_id
  * @property OrganizationRole $role
+ * @property int|null $hourly_rate Minor currency unit (öre)
+ * @property Carbon|null $deactivated_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Organization $organization
  * @property-read User $user
  */
-#[Fillable(['organization_id', 'user_id', 'role'])]
+#[Fillable(['organization_id', 'user_id', 'role', 'hourly_rate', 'deactivated_at'])]
 class Membership extends Pivot
 {
     /**
@@ -34,6 +36,11 @@ class Membership extends Pivot
      * @var bool
      */
     public $incrementing = true;
+
+    public function isDeactivated(): bool
+    {
+        return $this->deactivated_at !== null;
+    }
 
     /**
      * Get the organization that the membership belongs to.
@@ -64,6 +71,8 @@ class Membership extends Pivot
     {
         return [
             'role' => OrganizationRole::class,
+            'hourly_rate' => 'integer',
+            'deactivated_at' => 'datetime',
         ];
     }
 }

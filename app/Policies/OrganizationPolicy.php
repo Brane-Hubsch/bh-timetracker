@@ -96,4 +96,12 @@ class OrganizationPolicy
     {
         return $user->hasOrganizationPermission($organization, OrganizationPermission::DeleteOrganization);
     }
+
+    /**
+     * Determine whether the user can see hourly rates and amounts in the organization.
+     */
+    public function viewRates(User $user, Organization $organization): bool
+    {
+        return $user->hasOrganizationPermission($organization, OrganizationPermission::ViewRates);
+    }
 }

@@ -31,6 +31,10 @@ class EnsureOrganizationMembership
             }
 
             app(CurrentOrganization::class)->set($organization);
+
+            // The organization is available through CurrentOrganization; keep the slug out of the
+            // controller arguments so route model binding lines up with the method signatures.
+            $request->route()?->forgetParameter('current_organization');
         }
 
         return $next($request);

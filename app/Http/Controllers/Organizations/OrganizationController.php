@@ -64,7 +64,7 @@ class OrganizationController extends Controller
                 'weekStartsOn' => $organization->week_starts_on,
                 'timezone' => $organization->timezone,
             ],
-            'members' => $organization->members()->get()->map(function (User $member) {
+            'members' => $organization->members()->orderBy('name')->get()->map(function (User $member) use ($user, $organization) {
                 /** @var Membership $membership */
                 $membership = $member->getRelation('pivot');
 
@@ -75,6 +75,8 @@ class OrganizationController extends Controller
                     'avatar' => $member->avatar_url,
                     'role' => $membership->role->value,
                     'role_label' => $membership->role->label(),
+                    'hourly_rate' => $user->can('viewRates', $organization) ? $membership->hourly_rate : null,
+                    'is_deactivated' => $membership->isDeactivated(),
                 ];
             }),
             'invitations' => $organization->invitations()

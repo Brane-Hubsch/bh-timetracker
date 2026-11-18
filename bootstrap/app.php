@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureOrganizationMembership;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetLocale;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +20,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        // Resolve the organization from the URL before route model binding, so tenant models are
+        // bound through OrganizationScope of the organization in the URL (others give 404).
+        $middleware->prependToPriorityList(
+            before: SubstituteBindings::class,
+            prepend: EnsureOrganizationMembership::class,
+        );
 
         $middleware->web(append: [
             SetLocale::class,

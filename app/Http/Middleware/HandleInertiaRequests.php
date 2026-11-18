@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'currentOrganization' => fn () => $user?->currentOrganization ? $user->toUserOrganization($user->currentOrganization) : null,
             'organizations' => fn () => $user?->toUserOrganizations(includeCurrent: true) ?? [],
+            'can' => fn () => $user?->currentOrganization ? $user->toOrganizationPermissions($user->currentOrganization) : null,
         ];
     }
 }

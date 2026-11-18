@@ -28,6 +28,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, OrganizationInvitation> $invitations
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
+ * @property-read Collection<int, Client> $clients
+ * @property-read Collection<int, Project> $projects
  */
 #[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone'])]
 class Organization extends Model
@@ -74,8 +76,24 @@ class Organization extends Model
     {
         return $this->belongsToMany(User::class, 'organization_members', 'organization_id', 'user_id')
             ->using(Membership::class)
-            ->withPivot(['role'])
+            ->withPivot(['role', 'hourly_rate', 'deactivated_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<Client, $this>
+     */
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    /**
+     * @return HasMany<Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
     }
 
     /**

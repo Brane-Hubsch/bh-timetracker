@@ -11,9 +11,3 @@ parameters:
         - routes/
 
     level: 9
-
-    ignoreErrors:
-        # Used by tests only until the first tenant model (Client) arrives in phase 2. Remove then.
-        -
-            identifier: trait.unused
-            path: app/Models/Concerns/BelongsToOrganization.php

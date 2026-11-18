@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\URL;
 trait HasOrganizations
 {
     /**
-     * Get all of the organizations the user belongs to.
+     * Get all of the organizations the user is an active member of (deactivated memberships are
+     * excluded everywhere: no access, no switching, no permissions).
      *
      * @return BelongsToMany<Organization, $this>
      */
@@ -26,6 +27,7 @@ trait HasOrganizations
     {
         return $this->belongsToMany(Organization::class, 'organization_members', 'user_id', 'organization_id')
             ->withPivot(['role'])
+            ->wherePivotNull('deactivated_at')
             ->withTimestamps();
     }
 
@@ -114,6 +116,7 @@ trait HasOrganizations
     {
         return $this->organizationMemberships()
             ->where('organization_id', $organization->id)
+            ->whereNull('deactivated_at')
             ->first()
             ?->role;
     }
@@ -164,6 +167,9 @@ trait HasOrganizations
             canRemoveMember: $role?->hasPermission(OrganizationPermission::RemoveMember) ?? false,
             canCreateInvitation: $role?->hasPermission(OrganizationPermission::CreateInvitation) ?? false,
             canCancelInvitation: $role?->hasPermission(OrganizationPermission::CancelInvitation) ?? false,
+            canManageClients: $role?->hasPermission(OrganizationPermission::ManageClients) ?? false,
+            canManageProjects: $role?->hasPermission(OrganizationPermission::ManageProjects) ?? false,
+            canViewRates: $role?->hasPermission(OrganizationPermission::ViewRates) ?? false,
         );
     }
 
