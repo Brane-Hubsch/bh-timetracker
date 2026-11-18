@@ -40,6 +40,19 @@ describes; propose additions instead of building them.
   → organization default) and are snapshotted on time entries.
 - There are no personal organizations. An organization must always have at least one owner.
 
+## Time entries
+
+- Time entries are written only through `app/Actions/TimeEntries` (`CreateTimeEntry`, `UpdateTimeEntry`,
+  `CreateTimeEntries`, `DeleteTimeEntry`, `RestoreTimeEntry`); the shared `ValidatesTimeEntries` rules
+  (active member, accessible non-archived project, end after start, at most 24 h) apply to web and MCP.
+- Members manage their own time; `ManageTeamTime` (owner/admin) may view and report for other members
+  (`TimeEntryPolicy::manageFor`). Deletes are soft deletes so they can be undone.
+- Users enter times in their own time zone; requests convert to UTC. The frontend receives local
+  wall-clock strings (`YYYY-MM-DDTHH:mm`) from `App\Support\TimeEntryPresenter`, and FullCalendar runs
+  with `timeZone="UTC"` so they display unchanged.
+- Parse free-form durations ("1,5", "1:30", "90m") with `App\Support\DurationParser` (PHP) or
+  `parseDuration` in `@/lib/time` (React).
+
 ## Authentication
 
 - Passwordless: passkeys (Fortify / `laravel/passkeys`), Google (Socialite) and magic links

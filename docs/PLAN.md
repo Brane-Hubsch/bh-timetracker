@@ -299,7 +299,7 @@ Google via Socialite, passkeys via Fortify, magic link för registrering/återst
 **Fas 2 – Kunder, projekt, medlemmar** *(klar, se Status nedan)*
 CRUD + arkivering, projektmedlemmar, timpriser, RateResolver, policies, seeders.
 
-**Fas 3 – Tidrapportering**
+**Fas 3 – Tidrapportering** *(klar, se Status nedan)*
 Actions för tidposter, durationsparser, listvy, formulär (desktop + mobil-drawer), kalendervy (spike → implementation), dashboard.
 
 **Fas 4 – Rapporter**
@@ -347,6 +347,33 @@ Avvikelser och förtydliganden:
 - Projektkod är unik per organisation (valfri).
 - Inaktiverad medlem: ingen åtkomst, ingen roll, kan inte väljas; historik och projekttilldelningar finns kvar. Ägaren kan inte inaktiveras.
 - Listorna pagineras inte i v1 (små volymer).
+
+### Status Fas 3 (2026-11-18)
+
+Klar. Byggt:
+
+- Tidposter (`time_entries`) med actions, policy och durationsparser ("1,5", "1:30", "90m", "1h 30m").
+- Formulär: modal på desktop, drawer på mobil. Projektväljaren visar senast använda först, starttiden föreslås smart och överlapp ger en varning.
+- Listvy med dags- och veckosummor, och kalendervy med FullCalendar 7 (vecka/dag). I kalendern kan man dra för att skapa, flytta och ändra längd. Poster färgas efter projekt och dagssummor står i kolumnhuvudet.
+- "Kopiera förra veckan" som utkast med kryssrutor.
+- Ägare/admin kan se och rapportera åt andra medlemmar.
+- Duplicera post, och ta bort med ångra i toasten.
+- Startsida: min tid idag och denna vecka, senaste poster och snabbinmatning. För ägare/admin även teamets vecka och projekt som närmar sig estimatet (≥ 80 %).
+- Projektsidan visar förbrukad tid mot estimatet.
+
+Avvikelser och förtydliganden:
+
+- FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
+- Standardvy: vecka på desktop och lista på mobil. Dagvyn finns som flik.
+- Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
+- "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
+- Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
+- Tider matas in och visas i användarens tidszon och lagras i UTC.
+- En sluttid före starttiden tolkas som nästa dag. En post får vara högst 24 timmar.
+- Överlapp ger bara en varning; det blockeras inte.
+- Timpriset snapshottas när posten skapas och räknas om bara om projekt eller medlem ändras.
+- Admin kan rätta poster för inaktiverade medlemmar men inte skapa nya åt dem.
+- Projektsidans tid per medlem/vecka och belopp, samt kundsidans summerade tid, byggs med rapporterna i Fas 4.
 
 ## 8. Senare (medvetet bortvalt i v1)
 
