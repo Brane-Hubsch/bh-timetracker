@@ -302,7 +302,7 @@ CRUD + arkivering, projektmedlemmar, timpriser, RateResolver, policies, seeders.
 **Fas 3 – Tidrapportering** *(klar, se Status nedan)*
 Actions för tidposter, durationsparser, listvy, formulär (desktop + mobil-drawer), kalendervy (spike → implementation), dashboard.
 
-**Fas 4 – Rapporter**
+**Fas 4 – Rapporter** *(klar, se Status nedan)*
 ReportBuilder, sammanfattning, detaljerad, projektuppföljning, CSV/XLSX-export.
 
 **Fas 5 – MCP**
@@ -374,6 +374,36 @@ Avvikelser och förtydliganden:
 - Timpriset snapshottas när posten skapas och räknas om bara om projekt eller medlem ändras.
 - Admin kan rätta poster för inaktiverade medlemmar men inte skapa nya åt dem.
 - Projektsidans tid per medlem/vecka och belopp, samt kundsidans summerade tid, byggs med rapporterna i Fas 4.
+
+### Status Fas 4 (2026-11-18)
+
+Klar. Byggt:
+
+- `ReportBuilder` (`app/Services/Reports`) med filter (period, medlemmar, kunder, projekt, debiterbar) och gruppering i två nivåer: kund, projekt, medlem, dag, vecka eller månad. Samma builder ska användas av MCP-verktyget `get_report` i Fas 5.
+- **Sammanfattning** visar summakort (timmar, debiterbara timmar, belopp), stapeldiagram per dag eller vecka, fördelning per projekt och en grupperad tabell.
+- **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
+- **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
+- **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
+- **Projektsidan** visar debiterbara timmar och belopp, tid per medlem och timmar per vecka för de senaste 12 veckorna. **Kundsidan** visar tid och belopp per projekt för en vald period. Båda har en länk till rapporten.
+- "Rapporter" finns i sidomenyn och i mobilens bottennavigering (Idag / Kalender / Rapporter / Mer).
+
+Avvikelser och förtydliganden:
+
+- **Diagram:** egna enkla komponenter (staplar i en serie) i stället för ett diagrambibliotek. Ett ord och värde står alltid bredvid färgen, och den grupperade tabellen fungerar som tabellvy.
+- **Tidslinje:** per dag för perioder upp till 31 dagar, annars per vecka.
+- **Standardgruppering** är Kund → Projekt. Gruppering per vecka och månad har lagts till utöver planens exempel.
+- **Perioder** räknas i användarens tidszon, och en post räknas till den dag den startar.
+- **Behörighet:**
+  - Medlemmar ser bara sin egen tid i sammanfattning, detaljerad rapport och export, oavsett filter i URL:en. Belopp och timpriser visas bara för ägare/admin.
+  - Projektuppföljningen visar summerad tid för alla medlemmar på de projekt man har åtkomst till, på samma sätt som projektsidans förbrukning sedan Fas 3. Ingen per-person-uppdelning visas för medlemmar.
+  - Tid per medlem och vecka på projektsidan visas bara för ägare/admin.
+- **Medlemsfiltret** innehåller även inaktiverade medlemmar (märkta "inaktiv"), eftersom deras historik finns kvar i rapporterna.
+- **Export:**
+  - CSV använder semikolon, decimalkomma och BOM så att svenska Excel öppnar filen direkt.
+  - XLSX har riktiga tal: timmar som decimaltal och belopp i kronor.
+  - Filnamnet innehåller organisation, rapporttyp och period.
+- **Kundsidans** periodval har bara förvalen. Anpassad period finns i rapporten.
+- **Rättningar:** nyskapade organisationer får databasens standardvärden direkt (veckostart, valuta, tidszon). Tidigare började veckan på söndag tills organisationen lästes om. Dessutom ersätter `t()` nu längsta platshållaren först, som Laravel gör.
 
 ## 8. Senare (medvetet bortvalt i v1)
 

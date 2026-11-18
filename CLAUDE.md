@@ -53,6 +53,16 @@ describes; propose additions instead of building them.
 - Parse free-form durations ("1,5", "1:30", "90m") with `App\Support\DurationParser` (PHP) or
   `parseDuration` in `@/lib/time` (React).
 
+## Reports
+
+- Reports are built by `App\Services\Reports\ReportBuilder` from a `ReportFilters` DTO (period as local
+  dates in the viewer's time zone, members, clients, projects, billable). The filters enforce
+  visibility: without `ManageTeamTime` a viewer only ever gets their own time, and amounts are null
+  without `ViewRates`. Reuse the builder (e.g. for MCP `get_report`) instead of querying entries.
+- Entries count towards the local day they start on. Day/week/month bucketing happens in PHP.
+- Amounts are billable seconds × the snapshotted rate, rounded per entry, in minor units.
+- Report filters live in the URL (`ReportRequest`), so reports can be bookmarked.
+
 ## Authentication
 
 - Passwordless: passkeys (Fortify / `laravel/passkeys`), Google (Socialite) and magic links
