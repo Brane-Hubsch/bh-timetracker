@@ -1,10 +1,11 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
-import { Briefcase, FolderKanban, House } from 'lucide-react';
+import { Briefcase, CalendarDays, FolderKanban, House } from 'lucide-react';
 import { dashboard } from '@/routes';
 import { index as clients } from '@/routes/clients';
 import { index as projects } from '@/routes/projects';
+import { index as time } from '@/routes/time';
 
 export type MainNavItem = {
     /** Translation key (English source string). */
@@ -30,6 +31,12 @@ export function useMainNavigation(): MainNavItem[] {
 
     return [
         { title: 'Today', href: dashboard(slug), icon: House, mobile: true },
+        {
+            title: 'Calendar',
+            href: time(slug),
+            icon: CalendarDays,
+            mobile: true,
+        },
         {
             title: 'Projects',
             href: projects(slug),

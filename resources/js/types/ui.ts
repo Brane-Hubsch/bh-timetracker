@@ -11,6 +11,8 @@ export type AppVariant = 'header' | 'sidebar';
 export type FlashToast = {
     type: 'success' | 'info' | 'warning' | 'error';
     message: string;
+    /** URL to POST to undo the action (e.g. restore a deleted entry). */
+    undo?: string;
 };
 
 export type AuthLayoutProps = {

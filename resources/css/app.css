@@ -25,6 +25,42 @@
     --accent-foreground: oklch(0.99 0 0);
 }
 
+/* FullCalendar (classic theme) coloured with HeroUI tokens. */
+.time-calendar {
+    --fc-classic-button: var(--default);
+    --fc-classic-button-border: var(--default);
+    --fc-classic-button-strong: var(--accent);
+    --fc-classic-button-strong-border: var(--accent);
+    --fc-classic-button-outline: var(--focus);
+    --fc-classic-button-foreground: var(--default-foreground);
+    --fc-classic-primary: var(--accent);
+    --fc-classic-primary-foreground: var(--accent-foreground);
+    --fc-classic-event: var(--accent);
+    --fc-classic-event-contrast: var(--accent-foreground);
+    --fc-classic-background-event: var(--success);
+    --fc-classic-background-event-opacity: 15%;
+    --fc-classic-background-event-foreground-opacity: 50%;
+    --fc-classic-highlight: color-mix(in oklab, var(--accent) 15%, transparent);
+    --fc-classic-today: color-mix(in oklab, var(--accent) 6%, transparent);
+    --fc-classic-now: var(--danger);
+    --fc-classic-small-dot-width: 8px;
+    --fc-classic-large-dot-width: 10px;
+    --fc-classic-background: var(--surface);
+    --fc-classic-faint: color-mix(in oklab, var(--foreground) 4%, transparent);
+    --fc-classic-muted: color-mix(in oklab, var(--foreground) 8%, transparent);
+    --fc-classic-strong: color-mix(
+        in oklab,
+        var(--foreground) 14%,
+        transparent
+    );
+    --fc-classic-foreground: var(--foreground);
+    --fc-classic-faint-foreground: var(--muted);
+    --fc-classic-muted-foreground: var(--muted);
+    --fc-classic-border: var(--separator);
+    --fc-classic-strong-border: var(--border);
+    --fc-classic-ring-color: var(--focus);
+}
+
 @layer base {
     body {
         @apply bg-background text-foreground;

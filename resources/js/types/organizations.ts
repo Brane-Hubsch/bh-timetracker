@@ -62,6 +62,7 @@ export type OrganizationPermissions = {
     canCancelInvitation: boolean;
     canManageClients: boolean;
     canManageProjects: boolean;
+    canManageTeamTime: boolean;
     canViewRates: boolean;
 };
 

@@ -12,6 +12,7 @@ import { useState } from 'react';
 import type { SelectOption } from '@/components/form/select-field';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
+import { EstimateProgress } from '@/components/estimate-progress';
 import { ProjectDot } from '@/components/project-dot';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
@@ -197,11 +198,26 @@ export default function ProjectShow({
                     )}
                 </dl>
 
-                <p className="text-xs text-muted">
-                    {t(
-                        'Reported time, estimate follow-up and amounts appear here with time reporting.',
+                <section className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface sm:p-6">
+                    <h2 className="text-sm font-medium">
+                        {t('Reported time')}
+                    </h2>
+                    {project.estimateSeconds !== null ? (
+                        <EstimateProgress
+                            consumedSeconds={project.consumedSeconds}
+                            estimateSeconds={project.estimateSeconds}
+                        />
+                    ) : (
+                        <p className="text-2xl font-semibold tabular-nums">
+                            {formatHours(project.consumedSeconds, intlLocale)}
+                        </p>
                     )}
-                </p>
+                    <p className="text-xs text-muted">
+                        {t(
+                            'Time per member and week and billable amounts arrive with reports.',
+                        )}
+                    </p>
+                </section>
 
                 <section className="grid gap-4">
                     <Heading

@@ -32,7 +32,9 @@ function translationKeysUsedInCode(): array
             preg_match_all($patterns[$type], $contents, $matches);
 
             foreach ($matches[2] as $key) {
-                $keys[stripcslashes($key)] = $file->getRelativePathname();
+                if ($key !== '') {
+                    $keys[stripcslashes($key)] = $file->getRelativePathname();
+                }
             }
         }
     }

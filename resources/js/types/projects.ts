@@ -34,6 +34,7 @@ export type ProjectDetails = ProjectListItem & {
     visibility: 'public' | 'private';
     startsOn: string | null;
     endsOn: string | null;
+    consumedSeconds: number;
 };
 
 export type ProjectFormValues = {
