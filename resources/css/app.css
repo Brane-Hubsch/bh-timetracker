@@ -14,32 +14,15 @@
         'Noto Color Emoji';
 }
 
-/*
- * Brand overrides on top of HeroUI's default theme go here, e.g.:
- *
- * :root { --accent: oklch(...); }
- * .dark { --accent: oklch(...); }
- */
+/* Brand: violet accent on top of HeroUI's default theme. */
+:root {
+    --accent: oklch(0.55 0.24 293);
+    --accent-foreground: oklch(0.99 0 0);
+}
 
-/*
- * Legacy bridge: maps the few shadcn/ui token names still used by the legacy components in
- * resources/js/components/ui (password and two-factor screens that are removed in phase 1) onto
- * HeroUI's variables. Delete this block together with those components.
- */
-@theme inline {
-    --color-card: var(--surface);
-    --color-card-foreground: var(--surface-foreground);
-    --color-popover: var(--overlay);
-    --color-popover-foreground: var(--overlay-foreground);
-    --color-primary: var(--accent);
-    --color-primary-foreground: var(--accent-foreground);
-    --color-secondary: var(--default);
-    --color-secondary-foreground: var(--default-foreground);
-    --color-muted-foreground: var(--muted);
-    --color-destructive: var(--danger);
-    --color-destructive-foreground: var(--danger-foreground);
-    --color-input: var(--field-border, var(--border));
-    --color-ring: var(--focus);
+.dark {
+    --accent: oklch(0.66 0.21 293);
+    --accent-foreground: oklch(0.99 0 0);
 }
 
 @layer base {

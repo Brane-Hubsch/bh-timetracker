@@ -37,9 +37,9 @@ export function UserMenu({ showName = false, className }: Props) {
                 data-test="sidebar-menu-button"
             >
                 <Avatar size="sm">
-                    {auth.user.avatar && (
+                    {auth.user.avatar_url && (
                         <Avatar.Image
-                            src={auth.user.avatar}
+                            src={auth.user.avatar_url}
                             alt={auth.user.name}
                         />
                     )}

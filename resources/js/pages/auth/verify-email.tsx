@@ -1,8 +1,5 @@
-// Components
-import { Form, Head } from '@inertiajs/react';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@heroui/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
@@ -15,27 +12,26 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title={t('Email verification')} />
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <p className="rounded-xl bg-accent-soft p-3 text-center text-sm text-accent-soft-foreground">
                     {t(
-                        'A new verification link has been sent to the email address you provided during registration.',
+                        'A new verification link has been sent to your email address.',
                     )}
-                </div>
+                </p>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
+            <Form {...send.form()} className="grid gap-3">
                 {({ processing }) => (
                     <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
+                        <Button type="submit" fullWidth isPending={processing}>
                             {t('Resend verification email')}
                         </Button>
-
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
+                        <Button
+                            variant="ghost"
+                            fullWidth
+                            onPress={() => router.visit(logout())}
                         >
                             {t('Log out')}
-                        </TextLink>
+                        </Button>
                     </>
                 )}
             </Form>

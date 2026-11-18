@@ -50,16 +50,17 @@ export default function DeleteUser() {
                                     <AlertDialog.Body className="grid gap-4">
                                         <p className="text-sm">
                                             {t(
-                                                'All of your data will be permanently deleted. Enter your password to confirm.',
+                                                'All of your data will be permanently deleted. Type your email address to confirm.',
                                             )}
                                         </p>
                                         <TextInputField
-                                            name="password"
-                                            type="password"
-                                            label={t('Password')}
-                                            error={errors.password}
-                                            autoComplete="current-password"
+                                            name="email"
+                                            type="email"
+                                            label={t('Email address')}
+                                            error={errors.email}
+                                            autoComplete="off"
                                             autoFocus
+                                            data-test="delete-user-email"
                                         />
                                     </AlertDialog.Body>
                                     <AlertDialog.Footer>

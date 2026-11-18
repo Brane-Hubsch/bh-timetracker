@@ -8,17 +8,12 @@ import { useTranslation } from '@/lib/i18n';
 import type { Passkey } from '@/types/auth';
 
 export type Props = {
-    canManagePasskeys?: boolean;
-    passkeys?: Passkey[];
+    passkeys: Passkey[];
 };
 
 export default function ManagePasskeys(props: Props) {
     const { t } = useTranslation();
-    const passkeys = props.passkeys ?? [];
-
-    if (!(props.canManagePasskeys ?? false)) {
-        return null;
-    }
+    const { passkeys } = props;
 
     const handleDelete = (id: number, onFinish: () => void) => {
         router.delete(destroy.url(id), {

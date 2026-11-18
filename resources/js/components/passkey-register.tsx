@@ -6,6 +6,8 @@ import { useTranslation } from '@/lib/i18n';
 
 type Props = {
     onSuccess: () => void;
+    /** Show the name form right away (passkey setup page). */
+    initiallyOpen?: boolean;
 };
 
 /** Suggest a passkey name such as "Safari on iPhone" from the user agent. */
@@ -29,10 +31,13 @@ function suggestedName(): string {
     return [browser, os].filter(Boolean).join(' / ');
 }
 
-export default function PasskeyRegistration({ onSuccess }: Props) {
+export default function PasskeyRegistration({
+    onSuccess,
+    initiallyOpen = false,
+}: Props) {
     const { t } = useTranslation();
     const [name, setName] = useState(suggestedName);
-    const [showForm, setShowForm] = useState(false);
+    const [showForm, setShowForm] = useState(initiallyOpen);
     const { register, isLoading, error, isSupported } = usePasskeyRegister({
         onSuccess: () => {
             setShowForm(false);
@@ -83,12 +88,15 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
                     type="submit"
                     isPending={isLoading}
                     isDisabled={!name.trim()}
+                    data-test="register-passkey-button"
                 >
                     {t('Register passkey')}
                 </Button>
-                <Button variant="ghost" onPress={() => setShowForm(false)}>
-                    {t('Cancel')}
-                </Button>
+                {!initiallyOpen && (
+                    <Button variant="ghost" onPress={() => setShowForm(false)}>
+                        {t('Cancel')}
+                    </Button>
+                )}
             </div>
         </form>
     );
