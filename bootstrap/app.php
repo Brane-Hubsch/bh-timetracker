@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureOrganizationMembership;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LeaveInertiaForOAuth;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetOrganizationUrlDefaults;
 use Illuminate\Foundation\Application;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->web(append: [
+            LeaveInertiaForOAuth::class,
             SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,

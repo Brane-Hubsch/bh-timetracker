@@ -3,6 +3,7 @@
 use App\Http\Controllers\Organizations\OrganizationController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Organizations\OrganizationMemberController;
+use App\Http\Controllers\Settings\AiConnectionController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Middleware\EnsureOrganizationMembership;
@@ -30,6 +31,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('passkeys.rename');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    Route::get('settings/ai-connections', [AiConnectionController::class, 'edit'])->name('ai-connections.edit');
+    Route::delete('settings/ai-connections/{client}', [AiConnectionController::class, 'destroy'])->name('ai-connections.destroy');
 
     Route::get('settings/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
     Route::post('settings/organizations', [OrganizationController::class, 'store'])->name('organizations.store');

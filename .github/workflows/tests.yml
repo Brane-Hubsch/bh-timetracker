@@ -105,6 +105,7 @@ jobs:
           npm ci
           cp .env.example .env
           php artisan key:generate
+          php artisan passport:keys
           npm run build
 
       - name: Run tests (SQLite)

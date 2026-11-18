@@ -17,8 +17,11 @@ class PasskeySetupController extends Controller
 
     public function __invoke(Request $request): Response
     {
+        // Continue where the user was headed before signing in (e.g. an MCP client's OAuth approval).
+        $intended = $request->session()->pull('url.intended');
+
         return Inertia::render('auth/passkey-setup', [
-            'continueTo' => $this->redirectPathForCurrentOrganization($request, '/dashboard'),
+            'continueTo' => is_string($intended) ? $intended : $this->redirectPathForCurrentOrganization($request, '/dashboard'),
         ]);
     }
 }

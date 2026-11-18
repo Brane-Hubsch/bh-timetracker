@@ -12,3 +12,5 @@ Schedule::call(function () {
 })->daily()->description('Delete expired organization invitations');
 
 Schedule::command('model:prune', ['--model' => [MagicLink::class]])->daily()->description('Prune expired magic sign-in links');
+
+Schedule::command('passport:purge')->daily()->description('Purge revoked and expired OAuth tokens (MCP clients)');

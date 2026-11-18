@@ -6,7 +6,7 @@ use App\Data\TimeEntryData;
 use App\Enums\TimeEntrySource;
 use App\Models\User;
 use App\Support\DurationParser;
-use Carbon\CarbonImmutable;
+use App\Support\LocalTimes;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -59,24 +59,19 @@ class TimeEntryRequest extends FormRequest
     {
         $user = $this->user();
         $timezone = $user instanceof User ? $user->timezone : config()->string('app.timezone');
-        $date = $this->string('date')->value();
-        $startedAt = CarbonImmutable::parse($date.' '.$this->string('start')->value(), $timezone);
-
-        if ($this->filled('end')) {
-            $endedAt = CarbonImmutable::parse($date.' '.$this->string('end')->value(), $timezone);
-
-            if ($endedAt->lessThanOrEqualTo($startedAt)) {
-                $endedAt = $endedAt->addDay();
-            }
-        } else {
-            $endedAt = $startedAt->addSeconds(app(DurationParser::class)->parse($this->string('duration')->value()) ?? 0);
-        }
+        [$startedAt, $endedAt] = LocalTimes::toUtc(
+            $this->string('date')->value(),
+            $this->string('start')->value(),
+            $this->filled('end') ? $this->string('end')->value() : null,
+            app(DurationParser::class)->parse($this->string('duration')->value()),
+            $timezone,
+        );
 
         return new TimeEntryData(
             userId: $this->filled('user_id') ? $this->integer('user_id') : (($defaultUser ?? $user)->id ?? 0),
             projectId: $this->integer('project_id'),
-            startedAt: $startedAt->utc(),
-            endedAt: $endedAt->utc(),
+            startedAt: $startedAt,
+            endedAt: $endedAt,
             description: $this->filled('description') ? $this->string('description')->value() : null,
             isBillable: $this->has('is_billable') && $this->input('is_billable') !== null ? $this->boolean('is_billable') : null,
             source: TimeEntrySource::Web,

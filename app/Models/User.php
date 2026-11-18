@@ -16,6 +16,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
+use Laravel\Passport\Contracts\OAuthenticatable;
+use Laravel\Passport\HasApiTokens;
 
 /**
  * @property int $id
@@ -38,10 +40,10 @@ use Laravel\Fortify\PasskeyAuthenticatable;
  */
 #[Fillable(['name', 'email', 'password', 'google_id', 'avatar_url', 'locale', 'timezone', 'current_organization_id'])]
 #[Hidden(['password', 'google_id', 'remember_token'])]
-class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail, PasskeyUser
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail, OAuthenticatable, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasOrganizations, Notifiable, PasskeyAuthenticatable;
+    use HasApiTokens, HasFactory, HasOrganizations, Notifiable, PasskeyAuthenticatable;
 
     /**
      * Mirrors the column defaults so freshly created users have them before a reload.
