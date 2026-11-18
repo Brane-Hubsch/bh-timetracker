@@ -33,4 +33,20 @@ class UpdateOrganizationRequest extends FormRequest
             'timezone' => ['required', 'string', 'timezone:all'],
         ];
     }
+
+    /**
+     * The validated attributes for UpdateOrganization.
+     *
+     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string}
+     */
+    public function settings(): array
+    {
+        return [
+            'name' => $this->string('name')->trim()->value(),
+            'currency' => $this->string('currency')->value(),
+            'default_hourly_rate' => $this->filled('default_hourly_rate') ? $this->integer('default_hourly_rate') : null,
+            'week_starts_on' => $this->integer('week_starts_on'),
+            'timezone' => $this->string('timezone')->value(),
+        ];
+    }
 }

@@ -6,6 +6,7 @@ use App\Enums\OrganizationRole;
 use App\Models\OrganizationInvitation;
 use App\Models\User;
 use App\Notifications\Organizations\OrganizationInvitation as OrganizationInvitationNotification;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Notification;
 
 it('creates an invitation that expires in three days and emails it', function () {
@@ -70,4 +71,38 @@ it('lists only pending invitations for an email address', function () {
     OrganizationInvitation::factory()->create([...$attributes, 'email' => 'someone-else@example.com']);
 
     expect(OrganizationInvitation::pendingFor('invitee@example.com')->pluck('id')->all())->toBe([$pending->id]);
+});
+
+it('never invites as owner', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+
+    app(CreateOrganizationInvitation::class)
+        ->handle($owner->currentOrganization, $owner, 'new@example.com', OrganizationRole::Owner);
+})->throws(AuthorizationException::class);
+
+it('never accepts an owner invitation', function () {
+    $owner = User::factory()->create();
+    $invitee = User::factory()->withoutOrganization()->create(['email' => 'invitee@example.com']);
+    $invitation = OrganizationInvitation::factory()->create([
+        'organization_id' => $owner->current_organization_id,
+        'email' => 'invitee@example.com',
+        'role' => OrganizationRole::Owner,
+        'invited_by' => $owner->id,
+    ]);
+
+    app(AcceptOrganizationInvitation::class)->handle($invitee, $invitation);
+})->throws(AuthorizationException::class);
+
+it('rejects owner as invitation role in the request', function () {
+    $owner = User::factory()->create();
+
+    $this->actingAs($owner)
+        ->post(route('organizations.invitations.store', $owner->currentOrganization), [
+            'email' => 'new@example.com',
+            'role' => 'owner',
+        ])
+        ->assertSessionHasErrors('role');
+
+    expect($owner->currentOrganization->invitations()->count())->toBe(0);
 });

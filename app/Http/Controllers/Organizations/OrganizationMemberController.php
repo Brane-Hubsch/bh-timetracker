@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Organizations;
 
 use App\Actions\Organizations\RemoveOrganizationMember;
 use App\Actions\Organizations\UpdateOrganizationMemberRole;
-use App\Enums\OrganizationRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Organizations\UpdateOrganizationMemberRequest;
 use App\Models\Organization;
@@ -22,7 +21,7 @@ class OrganizationMemberController extends Controller
     {
         Gate::authorize('updateMember', $organization);
 
-        $updateMemberRole->handle($organization, $user, OrganizationRole::from($request->validated('role')));
+        $updateMemberRole->handle($organization, $user, $request->role());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member role updated.')]);
 

@@ -24,7 +24,24 @@ class CreateOrganizationInvitationRequest extends FormRequest
 
         return [
             'email' => ['required', 'string', 'email', 'max:255', new UniqueOrganizationInvitation($organization)],
-            'role' => ['required', 'string', Rule::enum(OrganizationRole::class)],
+            // Ownership can never be granted through an invitation.
+            'role' => ['required', 'string', Rule::enum(OrganizationRole::class)->except([OrganizationRole::Owner])],
         ];
+    }
+
+    /**
+     * The validated email address to invite.
+     */
+    public function invitationEmail(): string
+    {
+        return $this->string('email')->trim()->value();
+    }
+
+    /**
+     * The validated role for the invitee.
+     */
+    public function role(): OrganizationRole
+    {
+        return OrganizationRole::from($this->string('role')->value());
     }
 }

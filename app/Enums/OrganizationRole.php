@@ -13,7 +13,7 @@ enum OrganizationRole: string
      */
     public function label(): string
     {
-        return ucfirst($this->value);
+        return __(ucfirst($this->value));
     }
 
     /**
@@ -73,10 +73,11 @@ enum OrganizationRole: string
      */
     public static function assignable(): array
     {
-        return collect(self::cases())
-            ->filter(fn (self $role) => $role !== self::Owner)
-            ->map(fn (self $role) => ['value' => $role->value, 'label' => $role->label()])
-            ->values()
-            ->toArray();
+        $roles = array_filter(self::cases(), fn (self $role) => $role !== self::Owner);
+
+        return array_values(array_map(
+            fn (self $role) => ['value' => $role->value, 'label' => $role->label()],
+            $roles,
+        ));
     }
 }

@@ -20,4 +20,12 @@ class UpdateOrganizationMemberRequest extends FormRequest
             'role' => ['required', 'string', Rule::in(array_column(OrganizationRole::assignable(), 'value'))],
         ];
     }
+
+    /**
+     * The validated new role.
+     */
+    public function role(): OrganizationRole
+    {
+        return OrganizationRole::from($this->string('role')->value());
+    }
 }

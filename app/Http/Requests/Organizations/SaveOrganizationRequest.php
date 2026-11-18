@@ -19,4 +19,12 @@ class SaveOrganizationRequest extends FormRequest
             'name' => ['required', 'string', 'max:255', new OrganizationName],
         ];
     }
+
+    /**
+     * The validated organization name.
+     */
+    public function organizationName(): string
+    {
+        return $this->string('name')->trim()->value();
+    }
 }

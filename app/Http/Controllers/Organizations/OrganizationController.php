@@ -14,8 +14,8 @@ use App\Http\Requests\Organizations\UpdateOrganizationRequest;
 use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,9 +25,8 @@ class OrganizationController extends Controller
     /**
      * Display a listing of the user's organizations.
      */
-    public function index(Request $request): Response
+    public function index(#[CurrentUser] User $user): Response
     {
-        $user = $request->user();
 
         return Inertia::render('organizations/index', [
             'organizations' => $user->toUserOrganizations(includeCurrent: true),
@@ -37,11 +36,11 @@ class OrganizationController extends Controller
     /**
      * Store a newly created organization.
      */
-    public function store(SaveOrganizationRequest $request, CreateOrganization $createOrganization): RedirectResponse
+    public function store(SaveOrganizationRequest $request, #[CurrentUser] User $user, CreateOrganization $createOrganization): RedirectResponse
     {
         Gate::authorize('create', Organization::class);
 
-        $organization = $createOrganization->handle($request->user(), $request->validated('name'));
+        $organization = $createOrganization->handle($user, $request->organizationName());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Organization created.')]);
 
@@ -51,11 +50,9 @@ class OrganizationController extends Controller
     /**
      * Show the organization edit page.
      */
-    public function edit(Request $request, Organization $organization): Response
+    public function edit(#[CurrentUser] User $user, Organization $organization): Response
     {
         Gate::authorize('view', $organization);
-
-        $user = $request->user();
 
         return Inertia::render('organizations/edit', [
             'organization' => [
@@ -88,7 +85,7 @@ class OrganizationController extends Controller
                     'email' => $invitation->email,
                     'role' => $invitation->role->value,
                     'role_label' => $invitation->role->label(),
-                    'created_at' => $invitation->created_at->toISOString(),
+                    'created_at' => $invitation->created_at?->toISOString(),
                 ]),
             'permissions' => $user->toOrganizationPermissions($organization),
             'availableRoles' => OrganizationRole::assignable(),
@@ -100,7 +97,7 @@ class OrganizationController extends Controller
      */
     public function update(UpdateOrganizationRequest $request, Organization $organization, UpdateOrganization $updateOrganization): RedirectResponse
     {
-        $organization = $updateOrganization->handle($organization, $request->validated());
+        $organization = $updateOrganization->handle($organization, $request->settings());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Organization updated.')]);
 
@@ -110,11 +107,11 @@ class OrganizationController extends Controller
     /**
      * Switch the user's current organization.
      */
-    public function switch(Request $request, Organization $organization): RedirectResponse
+    public function switch(#[CurrentUser] User $user, Organization $organization): RedirectResponse
     {
-        abort_unless($request->user()->belongsToOrganization($organization), 403);
+        abort_unless($user->belongsToOrganization($organization), 403);
 
-        $request->user()->switchOrganization($organization);
+        $user->switchOrganization($organization);
 
         return back();
     }
@@ -122,11 +119,11 @@ class OrganizationController extends Controller
     /**
      * Leave the specified organization.
      */
-    public function leave(Request $request, Organization $organization, RemoveOrganizationMember $removeOrganizationMember): RedirectResponse
+    public function leave(#[CurrentUser] User $user, Organization $organization, RemoveOrganizationMember $removeOrganizationMember): RedirectResponse
     {
         Gate::authorize('leave', $organization);
 
-        $removeOrganizationMember->handle($request->user(), $organization);
+        $removeOrganizationMember->handle($user, $organization);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('You left the organization ":name"', ['name' => $organization->name])]);
 

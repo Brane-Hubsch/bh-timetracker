@@ -12,11 +12,13 @@ use Illuminate\Database\Eloquent\Scope;
  *
  * Code that runs without an organization context (console commands, jobs, seeders) must scope
  * explicitly with `forOrganization()`.
+ *
+ * @implements Scope<Model>
  */
 class OrganizationScope implements Scope
 {
     /**
-     * @param  Builder<Model>  $builder
+     * @param  Builder<covariant Model>  $builder
      */
     public function apply(Builder $builder, Model $model): void
     {

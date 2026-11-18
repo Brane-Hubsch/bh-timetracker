@@ -173,7 +173,7 @@ trait HasOrganizations
     public function fallbackOrganization(?Organization $excluding = null): ?Organization
     {
         return $this->organizations()
-            ->when($excluding, fn ($query) => $query->where('organizations.id', '!=', $excluding->id))
+            ->when($excluding, fn ($query, Organization $excluding) => $query->where('organizations.id', '!=', $excluding->id))
             ->orderByRaw('LOWER(organizations.name)')
             ->first();
     }

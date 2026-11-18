@@ -27,7 +27,11 @@ trait GeneratesUniqueOrganizationSlugs
         $existingSlugs = $query->pluck('slug');
 
         $maxSuffix = $existingSlugs
-            ->map(function (string $slug) use ($defaultSlug): ?int {
+            ->map(function (mixed $slug) use ($defaultSlug): ?int {
+                if (! is_string($slug)) {
+                    return null;
+                }
+
                 if ($slug === $defaultSlug) {
                     return 0;
                 } elseif (preg_match('/^'.preg_quote($defaultSlug, '/').'-(\d+)$/', $slug, $matches)) {
