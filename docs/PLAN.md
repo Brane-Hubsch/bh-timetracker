@@ -56,7 +56,9 @@ User ──< OrganizationMember >── Organization
 
 ### Tabeller (förslag)
 
-**users** – `id, name, email (unik), avatar_url, locale (sv), timezone (Europe/Stockholm), current_organization_id, password (nullable, används ej), google_id (nullable), email_verified_at, timestamps`
+**users** – `id, name, email (unik), avatar_url, locale (sv), timezone (Europe/Stockholm), current_organization_id, password (nullable, endast utveckling/test), google_id (nullable, unik), email_verified_at, timestamps`
+
+**magic_links** – `id, user_id, token_hash (sha256, unik), redirect_to (nullable), expires_at, used_at, timestamps` (rensas dagligen)
 
 **organizations** – `id, name, slug (unik), currency (SEK), default_hourly_rate (int, nullable), week_starts_on (1 = måndag), timezone, timestamps, deleted_at (soft delete, från startkitet)`
 
@@ -111,6 +113,11 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - **Återställning**: "Jag har tappat min passkey" → magic link till e-post → registrera ny passkey.
 - Stäng av Fortifys lösenordsfunktioner (registrering med lösenord, reset, 2FA/TOTP – passkeys ersätter det).
 - Öppen självregistrering är **avstängd som standard** (se öppna frågor); konton skapas via inbjudan. Styrs med en config-flagga.
+- **Magic link**: engångslänk via e-post, giltig 15 min, endast hash av token lagras. Länken öppnar en "Fortsätt"-sida och förbrukas först vid klick (skydd mot e-postskannrar). Används för inloggning, registrering, återställning och för att bekräfta åtkomst för användare utan passkey.
+- **Inbjudan**: e-posten länkar till `/invitations/{kod}`. Ny användare anger namn (eller väljer Google) → konto skapas verifierat → passkey-setup. Befintlig användare loggar in och accepterar.
+- **Känsliga åtgärder** (hantera passkeys, radera konto) kräver nylig inloggning eller bekräftelse med passkey/e-postlänk.
+- **Lösenordsinloggning finns bara för lokal utveckling och tester** (seedade användare, `AUTH_PASSWORD_LOGIN`), aldrig i produktion oavsett konfiguration.
+- **Första ägaren** i en miljö skapas med `php artisan app:create-owner {email} {namn} {organisation}`.
 
 ### 4.2 Organisationer och medlemmar
 
@@ -285,7 +292,7 @@ Varje fas avslutas med gröna tester, uppdaterad PLAN.md vid behov och en kort s
 5. i18n-lager (sv), Larastan, Pint, ESLint/Prettier, GitHub Actions med SQLite + Postgres.
 *Klart när*: man kan logga in med startkitets standardflöde, skapa/byta organisation i ny HeroUI-layout, CI är grön.
 
-**Fas 1 – Inloggning utan lösenord**
+**Fas 1 – Inloggning utan lösenord** *(klar, se Status nedan)*
 Google via Socialite, passkeys via Fortify, magic link för registrering/återställning, inbjudningsflöde, ta bort lösenordsflöden.
 *Klart när*: en inbjuden användare kan gå med via Google eller passkey, och lösenord inte förekommer någonstans.
 
@@ -316,6 +323,16 @@ Klar. Avvikelser från ursprungsplanen:
 - Organisationslogiken (skapa, ändra, radera, ta bort medlem, roll, inbjudningar) flyttad till `app/Actions/Organizations`.
 - Kvar från startkitet till Fas 1: lösenordsinloggning, glömt/återställ lösenord, bekräfta lösenord, e-postverifiering och 2FA. Dessa skärmar använder fortfarande äldre shadcn-komponenter i `resources/js/components/ui`, som tas bort i Fas 1.
 - `BelongsToOrganization`-traiten och `OrganizationScope` finns och är testade, men används av en riktig modell först i Fas 2 (Client).
+
+### Status Fas 1 (2026-11-18)
+
+Klar. Avvikelser och tillägg:
+
+- Lösenordsinloggning behålls för lokal utveckling och tester (beslut 2026-11-18) så att Google-nycklar inte blockerar arbetet. Avstängd i produktion.
+- `app:create-owner` för att skapa första ägaren (behövs eftersom registreringen är stängd).
+- Ägare kan inte radera sitt konto innan organisationen är raderad (en organisation ska alltid ha en ägare).
+- Accentfärg: lila (violett), definierad i `resources/css/app.css`.
+- Alla shadcn/Radix-komponenter är borttagna; hela UI:t använder HeroUI.
 
 ## 8. Senare (medvetet bortvalt i v1)
 

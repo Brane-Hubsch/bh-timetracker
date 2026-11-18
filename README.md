@@ -20,6 +20,20 @@ composer dev          # vite + queue + logs
 
 Passkeys require a secure context: run `herd secure` for the `.test` domain.
 
+Demo users (local only, password login is disabled in production): `owner@example.com`,
+`admin@example.com`, `member@example.com`, password `password`. Emails (magic links, invitations) go
+to the log with `MAIL_MAILER=log` and are sent by the queue worker that `composer dev` starts.
+
+Google sign-in: create an OAuth client in Google Cloud Console with redirect URI
+`{APP_URL}/auth/google/callback` and set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. The Google
+button only appears when both are set.
+
+First owner in a new environment (registration is invite-only):
+
+```bash
+php artisan app:create-owner you@example.com "Your Name" "Organization"
+```
+
 ## Quality checks
 
 ```bash

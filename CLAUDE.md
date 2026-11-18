@@ -32,6 +32,16 @@ describes; propose additions instead of building them.
 - Policies always verify membership in the resource's organization before checking the role.
 - There are no personal organizations. An organization must always have at least one owner.
 
+## Authentication
+
+- Passwordless: passkeys (Fortify / `laravel/passkeys`), Google (Socialite) and magic links
+  (`app/Actions/Auth`, `routes/auth.php`). Accounts come from invitations; open registration is a
+  config flag (`auth.open_registration`, off by default).
+- Password login exists only for local development and tests (`App\Support\SignInOptions`); it is
+  always off in production. Never build features that depend on users having a password.
+- Sensitive actions use the `password.confirm` middleware; users confirm with a passkey or an emailed
+  link. A fresh sign-in counts as confirmed.
+
 ## Time, money and data
 
 - Store timestamps in UTC; display them in the user's timezone. Use `CarbonImmutable` (it is the app
