@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -83,6 +84,22 @@ class Project extends Model
             ->as('assignment')
             ->withPivot(['id', 'hourly_rate'])
             ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<TimeEntry, $this>
+     */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
+    /**
+     * Total reported time on the project (all members, all time).
+     */
+    public function consumedSeconds(): int
+    {
+        return (int) $this->timeEntries()->sum('duration_seconds');
     }
 
     /**

@@ -34,6 +34,7 @@ enum OrganizationRole: string
                 OrganizationPermission::CancelInvitation,
                 OrganizationPermission::ManageClients,
                 OrganizationPermission::ManageProjects,
+                OrganizationPermission::ManageTeamTime,
                 OrganizationPermission::ViewRates,
             ],
             self::Member => [],

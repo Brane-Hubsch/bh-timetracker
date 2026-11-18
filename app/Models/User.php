@@ -44,6 +44,16 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     use HasFactory, HasOrganizations, Notifiable, PasskeyAuthenticatable;
 
     /**
+     * Mirrors the column defaults so freshly created users have them before a reload.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'locale' => 'sv',
+        'timezone' => 'Europe/Stockholm',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

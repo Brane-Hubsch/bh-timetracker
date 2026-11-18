@@ -14,6 +14,7 @@ readonly class OrganizationPermissions
         public bool $canCancelInvitation,
         public bool $canManageClients,
         public bool $canManageProjects,
+        public bool $canManageTeamTime,
         public bool $canViewRates,
     ) {
         //

@@ -169,6 +169,7 @@ trait HasOrganizations
             canCancelInvitation: $role?->hasPermission(OrganizationPermission::CancelInvitation) ?? false,
             canManageClients: $role?->hasPermission(OrganizationPermission::ManageClients) ?? false,
             canManageProjects: $role?->hasPermission(OrganizationPermission::ManageProjects) ?? false,
+            canManageTeamTime: $role?->hasPermission(OrganizationPermission::ManageTeamTime) ?? false,
             canViewRates: $role?->hasPermission(OrganizationPermission::ViewRates) ?? false,
         );
     }

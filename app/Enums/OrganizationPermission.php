@@ -17,6 +17,9 @@ enum OrganizationPermission: string
     case ManageClients = 'client:manage';
     case ManageProjects = 'project:manage';
 
+    /** See, report and change other members' time. */
+    case ManageTeamTime = 'time:manage-team';
+
     /** See hourly rates and amounts. */
     case ViewRates = 'rate:view';
 }

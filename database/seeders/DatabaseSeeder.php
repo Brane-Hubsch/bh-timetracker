@@ -3,12 +3,16 @@
 namespace Database\Seeders;
 
 use App\Actions\Organizations\CreateOrganization;
+use App\Actions\TimeEntries\CreateTimeEntry;
+use App\Data\TimeEntryData;
 use App\Enums\OrganizationRole;
 use App\Enums\ProjectVisibility;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\CurrentOrganization;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,7 +21,7 @@ class DatabaseSeeder extends Seeder
      * Seed a demo organization for local development.
      *
      * Log in as owner@example.com / admin@example.com / member@example.com (password: "password").
-     * Includes demo clients and projects; time entries are added in phase 3.
+     * Includes demo clients, projects and a few weeks of time entries.
      */
     public function run(CreateOrganization $createOrganization): void
     {
@@ -44,6 +48,43 @@ class DatabaseSeeder extends Seeder
         $owner->switchOrganization($organization);
 
         $this->seedClientsAndProjects($organization);
+        $this->seedTimeEntries($organization);
+    }
+
+    /**
+     * About three weeks of working days for every member, through the real action (rates snapshotted).
+     */
+    private function seedTimeEntries(Organization $organization): void
+    {
+        $createTimeEntry = app(CreateTimeEntry::class);
+        app(CurrentOrganization::class)->set($organization);
+        $descriptions = ['Utveckling', 'Möte med kund', 'Felsökning', 'Planering', 'Kodgranskning', 'Support'];
+        mt_srand(47);
+
+        foreach ($organization->members as $member) {
+            $projects = Project::query()->forOrganization($organization)->active()->accessibleBy($member, $organization)->get();
+            $day = CarbonImmutable::now($member->timezone)->startOfWeek()->subWeeks(2);
+
+            while ($day->isBefore(CarbonImmutable::now($member->timezone)->startOfDay())) {
+                if (! $day->isWeekend()) {
+                    $start = $day->setTime(8, 0);
+
+                    foreach ([3, 1.5, 2.5] as $hours) {
+                        $end = $start->addMinutes((int) ($hours * 60));
+                        $createTimeEntry->handle($organization, new TimeEntryData(
+                            userId: $member->id,
+                            projectId: $projects->random()->id,
+                            startedAt: $start->utc(),
+                            endedAt: $end->utc(),
+                            description: $descriptions[array_rand($descriptions)],
+                        ));
+                        $start = $end->addMinutes(30);
+                    }
+                }
+
+                $day = $day->addDay();
+            }
+        }
     }
 
     /**

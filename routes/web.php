@@ -7,6 +7,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectMemberController;
+use App\Http\Controllers\TimeEntries\TimeEntryController;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,13 @@ Route::prefix('{current_organization}')
     ->middleware(['auth', 'verified', EnsureOrganizationMembership::class])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+        Route::get('time', [TimeEntryController::class, 'index'])->name('time.index');
+        Route::post('time', [TimeEntryController::class, 'store'])->name('time.store');
+        Route::post('time/copy', [TimeEntryController::class, 'copy'])->name('time.copy');
+        Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');
+        Route::delete('time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('time.destroy');
+        Route::post('time/{timeEntry}/restore', [TimeEntryController::class, 'restore'])->withTrashed()->name('time.restore');
 
         Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
         Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
