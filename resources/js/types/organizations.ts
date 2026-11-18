@@ -25,6 +25,9 @@ export type OrganizationMember = {
     avatar?: string | null;
     role: OrganizationRole;
     role_label: string;
+    /** Minor currency unit; null when not set or not visible to the viewer. */
+    hourly_rate: number | null;
+    is_deactivated: boolean;
 };
 
 export type OrganizationInvitation = {
@@ -57,6 +60,9 @@ export type OrganizationPermissions = {
     canRemoveMember: boolean;
     canCreateInvitation: boolean;
     canCancelInvitation: boolean;
+    canManageClients: boolean;
+    canManageProjects: boolean;
+    canViewRates: boolean;
 };
 
 export type RoleOption = {

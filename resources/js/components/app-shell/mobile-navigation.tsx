@@ -43,11 +43,15 @@ export function MobileTopBar({ className }: { className?: string }) {
  */
 export function MobileBottomNav({ className }: { className?: string }) {
     const { t } = useTranslation();
-    const items = useMainNavigation().filter((item) => item.mobile);
+    const navigation = useMainNavigation();
+    const items = navigation.filter((item) => item.mobile);
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const [isMoreOpen, setMoreOpen] = useState(false);
 
     const moreLinks = [
+        ...navigation
+            .filter((item) => !item.mobile)
+            .map(({ title, href, icon }) => ({ title, href, icon })),
         { title: 'Profile', href: editProfile(), icon: User },
         { title: 'Security', href: editSecurity(), icon: Shield },
         { title: 'Organizations', href: organizations(), icon: Building2 },

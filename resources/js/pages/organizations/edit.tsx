@@ -1,7 +1,9 @@
 import {
     Avatar,
     Button,
+    Chip,
     ComboBox,
+    Dropdown,
     Input,
     Label,
     ListBox,
@@ -9,7 +11,7 @@ import {
     Separator,
 } from '@heroui/react';
 import { Form, Head, router } from '@inertiajs/react';
-import { Mail, UserPlus, X } from 'lucide-react';
+import { EllipsisVertical, Mail, UserPlus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import DeleteOrganizationModal from '@/components/delete-organization-modal';
@@ -17,12 +19,16 @@ import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
 import InviteMemberModal from '@/components/invite-member-modal';
+import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import { index, update } from '@/routes/organizations';
 import { destroy as destroyInvitation } from '@/routes/organizations/invitations';
 import {
+    deactivate as deactivateMember,
     destroy as destroyMember,
+    rate as updateMemberRate,
+    reactivate as reactivateMember,
     update as updateMember,
 } from '@/routes/organizations/members';
 import type {
@@ -278,8 +284,17 @@ export default function OrganizationEdit({
                                     </Avatar.Fallback>
                                 </Avatar>
                                 <div className="min-w-0">
-                                    <div className="truncate font-medium">
+                                    <div className="flex items-center gap-2 truncate font-medium">
                                         {member.name}
+                                        {member.is_deactivated && (
+                                            <Chip
+                                                size="sm"
+                                                variant="soft"
+                                                color="warning"
+                                            >
+                                                {t('Deactivated')}
+                                            </Chip>
+                                        )}
                                     </div>
                                     <div className="truncate text-sm text-muted">
                                         {member.email}
@@ -310,20 +325,113 @@ export default function OrganizationEdit({
                                         {member.role_label}
                                     </span>
                                 )}
-                                {member.role !== 'owner' &&
-                                    permissions.canRemoveMember && (
-                                        <Button
-                                            isIconOnly
-                                            variant="ghost"
-                                            size="sm"
-                                            aria-label={t('Remove member')}
-                                            onPress={() =>
-                                                setMemberToRemove(member)
+                                {permissions.canViewRates &&
+                                    permissions.canUpdateMember && (
+                                        <RateField
+                                            aria-label={t(
+                                                'Hourly rate for :name',
+                                                {
+                                                    name: member.name,
+                                                },
+                                            )}
+                                            rate={member.hourly_rate}
+                                            onSave={(rate) =>
+                                                router.visit(
+                                                    updateMemberRate([
+                                                        organization.slug,
+                                                        member.id,
+                                                    ]),
+                                                    {
+                                                        data: {
+                                                            hourly_rate: rate,
+                                                        },
+                                                        preserveScroll: true,
+                                                    },
+                                                )
                                             }
-                                            data-test="member-remove-button"
-                                        >
-                                            <X className="size-4" />
-                                        </Button>
+                                            className="w-28"
+                                        />
+                                    )}
+                                {member.role !== 'owner' &&
+                                    (permissions.canUpdateMember ||
+                                        permissions.canRemoveMember) && (
+                                        <Dropdown>
+                                            <Button
+                                                isIconOnly
+                                                variant="ghost"
+                                                size="sm"
+                                                aria-label={t('Member actions')}
+                                                data-test="member-actions"
+                                            >
+                                                <EllipsisVertical className="size-4" />
+                                            </Button>
+                                            <Dropdown.Popover placement="bottom end">
+                                                <Dropdown.Menu
+                                                    onAction={(key) => {
+                                                        if (key === 'remove') {
+                                                            setMemberToRemove(
+                                                                member,
+                                                            );
+
+                                                            return;
+                                                        }
+
+                                                        router.visit(
+                                                            (key ===
+                                                                'deactivate'
+                                                                ? deactivateMember
+                                                                : reactivateMember)(
+                                                                [
+                                                                    organization.slug,
+                                                                    member.id,
+                                                                ],
+                                                            ),
+                                                            {
+                                                                preserveScroll: true,
+                                                            },
+                                                        );
+                                                    }}
+                                                >
+                                                    {permissions.canUpdateMember ? (
+                                                        <Dropdown.Item
+                                                            id={
+                                                                member.is_deactivated
+                                                                    ? 'reactivate'
+                                                                    : 'deactivate'
+                                                            }
+                                                            textValue={t(
+                                                                'Deactivate',
+                                                            )}
+                                                        >
+                                                            <Label>
+                                                                {member.is_deactivated
+                                                                    ? t(
+                                                                          'Reactivate',
+                                                                      )
+                                                                    : t(
+                                                                          'Deactivate',
+                                                                      )}
+                                                            </Label>
+                                                        </Dropdown.Item>
+                                                    ) : null}
+                                                    {permissions.canRemoveMember ? (
+                                                        <Dropdown.Item
+                                                            id="remove"
+                                                            textValue={t(
+                                                                'Remove member',
+                                                            )}
+                                                            variant="danger"
+                                                        >
+                                                            <Label>
+                                                                {t(
+                                                                    'Remove member',
+                                                                )}
+                                                            </Label>
+                                                        </Dropdown.Item>
+                                                    ) : null}
+                                                </Dropdown.Menu>
+                                            </Dropdown.Popover>
+                                        </Dropdown>
                                     )}
                             </div>
                         </li>
