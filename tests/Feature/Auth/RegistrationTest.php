@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Models\TeamInvitation;
+use App\Enums\OrganizationRole;
+use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -21,14 +21,14 @@ class RegistrationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_registration_screen_includes_team_invitation_context()
+    public function test_registration_screen_includes_organization_invitation_context()
     {
         $owner = User::factory()->create();
-        $team = Team::factory()->create(['name' => 'Laravel Team']);
-        $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+        $organization = Organization::factory()->create(['name' => 'Laravel Organization']);
+        $organization->members()->attach($owner, ['role' => OrganizationRole::Owner->value]);
 
-        $invitation = TeamInvitation::factory()->create([
-            'team_id' => $team->id,
+        $invitation = OrganizationInvitation::factory()->create([
+            'organization_id' => $organization->id,
             'email' => 'invited@example.com',
             'invited_by' => $owner->id,
         ]);
@@ -38,8 +38,8 @@ class RegistrationTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
             ->component('auth/register')
-            ->where('teamInvitation.code', $invitation->code)
-            ->where('teamInvitation.teamName', 'Laravel Team'),
+            ->where('organizationInvitation.code', $invitation->code)
+            ->where('organizationInvitation.organizationName', 'Laravel Organization'),
         );
     }
 
