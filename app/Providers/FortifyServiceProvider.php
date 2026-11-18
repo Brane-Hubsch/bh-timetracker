@@ -2,28 +2,29 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\PasskeyLoginResponse;
-use App\Http\Responses\RegisterResponse;
-use App\Http\Responses\TwoFactorLoginResponse;
 use App\Http\Responses\VerifyEmailResponse;
 use App\Models\OrganizationInvitation;
+use App\Models\User;
+use App\Support\SignInOptions;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
-use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
-use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
 use Laravel\Fortify\Contracts\VerifyEmailResponse as VerifyEmailResponseContract;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Laravel\Passkeys\Contracts\PasskeyLoginResponse as PasskeyLoginResponseContract;
 
+/**
+ * Fortify provides the login page, passkeys, logout, password confirmation and email verification.
+ * Password login is only accepted when SignInOptions::passwordLogin() allows it (never in production).
+ */
 class FortifyServiceProvider extends ServiceProvider
 {
     /**
@@ -33,8 +34,6 @@ class FortifyServiceProvider extends ServiceProvider
     {
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
         $this->app->singleton(PasskeyLoginResponseContract::class, PasskeyLoginResponse::class);
-        $this->app->singleton(RegisterResponseContract::class, RegisterResponse::class);
-        $this->app->singleton(TwoFactorLoginResponseContract::class, TwoFactorLoginResponse::class);
         $this->app->singleton(VerifyEmailResponseContract::class, VerifyEmailResponse::class);
     }
 
@@ -43,18 +42,31 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->configureActions();
+        $this->configureAuthentication();
         $this->configureViews();
         $this->configureRateLimiting();
     }
 
     /**
-     * Configure Fortify actions.
+     * Password login (development and tests only).
      */
-    private function configureActions(): void
+    private function configureAuthentication(): void
     {
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        Fortify::createUsersUsing(CreateNewUser::class);
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            if (! app(SignInOptions::class)->passwordLogin()) {
+                throw ValidationException::withMessages([
+                    Fortify::username() => __('Password login is disabled. Use a passkey, Google or an email link.'),
+                ]);
+            }
+
+            $user = User::query()
+                ->whereRaw('LOWER(email) = ?', [$request->string(Fortify::username())->lower()->value()])
+                ->first();
+
+            $password = $request->string('password')->value();
+
+            return $user && $user->password !== null && Hash::check($password, $user->password) ? $user : null;
+        });
     }
 
     /**
@@ -63,31 +75,20 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureViews(): void
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'status' => $request->session()->get('status'),
+            'signInOptions' => app(SignInOptions::class)->toArray(),
             'organizationInvitation' => $this->organizationInvitation($request),
-        ]));
-
-        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
-        ]));
-
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
-            'status' => $request->session()->get('status'),
         ]));
 
         Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn (Request $request) => Inertia::render('auth/register', [
-            'organizationInvitation' => $this->organizationInvitation($request),
+        Fortify::confirmPasswordView(fn (Request $request) => Inertia::render('auth/confirm-access', [
+            'status' => $request->session()->get('status'),
+            'hasPasskeys' => $request->user() instanceof User && $request->user()->hasPasskeys(),
+            'passwordLogin' => app(SignInOptions::class)->passwordLogin(),
         ]));
-
-        Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
-
-        Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
     }
 
     /**
@@ -95,14 +96,17 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureRateLimiting(): void
     {
-        RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
-        });
-
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate($request->string(Fortify::username())->lower()->value().'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        RateLimiter::for('magic-link', function (Request $request) {
+            return [
+                Limit::perMinute(3)->by('email:'.$request->string('email')->lower()->value()),
+                Limit::perMinute(10)->by('ip:'.$request->ip()),
+            ];
         });
 
         RateLimiter::for('passkeys', function (Request $request) {
@@ -115,7 +119,7 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Get the pending organization invitation context for auth pages.
+     * The invitation the user is signing in to accept, if any.
      *
      * @return array{code: string, organizationName: string}|null
      */

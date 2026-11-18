@@ -106,12 +106,13 @@ class ProfileUpdateTest extends TestCase
 
     public function test_user_can_delete_their_account()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutOrganization()->create();
 
         $response = $this
             ->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->delete(route('profile.destroy'), [
-                'password' => 'password',
+                'email' => $user->email,
             ]);
 
         $response
@@ -122,21 +123,42 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->fresh());
     }
 
-    public function test_correct_password_must_be_provided_to_delete_account()
+    public function test_deleting_the_account_requires_a_recent_confirmation()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withoutOrganization()->create();
 
-        $response = $this
-            ->actingAs($user)
+        $this->actingAs($user)
+            ->delete(route('profile.destroy'), ['email' => $user->email])
+            ->assertRedirect(route('password.confirm'));
+
+        $this->assertNotNull($user->fresh());
+    }
+
+    public function test_the_email_address_must_be_typed_to_delete_the_account()
+    {
+        $user = User::factory()->withoutOrganization()->create();
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
             ->from(route('profile.edit'))
-            ->delete(route('profile.destroy'), [
-                'password' => 'wrong-password',
-            ]);
-
-        $response
-            ->assertSessionHasErrors('password')
+            ->delete(route('profile.destroy'), ['email' => 'someone-else@example.com'])
+            ->assertSessionHasErrors('email')
             ->assertRedirect(route('profile.edit'));
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_organization_owners_cannot_delete_their_account()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->from(route('profile.edit'))
+            ->delete(route('profile.destroy'), ['email' => $user->email])
+            ->assertSessionHasErrors('email');
+
+        $this->assertNotNull($user->fresh());
+        $this->assertAuthenticatedAs($user);
     }
 }

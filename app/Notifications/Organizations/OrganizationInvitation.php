@@ -44,10 +44,10 @@ class OrganizationInvitation extends Notification implements ShouldQueue
                 'inviterName' => $inviter->name,
                 'organizationName' => $organization->name,
             ]))
-            ->line(__('Log in and visit your dashboard to accept or decline this invitation.'))
+            ->line(__('Open the invitation to join. New to :app? You can create your account from there.', ['app' => config()->string('app.name')]))
             ->action(
-                __('Log in'),
-                route('login', ['invitation' => $this->invitation->code]),
+                __('Open invitation'),
+                route('invitations.show', $this->invitation->code),
             );
     }
 

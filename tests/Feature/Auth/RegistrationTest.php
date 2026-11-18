@@ -1,62 +1,50 @@
 <?php
 
-namespace Tests\Feature\Auth;
-
-use App\Enums\OrganizationRole;
-use App\Models\Organization;
-use App\Models\OrganizationInvitation;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Inertia\Testing\AssertableInertia as Assert;
-use Tests\TestCase;
+use App\Notifications\Auth\MagicLinkNotification;
+use Illuminate\Support\Facades\Notification;
 
-class RegistrationTest extends TestCase
-{
-    use RefreshDatabase;
+it('is not available when registration is closed (default)', function () {
+    $this->get(route('register'))->assertNotFound();
+    $this->post(route('register.store'), ['name' => 'Anna', 'email' => 'anna@example.com'])->assertNotFound();
 
-    public function test_registration_screen_can_be_rendered()
-    {
-        $response = $this->get(route('register'));
+    expect(User::count())->toBe(0);
+});
 
-        $response->assertOk();
-    }
+describe('with open registration', function () {
+    beforeEach(fn () => config(['auth.open_registration' => true]));
 
-    public function test_registration_screen_includes_organization_invitation_context()
-    {
-        $owner = User::factory()->create();
-        $organization = Organization::factory()->create(['name' => 'Laravel Organization']);
-        $organization->members()->attach($owner, ['role' => OrganizationRole::Owner->value]);
+    it('shows the registration page', function () {
+        $this->get(route('register'))->assertOk();
+    });
 
-        $invitation = OrganizationInvitation::factory()->create([
-            'organization_id' => $organization->id,
-            'email' => 'invited@example.com',
-            'invited_by' => $owner->id,
-        ]);
+    it('creates a passwordless, unverified account and emails a sign-in link', function () {
+        Notification::fake();
 
-        $response = $this->get(route('register', ['invitation' => $invitation->code]));
+        $this->post(route('register.store'), ['name' => 'Anna Andersson', 'email' => 'Anna@Example.com'])
+            ->assertSessionHas('status');
 
-        $response->assertOk();
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('auth/register')
-            ->where('organizationInvitation.code', $invitation->code)
-            ->where('organizationInvitation.organizationName', 'Laravel Organization'),
-        );
-    }
+        $user = User::where('email', 'anna@example.com')->sole();
+        expect($user->password)->toBeNull()
+            ->and($user->hasVerifiedEmail())->toBeFalse()
+            ->and($user->organizations)->toHaveCount(0);
+        $this->assertGuest();
+        Notification::assertSentTo($user, MagicLinkNotification::class);
+    });
 
-    public function test_new_users_can_register()
-    {
-        $response = $this->post(route('register.store'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-        ]);
+    it('sends a sign-in link instead of creating a duplicate for an existing address', function () {
+        Notification::fake();
+        $existing = User::factory()->create(['email' => 'anna@example.com', 'name' => 'Original']);
 
-        $this->assertAuthenticated();
+        $this->post(route('register.store'), ['name' => 'Someone Else', 'email' => 'anna@example.com']);
 
-        $user = User::where('email', 'test@example.com')->first();
-        $this->assertNull($user->current_organization_id);
-        $this->assertCount(0, $user->organizations);
-        $response->assertRedirect(route('onboarding', absolute: false));
-    }
-}
+        expect(User::count())->toBe(1)
+            ->and($existing->fresh()->name)->toBe('Original');
+        Notification::assertSentTo($existing, MagicLinkNotification::class);
+    });
+
+    it('validates the input', function () {
+        $this->post(route('register.store'), ['name' => '', 'email' => 'not-an-email'])
+            ->assertSessionHasErrors(['name', 'email']);
+    });
+});

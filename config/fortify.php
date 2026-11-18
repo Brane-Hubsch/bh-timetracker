@@ -160,16 +160,13 @@ return [
     |
     */
 
+    // Passwordless: no registration, password reset or two-factor via Fortify. Registration,
+    // magic links and Google sign-in are our own routes (routes/auth.php).
     'features' => [
-        Features::registration(),
-        Features::resetPasswords(),
         Features::emailVerification(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0
-        ]),
         Features::passkeys([
+            // Managing passkeys requires a recent sign-in or confirmation (passkey, email link,
+            // or password in development).
             'confirmPassword' => true,
         ]),
     ],

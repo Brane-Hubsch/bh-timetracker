@@ -72,7 +72,7 @@ class OrganizationController extends Controller
                     'id' => $member->id,
                     'name' => $member->name,
                     'email' => $member->email,
-                    'avatar' => $member->avatar ?? null,
+                    'avatar' => $member->avatar_url,
                     'role' => $membership->role->value,
                     'role_label' => $membership->role->label(),
                 ];

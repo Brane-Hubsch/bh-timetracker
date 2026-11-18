@@ -114,4 +114,24 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | BH Timetracker sign-in options
+    |--------------------------------------------------------------------------
+    |
+    | Users sign in with passkeys, Google or an emailed magic link. Password
+    | login exists only to make local development and tests easy (seeded
+    | users) and is always disabled in production, whatever the env says.
+    |
+    | Open registration is off by default: accounts are created through
+    | invitations (or the app:create-owner command for the first owner).
+    |
+    */
+
+    'password_login' => (bool) env('AUTH_PASSWORD_LOGIN', in_array(env('APP_ENV', 'production'), ['local', 'testing'], true)),
+
+    'open_registration' => (bool) env('AUTH_OPEN_REGISTRATION', false),
+
+    'magic_link_lifetime' => (int) env('AUTH_MAGIC_LINK_LIFETIME', 15),
+
 ];

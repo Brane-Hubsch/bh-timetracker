@@ -14,6 +14,9 @@ class PasskeyLoginResponse implements PasskeyLoginResponseContract
 
     public function toResponse($request): Response
     {
+        // A fresh sign-in counts as a recent confirmation (e.g. for managing passkeys).
+        $request->session()->passwordConfirmed();
+
         $redirect = $this->redirectPathForCurrentOrganization($request, Fortify::redirects('login'));
 
         return $request->wantsJson()

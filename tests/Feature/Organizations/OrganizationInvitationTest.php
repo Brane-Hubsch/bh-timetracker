@@ -40,7 +40,7 @@ class OrganizationInvitationTest extends TestCase
         ]);
     }
 
-    public function test_invitation_email_for_existing_users_uses_login_route()
+    public function test_invitation_email_for_existing_users_links_to_the_invitation_page()
     {
         $owner = User::factory()->create();
         $invitedUser = User::factory()->create(['email' => 'invited@example.com']);
@@ -56,11 +56,11 @@ class OrganizationInvitationTest extends TestCase
 
         $mail = (new OrganizationInvitationNotification($invitation))->toMail($invitedUser);
 
-        $this->assertSame(route('login', ['invitation' => $invitation->code]), $mail->actionUrl);
-        $this->assertContains(__('Log in and visit your dashboard to accept or decline this invitation.'), $mail->introLines);
+        $this->assertSame(route('invitations.show', $invitation->code), $mail->actionUrl);
+
     }
 
-    public function test_invitation_email_for_unknown_users_uses_login_route()
+    public function test_invitation_email_for_unknown_users_links_to_the_invitation_page()
     {
         $owner = User::factory()->create();
         $organization = Organization::factory()->create();
@@ -75,8 +75,8 @@ class OrganizationInvitationTest extends TestCase
 
         $mail = (new OrganizationInvitationNotification($invitation))->toMail((object) []);
 
-        $this->assertSame(route('login', ['invitation' => $invitation->code]), $mail->actionUrl);
-        $this->assertSame(__('Log in'), $mail->actionText);
+        $this->assertSame(route('invitations.show', $invitation->code), $mail->actionUrl);
+        $this->assertSame(__('Open invitation'), $mail->actionText);
     }
 
     public function test_organization_invitations_can_be_created_by_admins()

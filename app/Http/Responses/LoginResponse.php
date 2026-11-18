@@ -14,8 +14,11 @@ class LoginResponse implements LoginResponseContract
 
     public function toResponse($request): Response
     {
+        // A fresh sign-in counts as a recent confirmation (e.g. for managing passkeys).
+        $request->session()->passwordConfirmed();
+
         return $request->wantsJson()
-            ? new JsonResponse(['two_factor' => false], 200)
+            ? new JsonResponse(['redirect' => redirect()->intended($this->redirectPathForCurrentOrganization($request, Fortify::redirects('login')))->getTargetUrl()], 200)
             : redirect()->intended($this->redirectPathForCurrentOrganization($request, Fortify::redirects('login')));
     }
 }
