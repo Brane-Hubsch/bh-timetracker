@@ -1,6 +1,6 @@
 # BH Timetracker – Produkt- och teknisk plan (v1)
 
-> Levande dokument. Uppdatera när beslut fattas. Senast uppdaterad: 2026-11-18.
+> Levande dokument. Uppdatera när beslut fattas. Senast uppdaterad: 2026-11-18 (efter Fas 0).
 
 ## 1. Vision och avgränsning
 
@@ -23,7 +23,7 @@ uppgifter (tasks) och taggar, integrationer med externa kalendrar, native-app.
 | Område | Beslut |
 |---|---|
 | Arkitektur | Laravel-monolit med Inertia + React (officiella React-startkitet) |
-| Ramverk | Laravel 13, Inertia 3, React 19, TypeScript (strict), Tailwind CSS 4 |
+| Ramverk | Laravel 13, Inertia 3, React 19, TypeScript (strict), Tailwind CSS 4, PHP 8.5 (senaste stabila) |
 | UI-bibliotek | HeroUI v3 (`@heroui/react`), ersätter startkitets shadcn/ui |
 | AI-utveckling | Laravel Boost (guidelines, skills, MCP) + HeroUI MCP-server |
 | Inloggning | Passkeys (Fortify `Features::passkeys()` / `laravel/passkeys`) + Google via Laravel Socialite. **Inga lösenord.** |
@@ -35,6 +35,10 @@ uppgifter (tasks) och taggar, integrationer med externa kalendrar, native-app.
 | Lokal miljö | Laravel Herd, SQLite |
 | Produktion | Postgres. Hosting/deploy beslutas senare. |
 | Språk | Kod/identifierare på engelska. UI på svenska först, förberett för engelska (i18n från start). |
+| Organisation i URL | Tenant-sidor ligger under `/{organisationens-slug}/...`; slugen sätter aktiv organisation. `current_organization_id` minns senast använda (redirect efter inloggning, standard för MCP). |
+| Personliga organisationer | Finns inte. Användare utan organisation hamnar på `/onboarding` (acceptera inbjudan eller skapa organisation). |
+| i18n | Laravels `lang/{locale}.json` är enda källan (engelska källsträngar som nycklar), delas med React via `t()` i `resources/js/lib/i18n`. Svenska valideringsmeddelanden i `lang/sv/*.php` (från Laravel-Lang). Ett test kräver svensk översättning för varje nyckel. |
+| Frontend-lint | Vite+ (`vp check` = Oxlint + Oxfmt) från startkitet i stället för ESLint + Prettier. |
 
 ## 3. Domänmodell
 
@@ -54,11 +58,11 @@ User ──< OrganizationMember >── Organization
 
 **users** – `id, name, email (unik), avatar_url, locale (sv), timezone (Europe/Stockholm), current_organization_id, password (nullable, används ej), google_id (nullable), email_verified_at, timestamps`
 
-**organizations** – `id, name, slug (unik), currency (SEK), default_hourly_rate (int, nullable), week_starts_on (1 = måndag), timezone, timestamps`
+**organizations** – `id, name, slug (unik), currency (SEK), default_hourly_rate (int, nullable), week_starts_on (1 = måndag), timezone, timestamps, deleted_at (soft delete, från startkitet)`
 
 **organization_members** (pivot) – `id, organization_id, user_id, role (owner|admin|member), hourly_rate (nullable), deactivated_at (nullable), timestamps` – unik på (organization_id, user_id)
 
-**invitations** – `id, organization_id, email, role, token, invited_by, expires_at, accepted_at, timestamps`
+**organization_invitations** – `id, organization_id, email, role, code (unik, 64 tecken), invited_by, expires_at, accepted_at, timestamps` (från startkitet; inbjudan gäller 3 dagar och kan aldrig ge ägarroll)
 
 **clients** – `id, organization_id, name, organization_number (nullable), email (nullable), notes (nullable), archived_at, timestamps`
 
@@ -79,7 +83,7 @@ Index: `time_entries(organization_id, user_id, started_at)`, `time_entries(organ
 - `is_billable` ärvs från projektet vid skapande men kan ändras per post.
 - Projekt med `visibility = public` är öppna för alla medlemmar; `private` endast för tilldelade medlemmar.
 - Arkiverade kunder/projekt döljs i väljare men finns kvar i rapporter.
-- Organisationen måste alltid ha minst en ägare.
+- Organisationen måste alltid ha minst en ägare. Ägarens roll kan inte ändras och ägaren kan inte tas bort eller lämna; ägarskap kan inte ges via inbjudan eller rollbyte (överlåtelse byggs separat).
 
 ### Behörigheter (Policies)
 
@@ -211,7 +215,7 @@ resources/js/
 
 ### 5.4 Kvalitet och CI
 
-- Pest 4, Larastan (hög nivå), Pint, ESLint + Prettier, `tsc --noEmit`.
+- Pest 5, Larastan nivå 9, Pint, Vite+ (`vp check`: Oxlint + Oxfmt), `tsc --noEmit`. Allt körs med `composer ci:check`.
 - GitHub Actions: kör testsviten mot **både SQLite och Postgres** (Postgres som service) så att produktionsdatabasen täcks från dag ett.
 - Seeder med en demo-organisation, några kunder, projekt och några veckors tidposter.
 
@@ -273,7 +277,7 @@ Användaren ska kunna koppla t.ex. Claude (claude.ai/Claude Desktop/Claude Code)
 
 Varje fas avslutas med gröna tester, uppdaterad PLAN.md vid behov och en kort sammanfattning för granskning. Arbeta i feature-branches och små commits.
 
-**Fas 0 – Grund**
+**Fas 0 – Grund** *(klar, se Status nedan)*
 1. `laravel new` med React-startkitet och teams-stöd, Pest. Initiera repot `Brane-Hubsch/bh-timetracker`.
 2. Installera Laravel Boost (`composer require laravel/boost --dev && php artisan boost:install`) och HeroUI MCP-servern. Lägg projektkonventionerna i `.ai/guidelines/project.md`.
 3. Döp om Team → Organization (modell, tabeller, routes, UI), roller owner/admin/member.
@@ -299,6 +303,19 @@ Passport + `laravel/mcp`, alla verktyg i 6.3 med tester, sidan "AI-kopplingar", 
 
 **Fas 6 – Finputs inför produktion**
 PWA-manifest, tomlägen och felhantering, tillgänglighet, prestanda (N+1, index), e-postmallar, produktionskonfig för Postgres. Beslut om hosting.
+
+### Status Fas 0 (2026-11-18)
+
+Klar. Avvikelser från ursprungsplanen:
+
+- PHP 8.5 och Pest 5 (i stället för Pest 4), eftersom vi kör senaste PHP.
+- Vite+ (`vp check`) i stället för ESLint + Prettier, enligt startkitet.
+- Personliga organisationer borttagna; onboarding-sida för användare utan organisation.
+- Organisationens slug ligger i URL:en (startkitets modell).
+- Admin får hantera medlemmar (startkitet gav bara ägaren det), i linje med behörighetstabellen.
+- Organisationslogiken (skapa, ändra, radera, ta bort medlem, roll, inbjudningar) flyttad till `app/Actions/Organizations`.
+- Kvar från startkitet till Fas 1: lösenordsinloggning, glömt/återställ lösenord, bekräfta lösenord, e-postverifiering och 2FA. Dessa skärmar använder fortfarande äldre shadcn-komponenter i `resources/js/components/ui`, som tas bort i Fas 1.
+- `BelongsToOrganization`-traiten och `OrganizationScope` finns och är testade, men används av en riktig modell först i Fas 2 (Client).
 
 ## 8. Senare (medvetet bortvalt i v1)
 
