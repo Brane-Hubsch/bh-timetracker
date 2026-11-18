@@ -1,10 +1,17 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
-import { Briefcase, CalendarDays, FolderKanban, House } from 'lucide-react';
+import {
+    Briefcase,
+    CalendarDays,
+    ChartColumn,
+    FolderKanban,
+    House,
+} from 'lucide-react';
 import { dashboard } from '@/routes';
 import { index as clients } from '@/routes/clients';
 import { index as projects } from '@/routes/projects';
+import { summary as reports } from '@/routes/reports';
 import { index as time } from '@/routes/time';
 
 export type MainNavItem = {
@@ -17,8 +24,7 @@ export type MainNavItem = {
 };
 
 /**
- * Main navigation for the active organization. New sections (calendar, reports, ...) are added here
- * in their phases. Without an active organization there is nothing to navigate to.
+ * Main navigation for the active organization. Without an active organization there is nothing to navigate to.
  */
 export function useMainNavigation(): MainNavItem[] {
     const { currentOrganization, can } = usePage().props;
@@ -35,6 +41,12 @@ export function useMainNavigation(): MainNavItem[] {
             title: 'Calendar',
             href: time(slug),
             icon: CalendarDays,
+            mobile: true,
+        },
+        {
+            title: 'Reports',
+            href: reports(slug),
+            icon: ChartColumn,
             mobile: true,
         },
         {

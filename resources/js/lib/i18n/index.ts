@@ -34,19 +34,22 @@ export function intlLocale(locale: string): string {
 
 /**
  * Replace Laravel-style placeholders: `:name`, `:Name` (capitalised) and `:NAME` (upper case).
+ * Longer keys go first, like Laravel, so `:to` does not eat the start of `:total`.
  */
 function replace(line: string, replacements: Replacements = {}): string {
-    return Object.entries(replacements).reduce((result, [key, value]) => {
-        const text = String(value);
+    return Object.entries(replacements)
+        .sort(([a], [b]) => b.length - a.length)
+        .reduce((result, [key, value]) => {
+            const text = String(value);
 
-        return result
-            .replaceAll(`:${key.toUpperCase()}`, text.toUpperCase())
-            .replaceAll(
-                `:${key.charAt(0).toUpperCase()}${key.slice(1)}`,
-                text.charAt(0).toUpperCase() + text.slice(1),
-            )
-            .replaceAll(`:${key}`, text);
-    }, line);
+            return result
+                .replaceAll(`:${key.toUpperCase()}`, text.toUpperCase())
+                .replaceAll(
+                    `:${key.charAt(0).toUpperCase()}${key.slice(1)}`,
+                    text.charAt(0).toUpperCase() + text.slice(1),
+                )
+                .replaceAll(`:${key}`, text);
+        }, line);
 }
 
 export function translate(

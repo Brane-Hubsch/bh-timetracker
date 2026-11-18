@@ -4,14 +4,19 @@ import { Archive, ArchiveRestore, ChevronRight, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { ClientFormModal } from '@/components/client-form-modal';
 import Heading from '@/components/heading';
+import { SelectField } from '@/components/form/select-field';
+import type { SelectOption } from '@/components/form/select-field';
 import { ProjectDot } from '@/components/project-dot';
+import { ReportStats } from '@/components/reports/report-stats';
+import { formatDecimalHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { archive, index, restore } from '@/routes/clients';
 import {
     create as createProject,
     show as showProject,
 } from '@/routes/projects';
-import type { ClientDetails } from '@/types';
+import { summary as reportSummary } from '@/routes/reports';
+import type { ClientDetails, ReportTotals } from '@/types';
 
 type Props = {
     client: ClientDetails;
@@ -22,10 +27,29 @@ type Props = {
         color: string;
         isArchived: boolean;
     }[];
+    /** Time on the client's projects in the chosen period. */
+    report: {
+        period: string;
+        from: string;
+        to: string;
+        periods: SelectOption[];
+        totals: ReportTotals;
+        projects: (ReportTotals & {
+            id: number;
+            name: string;
+            color: string | null;
+        })[];
+    };
+    currency: string;
 };
 
-export default function ClientShow({ client, projects }: Props) {
-    const { t } = useTranslation();
+export default function ClientShow({
+    client,
+    projects,
+    report,
+    currency,
+}: Props) {
+    const { t, intlLocale } = useTranslation();
     const [isEditOpen, setEditOpen] = useState(false);
 
     const toggleArchived = () =>
@@ -89,6 +113,88 @@ export default function ClientShow({ client, projects }: Props) {
                     </p>
                 )}
 
+                <section className="grid gap-4" data-test="client-report">
+                    <Heading
+                        variant="small"
+                        title={t('Reported time')}
+                        actions={
+                            <SelectField
+                                name="period"
+                                label={
+                                    <span className="sr-only">
+                                        {t('Period')}
+                                    </span>
+                                }
+                                options={report.periods.filter(
+                                    (option) => option.value !== 'custom',
+                                )}
+                                value={report.period}
+                                onChange={(period) =>
+                                    router.get(
+                                        window.location.pathname,
+                                        { period },
+                                        {
+                                            preserveScroll: true,
+                                            preserveState: true,
+                                            replace: true,
+                                        },
+                                    )
+                                }
+                                className="w-44"
+                            />
+                        }
+                    />
+
+                    <ReportStats totals={report.totals} currency={currency} />
+
+                    {report.projects.length > 0 && (
+                        <ul className="divide-y divide-separator rounded-2xl bg-surface text-sm shadow-surface">
+                            {report.projects.map((project) => (
+                                <li
+                                    key={project.id}
+                                    className="flex items-center justify-between gap-3 px-4 py-3"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        {project.color && (
+                                            <ProjectDot color={project.color} />
+                                        )}
+                                        {project.name}
+                                    </span>
+                                    <span className="tabular-nums">
+                                        {formatDecimalHours(
+                                            project.seconds,
+                                            intlLocale,
+                                        )}
+                                        {project.amount !== null && (
+                                            <span className="ml-3 text-muted">
+                                                {formatMoney(
+                                                    project.amount,
+                                                    currency,
+                                                    intlLocale,
+                                                )}
+                                            </span>
+                                        )}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <Link
+                        href={reportSummary(undefined, {
+                            query: {
+                                period: report.period,
+                                clients: [client.id],
+                                group: 'project',
+                                subgroup: 'member',
+                            },
+                        })}
+                        className="text-sm text-accent"
+                    >
+                        {t('Open in reports')}
+                    </Link>
+                </section>
+
                 <section className="grid gap-4">
                     <Heading
                         variant="small"
@@ -135,11 +241,6 @@ export default function ClientShow({ client, projects }: Props) {
                             </li>
                         )}
                     </ul>
-                    <p className="text-xs text-muted">
-                        {t(
-                            'Reported time per client arrives with time reporting.',
-                        )}
-                    </p>
                 </section>
             </div>
 

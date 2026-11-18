@@ -16,16 +16,28 @@ import { EstimateProgress } from '@/components/estimate-progress';
 import { ProjectDot } from '@/components/project-dot';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
-import { formatHours, formatMoney, toMinorUnits } from '@/lib/format';
+import { TimelineChart } from '@/components/reports/timeline-chart';
+import {
+    formatDecimalHours,
+    formatHours,
+    formatMoney,
+    toMinorUnits,
+} from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { show as showClient } from '@/routes/clients';
 import { archive, edit, index, restore } from '@/routes/projects';
+import { summary as reportSummary } from '@/routes/reports';
 import {
     destroy as unassignMember,
     store as assignMember,
     update as updateMemberRate,
 } from '@/routes/projects/members';
-import type { ProjectDetails, ProjectMemberItem } from '@/types';
+import type {
+    ProjectDetails,
+    ProjectMemberItem,
+    ReportTotals,
+    TimelineBucket,
+} from '@/types';
 
 type Props = {
     project: ProjectDetails;
@@ -33,6 +45,12 @@ type Props = {
     assignableMembers: SelectOption[];
     currency: string;
     abilities: { manage: boolean; viewRates: boolean };
+    /** Time per member and week; only for owners and admins. */
+    breakdown: {
+        totals: ReportTotals;
+        members: (ReportTotals & { key: string; label: string })[];
+        weeks: TimelineBucket[];
+    } | null;
 };
 
 function Detail({
@@ -56,6 +74,7 @@ export default function ProjectShow({
     assignableMembers,
     currency,
     abilities: can,
+    breakdown,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const getInitials = useInitials();
@@ -212,12 +231,86 @@ export default function ProjectShow({
                             {formatHours(project.consumedSeconds, intlLocale)}
                         </p>
                     )}
-                    <p className="text-xs text-muted">
-                        {t(
-                            'Time per member and week and billable amounts arrive with reports.',
-                        )}
-                    </p>
+                    {breakdown && (
+                        <>
+                            <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                                <Detail label={t('Billable hours')}>
+                                    {formatDecimalHours(
+                                        breakdown.totals.billableSeconds,
+                                        intlLocale,
+                                    )}
+                                </Detail>
+                                {breakdown.totals.amount !== null && (
+                                    <Detail label={t('Billable amount')}>
+                                        {formatMoney(
+                                            breakdown.totals.amount,
+                                            currency,
+                                            intlLocale,
+                                        )}
+                                    </Detail>
+                                )}
+                            </dl>
+
+                            {breakdown.members.length > 0 && (
+                                <div className="grid gap-2">
+                                    <h3 className="text-xs text-muted">
+                                        {t('Time per member')}
+                                    </h3>
+                                    <ul
+                                        className="divide-y divide-separator text-sm"
+                                        data-test="project-member-time"
+                                    >
+                                        {breakdown.members.map((member) => (
+                                            <li
+                                                key={member.key}
+                                                className="flex items-center justify-between gap-3 py-2"
+                                            >
+                                                <span>{member.label}</span>
+                                                <span className="tabular-nums">
+                                                    {formatDecimalHours(
+                                                        member.seconds,
+                                                        intlLocale,
+                                                    )}
+                                                    {member.amount !== null && (
+                                                        <span className="ml-3 text-muted">
+                                                            {formatMoney(
+                                                                member.amount,
+                                                                currency,
+                                                                intlLocale,
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    <Link
+                        href={reportSummary(undefined, {
+                            query: {
+                                period: 'this_year',
+                                projects: [project.id],
+                                group: 'member',
+                                subgroup: 'week',
+                            },
+                        })}
+                        className="text-sm text-accent"
+                    >
+                        {t('Open in reports')}
+                    </Link>
                 </section>
+
+                {breakdown && (
+                    <TimelineChart
+                        unit="week"
+                        buckets={breakdown.weeks}
+                        title={t('Hours per week (last 12 weeks)')}
+                    />
+                )}
 
                 <section className="grid gap-4">
                     <Heading

@@ -31,3 +31,8 @@ export function toMinorUnits(
 
     return Number.isFinite(number) ? Math.round(number * 100) : null;
 }
+
+/** Decimal hours with up to two decimals, e.g. "12,25 h" – used in reports. */
+export function formatDecimalHours(seconds: number, locale: string): string {
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(seconds / 3600)} h`;
+}
