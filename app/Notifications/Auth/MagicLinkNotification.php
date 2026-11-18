@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Auth;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -28,6 +29,7 @@ class MagicLinkNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject(__('Your sign-in link for :app', ['app' => config()->string('app.name')]))
+            ->greeting(__('Hi :name,', ['name' => $notifiable instanceof User ? $notifiable->name : '']))
             ->line(__('Use the button below to sign in. The link works once and expires in :minutes minutes.', [
                 'minutes' => $this->lifetimeMinutes,
             ]))

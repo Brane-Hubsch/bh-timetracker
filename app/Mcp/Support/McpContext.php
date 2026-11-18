@@ -3,6 +3,7 @@
 namespace App\Mcp\Support;
 
 use App\Enums\OrganizationPermission;
+use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
 use App\Support\CurrentOrganization;
@@ -18,11 +19,14 @@ use Laravel\Mcp\Request;
  */
 final readonly class McpContext
 {
+    /** The user's role, resolved once per tool call. */
+    public ?OrganizationRole $role;
+
     public function __construct(
         public User $user,
         public Organization $organization,
     ) {
-        //
+        $this->role = $user->organizationRole($organization);
     }
 
     public static function from(Request $request): self
@@ -51,7 +55,7 @@ final readonly class McpContext
 
     public function can(OrganizationPermission $permission): bool
     {
-        return $this->user->hasOrganizationPermission($this->organization, $permission);
+        return $this->role?->hasPermission($permission) ?? false;
     }
 
     private static function organization(User $user, mixed $slug): Organization

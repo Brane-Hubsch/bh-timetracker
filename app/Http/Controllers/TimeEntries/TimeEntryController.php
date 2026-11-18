@@ -140,7 +140,7 @@ class TimeEntryController extends Controller
     {
         $organization = $this->currentOrganization->getOrFail();
 
-        $sources = TimeEntry::query()->whereKey($request->entryIds())->get();
+        $sources = TimeEntry::query()->whereKey($request->entryIds())->with('organization')->get();
         abort_if($sources->count() !== count($request->entryIds()), 404);
 
         $data = $sources->map(function (TimeEntry $entry) use ($user, $organization) {

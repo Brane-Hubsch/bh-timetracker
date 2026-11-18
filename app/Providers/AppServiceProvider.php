@@ -7,12 +7,16 @@ use App\Support\CurrentOrganization;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterval;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\ExceptionResponse;
 use Inertia\Inertia;
 use Laravel\Passport\Client;
 use Laravel\Passport\Passport;
@@ -37,7 +41,36 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureErrorPages();
         $this->configureMcp();
+    }
+
+    /**
+     * Friendly error pages instead of Laravel's defaults. An expired session (419) sends the user back
+     * with a toast. Other errors render the `error` page when debug mode is off; JSON clients (MCP,
+     * OAuth token requests) keep their JSON errors.
+     */
+    protected function configureErrorPages(): void
+    {
+        Inertia::handleExceptionsUsing(function (ExceptionResponse $response) {
+            $request = $response->request;
+
+            if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+                return null;
+            }
+
+            if ($response->statusCode() === 419) {
+                Inertia::flash('toast', ['type' => 'warning', 'message' => __('The page expired. Please try again.')]);
+
+                return back();
+            }
+
+            if (config('app.debug') || ! in_array($response->statusCode(), [403, 404, 429, 500, 503], true)) {
+                return null;
+            }
+
+            return $response->render('error', ['status' => $response->statusCode()])->withSharedData();
+        });
     }
 
     /**
@@ -83,6 +116,18 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // Surface N+1 queries in development and tests; in production a lazy load just runs.
+        Model::preventLazyLoading(! app()->isProduction());
+
+        // Production runs behind HTTPS only (passkeys and OAuth require a secure origin).
+        URL::forceHttps(app()->isProduction());
+
+        $trustedProxies = config('app.trusted_proxies');
+
+        if (is_string($trustedProxies) && $trustedProxies !== '') {
+            TrustProxies::at($trustedProxies === '*' ? '*' : array_map('trim', explode(',', $trustedProxies)));
+        }
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

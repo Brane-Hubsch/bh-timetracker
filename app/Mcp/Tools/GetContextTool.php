@@ -43,7 +43,7 @@ class GetContextTool extends TimetrackerTool
                 'name' => $context->organization->name,
                 'currency' => $context->organization->currency,
                 'week_starts_on' => self::WEEKDAYS[$context->organization->week_starts_on - 1] ?? 'Monday',
-                'role' => $user->organizationRole($context->organization)?->value,
+                'role' => $context->role?->value,
                 'permissions' => [
                     'report_time_for_others' => $context->can(OrganizationPermission::ManageTeamTime),
                     'manage_clients' => $context->can(OrganizationPermission::ManageClients),

@@ -16,6 +16,14 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | Proxies (load balancer, CDN) whose X-Forwarded-* headers are trusted, as a comma separated list of
+    | IPs/CIDRs, or "*" when the app is only reachable through the proxy. Needed for HTTPS detection and
+    | client IPs (rate limiting) behind a proxy.
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\OrganizationPermission;
+use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -14,6 +15,9 @@ use Carbon\CarbonImmutable;
  */
 final readonly class ReportFilters
 {
+    /** The viewer's role in the organization, resolved once (checked for every report row). */
+    private ?OrganizationRole $role;
+
     /**
      * @param  array<int, int>  $userIds
      * @param  array<int, int>  $clientIds
@@ -29,7 +33,7 @@ final readonly class ReportFilters
         public array $projectIds = [],
         public ?bool $billable = null,
     ) {
-        //
+        $this->role = $viewer->organizationRole($organization);
     }
 
     public function timezone(): string
@@ -39,12 +43,12 @@ final readonly class ReportFilters
 
     public function canViewTeam(): bool
     {
-        return $this->viewer->hasOrganizationPermission($this->organization, OrganizationPermission::ManageTeamTime);
+        return $this->role?->hasPermission(OrganizationPermission::ManageTeamTime) ?? false;
     }
 
     public function canViewAmounts(): bool
     {
-        return $this->viewer->hasOrganizationPermission($this->organization, OrganizationPermission::ViewRates);
+        return $this->role?->hasPermission(OrganizationPermission::ViewRates) ?? false;
     }
 
     /**
