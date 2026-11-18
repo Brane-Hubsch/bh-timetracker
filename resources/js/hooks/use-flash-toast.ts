@@ -17,10 +17,10 @@ export function useFlashToast(): void {
             }
 
             const show = {
-                success: toast.success,
-                info: toast.info,
-                warning: toast.warning,
-                error: toast.danger,
+                success: (message: string) => toast.success(message),
+                info: (message: string) => toast.info(message),
+                warning: (message: string) => toast.warning(message),
+                error: (message: string) => toast.danger(message),
             }[data.type];
 
             show(data.message);

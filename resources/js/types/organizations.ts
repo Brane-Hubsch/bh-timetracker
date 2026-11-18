@@ -9,6 +9,15 @@ export type Organization = {
     isCurrent?: boolean;
 };
 
+export type OrganizationSettings = Organization & {
+    currency: string;
+    /** Minor currency unit (öre); null for members who may not see rates. */
+    defaultHourlyRate: number | null;
+    /** ISO-8601 weekday, 1 = Monday. */
+    weekStartsOn: number;
+    timezone: string;
+};
+
 export type OrganizationMember = {
     id: number;
     name: string;

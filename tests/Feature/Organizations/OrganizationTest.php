@@ -322,7 +322,7 @@ class OrganizationTest extends TestCase
             ->delete(route('organizations.leave', $organization));
 
         $response->assertRedirect(route('organizations.index'));
-        $response->assertInertiaFlash('toast', ['type' => 'success', 'message' => "You left the organization \"{$organization->name}\""]);
+        $response->assertInertiaFlash('toast', ['type' => 'success', 'message' => __('You left the organization ":name"', ['name' => $organization->name])]);
 
         $this->assertFalse($member->fresh()->belongsToOrganization($organization));
     }

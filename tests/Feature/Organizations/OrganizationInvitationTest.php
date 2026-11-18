@@ -57,7 +57,7 @@ class OrganizationInvitationTest extends TestCase
         $mail = (new OrganizationInvitationNotification($invitation))->toMail($invitedUser);
 
         $this->assertSame(route('login', ['invitation' => $invitation->code]), $mail->actionUrl);
-        $this->assertStringContainsString('dashboard', implode(' ', $mail->introLines));
+        $this->assertContains(__('Log in and visit your dashboard to accept or decline this invitation.'), $mail->introLines);
     }
 
     public function test_invitation_email_for_unknown_users_uses_login_route()
@@ -76,7 +76,7 @@ class OrganizationInvitationTest extends TestCase
         $mail = (new OrganizationInvitationNotification($invitation))->toMail((object) []);
 
         $this->assertSame(route('login', ['invitation' => $invitation->code]), $mail->actionUrl);
-        $this->assertStringContainsString('log in', strtolower(implode(' ', $mail->introLines)));
+        $this->assertSame(__('Log in'), $mail->actionText);
     }
 
     public function test_organization_invitations_can_be_created_by_admins()
@@ -207,7 +207,7 @@ class OrganizationInvitationTest extends TestCase
             ->post(route('invitations.accept', $invitation));
 
         $response->assertRedirect(route('dashboard'));
-        $response->assertInertiaFlash('toast', ['type' => 'success', 'message' => 'Invitation accepted.']);
+        $response->assertInertiaFlash('toast', ['type' => 'success', 'message' => __('Invitation accepted.')]);
 
         $this->assertTrue($invitedUser->fresh()->belongsToOrganization($organization));
         $this->assertNotNull($invitation->fresh()->accepted_at);

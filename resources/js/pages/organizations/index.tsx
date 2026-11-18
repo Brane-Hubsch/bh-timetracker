@@ -1,18 +1,12 @@
-import { Head, Link } from '@inertiajs/react';
-import { Eye, LogOut, Pencil, Plus } from 'lucide-react';
+import { Button, Chip, buttonVariants } from '@heroui/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { LogOut, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import CreateOrganizationModal from '@/components/create-organization-modal';
 import Heading from '@/components/heading';
-import LeaveOrganizationModal from '@/components/leave-organization-modal';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { edit, index } from '@/routes/organizations';
+import { useTranslation } from '@/lib/i18n';
+import { edit, index, leave } from '@/routes/organizations';
 import type { Organization } from '@/types';
 
 type Props = {
@@ -20,146 +14,129 @@ type Props = {
 };
 
 export default function OrganizationsIndex({ organizations }: Props) {
-    const [leaveOrganizationDialogOpen, setLeaveOrganizationDialogOpen] = useState(false);
-    const [organizationLeaving, setOrganizationLeaving] = useState<Organization | null>(null);
+    const { t } = useTranslation();
+    const [isCreateOpen, setCreateOpen] = useState(false);
+    const [leaving, setLeaving] = useState<Organization | null>(null);
+    const [isProcessing, setProcessing] = useState(false);
 
-    const openLeaveOrganizationDialog = (organization: Organization) => {
-        setOrganizationLeaving(organization);
-        setLeaveOrganizationDialogOpen(true);
+    const leaveOrganization = () => {
+        if (!leaving) {
+            return;
+        }
+
+        router.visit(leave(leaving.slug), {
+            onStart: () => setProcessing(true),
+            onFinish: () => {
+                setProcessing(false);
+                setLeaving(null);
+            },
+        });
     };
 
     return (
         <>
-            <Head title="Organizations" />
+            <Head title={t('Organizations')} />
 
-            <h1 className="sr-only">Organizations</h1>
-
-            <div className="flex flex-col space-y-6">
-                <div className="flex items-center justify-between">
-                    <Heading
-                        variant="small"
-                        title="Organizations"
-                        description="Manage your organizations and organization memberships"
-                    />
-
-                    <CreateOrganizationModal>
-                        <Button data-test="organizations-new-organization-button">
-                            <Plus /> New organization
-                        </Button>
-                    </CreateOrganizationModal>
-                </div>
-
-                <div className="space-y-3">
-                    {organizations.map((organization) => {
-                        const canLeaveOrganization = organization.role !== 'owner';
-
-                        return (
-                            <div
-                                key={organization.id}
-                                data-test="organization-row"
-                                className="flex items-center justify-between gap-4 rounded-lg border p-4"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium">
-                                                {organization.name}
-                                            </span>
-                                        </div>
-                                        <span className="text-sm text-muted-foreground">
-                                            {organization.roleLabel}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <TooltipProvider>
-                                    <div className="flex items-center gap-2">
-                                        {canLeaveOrganization ? (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        data-test="organization-leave-button"
-                                                        onClick={() =>
-                                                            openLeaveOrganizationDialog(
-                                                                organization,
-                                                            )
-                                                        }
-                                                    >
-                                                        <LogOut className="h-4 w-4" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Leave organization</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        ) : null}
-
-                                        {organization.role === 'member' ? (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        data-test="organization-view-button"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={edit(
-                                                                organization.slug,
-                                                            )}
-                                                        >
-                                                            <Eye className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>View organization</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        ) : (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        data-test="organization-edit-button"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={edit(
-                                                                organization.slug,
-                                                            )}
-                                                        >
-                                                            <Pencil className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Edit organization</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        )}
-                                    </div>
-                                </TooltipProvider>
-                            </div>
-                        );
-                    })}
-
-                    {organizations.length === 0 ? (
-                        <p className="py-8 text-center text-muted-foreground">
-                            You don't belong to any organizations yet.
-                        </p>
-                    ) : null}
-                </div>
-            </div>
-
-            <LeaveOrganizationModal
-                organization={organizationLeaving}
-                open={leaveOrganizationDialogOpen}
-                onOpenChange={setLeaveOrganizationDialogOpen}
+            <Heading
+                variant="small"
+                title={t('Organizations')}
+                description={t('The organizations you belong to.')}
+                actions={
+                    <Button
+                        variant="secondary"
+                        onPress={() => setCreateOpen(true)}
+                        data-test="organizations-new-organization-button"
+                    >
+                        <Plus className="size-4" />
+                        {t('New organization')}
+                    </Button>
+                }
             />
+
+            <ul className="divide-y divide-separator rounded-2xl bg-surface shadow-surface">
+                {organizations.map((organization) => (
+                    <li
+                        key={organization.id}
+                        data-test="organization-row"
+                        className="flex items-center justify-between gap-4 p-4"
+                    >
+                        <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                                <span className="truncate font-medium">
+                                    {organization.name}
+                                </span>
+                                {organization.isCurrent && (
+                                    <Chip
+                                        size="sm"
+                                        color="accent"
+                                        variant="soft"
+                                    >
+                                        {t('Active')}
+                                    </Chip>
+                                )}
+                            </div>
+                            <span className="text-sm text-muted">
+                                {organization.roleLabel}
+                            </span>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-2">
+                            {organization.role !== 'owner' && (
+                                <Button
+                                    isIconOnly
+                                    variant="ghost"
+                                    size="sm"
+                                    aria-label={t('Leave organization')}
+                                    onPress={() => setLeaving(organization)}
+                                    data-test="organization-leave-button"
+                                >
+                                    <LogOut className="size-4" />
+                                </Button>
+                            )}
+                            <Link
+                                href={edit(organization.slug)}
+                                className={buttonVariants({
+                                    variant: 'secondary',
+                                    size: 'sm',
+                                })}
+                                data-test="organization-edit-button"
+                            >
+                                {organization.role === 'member'
+                                    ? t('View')
+                                    : t('Manage')}
+                            </Link>
+                        </div>
+                    </li>
+                ))}
+
+                {organizations.length === 0 && (
+                    <li className="p-8 text-center text-sm text-muted">
+                        {t("You don't belong to any organization yet.")}
+                    </li>
+                )}
+            </ul>
+
+            <CreateOrganizationModal
+                isOpen={isCreateOpen}
+                onOpenChange={setCreateOpen}
+            />
+
+            <ConfirmDialog
+                isOpen={leaving !== null}
+                onOpenChange={(isOpen) => !isOpen && setLeaving(null)}
+                title={t('Leave organization')}
+                confirmLabel={t('Leave organization')}
+                onConfirm={leaveOrganization}
+                isPending={isProcessing}
+                data-test="leave-organization-confirm"
+            >
+                <p className="text-sm">
+                    {t(
+                        'You will lose access to ":name" until someone invites you again.',
+                        { name: leaving?.name ?? '' },
+                    )}
+                </p>
+            </ConfirmDialog>
         </>
     );
 }

@@ -1,130 +1,78 @@
+import { Button, Modal } from '@heroui/react';
 import { Form } from '@inertiajs/react';
-import { useState } from 'react';
-import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SelectField } from '@/components/form/select-field';
+import { TextInputField } from '@/components/form/text-input-field';
+import { useTranslation } from '@/lib/i18n';
 import { store as storeInvitation } from '@/routes/organizations/invitations';
-import type { RoleOption, Organization } from '@/types';
+import type { Organization, RoleOption } from '@/types';
 
 type Props = {
     organization: Organization;
     availableRoles: RoleOption[];
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 };
 
 export default function InviteMemberModal({
     organization,
     availableRoles,
-    open,
+    isOpen,
     onOpenChange,
 }: Props) {
-    const [inviteRole, setInviteRole] = useState<RoleOption['value']>('member');
-
-    const handleOpenChange = (nextOpen: boolean) => {
-        onOpenChange(nextOpen);
-
-        if (!nextOpen) {
-            setInviteRole('member');
-        }
-    };
+    const { t } = useTranslation();
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent>
-                <Form
-                    key={String(open)}
-                    {...storeInvitation.form(organization.slug)}
-                    className="space-y-6"
-                    onSuccess={() => onOpenChange(false)}
-                >
-                    {({ errors, processing }) => (
-                        <>
-                            <DialogHeader>
-                                <DialogTitle>Invite an organization member</DialogTitle>
-                                <DialogDescription>
-                                    Send an invitation to join this organization.
-                                </DialogDescription>
-                            </DialogHeader>
-
-                            <div className="grid gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">Email address</Label>
-                                    <Input
-                                        id="email"
+        <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+            <Modal.Container>
+                <Modal.Dialog className="sm:max-w-md">
+                    <Form
+                        {...storeInvitation.form(organization.slug)}
+                        onSuccess={() => onOpenChange(false)}
+                        className="contents"
+                    >
+                        {({ errors, processing }) => (
+                            <>
+                                <Modal.Header>
+                                    <Modal.Heading>
+                                        {t('Invite a member')}
+                                    </Modal.Heading>
+                                </Modal.Header>
+                                <Modal.Body className="grid gap-4">
+                                    <TextInputField
                                         name="email"
                                         type="email"
+                                        label={t('Email address')}
+                                        error={errors.email}
+                                        isRequired
+                                        autoFocus
                                         data-test="invite-email"
-                                        placeholder="colleague@example.com"
-                                        required
                                     />
-                                    <InputError message={errors.email} />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="role">Role</Label>
-                                    <Select
+                                    <SelectField
                                         name="role"
+                                        label={t('Role')}
+                                        defaultValue="member"
+                                        options={availableRoles}
+                                        error={errors.role}
                                         data-test="invite-role"
-                                        value={inviteRole}
-                                        onValueChange={(value) =>
-                                            setInviteRole(
-                                                value as RoleOption['value'],
-                                            )
-                                        }
+                                    />
+                                </Modal.Body>
+                                <Modal.Footer>
+                                    <Button slot="close" variant="tertiary">
+                                        {t('Cancel')}
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        isPending={processing}
+                                        data-test="invite-submit"
                                     >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select a role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availableRoles.map((role) => (
-                                                <SelectItem
-                                                    key={role.value}
-                                                    value={role.value}
-                                                >
-                                                    {role.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.role} />
-                                </div>
-                            </div>
-
-                            <DialogFooter className="gap-2">
-                                <DialogClose asChild>
-                                    <Button variant="secondary">Cancel</Button>
-                                </DialogClose>
-
-                                <Button
-                                    type="submit"
-                                    data-test="invite-submit"
-                                    disabled={processing}
-                                >
-                                    Send invitation
-                                </Button>
-                            </DialogFooter>
-                        </>
-                    )}
-                </Form>
-            </DialogContent>
-        </Dialog>
+                                        {t('Send invitation')}
+                                    </Button>
+                                </Modal.Footer>
+                            </>
+                        )}
+                    </Form>
+                </Modal.Dialog>
+            </Modal.Container>
+        </Modal.Backdrop>
     );
 }

@@ -1,120 +1,86 @@
+import { AlertDialog, Button } from '@heroui/react';
 import { Form } from '@inertiajs/react';
-import { useRef } from 'react';
+import { useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { useTranslation } from '@/lib/i18n';
 
 export default function DeleteUser() {
-    const passwordInput = useRef<HTMLInputElement>(null);
+    const { t } = useTranslation();
+    const [isOpen, setOpen] = useState(false);
 
     return (
-        <div className="space-y-6">
+        <section className="grid gap-4 rounded-2xl border border-danger/30 p-4">
             <Heading
                 variant="small"
-                title="Delete account"
-                description="Delete your account and all of its resources"
+                title={t('Delete account')}
+                description={t(
+                    'Permanently deletes your account. This cannot be undone.',
+                )}
             />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
-                    <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
-                    </p>
-                </div>
+            <div>
+                <Button
+                    variant="danger-soft"
+                    onPress={() => setOpen(true)}
+                    data-test="delete-user-button"
+                >
+                    {t('Delete account')}
+                </Button>
+            </div>
 
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button
-                            variant="destructive"
-                            data-test="delete-user-button"
-                        >
-                            Delete account
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>
-                            Are you sure you want to delete your account?
-                        </DialogTitle>
-                        <DialogDescription>
-                            Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
-                        </DialogDescription>
-
+            <AlertDialog.Backdrop isOpen={isOpen} onOpenChange={setOpen}>
+                <AlertDialog.Container>
+                    <AlertDialog.Dialog className="sm:max-w-md">
                         <Form
                             {...ProfileController.destroy.form()}
-                            options={{
-                                preserveScroll: true,
-                            }}
-                            onError={() => passwordInput.current?.focus()}
+                            options={{ preserveScroll: true }}
                             resetOnSuccess
-                            className="space-y-6"
+                            onSuccess={() => setOpen(false)}
+                            className="contents"
                         >
-                            {({ resetAndClearErrors, processing, errors }) => (
+                            {({ processing, errors }) => (
                                 <>
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
-                                        >
-                                            Password
-                                        </Label>
-
-                                        <PasswordInput
-                                            id="password"
+                                    <AlertDialog.Header>
+                                        <AlertDialog.Icon status="danger" />
+                                        <AlertDialog.Heading>
+                                            {t('Delete your account?')}
+                                        </AlertDialog.Heading>
+                                    </AlertDialog.Header>
+                                    <AlertDialog.Body className="grid gap-4">
+                                        <p className="text-sm">
+                                            {t(
+                                                'All of your data will be permanently deleted. Enter your password to confirm.',
+                                            )}
+                                        </p>
+                                        <TextInputField
                                             name="password"
-                                            ref={passwordInput}
-                                            placeholder="Password"
+                                            type="password"
+                                            label={t('Password')}
+                                            error={errors.password}
                                             autoComplete="current-password"
+                                            autoFocus
                                         />
-
-                                        <InputError message={errors.password} />
-                                    </div>
-
-                                    <DialogFooter className="gap-2">
-                                        <DialogClose asChild>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() =>
-                                                    resetAndClearErrors()
-                                                }
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </DialogClose>
-
-                                        <Button
-                                            variant="destructive"
-                                            disabled={processing}
-                                            asChild
-                                        >
-                                            <button
-                                                type="submit"
-                                                data-test="confirm-delete-user-button"
-                                            >
-                                                Delete account
-                                            </button>
+                                    </AlertDialog.Body>
+                                    <AlertDialog.Footer>
+                                        <Button slot="close" variant="tertiary">
+                                            {t('Cancel')}
                                         </Button>
-                                    </DialogFooter>
+                                        <Button
+                                            type="submit"
+                                            variant="danger"
+                                            isPending={processing}
+                                            data-test="confirm-delete-user-button"
+                                        >
+                                            {t('Delete account')}
+                                        </Button>
+                                    </AlertDialog.Footer>
                                 </>
                             )}
                         </Form>
-                    </DialogContent>
-                </Dialog>
-            </div>
-        </div>
+                    </AlertDialog.Dialog>
+                </AlertDialog.Container>
+            </AlertDialog.Backdrop>
+        </section>
     );
 }

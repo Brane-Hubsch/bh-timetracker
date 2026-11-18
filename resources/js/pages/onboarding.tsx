@@ -31,10 +31,7 @@ export default function Onboarding({ pendingInvitations }: Props) {
                 </>
             )}
 
-            <Form
-                {...OnboardingController.store.form()}
-                className="grid gap-4"
-            >
+            <Form {...OnboardingController.store.form()} className="grid gap-4">
                 {({ processing, errors }) => (
                     <>
                         <h2 className="text-sm font-medium">

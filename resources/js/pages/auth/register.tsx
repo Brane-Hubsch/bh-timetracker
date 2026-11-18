@@ -1,12 +1,8 @@
+import { Button, Link } from '@heroui/react';
 import { Form, Head } from '@inertiajs/react';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
+import { TextInputField } from '@/components/form/text-input-field';
 import OrganizationInvitationAlert from '@/components/organization-invitation-alert';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { useTranslation } from '@/lib/i18n';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 import type { OrganizationInvitationContext } from '@/types';
@@ -16,120 +12,92 @@ type Props = {
     organizationInvitation?: OrganizationInvitationContext | null;
 };
 
-export default function Register({ passwordRules, organizationInvitation }: Props) {
+export default function Register({
+    passwordRules,
+    organizationInvitation,
+}: Props) {
+    const { t } = useTranslation();
+
     return (
         <>
-            <Head title="Register" />
+            <Head title={t('Create an account')} />
+
+            {organizationInvitation && (
+                <OrganizationInvitationAlert
+                    invitation={organizationInvitation}
+                    action="register"
+                />
+            )}
+
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
-                className="flex flex-col gap-6"
+                className="grid gap-4"
             >
                 {({ processing, errors }) => (
                     <>
-                        {organizationInvitation && (
-                            <OrganizationInvitationAlert
-                                invitation={organizationInvitation}
-                                action="Register"
-                            />
-                        )}
-
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="name"
-                                    name="name"
-                                    placeholder="Full name"
-                                />
-                                <InputError
-                                    message={errors.name}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="email"
-                                    name="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
-                                <PasswordInput
-                                    id="password"
-                                    required
-                                    tabIndex={3}
-                                    autoComplete="new-password"
-                                    name="password"
-                                    placeholder="Password"
-                                    passwordrules={passwordRules}
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    required
-                                    tabIndex={4}
-                                    autoComplete="new-password"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                    passwordrules={passwordRules}
-                                />
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={5}
-                                data-test="register-user-button"
-                            >
-                                {processing && <Spinner />}
-                                Create account
-                            </Button>
-                        </div>
-
-                        <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink
+                        <TextInputField
+                            name="name"
+                            label={t('Name')}
+                            error={errors.name}
+                            isRequired
+                            autoComplete="name"
+                            autoFocus
+                        />
+                        <TextInputField
+                            name="email"
+                            type="email"
+                            label={t('Email address')}
+                            error={errors.email}
+                            isRequired
+                            autoComplete="email"
+                        />
+                        <TextInputField
+                            name="password"
+                            type="password"
+                            label={t('Password')}
+                            error={errors.password}
+                            isRequired
+                            autoComplete="new-password"
+                            passwordrules={passwordRules}
+                        />
+                        <TextInputField
+                            name="password_confirmation"
+                            type="password"
+                            label={t('Confirm password')}
+                            error={errors.password_confirmation}
+                            isRequired
+                            autoComplete="new-password"
+                            passwordrules={passwordRules}
+                        />
+                        <Button
+                            type="submit"
+                            fullWidth
+                            isPending={processing}
+                            data-test="register-user-button"
+                        >
+                            {t('Create account')}
+                        </Button>
+                        <p className="text-center text-sm text-muted">
+                            {t('Already have an account?')}{' '}
+                            <Link
                                 href={
-                                    organizationInvitation
-                                        ? login.url({
+                                    (organizationInvitation
+                                        ? login({
                                               query: {
                                                   invitation:
                                                       organizationInvitation.code,
                                               },
                                           })
                                         : login()
+                                    ).url
                                 }
                                 data-test="organization-invitation-login-link"
-                                tabIndex={6}
                             >
-                                Log in
-                            </TextLink>
-                        </div>
+                                {t('Log in')}
+                            </Link>
+                        </p>
                     </>
                 )}
             </Form>
@@ -139,5 +107,5 @@ export default function Register({ passwordRules, organizationInvitation }: Prop
 
 Register.layout = {
     title: 'Create an account',
-    description: 'Enter your details below to create your account',
+    description: 'Enter your details to get started.',
 };

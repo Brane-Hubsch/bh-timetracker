@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Date;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
@@ -22,6 +23,8 @@ class SetLocale
         if (is_string($locale) && in_array($locale, $available, true)) {
             app()->setLocale($locale);
         }
+
+        Date::setLocale(app()->getLocale());
 
         return $next($request);
     }

@@ -25,7 +25,9 @@ export default function AuthSimpleLayout({
 
                     <div className="space-y-2 text-center">
                         {title && (
-                            <h1 className="text-xl font-semibold">{t(title)}</h1>
+                            <h1 className="text-xl font-semibold">
+                                {t(title)}
+                            </h1>
                         )}
                         {description && (
                             <p className="text-sm text-muted">
