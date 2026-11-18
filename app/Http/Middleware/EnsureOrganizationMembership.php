@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
+use App\Support\CurrentOrganization;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,8 +25,12 @@ class EnsureOrganizationMembership
 
         $this->ensureOrganizationMemberHasRequiredRole($user, $organization, $minimumRole);
 
-        if ($request->route('current_organization') && ! $user->isCurrentOrganization($organization)) {
-            $user->switchOrganization($organization);
+        if ($request->route('current_organization')) {
+            if (! $user->isCurrentOrganization($organization)) {
+                $user->switchOrganization($organization);
+            }
+
+            app(CurrentOrganization::class)->set($organization);
         }
 
         return $next($request);

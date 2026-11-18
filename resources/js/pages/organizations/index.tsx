@@ -51,8 +51,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
 
                 <div className="space-y-3">
                     {organizations.map((organization) => {
-                        const canLeaveOrganization =
-                            !organization.isPersonal && organization.role !== 'owner';
+                        const canLeaveOrganization = organization.role !== 'owner';
 
                         return (
                             <div
@@ -66,11 +65,6 @@ export default function OrganizationsIndex({ organizations }: Props) {
                                             <span className="font-medium">
                                                 {organization.name}
                                             </span>
-                                            {organization.isPersonal ? (
-                                                <Badge variant="secondary">
-                                                    Personal
-                                                </Badge>
-                                            ) : null}
                                         </div>
                                         <span className="text-sm text-muted-foreground">
                                             {organization.roleLabel}

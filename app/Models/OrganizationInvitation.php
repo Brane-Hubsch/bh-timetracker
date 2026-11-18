@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\OrganizationRole;
 use Database\Factories\OrganizationInvitationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -63,6 +65,39 @@ class OrganizationInvitation extends Model
     public function inviter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    /**
+     * Scope the query to pending (not accepted, not expired) invitations for the given email address.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function pendingFor(Builder $query, string $email): void
+    {
+        $query
+            ->whereRaw('LOWER(email) = ?', [strtolower($email)])
+            ->whereNull('accepted_at')
+            ->where(fn (Builder $query) => $query
+                ->whereNull('expires_at')
+                ->orWhere('expires_at', '>=', now()));
+    }
+
+    /**
+     * Get the invitation as the array shape used by the frontend's pending invitation list.
+     *
+     * @return array{code: string, inviterName: string, organization: array{name: string, slug: string}}
+     */
+    public function toPendingInvitationData(): array
+    {
+        return [
+            'code' => $this->code,
+            'inviterName' => $this->inviter->name,
+            'organization' => [
+                'name' => $this->organization->name,
+                'slug' => $this->organization->slug,
+            ],
+        ];
     }
 
     /**

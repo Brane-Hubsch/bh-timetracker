@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Organizations;
 
 use App\Actions\Organizations\CreateOrganization;
+use App\Actions\Organizations\DeleteOrganization;
+use App\Actions\Organizations\RemoveOrganizationMember;
+use App\Actions\Organizations\UpdateOrganization;
 use App\Enums\OrganizationRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Organizations\DeleteOrganizationRequest;
 use App\Http\Requests\Organizations\SaveOrganizationRequest;
+use App\Http\Requests\Organizations\UpdateOrganizationRequest;
 use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,7 +62,10 @@ class OrganizationController extends Controller
                 'id' => $organization->id,
                 'name' => $organization->name,
                 'slug' => $organization->slug,
-                'isPersonal' => $organization->is_personal,
+                'currency' => $organization->currency,
+                'defaultHourlyRate' => $user->can('update', $organization) ? $organization->default_hourly_rate : null,
+                'weekStartsOn' => $organization->week_starts_on,
+                'timezone' => $organization->timezone,
             ],
             'members' => $organization->members()->get()->map(function (User $member) {
                 /** @var Membership $membership */
@@ -92,17 +98,9 @@ class OrganizationController extends Controller
     /**
      * Update the specified organization.
      */
-    public function update(SaveOrganizationRequest $request, Organization $organization): RedirectResponse
+    public function update(UpdateOrganizationRequest $request, Organization $organization, UpdateOrganization $updateOrganization): RedirectResponse
     {
-        Gate::authorize('update', $organization);
-
-        $organization = DB::transaction(function () use ($request, $organization) {
-            $organization = Organization::whereKey($organization->id)->lockForUpdate()->firstOrFail();
-
-            $organization->update(['name' => $request->validated('name')]);
-
-            return $organization;
-        });
+        $organization = $updateOrganization->handle($organization, $request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Organization updated.')]);
 
@@ -124,23 +122,11 @@ class OrganizationController extends Controller
     /**
      * Leave the specified organization.
      */
-    public function leave(Request $request, Organization $organization): RedirectResponse
+    public function leave(Request $request, Organization $organization, RemoveOrganizationMember $removeOrganizationMember): RedirectResponse
     {
         Gate::authorize('leave', $organization);
 
-        $user = $request->user();
-
-        $fallbackOrganization = $user->isCurrentOrganization($organization)
-            ? $user->fallbackOrganization($organization)
-            : null;
-
-        $organization->memberships()
-            ->where('user_id', $user->id)
-            ->delete();
-
-        if ($fallbackOrganization) {
-            $user->switchOrganization($fallbackOrganization);
-        }
+        $removeOrganizationMember->handle($request->user(), $organization);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('You left the organization ":name"', ['name' => $organization->name])]);
 
@@ -150,26 +136,9 @@ class OrganizationController extends Controller
     /**
      * Delete the specified organization.
      */
-    public function destroy(DeleteOrganizationRequest $request, Organization $organization): RedirectResponse
+    public function destroy(DeleteOrganizationRequest $request, Organization $organization, DeleteOrganization $deleteOrganization): RedirectResponse
     {
-        $user = $request->user();
-        $fallbackOrganization = $user->isCurrentOrganization($organization)
-            ? $user->fallbackOrganization($organization)
-            : null;
-
-        DB::transaction(function () use ($user, $organization) {
-            User::where('current_organization_id', $organization->id)
-                ->where('id', '!=', $user->id)
-                ->each(fn (User $affectedUser) => $affectedUser->switchOrganization($affectedUser->personalOrganization()));
-
-            $organization->invitations()->delete();
-            $organization->memberships()->delete();
-            $organization->delete();
-        });
-
-        if ($fallbackOrganization) {
-            $user->switchOrganization($fallbackOrganization);
-        }
+        $deleteOrganization->handle($organization);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Organization deleted.')]);
 

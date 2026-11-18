@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Organizations;
 
+use App\Actions\Organizations\RemoveOrganizationMember;
+use App\Actions\Organizations\UpdateOrganizationMemberRole;
 use App\Enums\OrganizationRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Organizations\UpdateOrganizationMemberRequest;
@@ -16,16 +18,11 @@ class OrganizationMemberController extends Controller
     /**
      * Update the specified organization member's role.
      */
-    public function update(UpdateOrganizationMemberRequest $request, Organization $organization, User $user): RedirectResponse
+    public function update(UpdateOrganizationMemberRequest $request, Organization $organization, User $user, UpdateOrganizationMemberRole $updateMemberRole): RedirectResponse
     {
         Gate::authorize('updateMember', $organization);
 
-        $newRole = OrganizationRole::from($request->validated('role'));
-
-        $organization->memberships()
-            ->where('user_id', $user->id)
-            ->firstOrFail()
-            ->update(['role' => $newRole]);
+        $updateMemberRole->handle($organization, $user, OrganizationRole::from($request->validated('role')));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member role updated.')]);
 
@@ -35,19 +32,11 @@ class OrganizationMemberController extends Controller
     /**
      * Remove the specified organization member.
      */
-    public function destroy(Organization $organization, User $user): RedirectResponse
+    public function destroy(Organization $organization, User $user, RemoveOrganizationMember $removeOrganizationMember): RedirectResponse
     {
         Gate::authorize('removeMember', $organization);
 
-        abort_if($organization->owner()?->is($user), 403, __('The organization owner cannot be removed.'));
-
-        $organization->memberships()
-            ->where('user_id', $user->id)
-            ->delete();
-
-        if ($user->isCurrentOrganization($organization)) {
-            $user->switchOrganization($user->personalOrganization());
-        }
+        $removeOrganizationMember->handle($user, $organization);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Member removed.')]);
 

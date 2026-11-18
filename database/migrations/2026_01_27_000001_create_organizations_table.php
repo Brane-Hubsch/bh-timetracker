@@ -15,7 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->boolean('is_personal')->default(false);
+            $table->string('currency', 3)->default('SEK');
+            $table->unsignedInteger('default_hourly_rate')->nullable()->comment('Minor currency unit (öre)');
+            $table->unsignedTinyInteger('week_starts_on')->default(1)->comment('ISO-8601 weekday, 1 = Monday');
+            $table->string('timezone')->default('Europe/Stockholm');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -39,7 +39,10 @@ class OrganizationTest extends TestCase
 
         $this->assertDatabaseHas('organizations', [
             'name' => 'Test Organization',
-            'is_personal' => false,
+            'currency' => 'SEK',
+            'default_hourly_rate' => null,
+            'week_starts_on' => 1,
+            'timezone' => 'Europe/Stockholm',
         ]);
     }
 
@@ -113,6 +116,10 @@ class OrganizationTest extends TestCase
             ->actingAs($user)
             ->patch(route('organizations.update', $organization), [
                 'name' => 'Updated Name',
+                'currency' => 'EUR',
+                'default_hourly_rate' => 95000,
+                'week_starts_on' => 7,
+                'timezone' => 'Europe/Helsinki',
             ]);
 
         $response->assertRedirect(route('organizations.edit', $organization->fresh()));
@@ -120,7 +127,29 @@ class OrganizationTest extends TestCase
         $this->assertDatabaseHas('organizations', [
             'id' => $organization->id,
             'name' => 'Updated Name',
+            'currency' => 'EUR',
+            'default_hourly_rate' => 95000,
+            'week_starts_on' => 7,
+            'timezone' => 'Europe/Helsinki',
         ]);
+    }
+
+    public function test_organization_settings_are_validated()
+    {
+        $user = User::factory()->create();
+        $organization = $user->currentOrganization;
+
+        $response = $this
+            ->actingAs($user)
+            ->patch(route('organizations.update', $organization), [
+                'name' => 'Valid Name',
+                'currency' => 'kronor',
+                'default_hourly_rate' => -1,
+                'week_starts_on' => 8,
+                'timezone' => 'Mars/Olympus',
+            ]);
+
+        $response->assertSessionHasErrors(['currency', 'default_hourly_rate', 'week_starts_on', 'timezone']);
     }
 
     public function test_organizations_cannot_be_updated_by_members()
@@ -136,9 +165,14 @@ class OrganizationTest extends TestCase
             ->actingAs($member)
             ->patch(route('organizations.update', $organization), [
                 'name' => 'Updated Name',
+                'currency' => 'SEK',
+                'week_starts_on' => 1,
+                'timezone' => 'Europe/Stockholm',
             ]);
 
         $response->assertForbidden();
+
+        $this->assertDatabaseMissing('organizations', ['name' => 'Updated Name']);
     }
 
     public function test_organizations_can_be_deleted_by_owners()
@@ -212,10 +246,10 @@ class OrganizationTest extends TestCase
         $this->assertEquals($alphaOrganization->id, $user->fresh()->current_organization_id);
     }
 
-    public function test_deleting_current_organization_falls_back_to_personal_organization_when_alphabetically_first()
+    public function test_deleting_current_organization_falls_back_to_remaining_organization()
     {
         $user = User::factory()->create();
-        $personalOrganization = $user->personalOrganization();
+        $remainingOrganization = $user->currentOrganization;
         $organization = Organization::factory()->create(['name' => 'Zulu Organization']);
         $organization->members()->attach($user, ['role' => OrganizationRole::Owner->value]);
 
@@ -233,17 +267,31 @@ class OrganizationTest extends TestCase
             'id' => $organization->id,
         ]);
 
-        $this->assertEquals($personalOrganization->id, $user->fresh()->current_organization_id);
+        $this->assertEquals($remainingOrganization->id, $user->fresh()->current_organization_id);
+    }
+
+    public function test_deleting_the_only_organization_clears_the_current_organization()
+    {
+        $user = User::factory()->create();
+        $organization = $user->currentOrganization;
+
+        $this
+            ->actingAs($user)
+            ->delete(route('organizations.destroy', $organization), [
+                'name' => $organization->name,
+            ])
+            ->assertRedirect(route('organizations.index'));
+
+        $this->assertSoftDeleted('organizations', ['id' => $organization->id]);
+        $this->assertNull($user->fresh()->current_organization_id);
     }
 
     public function test_deleting_non_current_organization_leaves_current_organization_unchanged()
     {
         $user = User::factory()->create();
-        $personalOrganization = $user->personalOrganization();
+        $currentOrganization = $user->currentOrganization;
         $organization = Organization::factory()->create();
         $organization->members()->attach($user, ['role' => OrganizationRole::Owner->value]);
-
-        $user->update(['current_organization_id' => $personalOrganization->id]);
 
         $response = $this
             ->actingAs($user)
@@ -257,10 +305,10 @@ class OrganizationTest extends TestCase
             'id' => $organization->id,
         ]);
 
-        $this->assertEquals($personalOrganization->id, $user->fresh()->current_organization_id);
+        $this->assertEquals($currentOrganization->id, $user->fresh()->current_organization_id);
     }
 
-    public function test_members_can_leave_non_personal_organizations()
+    public function test_members_can_leave_organizations()
     {
         $owner = User::factory()->create();
         $member = User::factory()->create();
@@ -306,18 +354,20 @@ class OrganizationTest extends TestCase
         $this->assertEquals($alphaOrganization->id, $member->fresh()->current_organization_id);
     }
 
-    public function test_personal_organizations_cannot_be_left()
+    public function test_leaving_the_only_organization_clears_the_current_organization()
     {
-        $user = User::factory()->create();
-        $personalOrganization = $user->personalOrganization();
+        $owner = User::factory()->create();
+        $member = User::factory()->withoutOrganization()->create();
+        $organization = $owner->currentOrganization;
+        $organization->members()->attach($member, ['role' => OrganizationRole::Member->value]);
+        $member->update(['current_organization_id' => $organization->id]);
 
-        $response = $this
-            ->actingAs($user)
-            ->delete(route('organizations.leave', $personalOrganization));
+        $this
+            ->actingAs($member)
+            ->delete(route('organizations.leave', $organization))
+            ->assertRedirect(route('organizations.index'));
 
-        $response->assertForbidden();
-
-        $this->assertTrue($user->fresh()->belongsToOrganization($personalOrganization));
+        $this->assertNull($member->fresh()->current_organization_id);
     }
 
     public function test_organization_owners_cannot_leave_their_organization()
@@ -348,10 +398,11 @@ class OrganizationTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_deleting_organization_switches_other_affected_users_to_their_personal_organization()
+    public function test_deleting_organization_switches_other_affected_users_to_their_remaining_organization()
     {
         $owner = User::factory()->create();
         $member = User::factory()->create();
+        $membersOtherOrganization = $member->currentOrganization;
 
         $organization = Organization::factory()->create();
         $organization->members()->attach($owner, ['role' => OrganizationRole::Owner->value]);
@@ -368,27 +419,7 @@ class OrganizationTest extends TestCase
 
         $response->assertRedirect();
 
-        $this->assertEquals($member->personalOrganization()->id, $member->fresh()->current_organization_id);
-    }
-
-    public function test_personal_organizations_cannot_be_deleted()
-    {
-        $user = User::factory()->create();
-
-        $personalOrganization = $user->personalOrganization();
-
-        $response = $this
-            ->actingAs($user)
-            ->delete(route('organizations.destroy', $personalOrganization), [
-                'name' => $personalOrganization->name,
-            ]);
-
-        $response->assertForbidden();
-
-        $this->assertDatabaseHas('organizations', [
-            'id' => $personalOrganization->id,
-            'deleted_at' => null,
-        ]);
+        $this->assertEquals($membersOtherOrganization->id, $member->fresh()->current_organization_id);
     }
 
     public function test_organizations_cannot_be_deleted_by_non_owners()

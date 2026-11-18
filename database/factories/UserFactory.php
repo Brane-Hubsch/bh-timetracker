@@ -6,6 +6,7 @@ use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -44,9 +45,7 @@ class UserFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function ($user) {
-            $organization = Organization::factory()->personal()->create([
-                'name' => $user->name."'s Organization",
-            ]);
+            $organization = Organization::factory()->create();
 
             $organization->members()->attach($user, [
                 'role' => OrganizationRole::Owner->value,
@@ -54,6 +53,16 @@ class UserFactory extends Factory
 
             $user->switchOrganization($organization);
         });
+    }
+
+    /**
+     * Create the user without any organization (by default each user owns one organization).
+     *
+     * Note: this drops all after-creating callbacks registered before it.
+     */
+    public function withoutOrganization(): static
+    {
+        return $this->newInstance(['afterCreating' => new Collection]);
     }
 
     /**

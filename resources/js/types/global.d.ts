@@ -11,11 +11,18 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            locale: string;
             auth: Auth;
             sidebarOpen: boolean;
             currentOrganization: Organization | null;
             organizations: Organization[];
             [key: string]: unknown;
         };
+    }
+}
+
+declare module 'react-aria-components' {
+    interface RouterConfig {
+        routerOptions: import('@inertiajs/core').VisitOptions;
     }
 }

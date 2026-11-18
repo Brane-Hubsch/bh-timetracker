@@ -27,6 +27,9 @@ enum OrganizationRole: string
             self::Owner => OrganizationPermission::cases(),
             self::Admin => [
                 OrganizationPermission::UpdateOrganization,
+                OrganizationPermission::AddMember,
+                OrganizationPermission::UpdateMember,
+                OrganizationPermission::RemoveMember,
                 OrganizationPermission::CreateInvitation,
                 OrganizationPermission::CancelInvitation,
             ],

@@ -18,7 +18,10 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $slug
- * @property bool $is_personal
+ * @property string $currency
+ * @property int|null $default_hourly_rate
+ * @property int $week_starts_on
+ * @property string $timezone
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -26,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['name', 'slug', 'is_personal'])]
+#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -103,7 +106,8 @@ class Organization extends Model
     protected function casts(): array
     {
         return [
-            'is_personal' => 'boolean',
+            'default_hourly_rate' => 'integer',
+            'week_starts_on' => 'integer',
         ];
     }
 

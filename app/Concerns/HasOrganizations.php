@@ -67,16 +67,6 @@ trait HasOrganizations
     }
 
     /**
-     * Get the user's personal organization.
-     */
-    public function personalOrganization(): ?Organization
-    {
-        return $this->ownedOrganizations()
-            ->where('organizations.is_personal', true)
-            ->first();
-    }
-
-    /**
      * Switch to the given organization.
      */
     public function switchOrganization(Organization $organization): bool
@@ -153,7 +143,6 @@ trait HasOrganizations
             id: $organization->id,
             name: $organization->name,
             slug: $organization->slug,
-            isPersonal: $organization->is_personal,
             role: $role?->value,
             roleLabel: $role?->label(),
             isCurrent: $this->isCurrentOrganization($organization),
@@ -178,12 +167,34 @@ trait HasOrganizations
         );
     }
 
+    /**
+     * Get the organization to fall back to when the current one is no longer available.
+     */
     public function fallbackOrganization(?Organization $excluding = null): ?Organization
     {
         return $this->organizations()
             ->when($excluding, fn ($query) => $query->where('organizations.id', '!=', $excluding->id))
             ->orderByRaw('LOWER(organizations.name)')
             ->first();
+    }
+
+    /**
+     * Switch to the fallback organization, or clear the current organization when there is none.
+     */
+    public function resetCurrentOrganization(?Organization $excluding = null): ?Organization
+    {
+        $fallback = $this->fallbackOrganization($excluding);
+
+        if ($fallback) {
+            $this->switchOrganization($fallback);
+
+            return $fallback;
+        }
+
+        $this->update(['current_organization_id' => null]);
+        $this->setRelation('currentOrganization', null);
+
+        return null;
     }
 
     /**
