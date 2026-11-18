@@ -296,7 +296,7 @@ Varje fas avslutas med gröna tester, uppdaterad PLAN.md vid behov och en kort s
 Google via Socialite, passkeys via Fortify, magic link för registrering/återställning, inbjudningsflöde, ta bort lösenordsflöden.
 *Klart när*: en inbjuden användare kan gå med via Google eller passkey, och lösenord inte förekommer någonstans.
 
-**Fas 2 – Kunder, projekt, medlemmar**
+**Fas 2 – Kunder, projekt, medlemmar** *(klar, se Status nedan)*
 CRUD + arkivering, projektmedlemmar, timpriser, RateResolver, policies, seeders.
 
 **Fas 3 – Tidrapportering**
@@ -333,6 +333,20 @@ Klar. Avvikelser och tillägg:
 - Ägare kan inte radera sitt konto innan organisationen är raderad (en organisation ska alltid ha en ägare).
 - Accentfärg: lila (violett), definierad i `resources/css/app.css`.
 - Alla shadcn/Radix-komponenter är borttagna; hela UI:t använder HeroUI.
+
+### Status Fas 2 (2026-11-18)
+
+Klar. Byggt: kunder (lista med sök, aktiva/arkiverade, skapa/redigera/arkivera, kundsida med projekt), projekt (lista med sök och filter på kund/status, formulär, projektsida, arkivering), projektmedlemmar med pris per medlem, medlemmars timpris och inaktivering i organisationen, `RateResolver`, policies och demo-seeder.
+
+Avvikelser och förtydliganden:
+
+- Kundsidans summerade tid och projektsidans förbrukat/estimat, tid per medlem/vecka och belopp kräver tidposter och byggs i Fas 3–4.
+- Kunder hanteras och listas bara av ägare/admin (medlemmar ser kundnamn via sina projekt).
+- Arkivering är inte kaskaderande: en arkiverad kund arkiverar inte sina projekt. Väljare i Fas 3 döljer projekt vars kund är arkiverad.
+- Ingen radering av kunder/projekt i v1, bara arkivering (historik och rapporter bevaras).
+- Projektkod är unik per organisation (valfri).
+- Inaktiverad medlem: ingen åtkomst, ingen roll, kan inte väljas; historik och projekttilldelningar finns kvar. Ägaren kan inte inaktiveras.
+- Listorna pagineras inte i v1 (små volymer).
 
 ## 8. Senare (medvetet bortvalt i v1)
 

@@ -27,6 +27,14 @@ describes; propose additions instead of building them.
 - Models with an `organization_id` column use the `App\Models\Concerns\BelongsToOrganization` trait.
   Never query tenant data without an organization scope, and test it.
 - Policies always verify membership in the resource's organization before checking the role.
+- `EnsureOrganizationMembership` runs before route model binding (middleware priority) and removes the
+  `current_organization` route parameter, so tenant models in URLs are bound through
+  `OrganizationScope` (other organizations' ids give 404) and controller signatures stay simple.
+- Deactivated memberships (`organization_members.deactivated_at`) count as non-members everywhere.
+- Permissions per role live in `OrganizationRole::permissions()` (`ManageClients`, `ManageProjects`,
+  `ViewRates`, ...). Rates and amounts are only sent to the frontend when the viewer may see them.
+- Hourly rates resolve via `App\Support\RateResolver` (project member → project → organization member
+  → organization default) and are snapshotted on time entries.
 - There are no personal organizations. An organization must always have at least one owner.
 
 ## Authentication
