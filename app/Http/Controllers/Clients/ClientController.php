@@ -5,11 +5,18 @@ namespace App\Http\Controllers\Clients;
 use App\Actions\Clients\CreateClient;
 use App\Actions\Clients\SetClientArchived;
 use App\Actions\Clients\UpdateClient;
+use App\Enums\ReportGrouping;
+use App\Enums\ReportPeriod;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Clients\ClientRequest;
+use App\Http\Requests\Reports\ReportRequest;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\User;
+use App\Services\Reports\ReportBuilder;
+use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -57,9 +64,13 @@ class ClientController extends Controller
         return to_route('clients.show', ['client' => $client->id]);
     }
 
-    public function show(Client $client): Response
+    public function show(ReportRequest $request, #[CurrentUser] User $user, Client $client, ReportBuilder $reports, CurrentOrganization $currentOrganization): Response
     {
         Gate::authorize('view', $client);
+
+        $period = $request->filters($user, $currentOrganization->getOrFail());
+        $filters = new ReportFilters($period->organization, $user, $period->from, $period->to, clientIds: [$client->id]);
+        $summary = $reports->summary($filters, ReportGrouping::Project);
 
         return Inertia::render('clients/show', [
             'client' => [
@@ -81,6 +92,23 @@ class ClientController extends Controller
                     'color' => $project->color,
                     'isArchived' => $project->isArchived(),
                 ]),
+            // Time reported on the client's projects in the chosen period.
+            'report' => [
+                'period' => $request->period()->value,
+                'from' => $filters->from?->toDateString() ?? '',
+                'to' => $filters->to?->toDateString() ?? '',
+                'periods' => ReportPeriod::options(),
+                'totals' => $summary['totals'],
+                'projects' => array_map(fn (array $group) => [
+                    'id' => (int) $group['key'],
+                    'name' => $group['label'],
+                    'color' => $group['color'],
+                    'seconds' => $group['seconds'],
+                    'billableSeconds' => $group['billableSeconds'],
+                    'amount' => $group['amount'],
+                ], $summary['groups']),
+            ],
+            'currency' => $currentOrganization->getOrFail()->currency,
         ]);
     }
 

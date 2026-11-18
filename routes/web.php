@@ -7,6 +7,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectMemberController;
+use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\TimeEntries\TimeEntryController;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,11 @@ Route::prefix('{current_organization}')
         Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');
         Route::delete('time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('time.destroy');
         Route::post('time/{timeEntry}/restore', [TimeEntryController::class, 'restore'])->withTrashed()->name('time.restore');
+
+        Route::get('reports', [ReportController::class, 'summary'])->name('reports.summary');
+        Route::get('reports/detailed', [ReportController::class, 'detailed'])->name('reports.detailed');
+        Route::get('reports/projects', [ReportController::class, 'projects'])->name('reports.projects');
+        Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
 
         Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
         Route::post('clients', [ClientController::class, 'store'])->name('clients.store');

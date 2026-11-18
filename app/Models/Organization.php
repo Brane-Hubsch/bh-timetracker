@@ -38,6 +38,17 @@ class Organization extends Model
     use GeneratesUniqueOrganizationSlugs, HasFactory, SoftDeletes;
 
     /**
+     * Mirrors the column defaults so freshly created organizations have them before a reload.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'currency' => 'SEK',
+        'week_starts_on' => 1,
+        'timezone' => 'Europe/Stockholm',
+    ];
+
+    /**
      * Bootstrap the model and its traits.
      */
     protected static function boot(): void

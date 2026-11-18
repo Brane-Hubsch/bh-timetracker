@@ -4,14 +4,20 @@ namespace App\Http\Controllers\Projects;
 
 use App\Actions\Projects\SaveProject;
 use App\Actions\Projects\SetProjectArchived;
+use App\Enums\OrganizationPermission;
 use App\Enums\ProjectVisibility;
+use App\Enums\ReportGrouping;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Projects\ProjectRequest;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\User;
+use App\Services\Reports\ReportBuilder;
+use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
+use App\Support\TimeEntryPresenter;
+use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,7 +82,7 @@ class ProjectController extends Controller
         return to_route('projects.show', ['project' => $project->id]);
     }
 
-    public function show(#[CurrentUser] User $user, Project $project): Response
+    public function show(#[CurrentUser] User $user, Project $project, ReportBuilder $reports, TimeEntryPresenter $presenter): Response
     {
         Gate::authorize('view', $project);
 
@@ -109,12 +115,47 @@ class ProjectController extends Controller
                     ->get(['users.id', 'users.name'])
                     ->map(fn (User $member) => ['value' => (string) $member->id, 'label' => $member->name])
                 : [],
+            // Time per member and per week (last 12 weeks) for owners and admins; members only see
+            // their own time in reports.
+            'breakdown' => $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
+                ? $this->breakdown($reports, $presenter, $project, $user)
+                : null,
             'currency' => $organization->currency,
             'abilities' => [
                 'manage' => $canManage,
                 'viewRates' => $canViewRates,
             ],
         ]);
+    }
+
+    /**
+     * @return array{totals: array{seconds: int, billableSeconds: int, amount: int|null}, members: array<int, array{key: string, label: string, seconds: int, billableSeconds: int, amount: int|null}>, weeks: array<int, array{key: string, seconds: int, billableSeconds: int}>}
+     */
+    private function breakdown(ReportBuilder $reports, TimeEntryPresenter $presenter, Project $project, User $user): array
+    {
+        $organization = $this->currentOrganization->getOrFail();
+        $allTime = $reports->summary(
+            new ReportFilters($organization, $user, from: null, to: null, projectIds: [$project->id]),
+            ReportGrouping::Member,
+        );
+
+        $today = CarbonImmutable::now($user->timezone)->startOfDay();
+        $recent = $reports->summary(
+            new ReportFilters($organization, $user, from: $presenter->weekStart($today, $organization)->subWeeks(11), to: $today, projectIds: [$project->id]),
+            ReportGrouping::Week,
+        );
+
+        return [
+            'totals' => $allTime['totals'],
+            'members' => array_map(fn (array $group) => [
+                'key' => $group['key'],
+                'label' => $group['label'],
+                'seconds' => $group['seconds'],
+                'billableSeconds' => $group['billableSeconds'],
+                'amount' => $group['amount'],
+            ], $allTime['groups']),
+            'weeks' => $recent['timeline']['buckets'],
+        ];
     }
 
     public function edit(#[CurrentUser] User $user, Project $project): Response
