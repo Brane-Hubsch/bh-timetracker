@@ -308,7 +308,7 @@ ReportBuilder, sammanfattning, detaljerad, projektuppföljning, CSV/XLSX-export.
 **Fas 5 – MCP** *(klar, se Status nedan)*
 Passport + `laravel/mcp`, alla verktyg i 6.3 med tester, sidan "AI-kopplingar", test mot Claude via tunnel.
 
-**Fas 6 – Finputs inför produktion**
+**Fas 6 – Finputs inför produktion** *(klar, se Status nedan – hostingbeslut kvar)*
 PWA-manifest, tomlägen och felhantering, tillgänglighet, prestanda (N+1, index), e-postmallar, produktionskonfig för Postgres. Beslut om hosting.
 
 ### Status Fas 0 (2026-11-18)
@@ -437,6 +437,41 @@ Avvikelser och förtydliganden:
 - **`get_project_status`** visar förbrukad tid för alla på projekt man har åtkomst till, på samma sätt som projektuppföljningen.
 - **Rättning av inloggningsflödet:** om en användare loggar in mitt i en OAuth-godkännande (även via passkey-förslaget efter inloggning) kommer hen tillbaka till godkännandesidan. Den sidan laddas alltid som en hel sida, eftersom Passport skickar vidare till klientens domän.
 - **Tidstolkning:** webbformuläret och MCP använder samma klass (`LocalTimes`) för att tolka lokal tid.
+
+### Status Fas 6 (2026-11-18)
+
+Klar, förutom beslut om hosting. Byggt:
+
+- **PWA:**
+  - Egen ikon (lila klocka) som favicon, SVG, apple-touch-icon och PNG 192/512/maskable.
+  - `site.webmanifest` på svenska, `theme-color` och fristående läge.
+  - Ingen offline-funktion, enligt planen.
+- **Felhantering:**
+  - Egna felsidor (`error`) för 403/404/429/500/503 när debug är av, även för utloggade.
+  - JSON-klienter (MCP, OAuth) får JSON-fel.
+  - En utgången session (419) skickar tillbaka med en notis.
+  - Nätverksfel visas som notis i stället för att sidan låser sig.
+- **Tomlägen:** genomgångna med en ny, tom organisation. Formuläret förklarar när det saknas projekt (med länk "Skapa ett projekt" för ägare/admin).
+- **Tillgänglighet:** axe-core kördes mot alla huvudsidor i ljust och mörkt läge, och fynden är åtgärdade:
+  - Kontrasten på dämpad text och på knappar i mörkt läge.
+  - En `h1` per sida.
+  - `<main>` på inloggningssidorna.
+  - Vyväxlare och statusfilter är nu en knappgrupp (`SegmentedControl`) i stället för flikar utan paneler.
+  - Rapportflikarna har riktiga flikpaneler.
+  - Knappar utan synlig text har namn.
+  - Kvar: FullCalendars interna skrollyta i dag/veckovyn (tredjepart; listvyn är fullt tangentbordsnavigerbar) och ett tomt `role="img"` i React Arias skärmläsarannonsering.
+- **Prestanda:**
+  - Lazy loading är blockerat utanför produktion så att N+1 fångas i tester och lokalt; en träff åtgärdad.
+  - Behörigheter slås upp en gång per rapport/MCP-anrop i stället för per rad: detaljerad rapport gick från 75 till 20 frågor.
+  - Index för vanliga uppslag som Postgres inte skapar själv: medlemskap per användare, projekt per kund, teamets tid per period m.fl.
+- **E-post:** egen layout med logotyp, lila knapp och svensk ram ("Hej …!", "Hälsningar,") för inloggningslänk och inbjudan.
+- **Produktionskonfig:**
+  - Tvingad HTTPS i produktion.
+  - `TRUSTED_PROXIES` för lastbalanserare.
+  - `.env.production.example` (Postgres med SSL, databaskö, krypterade och säkra sessionscookies, SMTP, Passport-nycklar).
+  - Driftchecklista i README.
+
+Kvar att besluta: **hosting** (se förslag i sammanfattningen till beställaren). Backup och CI/CD-deploy beslutas samtidigt.
 
 ## 8. Senare (medvetet bortvalt i v1)
 

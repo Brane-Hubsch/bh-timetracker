@@ -92,6 +92,8 @@ describes; propose additions instead of building them.
   default via `Date::use()`).
 - Durations are integers in seconds. Money is an integer in the smallest currency unit (öre);
   format it in the frontend with `Intl.NumberFormat`.
+- Lazy loading is blocked outside production (`Model::preventLazyLoading`): eager load relations used in
+  loops. Resolve permissions once per request/report, not per row.
 - Keep SQL database-agnostic: the app runs on SQLite locally and Postgres in production, and the test
   suite runs against both in CI. No `strftime`, `date_trunc` or other engine-specific SQL; do date
   bucketing for reports in PHP.
@@ -110,6 +112,10 @@ describes; propose additions instead of building them.
   the default, English `en` is prepared). Use the `useTranslation()` hook / `t()` from
   `@/lib/i18n` in React and `__()` in PHP. Keys are the English source strings.
 - Mobile first for data entry, desktop first for reports and administration. No hover-only features.
+- Accessibility: one `h1` per page (`Heading` renders it), view switchers and filters use
+  `SegmentedControl` (HeroUI ToggleButtonGroup), not `Tabs` without panels; icon-only buttons need an
+  `aria-label`. Use the `muted`/`accent` tokens from `app.css`, which are tuned for WCAG AA.
+- Errors render the `error` page in production (`AppServiceProvider::configureErrorPages`).
 
 ## Code quality
 

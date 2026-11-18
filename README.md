@@ -34,6 +34,29 @@ First owner in a new environment (registration is invite-only):
 php artisan app:create-owner you@example.com "Your Name" "Organization"
 ```
 
+## Production
+
+Requirements: PHP 8.5, PostgreSQL 16, Node 22 (build only), HTTPS. Start from `.env.production.example`.
+
+Deploy:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci && npm run build
+php artisan migrate --force
+php artisan optimize
+```
+
+Run alongside the web server:
+
+- a queue worker for emails (`php artisan queue:work --tries=3`), kept alive by the platform/Supervisor;
+- the scheduler every minute (`php artisan schedule:run`): prunes expired invitations, magic links and
+  OAuth tokens;
+- `/up` as health check.
+
+First deploy: `php artisan passport:keys` (or set `PASSPORT_PRIVATE_KEY`/`PASSPORT_PUBLIC_KEY`) and create
+the first owner with `php artisan app:create-owner`. Back up the Postgres database daily.
+
 ## AI assistants (MCP)
 
 The MCP server lives at `{APP_URL}/mcp` and uses OAuth 2.1 (Passport). `composer setup` creates the
