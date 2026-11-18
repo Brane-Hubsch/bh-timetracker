@@ -4,6 +4,7 @@ import Heading from '@/components/heading';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useTranslation } from '@/lib/i18n';
 import { cn, toUrl } from '@/lib/utils';
+import { edit as editAiConnections } from '@/routes/ai-connections';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as organizations } from '@/routes/organizations';
 import { edit as editProfile } from '@/routes/profile';
@@ -13,6 +14,7 @@ const items = [
     { title: 'Profile', href: editProfile() },
     { title: 'Security', href: editSecurity() },
     { title: 'Organizations', href: organizations() },
+    { title: 'AI connections', href: editAiConnections() },
     { title: 'Appearance', href: editAppearance() },
 ];
 
