@@ -1,8 +1,9 @@
-import { Button, Tabs } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { Head, router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, CopyPlus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
+import { SegmentedControl } from '@/components/segmented-control';
 import type { SelectOption } from '@/components/form/select-field';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
@@ -190,32 +191,21 @@ export default function TimeIndex({
                                 data-test="member-select"
                             />
                         )}
-                        <Tabs
-                            selectedKey={view}
-                            onSelectionChange={(key) =>
-                                visit({ view: key as View })
-                            }
-                        >
-                            <Tabs.ListContainer>
-                                <Tabs.List aria-label={t('View')}>
-                                    <Tabs.Tab id="list">
-                                        {t('List')}
-                                        <Tabs.Indicator />
-                                    </Tabs.Tab>
-                                    <Tabs.Tab id="week">
-                                        {t('Week')}
-                                        <Tabs.Indicator />
-                                    </Tabs.Tab>
-                                    <Tabs.Tab id="day">
-                                        {t('Day')}
-                                        <Tabs.Indicator />
-                                    </Tabs.Tab>
-                                </Tabs.List>
-                            </Tabs.ListContainer>
-                        </Tabs>
+                        <SegmentedControl
+                            aria-label={t('View')}
+                            value={view}
+                            onChange={(next) => visit({ view: next })}
+                            options={[
+                                { id: 'list', label: t('List') },
+                                { id: 'week', label: t('Week') },
+                                { id: 'day', label: t('Day') },
+                            ]}
+                            data-test="time-view"
+                        />
                         <Button
                             variant="tertiary"
                             onPress={() => setCopyOpen(true)}
+                            aria-label={t('Copy previous week')}
                             data-test="copy-week-button"
                         >
                             <CopyPlus className="size-4" />

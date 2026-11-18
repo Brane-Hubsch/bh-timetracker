@@ -5,7 +5,7 @@ import { translate } from '@/lib/i18n';
 import type { FlashToast } from '@/types/ui';
 
 /**
- * Show `Inertia::flash('toast', [...])` messages from the backend as HeroUI toasts.
+ * Show `Inertia::flash('toast', [...])` messages from the backend, and network errors, as HeroUI toasts.
  */
 export function useFlashToast(): void {
     useEffect(() => {
@@ -44,6 +44,18 @@ export function useFlashToast(): void {
             }[data.type];
 
             show(data.message);
+        });
+    }, []);
+
+    // Lost connection (offline, server unreachable): keep the page and say so.
+    useEffect(() => {
+        return router.on('networkError', () => {
+            toast.danger(
+                translate(
+                    document.documentElement.lang || 'sv',
+                    'Could not reach the server. Check your connection and try again.',
+                ),
+            );
         });
     }, []);
 }

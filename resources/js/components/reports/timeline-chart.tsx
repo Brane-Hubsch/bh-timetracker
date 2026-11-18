@@ -54,12 +54,12 @@ export function TimelineChart({ unit, buckets, title }: Props) {
             data-test="timeline-chart"
         >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold">
+                <h2 className="text-sm font-semibold">
                     {title ??
                         (unit === 'week'
                             ? t('Hours per week')
                             : t('Hours per day'))}
-                </h3>
+                </h2>
                 <p
                     className="min-h-5 text-sm text-muted tabular-nums"
                     aria-live="polite"
@@ -89,23 +89,27 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                     aria-label={title ?? t('Hours per day')}
                 >
                     {buckets.map((bucket) => (
-                        <button
+                        <div
                             key={bucket.key}
-                            type="button"
                             role="listitem"
-                            aria-label={describe(bucket)}
-                            className="group flex h-full min-w-0 flex-1 items-end rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                            onMouseEnter={() => setSelected(bucket)}
-                            onFocus={() => setSelected(bucket)}
-                            onClick={() => setSelected(bucket)}
+                            className="flex h-full min-w-0 flex-1"
                         >
-                            <span
-                                className={`block w-full rounded-t-[4px] transition-colors ${selected?.key === bucket.key ? 'bg-accent' : 'bg-accent/75 group-hover:bg-accent'}`}
-                                style={{
-                                    height: `${(bucket.seconds / 3600 / max) * 100}%`,
-                                }}
-                            />
-                        </button>
+                            <button
+                                type="button"
+                                aria-label={describe(bucket)}
+                                className="group flex h-full w-full items-end rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                onMouseEnter={() => setSelected(bucket)}
+                                onFocus={() => setSelected(bucket)}
+                                onClick={() => setSelected(bucket)}
+                            >
+                                <span
+                                    className={`block w-full rounded-t-[4px] transition-colors ${selected?.key === bucket.key ? 'bg-accent' : 'bg-accent/75 group-hover:bg-accent'}`}
+                                    style={{
+                                        height: `${(bucket.seconds / 3600 / max) * 100}%`,
+                                    }}
+                                />
+                            </button>
+                        </div>
                     ))}
                 </div>
             </div>

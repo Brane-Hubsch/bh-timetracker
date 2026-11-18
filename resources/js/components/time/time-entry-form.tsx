@@ -8,7 +8,7 @@ import {
     TextArea,
     TextField,
 } from '@heroui/react';
-import { router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
@@ -25,6 +25,7 @@ import {
     timeOf,
     timeToMinutes,
 } from '@/lib/time';
+import { create as createProject } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/time';
 import type { ProjectOption, TimeEntry, TimeEntryDraft } from '@/types';
 
@@ -79,6 +80,7 @@ function TimeEntryFields({
     onDuplicate,
 }: Omit<Props, 'draft'> & { draft: TimeEntryDraft }) {
     const { t } = useTranslation();
+    const { can } = usePage().props;
     const [values, setValues] = useState(draft);
     const [duration, setDuration] = useState(
         draft.end ? formatDuration(secondsBetween(draft.start, draft.end)) : '',
@@ -209,6 +211,33 @@ function TimeEntryFields({
                     error={errors.user_id}
                     data-test="time-entry-member"
                 />
+            )}
+
+            {projects.length === 0 && (
+                <Alert status="warning" data-test="no-projects">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                        <Alert.Description>
+                            {can?.canManageProjects ? (
+                                <>
+                                    {t(
+                                        'There are no projects to report time on yet.',
+                                    )}{' '}
+                                    <Link
+                                        href={createProject()}
+                                        className="font-medium underline"
+                                    >
+                                        {t('Create a project')}
+                                    </Link>
+                                </>
+                            ) : (
+                                t(
+                                    'There are no projects to report time on yet. Ask an administrator to add one.',
+                                )
+                            )}
+                        </Alert.Description>
+                    </Alert.Content>
+                </Alert>
             )}
 
             <ProjectPicker

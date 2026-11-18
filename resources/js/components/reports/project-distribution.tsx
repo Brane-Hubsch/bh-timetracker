@@ -25,7 +25,7 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
             className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="project-distribution"
         >
-            <h3 className="text-sm font-semibold">{t('Time per project')}</h3>
+            <h2 className="text-sm font-semibold">{t('Time per project')}</h2>
 
             {projects.length === 0 ? (
                 <p className="text-sm text-muted">

@@ -1,7 +1,8 @@
-import { SearchField, Tabs } from '@heroui/react';
+import { SearchField } from '@heroui/react';
 import { router } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { SegmentedControl } from '@/components/segmented-control';
 import { useTranslation } from '@/lib/i18n';
 
 export type ListFilterValues = Record<
@@ -69,24 +70,17 @@ export function ListFilters({ filters, children }: Props) {
 
             {children?.(apply)}
 
-            <Tabs
-                selectedKey={filters.status ?? 'active'}
-                onSelectionChange={(key) => apply({ status: String(key) })}
+            <SegmentedControl
+                aria-label={t('Status')}
+                value={filters.status === 'archived' ? 'archived' : 'active'}
+                onChange={(status) => apply({ status })}
+                options={[
+                    { id: 'active', label: t('Active (plural)') },
+                    { id: 'archived', label: t('Archived (plural)') },
+                ]}
                 className="sm:ml-auto"
-            >
-                <Tabs.ListContainer>
-                    <Tabs.List aria-label={t('Status')}>
-                        <Tabs.Tab id="active">
-                            {t('Active (plural)')}
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                        <Tabs.Tab id="archived">
-                            {t('Archived (plural)')}
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                    </Tabs.List>
-                </Tabs.ListContainer>
-            </Tabs>
+                data-test="status-filter"
+            />
         </div>
     );
 }

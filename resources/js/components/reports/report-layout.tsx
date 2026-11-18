@@ -51,6 +51,7 @@ export function ReportLayout({ current, filters, actions, children }: Props) {
                 <Tabs
                     selectedKey={current}
                     onSelectionChange={(key) => open(key as ReportKind)}
+                    className="grid grid-cols-1 gap-6"
                 >
                     <Tabs.ListContainer className="overflow-x-auto">
                         <Tabs.List aria-label={t('Reports')}>
@@ -68,9 +69,14 @@ export function ReportLayout({ current, filters, actions, children }: Props) {
                             )}
                         </Tabs.List>
                     </Tabs.ListContainer>
-                </Tabs>
 
-                {children}
+                    <Tabs.Panel
+                        id={current}
+                        className="grid grid-cols-1 gap-6 p-0"
+                    >
+                        {children}
+                    </Tabs.Panel>
+                </Tabs>
             </div>
         </>
     );
