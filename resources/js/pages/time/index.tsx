@@ -302,6 +302,7 @@ export default function TimeIndex({
                 onClose={() => setDraft(null)}
                 projects={projects}
                 entries={entries}
+                members={members}
                 onDuplicate={(values) => {
                     const base = newDraft(today, entries, member.id);
                     const seconds = values.end

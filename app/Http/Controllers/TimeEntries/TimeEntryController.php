@@ -67,8 +67,7 @@ class TimeEntryController extends Controller
             'member' => ['id' => $member->id, 'name' => $member->name],
             // Owners and admins can switch to another member's time.
             'members' => $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
-                ? $organization->members()->wherePivotNull('deactivated_at')->orderBy('name')->get(['users.id', 'users.name'])
-                    ->map(fn (User $candidate) => ['value' => (string) $candidate->id, 'label' => $candidate->name])
+                ? $this->presenter->memberOptions($organization)
                 : [],
             // Loaded on demand for "copy previous week".
             'previousWeek' => Inertia::optional(fn () => TimeEntry::query()

@@ -51,6 +51,8 @@ class DashboardController extends Controller
                 ->get()
                 ->map(fn (TimeEntry $entry) => $presenter->entry($entry, $timezone)),
             'projects' => $presenter->projectOptions($organization, $user),
+            // Owners and admins can report time for other members from the quick entry form.
+            'members' => $isManager ? $presenter->memberOptions($organization) : [],
             'team' => $isManager ? $this->teamWeek($organization->members()->wherePivotNull('deactivated_at')->orderBy('name')->get(), $weekStart) : null,
             'projectsNearEstimate' => $isManager ? $this->projectsNearEstimate() : null,
         ]);

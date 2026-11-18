@@ -52,6 +52,22 @@ class TimeEntryPresenter
     }
 
     /**
+     * Active members a manager can report time for, as select options.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public function memberOptions(Organization $organization): array
+    {
+        return $organization->members()
+            ->wherePivotNull('deactivated_at')
+            ->orderBy('name')
+            ->get(['users.id', 'users.name'])
+            ->map(fn (User $member) => ['value' => (string) $member->id, 'label' => $member->name])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Active projects the member can report on (client not archived), the member's most recently
      * used ones first, then alphabetical.
      *

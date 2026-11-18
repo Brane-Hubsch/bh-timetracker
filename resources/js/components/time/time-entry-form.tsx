@@ -11,6 +11,8 @@ import {
 import { router } from '@inertiajs/react';
 import { Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { SelectField } from '@/components/form/select-field';
+import type { SelectOption } from '@/components/form/select-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
 import { useTranslation } from '@/lib/i18n';
@@ -32,6 +34,8 @@ type Props = {
     projects: ProjectOption[];
     /** Entries already loaded, used to warn about overlaps. */
     entries: TimeEntry[];
+    /** Members the viewer may report time for (owners and admins); hidden when empty. */
+    members?: SelectOption[];
     onDuplicate?: (draft: TimeEntryDraft) => void;
 };
 
@@ -40,6 +44,7 @@ export function TimeEntryForm({
     onClose,
     projects,
     entries,
+    members = [],
     onDuplicate,
 }: Props) {
     const { t } = useTranslation();
@@ -57,6 +62,7 @@ export function TimeEntryForm({
                     onClose={onClose}
                     projects={projects}
                     entries={entries}
+                    members={members}
                     onDuplicate={onDuplicate}
                 />
             )}
@@ -69,6 +75,7 @@ function TimeEntryFields({
     onClose,
     projects,
     entries,
+    members = [],
     onDuplicate,
 }: Omit<Props, 'draft'> & { draft: TimeEntryDraft }) {
     const { t } = useTranslation();
@@ -135,7 +142,7 @@ function TimeEntryFields({
         entries.some(
             (entry) =>
                 entry.id !== draft.id &&
-                entry.userId === draft.userId &&
+                entry.userId === values.userId &&
                 overlaps(
                     {
                         start: startAt,
@@ -192,6 +199,18 @@ function TimeEntryFields({
             className="grid gap-4"
             data-test="time-entry-form"
         >
+            {members.length > 1 && (
+                <SelectField
+                    name="user_id"
+                    label={t('Member')}
+                    options={members}
+                    value={String(values.userId)}
+                    onChange={(userId) => set({ userId: Number(userId) })}
+                    error={errors.user_id}
+                    data-test="time-entry-member"
+                />
+            )}
+
             <ProjectPicker
                 projects={projects}
                 value={values.projectId}
@@ -295,7 +314,7 @@ function TimeEntryFields({
                 </Switch.Content>
             </Switch>
 
-            {errors.user_id && (
+            {errors.user_id && members.length <= 1 && (
                 <p className="text-sm text-danger">{errors.user_id}</p>
             )}
 

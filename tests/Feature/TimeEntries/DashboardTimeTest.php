@@ -37,6 +37,7 @@ it('shows members their own time today and this week', function () {
             ->where('todaySeconds', 2 * 3600)
             ->where('weekSeconds', 5 * 3600)
             ->has('recentEntries', 3)
+            ->where('members', [])
             ->where('team', null)
             ->where('projectsNearEstimate', null));
 });
@@ -46,6 +47,10 @@ it('shows owners and admins the team week and projects near their estimate', fun
         ->get(route('dashboard', ['current_organization' => $this->organization->slug]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('weekSeconds', 3600)
+            ->where('members', [
+                ['value' => (string) $this->member->id, 'label' => 'Mia Member'],
+                ['value' => (string) $this->owner->id, 'label' => 'Olivia Owner'],
+            ])
             ->has('team', 2)
             ->where('team.0.name', 'Mia Member')
             ->where('team.0.seconds', 5 * 3600)

@@ -2,6 +2,7 @@ import { Button, Modal } from '@heroui/react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Clock, Plus } from 'lucide-react';
 import { useState } from 'react';
+import type { SelectOption } from '@/components/form/select-field';
 import { EstimateProgress } from '@/components/estimate-progress';
 import Heading from '@/components/heading';
 import { PendingInvitationList } from '@/components/pending-invitation-list';
@@ -30,6 +31,7 @@ type Props = {
     weekSeconds: number;
     recentEntries: TimeEntry[];
     projects: ProjectOption[];
+    members: SelectOption[];
     team: { id: number; name: string; seconds: number }[] | null;
     projectsNearEstimate:
         | {
@@ -60,6 +62,7 @@ export default function Dashboard({
     weekSeconds,
     recentEntries,
     projects,
+    members,
     team,
     projectsNearEstimate,
 }: Props) {
@@ -241,6 +244,7 @@ export default function Dashboard({
                 onClose={() => setDraft(null)}
                 projects={projects}
                 entries={recentEntries}
+                members={members}
             />
 
             <Modal.Backdrop
