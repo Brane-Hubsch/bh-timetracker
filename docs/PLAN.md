@@ -305,7 +305,7 @@ Actions för tidposter, durationsparser, listvy, formulär (desktop + mobil-draw
 **Fas 4 – Rapporter** *(klar, se Status nedan)*
 ReportBuilder, sammanfattning, detaljerad, projektuppföljning, CSV/XLSX-export.
 
-**Fas 5 – MCP**
+**Fas 5 – MCP** *(klar, se Status nedan)*
 Passport + `laravel/mcp`, alla verktyg i 6.3 med tester, sidan "AI-kopplingar", test mot Claude via tunnel.
 
 **Fas 6 – Finputs inför produktion**
@@ -404,6 +404,39 @@ Avvikelser och förtydliganden:
   - Filnamnet innehåller organisation, rapporttyp och period.
 - **Kundsidans** periodval har bara förvalen. Anpassad period finns i rapporten.
 - **Rättningar:** nyskapade organisationer får databasens standardvärden direkt (veckostart, valuta, tidszon). Tidigare började veckan på söndag tills organisationen lästes om. Dessutom ersätter `t()` nu längsta platshållaren först, som Laravel gör.
+
+### Status Fas 5 (2026-11-18)
+
+Klar. Byggt:
+
+- **MCP-server:** `TimetrackerServer` på `/mcp`, skyddad med OAuth 2.1 via Passport.
+  - `Mcp::oauthRoutes()` ger discovery, metadata och dynamisk klientregistrering.
+  - Rate limits: 120 anrop/min per användare på `/mcp`, och 10/min per IP på de publika OAuth-routerna.
+- **Alla elva verktyg i 6.3:**
+  - Verktygen agerar som den inloggade användaren via samma Actions, policies och `ReportBuilder` som webben.
+  - Poster som skapas via MCP får `source = mcp`.
+  - Projekt, kunder och medlemmar kan anges med id eller namn. När ett namn matchar flera listas kandidaterna med id, så att AI:n kan fråga användaren.
+  - Läsverktyg är märkta `IsReadOnly`, `delete_time_entry` är märkt `IsDestructive`.
+- **Serverinstruktioner** beskriver domänen, datumtolkning i användarens tidszon och att AI:n ska bekräfta innan den skapar många poster eller ändrar och tar bort.
+- **Godkännandesida för OAuth** (`auth/oauth-authorize`), i appens utseende och på svenska.
+- **Inställningar → AI-kopplingar:**
+  - MCP-adress med kopieringsknapp.
+  - Instruktioner för Claude (webb, desktop, mobil), Claude Code och andra klienter.
+  - Lista över anslutna assistenter med "Koppla från" (återkallar access- och refresh-tokens).
+- **Loggning:** varje MCP-anrop loggas med metod, verktyg, användare, status och tid. Argumenten loggas inte eftersom de kan innehålla beskrivningar.
+- **Verifierat lokalt hela vägen:** dynamisk registrering → inloggning → godkännande → PKCE-tokenutbyte → `initialize` → verktygsanrop.
+
+Avvikelser och förtydliganden:
+
+- **Test mot Claude via tunnel återstår.** Det kräver en publik HTTPS-adress och görs manuellt (se README).
+- **Prompts** (`weekly_summary`, `fill_week_from_notes`) är valfria i planen och är inte byggda. Verktygen och instruktionerna räcker för de exemplen.
+- **Token-livslängd:** access-token 1 dag och refresh-token 60 dagar (Passports standard är ett år). Gamla tokens rensas dagligen med `passport:purge`. Device-flödet är avstängt.
+- **Verktygens svar och felmeddelanden är på engelska**, eftersom de läses av AI:n och inte är UI. AI:n svarar på användarens språk.
+- **Gränser:** `create_time_entries` tar högst 50 poster per anrop (allt eller inget). `list_time_entries` returnerar högst 500 poster och säger till när listan är avkortad.
+- **Ta bort** kan inte ångras via MCP; ångra finns bara i webbens notis.
+- **`get_project_status`** visar förbrukad tid för alla på projekt man har åtkomst till, på samma sätt som projektuppföljningen.
+- **Rättning av inloggningsflödet:** om en användare loggar in mitt i en OAuth-godkännande (även via passkey-förslaget efter inloggning) kommer hen tillbaka till godkännandesidan. Den sidan laddas alltid som en hel sida, eftersom Passport skickar vidare till klientens domän.
+- **Tidstolkning:** webbformuläret och MCP använder samma klass (`LocalTimes`) för att tolka lokal tid.
 
 ## 8. Senare (medvetet bortvalt i v1)
 

@@ -34,6 +34,18 @@ First owner in a new environment (registration is invite-only):
 php artisan app:create-owner you@example.com "Your Name" "Organization"
 ```
 
+## AI assistants (MCP)
+
+The MCP server lives at `{APP_URL}/mcp` and uses OAuth 2.1 (Passport). `composer setup` creates the
+Passport keys (`php artisan passport:keys`; the keys in `storage/` are not committed – in production set
+`PASSPORT_PRIVATE_KEY` / `PASSPORT_PUBLIC_KEY` or run the command on deploy). `APP_URL` must be the public
+URL, since it is used in the OAuth metadata.
+
+Connect Claude: Settings → AI connections in the app shows the address and steps. To try it against
+claude.ai locally, expose the app over HTTPS (e.g. `herd share` or `cloudflared tunnel --url
+http://localhost:8000`), set `APP_URL` to the tunnel URL and add it as a custom connector. For debugging
+use `php artisan mcp:inspector mcp`.
+
 ## Quality checks
 
 ```bash

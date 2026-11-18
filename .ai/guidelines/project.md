@@ -60,6 +60,19 @@ describes; propose additions instead of building them.
 - Amounts are billable seconds × the snapshotted rate, rounded per entry, in minor units.
 - Report filters live in the URL (`ReportRequest`), so reports can be bookmarked.
 
+## MCP (AI assistants)
+
+- The MCP server is `App\Mcp\Servers\TimetrackerServer` on `/mcp` (`routes/ai.php`), protected by
+  Passport OAuth (`auth:api`). Tools act as the signed-in user: resolve the organization with
+  `App\Mcp\Support\McpContext::from($request)` (optional `organization` slug, else the user's current
+  one) and authorize with the same policies as the web app.
+- Tools stay thin: validate → resolve names with `App\Mcp\Support\Lookup` (id or name; ambiguous names
+  error with the candidates) → authorize → call an Action / `ReportBuilder` → return
+  `Response::structured()` with local times and decimal hours. Entries created via MCP use
+  `TimeEntrySource::Mcp`.
+- Tool descriptions and error messages are English (read by the AI). Mark read tools `#[IsReadOnly]`
+  and destructive ones `#[IsDestructive]`.
+
 ## Authentication
 
 - Passwordless: passkeys (Fortify / `laravel/passkeys`), Google (Socialite) and magic links
