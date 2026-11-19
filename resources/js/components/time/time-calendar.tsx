@@ -302,7 +302,7 @@ export function TimeCalendar({
                                 <Banknote
                                     role="img"
                                     aria-label={t('Billable')}
-                                    className="absolute bottom-0.5 left-2 size-3.5"
+                                    className="absolute bottom-px left-2 size-3.5"
                                     style={{ color }}
                                 />
                             )}
