@@ -97,6 +97,13 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Backups (config/backup.php): the directory of pg_dump when it is not on the PATH or another
+            // version is (e.g. /usr/lib/postgresql/16/bin/). Dumps leave out owners and grants so they
+            // can be restored with any database user.
+            'dump' => [
+                'dump_binary_path' => env('DB_DUMP_BINARY_PATH', ''),
+                'add_extra_option' => '--no-owner --no-privileges',
+            ],
         ],
 
         'sqlsrv' => [

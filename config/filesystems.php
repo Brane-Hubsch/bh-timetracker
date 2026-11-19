@@ -60,6 +60,27 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Nightly backups (config/backup.php): a private, S3-compatible bucket of their own, e.g.
+         * Cloudflare R2 (region "auto", endpoint https://<account id>.r2.cloudflarestorage.com) or AWS
+         * S3. The checksum options keep uploads working on S3-compatible services that don't support
+         * the AWS SDK's default checksums.
+         */
+        'backups' => [
+            'driver' => 's3',
+            'key' => env('BACKUP_AWS_ACCESS_KEY_ID'),
+            'secret' => env('BACKUP_AWS_SECRET_ACCESS_KEY'),
+            'region' => env('BACKUP_AWS_DEFAULT_REGION', 'auto'),
+            'bucket' => env('BACKUP_AWS_BUCKET'),
+            'endpoint' => env('BACKUP_AWS_ENDPOINT'),
+            'use_path_style_endpoint' => (bool) env('BACKUP_AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => true,
+        ],
+
     ],
 
     /*
