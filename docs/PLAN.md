@@ -234,7 +234,7 @@ resources/js/
 
 ### 5.6 Produktion (avvaktas)
 
-Det enda som bestäms nu: Postgres, köer (database-driver räcker initialt), e-post för inbjudningar/magic links, HTTPS. Hosting, CI/CD-deploy och backup beslutas när v1 närmar sig klart.
+Det enda som bestäms nu: Postgres, köer (database-driver räcker initialt), e-post för inbjudningar/magic links, HTTPS. Hosting och CI/CD-deploy beslutas när v1 närmar sig klart. Backup är byggd, se "Tillägg efter Fas 6: nattlig backup".
 
 ## 6. MCP-server (AI-integration)
 
@@ -471,7 +471,7 @@ Klar, förutom beslut om hosting. Byggt:
   - `.env.production.example` (Postgres med SSL, databaskö, krypterade och säkra sessionscookies, SMTP, Passport-nycklar).
   - Driftchecklista i README.
 
-Kvar att besluta: **hosting** (se förslag i sammanfattningen till beställaren). Backup och CI/CD-deploy beslutas samtidigt.
+Kvar att besluta: **hosting** (se förslag i sammanfattningen till beställaren). CI/CD-deploy beslutas samtidigt. Backup är byggd (se nedan) och fungerar oavsett hosting.
 
 ### Tillägg efter Fas 6: kommandomeny (⌘K) (2026-11-19)
 
@@ -602,6 +602,25 @@ Beställt i efterhand. Designen finns i Figma-filen TimeReport på sidan "Bilder
   - `App\Services\Images\ImageStorage` (lagra, URL, PNG-data för PDF, ta bort).
   - Actions `App\Actions\Images\UpdateUserAvatar`, `UpdateOrganizationLogo` och `UpdateClientLogo`. Den nya bilden sparas först, sedan uppdateras kolumnen, sedan tas den gamla bort.
   - Kolumnerna `users.avatar_path`, `organizations.logo_path` och `clients.logo_path`.
+
+### Tillägg efter Fas 6: nattlig backup (2026-11-19)
+
+Beställt i efterhand. Backup till en S3-kompatibel bucket, i första hand Cloudflare R2, med `spatie/laravel-backup` och `league/flysystem-aws-s3-v3` (godkända beroenden). Lösningen är inte bunden till någon hosting; den kräver bara att schemaläggaren körs. Väljs senare hosting med hanterad Postgres blir detta en extra, oberoende kopia.
+
+- **Innehåll:** en Postgres-dump (`pg_dump`, gzip, utan ägare och rättigheter så att den går att läsa in med valfri databasanvändare) och de uppladdade bilderna (`storage/app/public/images`). Allt annat finns i git eller kan byggas om. Ligger bilderna själva i en bucket (`IMAGES_DISK=s3`) tas bara databasen med, och bild-bucketen skyddas med versionshantering.
+- **Inte med:** `.env`, `APP_KEY`, Passport-nycklarna och arkivlösenordet. De förvaras separat, t.ex. i en lösenordshanterare.
+- **Schema** (`routes/console.php`, svensk tid, bara i produktion, `onOneServer`):
+  - 02:30 `backup:run`
+  - 03:15 `backup:clean`
+  - 08:00 `backup:monitor`
+- **Gallring:** alla backuper i 7 dagar, en per dag fram till 30 dagar, en per vecka i 8 veckor till och en per månad i 12 månader till. Högst 5 GB; den senaste tas aldrig bort.
+- **Säkerhet:**
+  - Arkiven krypteras med AES-256 (`BACKUP_ARCHIVE_PASSWORD`).
+  - Egen privat bucket och egna nycklar (`BACKUP_AWS_*`), skilda från bilderna.
+  - API-token begränsad till bucketen.
+  - Rekommenderat: en låsregel (R2 bucket lock / S3 Object Lock) så att en kapad server inte kan radera backuperna.
+- **Larm:** e-post till `BACKUP_NOTIFICATION_EMAIL` när en backup eller gallring misslyckas, och när morgonkontrollen hittar att senaste backupen saknas, är äldre än ett dygn, är under hälften så stor som den förra (`App\Support\Backups\NewestBackupIsNotMuchSmaller`) eller att backuperna tar mer än 5 GB. Ett misslyckat försök görs om efter 5 minuter. Lyckade körningar loggas men mejlas inte. Mejlen är på engelska (paketets texter).
+- **Återställning:** beskriven i README. Provas mot en tom databas en gång per kvartal.
 
 ## 8. Senare (medvetet bortvalt i v1)
 
