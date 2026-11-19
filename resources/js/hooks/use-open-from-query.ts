@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 /**
@@ -19,7 +20,12 @@ export function useOpenFromQuery(
         open(url.searchParams);
 
         [param, ...alsoRemove].forEach((key) => url.searchParams.delete(key));
-        window.history.replaceState(window.history.state, '', url.toString());
+        // A client-side visit, so Inertia's own page state and history entry get the clean URL too.
+        router.replace({
+            url: url.pathname + url.search + url.hash,
+            preserveState: true,
+            preserveScroll: true,
+        });
         // Only on the first render of the page.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
