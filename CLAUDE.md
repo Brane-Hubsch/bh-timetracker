@@ -62,6 +62,8 @@ describes; propose additions instead of building them.
 - Entries count towards the local day they start on. Day/week/month bucketing happens in PHP.
 - Amounts are billable seconds × the snapshotted rate, rounded per entry, in minor units.
 - Report filters live in the URL (`ReportRequest`), so reports can be bookmarked.
+- Exports go through `App\Services\Reports\ReportExporter` (CSV/XLSX via openspout, PDF via dompdf from
+  the Blade views in `resources/views/reports/pdf`) with the same `ReportFilters` visibility rules.
 
 ## MCP (AI assistants)
 

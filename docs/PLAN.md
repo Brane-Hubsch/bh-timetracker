@@ -157,7 +157,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, anpassad), filter (medlemmar, kunder, projekt, debiterbar), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt.
 - **Detaljerad**: lista med alla poster enligt filter, sortering, summering.
 - **Projektuppföljning**: alla aktiva projekt med estimat, förbrukat, kvar och procent.
-- **Export**: CSV och XLSX (t.ex. `openspout/openspout`). PDF senare.
+- **Export**: CSV och XLSX (t.ex. `openspout/openspout`). PDF tillagt i efterhand (se tillägg efter Fas 6).
 - Rapportens filter ligger i URL:en så att den går att bokmärka och dela internt.
 - Medlemmar ser endast sin egen tid. Belopp visas endast för ägare/admin.
 
@@ -496,6 +496,17 @@ Beställt i efterhand. Formulär för att skapa och redigera projekt och kunder 
 - Sidorna `projects/create` och `projects/{project}/edit` är borttagna. Kommandomenyn och länken i tidformuläret öppnar panelen via `projekt?new=1`.
 - Formulärets val (kunder, färger, valuta) skickas bara till användare som får skapa eller ändra projekt.
 - **Kunder:** "Ny kund" öppnar panelen på kundlistan (även via kommandomenyn) och "Redigera" på kundsidan.
+
+### Tillägg efter Fas 6: PDF-export av rapporter (2026-11-19)
+
+Beställt i efterhand (planen sa "PDF senare"). Sammanfattningen och den detaljerade rapporten kan exporteras som PDF, med samma filter som på skärmen.
+
+- **Motor:** `barryvdh/laravel-dompdf` (godkänt beroende). Ren PHP, ingen webbläsare eller extern tjänst på servern, så den fungerar oavsett hosting.
+- **Innehåll:** organisation, rubrik, period och aktiva filter (namn slås upp inom organisationen), nyckeltal (timmar, debiterbara timmar och belopp), tabell och sidfot med skapad tid, användare och sidnummer.
+  - Sammanfattningen är stående A4 med grupper och undergrupper.
+  - Den detaljerade rapporten är liggande A4 med en rad per post.
+- **Behörighet:** samma regler som CSV/XLSX. Medlemmar får bara sin egen tid och inga belopp.
+- **Kod:** `ReportExporter` (format `pdf`) renderar Blade-vyerna i `resources/views/reports/pdf`.
 
 ## 8. Senare (medvetet bortvalt i v1)
 
