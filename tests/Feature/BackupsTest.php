@@ -88,6 +88,29 @@ it('mails when the newest backup is much smaller than the one before it', functi
     'slightly smaller' => [900, false],
 ]);
 
+it('boots when the notification addresses are empty', function () {
+    $variables = ['BACKUP_NOTIFICATION_EMAIL', 'MAIL_FROM_ADDRESS'];
+    $original = array_map(fn (string $name) => $_SERVER[$name] ?? null, $variables);
+
+    try {
+        foreach ($variables as $name) {
+            $_SERVER[$name] = $_ENV[$name] = '';
+        }
+
+        $config = Config::fromArray(require config_path('backup.php'));
+    } finally {
+        foreach ($variables as $index => $name) {
+            unset($_SERVER[$name], $_ENV[$name]);
+
+            if ($original[$index] !== null) {
+                $_SERVER[$name] = $_ENV[$name] = $original[$index];
+            }
+        }
+    }
+
+    expect($config->notifications->mail->to)->toBe('hello@example.com');
+});
+
 it('runs the backups every night in production only', function () {
     $events = collect(app(Schedule::class)->events())
         ->filter(fn (Event $event) => str_contains((string) $event->command, 'backup:'))
