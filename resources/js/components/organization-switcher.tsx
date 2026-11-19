@@ -1,12 +1,11 @@
 import { Button, Dropdown, Header, Label, Separator } from '@heroui/react';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 import CreateOrganizationModal from '@/components/create-organization-modal';
+import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { switchMethod } from '@/routes/organizations';
-import type { Organization } from '@/types';
 
 type Props = {
     className?: string;
@@ -14,36 +13,14 @@ type Props = {
 };
 
 /**
- * Switches the active organization. On tenant pages the URL's organization segment is replaced so
- * the user stays on the same page in the new organization.
+ * Shows and switches the active organization (see useSwitchOrganization).
  */
 export function OrganizationSwitcher({ className, compact = false }: Props) {
     const { t } = useTranslation();
     const { currentOrganization, organizations } = usePage().props;
     const [isCreateOpen, setCreateOpen] = useState(false);
 
-    const switchOrganization = (organization: Organization) => {
-        const previousSlug = currentOrganization?.slug;
-
-        router.visit(switchMethod(organization.slug), {
-            onFinish: () => {
-                const path = window.location.pathname;
-                const segment = `/${previousSlug}/`;
-
-                if (previousSlug && path.startsWith(segment)) {
-                    router.visit(
-                        path.replace(segment, `/${organization.slug}/`) +
-                            window.location.search,
-                        { replace: true },
-                    );
-
-                    return;
-                }
-
-                router.reload();
-            },
-        });
-    };
+    const switchOrganization = useSwitchOrganization();
 
     const onAction = (key: React.Key) => {
         if (key === 'create') {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Clients\ClientController;
+use App\Http\Controllers\CommandPaletteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OnboardingController;
@@ -27,6 +28,8 @@ Route::prefix('{current_organization}')
         Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');
         Route::delete('time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('time.destroy');
         Route::post('time/{timeEntry}/restore', [TimeEntryController::class, 'restore'])->withTrashed()->name('time.restore');
+
+        Route::get('command-palette', CommandPaletteController::class)->name('command-palette');
 
         Route::get('reports', [ReportController::class, 'summary'])->name('reports.summary');
         Route::get('reports/detailed', [ReportController::class, 'detailed'])->name('reports.detailed');

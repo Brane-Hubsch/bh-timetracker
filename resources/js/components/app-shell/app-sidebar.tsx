@@ -1,5 +1,10 @@
 import { Link } from '@inertiajs/react';
+import { Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import {
+    CommandPaletteShortcut,
+    useCommandPalette,
+} from '@/components/command-palette';
 import { OrganizationSwitcher } from '@/components/organization-switcher';
 import { UserMenu } from '@/components/user-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -15,6 +20,7 @@ export function AppSidebar({ className }: { className?: string }) {
     const { t } = useTranslation();
     const items = useMainNavigation();
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { open } = useCommandPalette();
 
     return (
         <aside
@@ -28,6 +34,17 @@ export function AppSidebar({ className }: { className?: string }) {
             </Link>
 
             <OrganizationSwitcher />
+
+            <button
+                type="button"
+                onClick={open}
+                className="flex items-center gap-2 rounded-xl border border-separator bg-background px-3 py-2 text-sm text-muted transition-colors hover:bg-default focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+                data-test="command-palette-trigger"
+            >
+                <Search className="size-4" />
+                {t('Search…')}
+                <CommandPaletteShortcut className="ms-auto" />
+            </button>
 
             <nav aria-label={t('Main')} className="grid gap-1">
                 {items.map((item) => {

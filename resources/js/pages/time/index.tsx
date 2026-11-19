@@ -14,6 +14,7 @@ import {
 } from '@/components/time/time-entry-form';
 import { TimeEntryList } from '@/components/time/time-entry-list';
 import { useIsDesktop } from '@/hooks/use-media-query';
+import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import {
     addDays,
@@ -64,6 +65,33 @@ export default function TimeIndex({
     const view: View = requestedView ?? (isDesktop ? 'week' : 'list');
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
+
+    // Opened from the command palette ("Report time", "Report time on …", "Copy previous week").
+    useOpenFromQuery(
+        'new',
+        (params) => {
+            const project = projects.find(
+                (option) => option.value === params.get('project'),
+            );
+            const base = newDraft(
+                dates.includes(today) ? today : date,
+                entries,
+                member.id,
+            );
+
+            setDraft(
+                project
+                    ? {
+                          ...base,
+                          projectId: project.value,
+                          isBillable: project.isBillable,
+                      }
+                    : base,
+            );
+        },
+        ['project'],
+    );
+    useOpenFromQuery('copy', () => setCopyOpen(true));
 
     const dates = weekDates(weekStart);
     const weekTotal = entries.reduce(

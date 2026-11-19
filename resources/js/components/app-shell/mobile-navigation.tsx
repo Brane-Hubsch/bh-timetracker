@@ -1,8 +1,17 @@
 import { Button, Drawer, Separator } from '@heroui/react';
 import { Link } from '@inertiajs/react';
-import { Building2, LogOut, Menu, Palette, Shield, User } from 'lucide-react';
+import {
+    Building2,
+    LogOut,
+    Menu,
+    Palette,
+    Search,
+    Shield,
+    User,
+} from 'lucide-react';
 import { useState } from 'react';
 import AppLogo from '@/components/app-logo';
+import { useCommandPalette } from '@/components/command-palette';
 import { OrganizationSwitcher } from '@/components/organization-switcher';
 import { UserMenu, logoutAndFlush } from '@/components/user-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -19,6 +28,9 @@ import { edit as editSecurity } from '@/routes/security';
  * Top bar on small screens: logo, organization switcher and account menu.
  */
 export function MobileTopBar({ className }: { className?: string }) {
+    const { t } = useTranslation();
+    const { open } = useCommandPalette();
+
     return (
         <header
             className={cn(
@@ -30,6 +42,16 @@ export function MobileTopBar({ className }: { className?: string }) {
                 <AppLogo />
             </Link>
             <div className="flex items-center gap-1">
+                <Button
+                    isIconOnly
+                    variant="ghost"
+                    size="sm"
+                    aria-label={t('Search…')}
+                    onPress={open}
+                    data-test="command-palette-trigger-mobile"
+                >
+                    <Search className="size-4" />
+                </Button>
                 <OrganizationSwitcher compact />
                 <UserMenu />
             </div>

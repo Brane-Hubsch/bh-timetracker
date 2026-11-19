@@ -21,6 +21,7 @@ import Heading from '@/components/heading';
 import InviteMemberModal from '@/components/invite-member-modal';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
+import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import { index, update } from '@/routes/organizations';
 import { destroy as destroyInvitation } from '@/routes/organizations/invitations';
@@ -59,6 +60,9 @@ export default function OrganizationEdit({
     const { t } = useTranslation();
     const getInitials = useInitials();
     const [isInviteOpen, setInviteOpen] = useState(false);
+    useOpenFromQuery('invite', () =>
+        setInviteOpen(permissions.canCreateInvitation),
+    );
     const [isDeleteOpen, setDeleteOpen] = useState(false);
     const [memberToRemove, setMemberToRemove] =
         useState<OrganizationMember | null>(null);

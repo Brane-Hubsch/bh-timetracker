@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ClientFormModal } from '@/components/client-form-modal';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
+import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import { show } from '@/routes/clients';
 import type { ClientListItem } from '@/types';
@@ -17,6 +18,7 @@ type Props = {
 export default function ClientsIndex({ clients, filters }: Props) {
     const { t, tc } = useTranslation();
     const [isCreateOpen, setCreateOpen] = useState(false);
+    useOpenFromQuery('new', () => setCreateOpen(true));
 
     return (
         <>
