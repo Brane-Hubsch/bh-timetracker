@@ -8,6 +8,7 @@ import {
     ToggleButton,
     ToggleButtonGroup,
 } from '@heroui/react';
+import type { ReactNode } from 'react';
 import { ProjectDot } from '@/components/project-dot';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
@@ -19,6 +20,7 @@ type Props = {
     onChange: (projectId: string) => void;
     error?: string;
     autoFocus?: boolean;
+    labelAction?: ReactNode;
     /** Recently used project ids, newest first; overrides `isRecent` (e.g. for another member). */
     recentIds?: string[];
 };
@@ -50,6 +52,7 @@ export function ProjectPicker({
     onChange,
     error,
     autoFocus,
+    labelAction,
     recentIds,
 }: Props) {
     const { t } = useTranslation();
@@ -81,7 +84,10 @@ export function ProjectPicker({
                 menuTrigger="focus"
                 data-test="project-picker"
             >
-                <Label>{t('Project')}</Label>
+                <div className="flex items-center justify-between gap-2">
+                    <Label>{t('Project')}</Label>
+                    {labelAction}
+                </div>
                 <ComboBox.InputGroup>
                     <Input
                         placeholder={t('Search projects')}

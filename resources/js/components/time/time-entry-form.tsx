@@ -9,10 +9,11 @@ import {
     Switch,
     TextArea,
     TextField,
+    Tooltip,
 } from '@heroui/react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
-import { Copy, Trash2, UserRound } from 'lucide-react';
+import { Banknote, Copy, Trash2, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { TagInput } from '@/components/form/tag-input';
@@ -499,6 +500,41 @@ export function TimeEntryForm({
                         onChange={changeProject}
                         error={errors.project_id}
                         autoFocus={!isEditing && current.projectId === ''}
+                        labelAction={
+                            <Tooltip delay={350} closeDelay={0}>
+                                <Tooltip.Trigger
+                                    role="presentation"
+                                    tabIndex={-1}
+                                >
+                                    <Switch
+                                        aria-label={t('Billable')}
+                                        size="sm"
+                                        isSelected={current.isBillable ?? true}
+                                        onChange={(isBillable) =>
+                                            set({ isBillable })
+                                        }
+                                    >
+                                        <Switch.Content className="min-h-6 gap-2">
+                                            <Banknote
+                                                aria-hidden="true"
+                                                className="shrink-0 text-muted"
+                                                size={14}
+                                            />
+                                            <Switch.Control>
+                                                <Switch.Thumb />
+                                            </Switch.Control>
+                                        </Switch.Content>
+                                    </Switch>
+                                </Tooltip.Trigger>
+                                <Tooltip.Content
+                                    placement="bottom end"
+                                    offset={4}
+                                    className="rounded-full px-2 py-1.5"
+                                >
+                                    {t('Billable')}
+                                </Tooltip.Content>
+                            </Tooltip>
+                        }
                     />
 
                     <div className="grid gap-2">
@@ -667,18 +703,6 @@ export function TimeEntryForm({
                             </Description>
                         )}
                     </TextField>
-
-                    <Switch
-                        isSelected={current.isBillable ?? true}
-                        onChange={(isBillable) => set({ isBillable })}
-                    >
-                        <Switch.Content>
-                            <Switch.Control>
-                                <Switch.Thumb />
-                            </Switch.Control>
-                            <Label>{t('Billable')}</Label>
-                        </Switch.Content>
-                    </Switch>
 
                     {errors.user_id && members.length <= 1 && (
                         <p className="text-sm text-danger">{errors.user_id}</p>
