@@ -45,6 +45,7 @@ class ProjectController extends Controller
         $projects = Project::query()
             ->accessibleBy($user, $organization)
             ->with('client')
+            ->withSum('timeEntries as consumed_seconds', 'duration_seconds')
             ->when($status === 'archived', fn ($query) => $query->archived(), fn ($query) => $query->active())
             ->when($clientId, fn ($query) => $query->where('client_id', $clientId))
             ->search($search)
@@ -52,7 +53,11 @@ class ProjectController extends Controller
             ->get();
 
         return Inertia::render('projects/index', [
-            'projects' => $projects->map(fn (Project $project) => $this->listItem($project)),
+            'projects' => $projects->map(fn (Project $project) => [
+                ...$this->listItem($project),
+                // All time reported on the project, as on the project page and in the follow-up report.
+                'consumedSeconds' => is_numeric($consumed = $project->getAttribute('consumed_seconds')) ? (int) $consumed : 0,
+            ]),
             'clients' => Client::query()->active()->orderBy('name')->get(['id', 'name'])
                 ->when(! $user->can('viewAny', Client::class), fn ($clients) => $clients
                     ->whereIn('id', $projects->pluck('client_id')->filter()->all())

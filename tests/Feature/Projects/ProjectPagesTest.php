@@ -3,7 +3,9 @@
 use App\Enums\OrganizationRole;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\TimeEntry;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -48,6 +50,27 @@ it('lists accessible projects only for members', function () {
     $this->actingAs($this->owner)
         ->get(route('projects.index', ['current_organization' => $this->slug]))
         ->assertInertia(fn (Assert $page) => $page->has('projects', 3));
+});
+
+it('shows the time reported on each project in the list', function () {
+    $project = Project::factory()->for($this->organization)->create(['name' => 'Webbshop', 'estimate_seconds' => 10 * 3600]);
+    Project::factory()->for($this->organization)->create(['name' => 'Tomt']);
+    $entry = fn (User $user, string $start, int $minutes) => TimeEntry::factory()->by($user, $project)
+        ->between(CarbonImmutable::parse($start), CarbonImmutable::parse($start)->addMinutes($minutes))
+        ->create();
+
+    $entry($this->owner, '2026-11-16 08:00', 90);
+    $entry($this->member, '2026-11-17 08:00', 60);
+    $entry($this->owner, '2026-11-18 08:00', 30)->delete();
+
+    $this->actingAs($this->member)
+        ->get(route('projects.index', ['current_organization' => $this->slug]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('projects.0.name', 'Tomt')
+            ->where('projects.0.consumedSeconds', 0)
+            ->where('projects.1.name', 'Webbshop')
+            ->where('projects.1.consumedSeconds', 9000)
+            ->where('projects.1.estimateSeconds', 36000));
 });
 
 it('filters by search, client and status', function () {

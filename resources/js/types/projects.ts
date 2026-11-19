@@ -26,6 +26,8 @@ export type ProjectListItem = {
     estimateSeconds: number | null;
     isPrivate: boolean;
     isArchived: boolean;
+    /** All time reported on the project. */
+    consumedSeconds: number;
 };
 
 export type ProjectDetails = ProjectListItem & {
@@ -34,7 +36,6 @@ export type ProjectDetails = ProjectListItem & {
     visibility: 'public' | 'private';
     startsOn: string | null;
     endsOn: string | null;
-    consumedSeconds: number;
 };
 
 export type ProjectFormValues = {

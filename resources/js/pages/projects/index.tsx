@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
+import { EstimateProgress } from '@/components/estimate-progress';
 import { ProjectDot } from '@/components/project-dot';
 import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
@@ -97,7 +98,7 @@ export default function ProjectsIndex({
                         <li key={project.id} data-test="project-row">
                             <Link
                                 href={show({ project: project.id })}
-                                className="flex items-center gap-3 p-4 transition-colors hover:bg-surface-secondary"
+                                className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4 transition-colors hover:bg-surface-secondary"
                             >
                                 <ProjectDot color={project.color} />
                                 <div className="min-w-0 flex-1 space-y-1">
@@ -121,19 +122,35 @@ export default function ProjectsIndex({
                                         {[
                                             project.client?.name ??
                                                 t('No client'),
-                                            project.estimateSeconds !== null &&
-                                                t('Estimate :hours', {
-                                                    hours: formatHours(
-                                                        project.estimateSeconds,
-                                                        intlLocale,
-                                                    ),
-                                                }),
                                             !project.isBillable &&
                                                 t('Not billable'),
                                         ]
                                             .filter(Boolean)
                                             .join(' · ')}
                                     </p>
+                                </div>
+                                {/* Reported time: below the name on mobile, beside it from sm. */}
+                                <div className="order-last w-full pl-6 sm:order-none sm:w-56 sm:pl-0">
+                                    {project.estimateSeconds ? (
+                                        <EstimateProgress
+                                            consumedSeconds={
+                                                project.consumedSeconds
+                                            }
+                                            estimateSeconds={
+                                                project.estimateSeconds
+                                            }
+                                        />
+                                    ) : (
+                                        <p className="text-xs tabular-nums sm:text-right">
+                                            {formatHours(
+                                                project.consumedSeconds,
+                                                intlLocale,
+                                            )}{' '}
+                                            <span className="text-muted">
+                                                {t('reported')}
+                                            </span>
+                                        </p>
+                                    )}
                                 </div>
                                 {project.isArchived && (
                                     <Chip size="sm" variant="soft">
