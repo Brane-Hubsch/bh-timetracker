@@ -1,7 +1,7 @@
 # Production stack: docker compose up -d --build (see the README's Production section).
 #
-# - web: FrankenPHP on ports 80/443 with automatic HTTPS (Let's Encrypt for the host in APP_URL). Runs
-#   the start-up automations: storage:link, migrations and optimize.
+# - web: Laravel Octane on FrankenPHP (worker mode) on ports 80/443 with automatic HTTPS (Let's Encrypt
+#   for the host in APP_URL). Runs the start-up automations first: storage:link, migrations, optimize.
 # - queue / scheduler: the same image running queue:work and schedule:work (incl. nightly backups).
 # - postgres: the database, reachable only inside the stack.
 #
@@ -29,6 +29,22 @@ services:
             target: production
             args:
                 VITE_APP_NAME: ${VITE_APP_NAME:-BH Timetracker}
+        # Worker mode: the app boots once per worker and serves many requests. Octane uses the image's
+        # Caddyfile, so SSL_MODE, trusted proxies, security headers and the health check still apply.
+        # A worker is replaced after --max-requests requests to keep memory in check.
+        command:
+            [
+                'php',
+                'artisan',
+                'octane:start',
+                '--server=frankenphp',
+                '--port=8080',
+                '--caddyfile=/etc/frankenphp/Caddyfile',
+                '--workers=${OCTANE_WORKERS:-auto}',
+                '--max-requests=${OCTANE_MAX_REQUESTS:-500}',
+            ]
+        stop_signal: SIGTERM
+        stop_grace_period: 30s
         environment:
             <<: *app-environment
             # Start-up automations, on this service only so they run once per deploy.

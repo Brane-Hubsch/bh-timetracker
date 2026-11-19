@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 
-# Production image: serversideup/php with FrankenPHP (Caddy) in classic mode, i.e. every request boots
-# the app like PHP-FPM; no Laravel Octane. The same image runs the web server, the queue worker and the
-# scheduler (see compose.yaml). Secrets are never baked in: they come from the environment at runtime.
+# Production image: serversideup/php with FrankenPHP (Caddy). The web service runs Laravel Octane in
+# FrankenPHP's worker mode with the image's frankenphp binary and Caddyfile; the same image runs the
+# queue worker and the scheduler (see compose.yaml). Secrets are never baked in: they come from the
+# environment at runtime.
 
 ARG PHP_IMAGE=serversideup/php:8.5-frankenphp-trixie
 ARG NODE_IMAGE=node:22-trixie-slim
