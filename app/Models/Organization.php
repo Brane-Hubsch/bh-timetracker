@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\GeneratesUniqueOrganizationSlugs;
 use App\Enums\OrganizationRole;
+use App\Services\Images\ImageStorage;
 use Database\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $default_hourly_rate
  * @property int $week_starts_on
  * @property string $timezone
+ * @property string|null $logo_path Uploaded logo (directory in ImageStorage)
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -31,7 +33,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Client> $clients
  * @property-read Collection<int, Project> $projects
  */
-#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone'])]
+#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -146,5 +148,13 @@ class Organization extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * URL of the logo in the size closest to the requested one, or null without a logo.
+     */
+    public function logoUrl(int $size = 128): ?string
+    {
+        return app(ImageStorage::class)->url($this->logo_path, $size);
     }
 }

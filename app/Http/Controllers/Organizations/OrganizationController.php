@@ -64,6 +64,7 @@ class OrganizationController extends Controller
                 'defaultHourlyRate' => $user->can('update', $organization) ? $organization->default_hourly_rate : null,
                 'weekStartsOn' => $organization->week_starts_on,
                 'timezone' => $organization->timezone,
+                'logo' => $organization->logoUrl(256),
             ],
             'members' => $organization->members()->orderBy('name')->get()->map(function (User $member) use ($user, $organization) {
                 /** @var Membership $membership */
@@ -73,7 +74,7 @@ class OrganizationController extends Controller
                     'id' => $member->id,
                     'name' => $member->name,
                     'email' => $member->email,
-                    'avatar' => $member->avatar_url,
+                    'avatar' => $member->avatar,
                     'role' => $membership->role->value,
                     'role_label' => $membership->role->label(),
                     'hourly_rate' => $user->can('viewRates', $organization) ? $membership->hourly_rate : null,

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\User;
+use App\Services\Images\ImageStorage;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -20,10 +21,15 @@ class ProfileController extends Controller
     /**
      * Show the user's profile settings page.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request, #[CurrentUser] User $user, ImageStorage $images): Response
     {
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            // The uploaded picture in preview size, and the one shown without it (from Google).
+            'avatar' => [
+                'uploaded' => $images->url($user->avatar_path, 256),
+                'fallback' => $user->avatar_url,
+            ],
             'status' => $request->session()->get('status'),
         ]);
     }

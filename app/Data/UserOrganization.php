@@ -11,6 +11,8 @@ readonly class UserOrganization
         public ?string $role,
         public ?string $roleLabel,
         public ?bool $isCurrent = null,
+        /** Logo URL (128 px), or null without a logo. */
+        public ?string $logo = null,
     ) {
         //
     }
