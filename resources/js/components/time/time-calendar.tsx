@@ -193,6 +193,7 @@ export function TimeCalendar({
                 }}
                 editable
                 eventMinHeight={28}
+                eventShortHeight={42}
                 eventResizableFromStart
                 events={entries.map((entry) => ({
                     id: String(entry.id),
@@ -243,63 +244,67 @@ export function TimeCalendar({
                         (info.event.extendedProps.tags as
                             | string[]
                             | undefined) ?? [];
-                    const billableLabel =
-                        info.event.extendedProps.isBillable === true
-                            ? t('Billable')
-                            : null;
+                    const isBillable =
+                        info.event.extendedProps.isBillable === true;
+                    const contentSpacing = isBillable
+                        ? info.isShort
+                            ? 'pl-5'
+                            : 'mb-3.5'
+                        : '';
 
                     return (
                         <div
-                            className="h-full w-full overflow-hidden rounded-lg border-l-[3px] px-2 py-0.5 text-xs leading-tight text-foreground"
+                            className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border-l-[3px] px-2 py-0.5 text-xs leading-tight text-foreground"
                             style={{
                                 borderLeftColor: color,
                                 backgroundColor: `color-mix(in oklab, ${color} 18%, var(--surface))`,
                             }}
                         >
-                            <div className="flex items-center gap-1">
-                                <div className="min-w-0 flex-1 truncate font-semibold">
+                            <div
+                                className={`min-h-0 flex-1 overflow-hidden ${contentSpacing}`}
+                            >
+                                <div className="truncate font-semibold">
                                     {info.event.title}
                                 </div>
-                                {billableLabel && (
-                                    <span
-                                        className="flex max-w-[70%] shrink-0 items-center gap-1 text-muted"
-                                        title={billableLabel}
-                                    >
-                                        <Banknote
-                                            aria-hidden="true"
-                                            className="size-3.5 shrink-0"
-                                        />
-                                        <span className="truncate">
-                                            {billableLabel}
-                                        </span>
-                                    </span>
+                                {info.event.extendedProps.description && (
+                                    <div className="truncate text-muted">
+                                        {String(
+                                            info.event.extendedProps
+                                                .description,
+                                        )}
+                                    </div>
+                                )}
+                                <div className="text-muted tabular-nums">
+                                    {info.event.start &&
+                                        timeOf(
+                                            fromCalendarDate(info.event.start),
+                                        )}
+                                    –
+                                    {info.event.end &&
+                                        timeOf(
+                                            fromCalendarDate(info.event.end),
+                                        )}
+                                </div>
+                                {tags.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {tags.map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="max-w-full truncate rounded-full bg-surface/70 px-1.5 py-px text-[0.6875rem] text-foreground"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
-                            {info.event.extendedProps.description && (
-                                <div className="truncate text-muted">
-                                    {String(
-                                        info.event.extendedProps.description,
-                                    )}
-                                </div>
-                            )}
-                            <div className="text-muted tabular-nums">
-                                {info.event.start &&
-                                    timeOf(fromCalendarDate(info.event.start))}
-                                –
-                                {info.event.end &&
-                                    timeOf(fromCalendarDate(info.event.end))}
-                            </div>
-                            {tags.length > 0 && (
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                    {tags.map((tag) => (
-                                        <span
-                                            key={tag}
-                                            className="max-w-full truncate rounded-full bg-surface/70 px-1.5 py-px text-[0.6875rem] text-foreground"
-                                        >
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
+                            {isBillable && (
+                                <Banknote
+                                    role="img"
+                                    aria-label={t('Billable')}
+                                    className="absolute bottom-0.5 left-2 size-3.5"
+                                    style={{ color }}
+                                />
                             )}
                         </div>
                     );
