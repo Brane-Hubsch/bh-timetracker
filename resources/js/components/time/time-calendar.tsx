@@ -192,8 +192,7 @@ export function TimeCalendar({
                     return true;
                 }}
                 editable
-                eventMinHeight={28}
-                eventShortHeight={42}
+                eventMinHeight={0}
                 eventResizableFromStart
                 events={entries.map((entry) => ({
                     id: String(entry.id),
@@ -203,12 +202,6 @@ export function TimeCalendar({
                     // Drawn by eventContent as a soft card in the project colour.
                     backgroundColor: 'transparent',
                     borderColor: 'transparent',
-                    extendedProps: {
-                        description: entry.description,
-                        color: entry.project.color,
-                        tags: entry.tags,
-                        isBillable: entry.isBillable,
-                    },
                 }))}
                 eventClass="time-calendar-event"
                 slotHeaderClass="time-calendar-slot-label"
@@ -238,74 +231,83 @@ export function TimeCalendar({
                     );
                 }}
                 eventContent={(info) => {
-                    const color = String(info.event.extendedProps.color);
-                    // The selection mirror (dragging out a new entry) has no extendedProps.
-                    const tags =
-                        (info.event.extendedProps.tags as
-                            | string[]
-                            | undefined) ?? [];
-                    const isBillable =
-                        info.event.extendedProps.isBillable === true;
-                    const contentSpacing = isBillable
-                        ? info.isShort
-                            ? 'pl-5'
-                            : 'mb-3.5'
-                        : '';
+                    const { id, title, start, end } = info.event;
+                    // The selection preview has dates but no saved entry.
+                    const entry = byId.get(id);
+                    const color = entry?.project.color ?? 'var(--accent)';
+                    const localStart = start && fromCalendarDate(start);
+                    const localEnd = end && fromCalendarDate(end);
+                    const range =
+                        localStart && localEnd
+                            ? `${timeOf(localStart)}–${timeOf(localEnd)}`
+                            : '';
+                    // Use the saved duration, including across DST changes. While resizing,
+                    // FullCalendar's preview has updated wall-clock times.
+                    const durationSeconds =
+                        entry &&
+                        entry.start === localStart &&
+                        entry.end === localEnd
+                            ? entry.durationSeconds
+                            : start && end
+                              ? (end.getTime() - start.getTime()) / 1000
+                              : null;
+                    const duration =
+                        durationSeconds === null
+                            ? ''
+                            : formatDuration(durationSeconds);
 
                     return (
                         <div
-                            className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border-l-[3px] px-2 py-0.5 text-xs leading-tight text-foreground"
+                            className="time-calendar-entry relative size-full overflow-hidden border-l-3 text-xs leading-tight text-foreground"
                             style={{
                                 borderLeftColor: color,
                                 backgroundColor: `color-mix(in oklab, ${color} 18%, var(--surface))`,
                             }}
+                            title={[title, range, duration]
+                                .filter(Boolean)
+                                .join(' · ')}
                         >
-                            <div
-                                className={`min-h-0 flex-1 overflow-hidden ${contentSpacing}`}
-                            >
-                                <div className="truncate font-semibold">
-                                    {info.event.title}
-                                </div>
-                                {info.event.extendedProps.description && (
-                                    <div className="truncate text-muted">
-                                        {String(
-                                            info.event.extendedProps
-                                                .description,
-                                        )}
+                            <div className="time-calendar-entry-layout flex size-full flex-col p-2">
+                                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                                    <div className="shrink-0 truncate font-semibold">
+                                        {title || range}
                                     </div>
-                                )}
-                                <div className="text-muted tabular-nums">
-                                    {info.event.start &&
-                                        timeOf(
-                                            fromCalendarDate(info.event.start),
-                                        )}
-                                    –
-                                    {info.event.end &&
-                                        timeOf(
-                                            fromCalendarDate(info.event.end),
-                                        )}
+                                    {entry?.description && (
+                                        <div className="time-calendar-entry-detail shrink-0 truncate text-[11px]/3.5 text-muted">
+                                            {entry.description}
+                                        </div>
+                                    )}
+                                    {title && range && (
+                                        <div className="time-calendar-entry-range shrink-0 truncate text-[11px]/3.5 font-medium text-muted tabular-nums">
+                                            {range}
+                                        </div>
+                                    )}
+                                    {!!entry?.tags.length && (
+                                        <div className="time-calendar-entry-detail flex shrink-0 flex-wrap gap-1">
+                                            {entry.tags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    className="max-w-full truncate rounded-full bg-surface/70 px-1.5 py-px text-[11px]/3.5 font-medium"
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                                {tags.length > 0 && (
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {tags.map((tag) => (
-                                            <span
-                                                key={tag}
-                                                className="max-w-full truncate rounded-full bg-surface/70 px-1.5 py-px text-[0.6875rem] text-foreground"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
+                                <div className="flex h-3.5 shrink-0 items-center justify-end gap-0.5 text-[11px]/3.5 font-medium text-muted tabular-nums">
+                                    {entry?.isBillable && (
+                                        <Banknote
+                                            role="img"
+                                            aria-label={t('Billable')}
+                                            size={14}
+                                            className="time-calendar-entry-icon absolute shrink-0"
+                                            style={{ color }}
+                                        />
+                                    )}
+                                    {duration}
+                                </div>
                             </div>
-                            {isBillable && (
-                                <Banknote
-                                    role="img"
-                                    aria-label={t('Billable')}
-                                    className="absolute bottom-px left-2 size-3.5"
-                                    style={{ color }}
-                                />
-                            )}
                         </div>
                     );
                 }}
