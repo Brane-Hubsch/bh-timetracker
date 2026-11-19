@@ -56,6 +56,10 @@ class TimeEntryController extends Controller
 
         $previousWeekStart = $weekStart->subWeek();
 
+        $members = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
+            ? $this->presenter->memberOptions($organization)
+            : [];
+
         return Inertia::render('time/index', [
             'date' => $date->toDateString(),
             'today' => CarbonImmutable::now($timezone)->toDateString(),
@@ -66,9 +70,9 @@ class TimeEntryController extends Controller
             'projects' => $this->presenter->projectOptions($organization, $member),
             'member' => ['id' => $member->id, 'name' => $member->name],
             // Owners and admins can switch to another member's time.
-            'members' => $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
-                ? $this->presenter->memberOptions($organization)
-                : [],
+            'members' => $members,
+            // So the entry form's project shortcuts follow the member it reports for.
+            'recentProjects' => $this->presenter->recentProjectsByMember($organization, $members),
             // Loaded on demand for "copy previous week".
             'previousWeek' => Inertia::optional(fn () => TimeEntry::query()
                 ->where('user_id', $member->id)

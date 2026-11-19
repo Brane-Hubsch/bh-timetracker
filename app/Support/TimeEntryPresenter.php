@@ -68,6 +68,50 @@ class TimeEntryPresenter
     }
 
     /**
+     * The projects each member reported time on most recently (last 60 days, newest first, at most
+     * five), keyed by member id. One query for all members, so the time entry form can follow the
+     * member it reports for.
+     *
+     * @param  array<int, int>  $userIds
+     * @return array<int, array<int, int>>
+     */
+    public function recentProjectIds(Organization $organization, array $userIds): array
+    {
+        $recent = [];
+
+        TimeEntry::query()
+            ->forOrganization($organization)
+            ->whereIn('user_id', $userIds)
+            ->where('started_at', '>=', now()->subDays(60))
+            ->selectRaw('user_id, project_id, MAX(started_at) as last_used_at')
+            ->groupBy('user_id', 'project_id')
+            ->get()
+            // MAX() comes back as a 'Y-m-d H:i:s' string on SQLite and Postgres, which sorts as text.
+            ->sortByDesc(fn (TimeEntry $usage) => is_string($lastUsedAt = $usage->getAttribute('last_used_at')) ? $lastUsedAt : '')
+            ->each(function (TimeEntry $usage) use (&$recent): void {
+                if (count($recent[$usage->user_id] ?? []) < 5) {
+                    $recent[$usage->user_id][] = $usage->project_id;
+                }
+            });
+
+        return $recent;
+    }
+
+    /**
+     * Recently used project ids per member, for the time entry form's member picker: keyed by member
+     * id (a JSON object), with the project ids as strings like the project options.
+     *
+     * @param  array<int, array{value: string, label: string}>  $members
+     * @return array<int, array<int, string>>
+     */
+    public function recentProjectsByMember(Organization $organization, array $members): array
+    {
+        $recent = $this->recentProjectIds($organization, array_map(fn (array $member) => (int) $member['value'], $members));
+
+        return array_map(fn (array $projectIds) => array_map(fn (int $projectId) => (string) $projectId, $projectIds), $recent);
+    }
+
+    /**
      * Active projects the member can report on (client not archived), the member's most recently
      * used ones first, then alphabetical.
      *
@@ -75,15 +119,7 @@ class TimeEntryPresenter
      */
     public function projectOptions(Organization $organization, User $member): array
     {
-        $recent = TimeEntry::query()
-            ->where('user_id', $member->id)
-            ->where('started_at', '>=', now()->subDays(60))
-            ->selectRaw('project_id, MAX(started_at) as last_used_at')
-            ->groupBy('project_id')
-            ->orderByDesc('last_used_at')
-            ->limit(5)
-            ->pluck('project_id')
-            ->all();
+        $recent = $this->recentProjectIds($organization, [$member->id])[$member->id] ?? [];
 
         $projects = Project::query()
             ->accessibleBy($member, $organization)

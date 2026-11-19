@@ -42,6 +42,8 @@ type Props = {
     projects: ProjectOption[];
     member: { id: number; name: string };
     members: SelectOption[];
+    /** Recently used project ids per member id (owners and admins). */
+    recentProjects: Record<string, string[]>;
     previousWeek?: TimeEntry[];
 };
 
@@ -54,6 +56,7 @@ export default function TimeIndex({
     projects,
     member,
     members,
+    recentProjects,
     previousWeek,
 }: Props) {
     const { t, intlLocale } = useTranslation();
@@ -341,6 +344,7 @@ export default function TimeIndex({
                 projects={projects}
                 entries={entries}
                 members={members}
+                recentProjects={recentProjects}
                 onDuplicate={(values) => {
                     const base = newDraft(today, entries, member.id);
                     const seconds = values.end

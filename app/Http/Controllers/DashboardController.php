@@ -27,6 +27,7 @@ class DashboardController extends Controller
         $today = CarbonImmutable::now($timezone)->startOfDay();
         $weekStart = $presenter->weekStart($today, $organization);
         $isManager = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime);
+        $members = $isManager ? $presenter->memberOptions($organization) : [];
 
         $myWeek = TimeEntry::query()
             ->where('user_id', $user->id)
@@ -52,7 +53,8 @@ class DashboardController extends Controller
                 ->map(fn (TimeEntry $entry) => $presenter->entry($entry, $timezone)),
             'projects' => $presenter->projectOptions($organization, $user),
             // Owners and admins can report time for other members from the quick entry form.
-            'members' => $isManager ? $presenter->memberOptions($organization) : [],
+            'members' => $members,
+            'recentProjects' => $presenter->recentProjectsByMember($organization, $members),
             'team' => $isManager ? $this->teamWeek($organization->members()->wherePivotNull('deactivated_at')->orderBy('name')->get(), $weekStart) : null,
             'projectsNearEstimate' => $isManager ? $this->projectsNearEstimate() : null,
         ]);

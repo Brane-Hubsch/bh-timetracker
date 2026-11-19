@@ -32,6 +32,8 @@ type Props = {
     recentEntries: TimeEntry[];
     projects: ProjectOption[];
     members: SelectOption[];
+    /** Recently used project ids per member id (owners and admins). */
+    recentProjects: Record<string, string[]>;
     team: { id: number; name: string; seconds: number }[] | null;
     projectsNearEstimate:
         | {
@@ -63,6 +65,7 @@ export default function Dashboard({
     recentEntries,
     projects,
     members,
+    recentProjects,
     team,
     projectsNearEstimate,
 }: Props) {
@@ -279,6 +282,7 @@ export default function Dashboard({
                 projects={projects}
                 entries={recentEntries}
                 members={members}
+                recentProjects={recentProjects}
             />
 
             <Modal.Backdrop

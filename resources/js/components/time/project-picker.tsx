@@ -19,6 +19,8 @@ type Props = {
     onChange: (projectId: string) => void;
     error?: string;
     autoFocus?: boolean;
+    /** Recently used project ids, newest first; overrides `isRecent` (e.g. for another member). */
+    recentIds?: string[];
 };
 
 function ProjectItem({ project }: { project: ProjectOption }) {
@@ -48,11 +50,20 @@ export function ProjectPicker({
     onChange,
     error,
     autoFocus,
+    recentIds,
 }: Props) {
     const { t } = useTranslation();
     const isDesktop = useIsDesktop();
-    const recent = projects.filter((project) => project.isRecent);
-    const others = projects.filter((project) => !project.isRecent);
+    const recent = recentIds
+        ? recentIds.flatMap(
+              (id) => projects.find((project) => project.value === id) ?? [],
+          )
+        : projects.filter((project) => project.isRecent);
+    const others = recentIds
+        ? projects
+              .filter((project) => !recentIds.includes(project.value))
+              .sort((a, b) => a.label.localeCompare(b.label))
+        : projects.filter((project) => !project.isRecent);
     // On mobile, focusing the search opens the keyboard over the shortcuts; let people tap one instead.
     const focusSearch = autoFocus && (isDesktop || recent.length === 0);
 

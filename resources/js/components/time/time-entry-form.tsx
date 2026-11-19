@@ -39,6 +39,8 @@ type Props = {
     entries: TimeEntry[];
     /** Members the viewer may report time for (owners and admins); hidden when empty. */
     members?: SelectOption[];
+    /** Recently used project ids per member id, so the shortcuts follow the selected member. */
+    recentProjects?: Record<string, string[]>;
     onDuplicate?: (draft: TimeEntryDraft) => void;
 };
 
@@ -60,6 +62,7 @@ export function TimeEntryForm({
     projects,
     entries,
     members = [],
+    recentProjects,
     onDuplicate,
 }: Props) {
     const { t } = useTranslation();
@@ -306,6 +309,12 @@ export function TimeEntryForm({
 
                     <ProjectPicker
                         projects={projects}
+                        recentIds={
+                            members.length > 1
+                                ? (recentProjects?.[String(current.userId)] ??
+                                  [])
+                                : undefined
+                        }
                         value={current.projectId}
                         onChange={changeProject}
                         error={errors.project_id}
