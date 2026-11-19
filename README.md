@@ -51,11 +51,43 @@ Run alongside the web server:
 
 - a queue worker for emails (`php artisan queue:work --tries=3`), kept alive by the platform/Supervisor;
 - the scheduler every minute (`php artisan schedule:run`): prunes expired invitations, magic links and
-  OAuth tokens;
+  OAuth tokens, and runs the nightly backups (see below);
 - `/up` as health check.
 
 First deploy: `php artisan passport:keys` (or set `PASSPORT_PRIVATE_KEY`/`PASSPORT_PUBLIC_KEY`) and create
-the first owner with `php artisan app:create-owner`. Back up the Postgres database daily.
+the first owner with `php artisan app:create-owner`.
+
+### Backups
+
+Every night (02:30 Swedish time, production only) the scheduler dumps the database and zips it with the
+uploaded images (`storage/app/public/images`) into an AES-256 encrypted archive on the `backups` disk:
+a private S3-compatible bucket such as Cloudflare R2. Old archives are pruned at 03:15, and at 08:00
+`backup:monitor` mails `BACKUP_NOTIFICATION_EMAIL` if the newest backup is missing, older than a day or
+much smaller than the previous one. Failures are mailed as well. Settings: `config/backup.php`.
+
+Setup:
+
+1. Create a private bucket (R2: in the EU jurisdiction) and an API token limited to it with read and
+   write access. Recommended: a lock/retention rule so that backups can't be deleted from the server.
+2. Set `BACKUP_AWS_*`, `BACKUP_ARCHIVE_PASSWORD` and `BACKUP_NOTIFICATION_EMAIL` (see
+   `.env.production.example`). Store the archive password, `APP_KEY` and the Passport keys outside the
+   server: they are not in the backups and are needed to restore.
+3. Install `pg_dump` in the database server's major version (or set `DB_DUMP_BINARY_PATH`) and run
+   `php artisan backup:run` once, then `php artisan backup:list` to see it in the bucket.
+
+Restore (try it against an empty database every quarter):
+
+```bash
+# 1. Download the archive, e.g. bh-timetracker/2026-11-19-02-30-00.zip, from the bucket.
+# 2. Unzip it with the archive password. macOS/Linux unzip can't open AES archives; use 7-Zip:
+7z x 2026-11-19-02-30-00.zip -orestore
+# 3. Load the dump into an empty database, then run any newer migrations.
+gunzip -c restore/db-dumps/postgresql-*.sql.gz | psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+php artisan migrate --force
+# 4. Put the images back and clear caches.
+cp -R restore/images storage/app/public/
+php artisan optimize:clear
+```
 
 ## AI assistants (MCP)
 
