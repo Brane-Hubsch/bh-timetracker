@@ -30,6 +30,7 @@ import {
     timeOf,
     timeToMinutes,
 } from '@/lib/time';
+import { cn } from '@/lib/utils';
 import { index as projectsIndex } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/time';
 import type {
@@ -70,6 +71,36 @@ function offsetTime(value: string, fallback: string, offset: number): string {
         : minutesToTime(timeToMinutes(value || fallback || '00:00') + offset);
 }
 
+function MemberAvatar({
+    name,
+    src,
+    title,
+    className,
+}: {
+    name?: string;
+    src?: string | null;
+    title?: string;
+    className?: string;
+}) {
+    const getInitials = useInitials();
+
+    return (
+        <Avatar
+            size="sm"
+            variant="soft"
+            color="accent"
+            className={cn('rounded-full', className)}
+            aria-hidden="true"
+            title={title}
+        >
+            {src && <Avatar.Image src={src} alt="" className="object-cover" />}
+            <Avatar.Fallback>
+                {name ? getInitials(name) : <UserRound className="size-4" />}
+            </Avatar.Fallback>
+        </Avatar>
+    );
+}
+
 /**
  * Report or edit time in a dialog (bottom sheet on mobile). Actions sit in the dialog footer so they
  * stay reachable while the fields scroll.
@@ -87,7 +118,6 @@ export function TimeEntryForm({
 }: Props) {
     const { t } = useTranslation();
     const { auth, can } = usePage().props;
-    const getInitials = useInitials();
     // The last opened draft: kept while the dialog animates out.
     const [source, setSource] = useState(draft);
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
@@ -270,29 +300,11 @@ export function TimeEntryForm({
         ? t('Reporting for :name', { name: memberName })
         : t('Member');
     const avatar = (
-        <Avatar
-            size="sm"
-            variant="soft"
-            color="accent"
-            className="rounded-full"
-            aria-hidden="true"
+        <MemberAvatar
+            name={memberName}
+            src={memberAvatar}
             title={memberLabel}
-        >
-            {memberAvatar && (
-                <Avatar.Image
-                    src={memberAvatar}
-                    alt=""
-                    className="object-cover"
-                />
-            )}
-            <Avatar.Fallback>
-                {memberName ? (
-                    getInitials(memberName)
-                ) : (
-                    <UserRound className="size-4" />
-                )}
-            </Avatar.Fallback>
-        </Avatar>
+        />
     );
 
     return (
@@ -345,12 +357,17 @@ export function TimeEntryForm({
                                     }
                                 }}
                             >
-                                {members.map(({ value, label }) => (
+                                {members.map(({ value, label, avatar }) => (
                                     <Dropdown.Item
                                         key={value}
                                         id={value}
                                         textValue={label}
                                     >
+                                        <MemberAvatar
+                                            name={label}
+                                            src={avatar}
+                                            className="size-9"
+                                        />
                                         <Label>{label}</Label>
                                         <Dropdown.ItemIndicator />
                                     </Dropdown.Item>
