@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Organizations\OrganizationController;
+use App\Http\Controllers\Organizations\OrganizationImportController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Organizations\OrganizationMemberController;
 use App\Http\Controllers\Organizations\OrganizationTagController;
@@ -55,6 +56,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('settings/organizations/{organization}/tags', [OrganizationTagController::class, 'store'])->name('organizations.tags.store');
         Route::patch('settings/organizations/{organization}/tags/{tag}', [OrganizationTagController::class, 'update'])->name('organizations.tags.update');
         Route::delete('settings/organizations/{organization}/tags/{tag}', [OrganizationTagController::class, 'destroy'])->name('organizations.tags.destroy');
+
+        Route::get('settings/organizations/{organization}/import', [OrganizationImportController::class, 'create'])->name('organizations.import.create');
+        Route::post('settings/organizations/{organization}/import', [OrganizationImportController::class, 'store'])->name('organizations.import.store');
+        Route::get('settings/organizations/{organization}/import/{import}', [OrganizationImportController::class, 'show'])->whereUuid('import')->name('organizations.import.show');
+        Route::post('settings/organizations/{organization}/import/{import}', [OrganizationImportController::class, 'import'])->whereUuid('import')->name('organizations.import.run');
+        Route::delete('settings/organizations/{organization}/import/{import}', [OrganizationImportController::class, 'destroy'])->whereUuid('import')->name('organizations.import.destroy');
 
         Route::post('settings/organizations/{organization}/invitations', [OrganizationInvitationController::class, 'store'])->name('organizations.invitations.store');
         Route::delete('settings/organizations/{organization}/invitations/{invitation}', [OrganizationInvitationController::class, 'destroy'])->name('organizations.invitations.destroy');

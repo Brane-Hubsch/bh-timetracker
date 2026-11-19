@@ -90,6 +90,17 @@ class OrganizationPolicy
     }
 
     /**
+     * Determine whether the user can import time from another tool (e.g. Clockify): it creates
+     * clients, projects and entries for any member.
+     */
+    public function import(User $user, Organization $organization): bool
+    {
+        return $user->hasOrganizationPermission($organization, OrganizationPermission::ManageClients)
+            && $user->hasOrganizationPermission($organization, OrganizationPermission::ManageProjects)
+            && $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime);
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, Organization $organization): bool

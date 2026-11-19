@@ -48,3 +48,33 @@ function something()
 {
     // ..
 }
+
+/*
+| Clockify import: CSV in the format of Clockify's user data export.
+*/
+
+const CLOCKIFY_HEADER = '"Project","Client","Description","Task","User","Group","Email","Tags","Start Date","Start Time","End Date","End Time","Duration (h)","Duration (decimal)","Date of creation"';
+
+/**
+ * @param  array<int, array<int, string>>  $rows
+ */
+function clockifyCsv(array $rows, string $header = CLOCKIFY_HEADER, string $delimiter = ','): string
+{
+    $lines = [$header];
+
+    foreach ($rows as $row) {
+        $lines[] = implode($delimiter, array_map(fn (string $value) => '"'.str_replace('"', '""', $value).'"', $row));
+    }
+
+    return implode("\n", $lines)."\n";
+}
+
+/**
+ * A row in the user data export format: project, client, description, task, user, email, tags, start, end.
+ *
+ * @return array<int, string>
+ */
+function clockifyRow(string $project, ?string $client, string $email, string $startDate, string $startTime, string $endDate, string $endTime, string $description = '', string $task = '', string $tags = '', string $user = 'Anna Andersson'): array
+{
+    return [$project, $client ?? '', $description, $task, $user, '', $email, $tags, $startDate, $startTime, $endDate, $endTime, '', '', ''];
+}
