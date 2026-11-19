@@ -9,9 +9,11 @@ use Database\Factories\TimeEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -36,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @property-read Organization $organization
  * @property-read User $user
  * @property-read Project $project
+ * @property-read Collection<int, Tag> $tags
  */
 #[Fillable([
     'organization_id', 'user_id', 'project_id', 'description', 'started_at', 'ended_at',
@@ -63,6 +66,14 @@ class TimeEntry extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * @return BelongsToMany<Tag, $this>
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class)->orderBy('name');
     }
 
     /**

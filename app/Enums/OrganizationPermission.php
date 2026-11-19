@@ -17,6 +17,9 @@ enum OrganizationPermission: string
     case ManageClients = 'client:manage';
     case ManageProjects = 'project:manage';
 
+    /** Rename, merge and delete tags. Everyone can create tags when tagging time. */
+    case ManageTags = 'tag:manage';
+
     /** See, report and change other members' time. */
     case ManageTeamTime = 'time:manage-team';
 

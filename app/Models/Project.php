@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
  * @property ProjectVisibility $visibility
  * @property Carbon|null $starts_on
  * @property Carbon|null $ends_on
+ * @property string|null $notes
  * @property Carbon|null $archived_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -40,7 +41,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'organization_id', 'client_id', 'name', 'code', 'color', 'is_billable', 'hourly_rate',
-    'estimate_seconds', 'visibility', 'starts_on', 'ends_on', 'archived_at',
+    'estimate_seconds', 'visibility', 'starts_on', 'ends_on', 'notes', 'archived_at',
 ])]
 class Project extends Model
 {

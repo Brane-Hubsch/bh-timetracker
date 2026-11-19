@@ -15,6 +15,8 @@
     ":name is not assigned to this project.": ":name är inte tilldelad det här projektet.",
     ":name will lose access to this organization.": ":name förlorar åtkomsten till den här organisationen.",
     "A new verification link has been sent to your email address.": "En ny verifieringslänk har skickats till din e-postadress.",
+    "A tag can be at most :max characters.": "En tagg kan vara högst :max tecken.",
+    "A tag needs a name of at most :max characters.": "En tagg behöver ett namn på högst :max tecken.",
     "A time entry can be at most 24 hours.": "En tidpost kan vara högst 24 timmar.",
     "Accept": "Acceptera",
     "Accept an invitation or create a new organization to get started.": "Acceptera en inbjudan eller skapa en ny organisation för att komma igång.",
