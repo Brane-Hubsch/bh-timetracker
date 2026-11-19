@@ -36,11 +36,12 @@ class ProjectRequest extends FormRequest
             'visibility' => ['required', Rule::enum(ProjectVisibility::class)],
             'starts_on' => ['nullable', 'date'],
             'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
+            'notes' => ['nullable', 'string', 'max:10000'],
         ];
     }
 
     /**
-     * @return array{name: string, client_id: int|null, code: string|null, color: string, is_billable: bool, hourly_rate: int|null, estimate_seconds: int|null, visibility: string, starts_on: string|null, ends_on: string|null}
+     * @return array{name: string, client_id: int|null, code: string|null, color: string, is_billable: bool, hourly_rate: int|null, estimate_seconds: int|null, visibility: string, starts_on: string|null, ends_on: string|null, notes: string|null}
      */
     public function projectAttributes(): array
     {
@@ -55,6 +56,7 @@ class ProjectRequest extends FormRequest
             'visibility' => $this->string('visibility')->value(),
             'starts_on' => $this->filled('starts_on') ? $this->string('starts_on')->value() : null,
             'ends_on' => $this->filled('ends_on') ? $this->string('ends_on')->value() : null,
+            'notes' => $this->filled('notes') ? $this->string('notes')->trim()->value() : null,
         ];
     }
 }

@@ -8,6 +8,8 @@ import {
     Radio,
     RadioGroup,
     Switch,
+    TextField,
+    TextArea,
     parseColor,
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
@@ -61,6 +63,7 @@ function initialValues(
         visibility: project?.visibility ?? 'public',
         starts_on: project?.startsOn ?? '',
         ends_on: project?.endsOn ?? '',
+        notes: project?.notes ?? '',
     };
 }
 
@@ -316,6 +319,29 @@ export function ProjectFormDrawer({
                                 </Radio.Content>
                             </Radio>
                         </RadioGroup>
+                    </div>
+
+                    <div className="grid gap-4 border-t border-separator pt-6">
+                        <TextField
+                            value={form.data.notes}
+                            onChange={(notes) => form.setData('notes', notes)}
+                            isInvalid={Boolean(form.errors.notes)}
+                            className="w-full"
+                        >
+                            <Label>{t('Notes')}</Label>
+                            <TextArea
+                                rows={5}
+                                placeholder={t(
+                                    'Scope, contacts, links… Visible to everyone on the project.',
+                                )}
+                                data-test="project-notes"
+                            />
+                            {form.errors.notes && (
+                                <Description className="text-danger">
+                                    {form.errors.notes}
+                                </Description>
+                            )}
+                        </TextField>
                     </div>
                 </SideDrawerBody>
                 <SideDrawerFooter>

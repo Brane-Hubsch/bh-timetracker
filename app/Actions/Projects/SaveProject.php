@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 class SaveProject
 {
     /**
-     * @param  array{name: string, client_id: int|null, code: string|null, color: string, is_billable: bool, hourly_rate: int|null, estimate_seconds: int|null, visibility: string, starts_on: string|null, ends_on: string|null}  $attributes
+     * @param  array{name: string, client_id: int|null, code: string|null, color: string, is_billable: bool, hourly_rate: int|null, estimate_seconds: int|null, visibility: string, starts_on: string|null, ends_on: string|null, notes?: string|null}  $attributes
      *
      * @throws ValidationException
      */

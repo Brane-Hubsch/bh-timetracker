@@ -94,6 +94,7 @@ class ProjectController extends Controller
                 'visibility' => $project->visibility->value,
                 'startsOn' => $project->starts_on?->toDateString(),
                 'endsOn' => $project->ends_on?->toDateString(),
+                'notes' => $project->notes,
                 'consumedSeconds' => $project->consumedSeconds(),
             ],
             'members' => $project->members->map(fn (User $member) => [

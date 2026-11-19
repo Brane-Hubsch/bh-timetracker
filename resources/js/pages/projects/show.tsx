@@ -214,6 +214,18 @@ export default function ProjectShow({
                     )}
                 </dl>
 
+                {project.notes && (
+                    <section
+                        className="grid gap-2 rounded-2xl bg-surface p-4 shadow-surface sm:p-6"
+                        data-test="project-notes"
+                    >
+                        <h2 className="text-sm font-medium">{t('Notes')}</h2>
+                        <p className="text-sm break-words whitespace-pre-line">
+                            {project.notes}
+                        </p>
+                    </section>
+                )}
+
                 <section className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface sm:p-6">
                     <h2 className="text-sm font-medium">
                         {t('Reported time')}
@@ -462,6 +474,7 @@ export default function ProjectShow({
                         visibility: project.visibility,
                         startsOn: project.startsOn,
                         endsOn: project.endsOn,
+                        notes: project.notes,
                     }}
                     options={projectForm}
                     isOpen={isEditOpen}

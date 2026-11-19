@@ -36,6 +36,8 @@ export type ProjectDetails = ProjectListItem & {
     visibility: 'public' | 'private';
     startsOn: string | null;
     endsOn: string | null;
+    /** Free text for everyone on the project (e.g. scope, contacts, links). */
+    notes: string | null;
 };
 
 export type ProjectFormValues = {
@@ -50,6 +52,7 @@ export type ProjectFormValues = {
     visibility: 'public' | 'private';
     startsOn: string | null;
     endsOn: string | null;
+    notes: string | null;
 };
 
 /** Choices for the project form; only sent to users who may create or edit projects. */

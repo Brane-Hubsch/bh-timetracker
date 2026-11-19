@@ -97,6 +97,31 @@ it('lets owners and admins create projects', function () {
         ->and($project->hourly_rate)->toBe(110000);
 });
 
+it('saves project notes and shows them to everyone on the project', function () {
+    $this->actingAs($this->owner)
+        ->post(route('projects.store', ['current_organization' => $this->slug]), projectPayload(['notes' => "  Kontakt: Anna\nUnderlag i Drive  "]))
+        ->assertSessionHasNoErrors();
+    $project = Project::forOrganization($this->organization)->sole();
+
+    expect($project->notes)->toBe("Kontakt: Anna\nUnderlag i Drive");
+
+    $this->actingAs($this->member)
+        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('project.notes', "Kontakt: Anna\nUnderlag i Drive"));
+
+    $this->actingAs($this->owner)
+        ->patch(route('projects.update', ['current_organization' => $this->slug, 'project' => $project->id]), projectPayload(['notes' => '']))
+        ->assertSessionHasNoErrors();
+
+    expect($project->fresh()->notes)->toBeNull();
+});
+
+it('limits the length of project notes', function () {
+    $this->actingAs($this->owner)
+        ->post(route('projects.store', ['current_organization' => $this->slug]), projectPayload(['notes' => str_repeat('a', 10001)]))
+        ->assertSessionHasErrors('notes');
+});
+
 it('validates project input', function () {
     Project::factory()->for($this->organization)->create(['code' => 'WEB']);
     $foreignClient = Client::factory()->create();
