@@ -13,6 +13,7 @@ import {
 import { router, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import {
+    FileUp,
     Briefcase,
     Building2,
     CalendarDays,
@@ -49,6 +50,7 @@ import { edit as editAiConnections } from '@/routes/ai-connections';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as clientsIndex, show as showClient } from '@/routes/clients';
 import { edit as editOrganization } from '@/routes/organizations';
+import { create as createImport } from '@/routes/organizations/import';
 import { edit as editProfile } from '@/routes/profile';
 import { index as projectsIndex, show as showProject } from '@/routes/projects';
 import {
@@ -459,6 +461,19 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                               keywords: t('rename merge'),
                               icon: Tags,
                               perform: go(`${editOrganization.url(slug)}#tags`),
+                          },
+                      ]
+                    : []),
+                ...(can?.canManageClients &&
+                can.canManageProjects &&
+                can.canManageTeamTime
+                    ? [
+                          {
+                              id: 'go-import',
+                              label: t('Import from Clockify'),
+                              keywords: t('csv clockify import'),
+                              icon: FileUp,
+                              perform: go(createImport.url(slug)),
                           },
                       ]
                     : []),

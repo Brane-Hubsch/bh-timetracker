@@ -23,6 +23,10 @@ declare module '@inertiajs/core' {
             can: OrganizationPermissions | null;
             [key: string]: unknown;
         };
+        flashDataType: {
+            toast?: import('@/types/ui').FlashToast;
+            importResult?: import('@/types/imports').ImportResult;
+        };
         layoutProps: {
             width: import('@/types/ui').ContentWidth;
         };
