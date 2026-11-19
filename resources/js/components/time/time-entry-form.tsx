@@ -18,6 +18,7 @@ import { TextInputField } from '@/components/form/text-input-field';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
+import { TimeDragHandle } from '@/components/time/time-drag-handle';
 import { useTranslation } from '@/lib/i18n';
 import {
     formatDuration,
@@ -53,6 +54,12 @@ function durationOf(draft: TimeEntryDraft): string {
     return draft.end
         ? formatDuration(secondsBetween(draft.start, draft.end))
         : '';
+}
+
+function offsetTime(value: string, fallback: string, offset: number): string {
+    return offset === 0
+        ? value
+        : minutesToTime(timeToMinutes(value || fallback || '00:00') + offset);
 }
 
 /**
@@ -127,6 +134,35 @@ export function TimeEntryForm({
                         Math.min(seconds, 86400) / 60,
                 ),
             });
+        }
+    };
+
+    const restoreEndAndDuration = () => {
+        set({ end: current?.end });
+        setDuration(duration);
+    };
+
+    const adjustEnd = (offset: number) => {
+        if (offset === 0) {
+            restoreEndAndDuration();
+            return;
+        }
+
+        changeEnd(offsetTime(current?.end ?? '', current?.start ?? '', offset));
+    };
+
+    const durationForDrag = Math.min(86400, parseDuration(duration) ?? 0);
+    const adjustDuration = (offset: number) => {
+        if (offset === 0) {
+            restoreEndAndDuration();
+            return;
+        }
+
+        const seconds = Math.min(86400, durationForDrag + offset * 60);
+        if (seconds <= 0) {
+            changeEnd('');
+        } else {
+            changeDuration(formatDuration(seconds));
         }
     };
 
@@ -223,6 +259,7 @@ export function TimeEntryForm({
                     : undefined
             }
             title={isEditing ? t('Edit time') : t('Report time')}
+            desktopClassName="sm:max-w-[40rem]"
             footer={
                 <div className="flex w-full items-center gap-2">
                     {isEditing && (
@@ -334,34 +371,93 @@ export function TimeEntryForm({
                         autoFocus={!isEditing && current.projectId === ''}
                     />
 
-                    <DatePickerField
-                        label={t('Date')}
-                        value={current.date}
-                        onChange={(date) => set({ date })}
-                        error={errors.date}
-                        isRequired
-                        data-test="time-entry-date"
-                    />
-
                     <div className="grid gap-2">
-                        <div className="grid grid-cols-3 gap-3">
-                            <TimeInputField
-                                label={t('Start')}
-                                value={current.start}
-                                onChange={changeStart}
-                                isInvalid={Boolean(errors.start)}
+                        <div className="grid gap-3 md:grid-cols-[10rem_17.25rem_minmax(0,1fr)]">
+                            <DatePickerField
+                                label={t('Date')}
+                                value={current.date}
+                                onChange={(date) => set({ date })}
+                                error={errors.date}
                                 isRequired
-                                data-test="time-entry-start"
+                                data-test="time-entry-date"
                             />
-                            <TimeInputField
-                                label={t('End')}
-                                value={current.end}
-                                onChange={changeEnd}
-                                isInvalid={Boolean(
-                                    errors.end ?? errors.ended_at,
-                                )}
-                                data-test="time-entry-end"
-                            />
+                            <fieldset className="min-w-0">
+                                <legend className="label mb-1 grid w-full grid-cols-2">
+                                    <span>
+                                        {t('Start')}{' '}
+                                        <span aria-hidden="true">*</span>
+                                    </span>
+                                    <span>{t('End')}</span>
+                                </legend>
+                                <div
+                                    className="grid h-9 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field"
+                                    data-invalid={Boolean(
+                                        errors.start ||
+                                        errors.end ||
+                                        errors.ended_at,
+                                    )}
+                                >
+                                    <TimeInputField
+                                        label={t('Start')}
+                                        value={current.start}
+                                        onChange={changeStart}
+                                        isInvalid={Boolean(errors.start)}
+                                        isRequired
+                                        isEmbedded
+                                        data-test="time-entry-start"
+                                        suffix={
+                                            <TimeDragHandle
+                                                label={t('Start')}
+                                                value={current.start}
+                                                minutes={
+                                                    current.start
+                                                        ? timeToMinutes(
+                                                              current.start,
+                                                          )
+                                                        : undefined
+                                                }
+                                                onAdjust={(offset) =>
+                                                    changeStart(
+                                                        offsetTime(
+                                                            current.start,
+                                                            source?.start ?? '',
+                                                            offset,
+                                                        ),
+                                                    )
+                                                }
+                                            />
+                                        }
+                                    />
+                                    <span
+                                        aria-hidden="true"
+                                        className="h-5 bg-[var(--field-border)]"
+                                    />
+                                    <TimeInputField
+                                        label={t('End')}
+                                        value={current.end}
+                                        onChange={changeEnd}
+                                        isInvalid={Boolean(
+                                            errors.end ?? errors.ended_at,
+                                        )}
+                                        isEmbedded
+                                        data-test="time-entry-end"
+                                        suffix={
+                                            <TimeDragHandle
+                                                label={t('End')}
+                                                value={current.end}
+                                                minutes={
+                                                    current.end
+                                                        ? timeToMinutes(
+                                                              current.end,
+                                                          )
+                                                        : undefined
+                                                }
+                                                onAdjust={adjustEnd}
+                                            />
+                                        }
+                                    />
+                                </div>
+                            </fieldset>
                             <TextInputField
                                 name="duration"
                                 label={t('Duration')}
@@ -370,6 +466,21 @@ export function TimeEntryForm({
                                 value={duration}
                                 onChange={changeDuration}
                                 data-test="time-entry-duration"
+                                suffix={
+                                    <TimeDragHandle
+                                        label={t('Duration')}
+                                        value={duration}
+                                        minutes={
+                                            duration
+                                                ? Math.round(
+                                                      durationForDrag / 60,
+                                                  )
+                                                : undefined
+                                        }
+                                        maxMinutes={1440}
+                                        onAdjust={adjustDuration}
+                                    />
+                                }
                             />
                         </div>
                         {timeError ? (
@@ -378,6 +489,9 @@ export function TimeEntryForm({
                             <p className="text-xs text-muted">
                                 {t(
                                     'Enter an end time or a duration such as 1,5, 1:30 or 90m.',
+                                )}{' '}
+                                {t(
+                                    'Drag the arrows to adjust in 15-minute steps.',
                                 )}
                             </p>
                         )}
