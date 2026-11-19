@@ -191,7 +191,11 @@ export function TimeCalendar({
                 }}
                 eventContent={(info) => {
                     const color = String(info.event.extendedProps.color);
-                    const tags = info.event.extendedProps.tags as string[];
+                    // The selection mirror (dragging out a new entry) has no extendedProps.
+                    const tags =
+                        (info.event.extendedProps.tags as
+                            | string[]
+                            | undefined) ?? [];
 
                     return (
                         <div
