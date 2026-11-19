@@ -1,0 +1,53 @@
+# Keep the build context to what the image needs. Secrets come from the environment at runtime.
+.git
+.github
+.env
+.env.*
+!.env.example
+auth.json
+
+# Built inside the image
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+bootstrap/ssr
+bootstrap/cache/*.php
+resources/js/actions
+resources/js/routes
+resources/js/wayfinder
+
+# Runtime data: lives in the storage volume, only the directory skeleton goes into the image
+storage/*.key
+storage/pail
+storage/app/backup-temp
+storage/app/private/*
+storage/app/public/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+storage/fonts/*
+storage/inertia-devtools/*
+storage/logs/*
+!storage/**/.gitignore
+database/*.sqlite*
+
+# Development and tooling
+tests
+docs
+.ai
+.agents
+.claude
+.mcp.json
+boost.json
+.phpunit.cache
+.phpunit.result.cache
+.idea
+.vscode
+.DS_Store
+npm-debug.log
+compose.yaml
+compose.*.yaml
+Dockerfile
