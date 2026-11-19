@@ -473,6 +473,21 @@ Klar, förutom beslut om hosting. Byggt:
 
 Kvar att besluta: **hosting** (se förslag i sammanfattningen till beställaren). Backup och CI/CD-deploy beslutas samtidigt.
 
+### Tillägg efter Fas 6: kommandomeny (⌘K) (2026-11-19)
+
+Beställt i efterhand (inte i ursprungsplanen). Kommandomenyn öppnas med ⌘K / Ctrl+K, eller med sökknappen i sidomenyn eller i mobilens toppfält. Byggd med HeroUI (Modal, `Autocomplete.Filter`, SearchField, ListBox).
+
+- **Snabbåtgärder:** Rapportera tid och Kopiera förra veckan. Nytt projekt, Ny kund och Bjud in medlem visas efter behörighet.
+- **Gå till:** alla sidor och inställningar.
+- **Rapporter:** denna vecka, förra veckan, denna månad, förra månaden, i år.
+- **När man söker visas även:**
+  - projekt (öppna eller "Rapportera tid på X" med projektet förvalt),
+  - kunder (ägare/admin),
+  - "Visa tid för X" för medlemmar (ägare/admin).
+- **Övrigt:** byt organisation, tema (ljust/mörkt/system) och logga ut.
+- **Data:** projekt, kunder och medlemmar hämtas från `GET /{org}/command-palette` första gången menyn öppnas, med samma behörigheter som resten av appen.
+- **Direktöppning:** sidor öppnar formulär och dialoger via URL-parametrar (`?new=1`, `?copy=1`, `?invite=1`), som tas bort ur adressen efteråt.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter och taggar · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Clockify/Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.

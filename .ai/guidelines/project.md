@@ -113,6 +113,8 @@ describes; propose additions instead of building them.
   `SegmentedControl` (HeroUI ToggleButtonGroup), not `Tabs` without panels; icon-only buttons need an
   `aria-label`. Use the `muted`/`accent` tokens from `app.css`, which are tuned for WCAG AA.
 - Errors render the `error` page in production (`AppServiceProvider::configureErrorPages`).
+- New pages and frequent actions get a command in the ⌘K palette (`components/command-palette.tsx`,
+  respecting permissions). Pages open dialogs from the palette through `useOpenFromQuery` (`?new=1`).
 
 ## Code quality
 
