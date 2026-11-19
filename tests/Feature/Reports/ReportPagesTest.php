@@ -1,11 +1,14 @@
 <?php
 
 use App\Enums\OrganizationRole;
+use App\Enums\ReportGrouping;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Services\Reports\ReportExporter;
+use App\Services\Reports\ReportFilters;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 use OpenSpout\Reader\XLSX\Reader;
@@ -139,9 +142,45 @@ it('exports the summary as XLSX with amounts for owners', function () {
         ->and(end($rows))->toBe([__('Total'), 2.5, 2.5, 2500]);
 });
 
+it('exports the summary and the detailed report as PDF', function (string $type) {
+    $response = $this->actingAs($this->owner)
+        ->get(reportRoute('reports.export', ['type' => $type, 'format' => 'pdf']))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf');
+
+    expect($response->headers->get('Content-Disposition'))->toContain('.pdf')
+        ->and($response->getContent())->toStartWith('%PDF');
+})->with(['summary', 'detailed']);
+
+it('builds PDF documents with amounts and the whole team for owners', function () {
+    $exporter = app(ReportExporter::class);
+    $filters = new ReportFilters($this->organization, $this->owner, CarbonImmutable::parse('2026-11-01'), CarbonImmutable::parse('2026-11-30'));
+
+    $summary = $exporter->summaryDocument($filters, ReportGrouping::Member, null)->render();
+    $detailed = $exporter->detailedDocument($filters, 'date', 'desc')->render();
+
+    expect($summary)->toContain('Mia Member', 'Olivia Owner', '1,5 h', '2,5 h', __('Amount'))
+        ->and($detailed)->toContain('Mia Member', 'Olivia Owner', 'Kodning', __('Amount'));
+});
+
+it('builds PDF documents with only their own time and no amounts for members', function () {
+    $exporter = app(ReportExporter::class);
+    // A member asking for someone else's time still only gets their own.
+    $filters = new ReportFilters($this->organization, $this->member, CarbonImmutable::parse('2026-11-01'), CarbonImmutable::parse('2026-11-30'), userIds: [$this->owner->id]);
+
+    foreach ([
+        $exporter->summaryDocument($filters, ReportGrouping::Member, null)->render(),
+        $exporter->detailedDocument($filters, 'date', 'desc')->render(),
+    ] as $document) {
+        expect($document)->toContain('Mia Member', '1,5 h')
+            ->and($document)->not->toContain('Olivia Owner')
+            ->and($document)->not->toContain(__('Amount'));
+    }
+});
+
 it('rejects unknown export formats', function () {
     $this->actingAs($this->owner)
-        ->get(reportRoute('reports.export', ['type' => 'detailed', 'format' => 'pdf']))
+        ->get(reportRoute('reports.export', ['type' => 'detailed', 'format' => 'docx']))
         ->assertSessionHasErrors('format');
 });
 
@@ -162,6 +201,15 @@ it('does not show another organization in reports or exports', function () {
     $csv = file_get_contents($response->baseResponse->getFile()->getPathname());
 
     expect($csv)->not->toContain('Otto Outsider')->and($csv)->not->toContain('Hemligt');
+
+    // Filter names in the PDF header are looked up within the organization only.
+    $document = app(ReportExporter::class)->detailedDocument(
+        new ReportFilters($this->organization, $this->owner, null, null, userIds: [$otherOwner->id, $this->member->id], projectIds: [$foreign->id, $this->project->id]),
+        'date',
+        'desc',
+    )->render();
+
+    expect($document)->not->toContain('Otto Outsider')->and($document)->not->toContain('Hemligt')->and($document)->toContain('Webb');
 
     $this->actingAs($otherOwner)
         ->get(reportRoute('reports.summary'))

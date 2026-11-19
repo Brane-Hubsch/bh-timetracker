@@ -21,7 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * Reports: summary, detailed list, project follow-up and exports. Owners and admins see everyone's
@@ -70,15 +70,19 @@ class ReportController extends Controller
         ]);
     }
 
-    public function export(ReportRequest $request, #[CurrentUser] User $user, ReportExporter $exporter): BinaryFileResponse
+    public function export(ReportRequest $request, #[CurrentUser] User $user, ReportExporter $exporter): SymfonyResponse
     {
         $request->validate([
             'type' => ['required', Rule::in(['summary', 'detailed'])],
-            'format' => ['required', Rule::in(['csv', 'xlsx'])],
+            'format' => ['required', Rule::in(['csv', 'xlsx', 'pdf'])],
         ]);
 
         $filters = $request->filters($user, $this->currentOrganization->getOrFail());
-        $format = $request->string('format')->value() === 'csv' ? 'csv' : 'xlsx';
+        $format = match ($request->string('format')->value()) {
+            'csv' => 'csv',
+            'pdf' => 'pdf',
+            default => 'xlsx',
+        };
 
         return $request->string('type')->value() === 'summary'
             ? $exporter->summary($filters, $request->grouping(), $request->subGrouping(), $format)

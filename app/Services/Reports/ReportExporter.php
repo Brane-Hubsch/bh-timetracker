@@ -3,17 +3,24 @@
 namespace App\Services\Reports;
 
 use App\Enums\ReportGrouping;
+use App\Models\Client;
+use App\Models\Project;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\CarbonImmutable;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Number;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\CSV\Options as CsvOptions;
 use OpenSpout\Writer\CSV\Writer as CsvWriter;
 use OpenSpout\Writer\WriterInterface;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Writes reports to CSV or XLSX. Hours are decimal numbers; amounts are in the currency's major
+ * Writes reports to CSV, XLSX or PDF. Hours are decimal numbers; amounts are in the currency's major
  * unit and only included for viewers who may see them. CSV uses semicolons and decimal commas so
- * Swedish Excel opens it directly.
+ * Swedish Excel opens it directly. PDFs are rendered from Blade views (`reports/pdf`) with dompdf.
  */
 class ReportExporter
 {
@@ -23,10 +30,14 @@ class ReportExporter
     }
 
     /**
-     * @param  'csv'|'xlsx'  $format
+     * @param  'csv'|'xlsx'|'pdf'  $format
      */
-    public function summary(ReportFilters $filters, ReportGrouping $grouping, ?ReportGrouping $subGrouping, string $format): BinaryFileResponse
+    public function summary(ReportFilters $filters, ReportGrouping $grouping, ?ReportGrouping $subGrouping, string $format): Response
     {
+        if ($format === 'pdf') {
+            return $this->pdf($this->summaryDocument($filters, $grouping, $subGrouping), $this->filename($this->text(__('summary')), $filters, 'pdf'));
+        }
+
         $summary = $this->reports->summary($filters, $grouping, $subGrouping);
         $amounts = $filters->canViewAmounts();
         $subGrouping = $subGrouping === $grouping ? null : $subGrouping;
@@ -81,10 +92,14 @@ class ReportExporter
     /**
      * @param  'date'|'duration'|'project'|'member'  $sort
      * @param  'asc'|'desc'  $direction
-     * @param  'csv'|'xlsx'  $format
+     * @param  'csv'|'xlsx'|'pdf'  $format
      */
-    public function detailed(ReportFilters $filters, string $sort, string $direction, string $format): BinaryFileResponse
+    public function detailed(ReportFilters $filters, string $sort, string $direction, string $format): Response
     {
+        if ($format === 'pdf') {
+            return $this->pdf($this->detailedDocument($filters, $sort, $direction), $this->filename($this->text(__('entries')), $filters, 'pdf'), 'landscape');
+        }
+
         $amounts = $filters->canViewAmounts();
         $header = [$this->text(__('Date')), $this->text(__('Start')), $this->text(__('End')), $this->text(__('Member')), $this->text(__('Client')), $this->text(__('Project')), $this->text(__('Description')), $this->text(__('Hours')), $this->text(__('Billable'))];
 
@@ -122,6 +137,142 @@ class ReportExporter
         })();
 
         return $this->download($rows, $this->filename($this->text(__('entries')), $filters, $format), $format);
+    }
+
+    /**
+     * The summary as a printable document: period and filters, totals and the grouped table.
+     */
+    public function summaryDocument(ReportFilters $filters, ReportGrouping $grouping, ?ReportGrouping $subGrouping): View
+    {
+        return view('reports.pdf.summary', [
+            ...$this->documentContext($filters, $this->text(__('Summary'))),
+            'grouping' => $grouping,
+            'subGrouping' => $subGrouping === $grouping ? null : $subGrouping,
+            'summary' => $this->reports->summary($filters, $grouping, $subGrouping),
+        ]);
+    }
+
+    /**
+     * The detailed report as a printable document: every entry in the period, then the totals.
+     *
+     * @param  'date'|'duration'|'project'|'member'  $sort
+     * @param  'asc'|'desc'  $direction
+     */
+    public function detailedDocument(ReportFilters $filters, string $sort, string $direction): View
+    {
+        $rows = (function () use ($filters, $sort, $direction) {
+            foreach ($this->reports->detailedForExport($filters, $sort, $direction) as $entry) {
+                yield $this->reports->row($entry, $filters);
+            }
+        })();
+
+        return view('reports.pdf.detailed', [
+            ...$this->documentContext($filters, $this->text(__('Detailed report'))),
+            'rows' => $rows,
+            'totals' => $this->reports->totalsFor($filters),
+        ]);
+    }
+
+    /**
+     * Header, footer and formatting shared by the PDF documents.
+     *
+     * @return array<string, mixed>
+     */
+    private function documentContext(ReportFilters $filters, string $title): array
+    {
+        $locale = app()->getLocale();
+        $currency = $filters->organization->currency;
+
+        return [
+            'title' => $title,
+            'organization' => $filters->organization->name,
+            'period' => $filters->from && $filters->to
+                ? $this->date($filters->from).' – '.$this->date($filters->to)
+                : $this->text(__('All time')),
+            'criteria' => $this->criteria($filters),
+            'showMembers' => $filters->canViewTeam(),
+            'showAmounts' => $filters->canViewAmounts(),
+            'generated' => $this->text(__('Created :date by :name', [
+                'date' => CarbonImmutable::now($filters->timezone())->settings(['locale' => $locale])->isoFormat('D MMM YYYY HH:mm'),
+                'name' => $filters->viewer->name,
+            ])),
+            'hours' => fn (int $seconds): string => Number::format($seconds / 3600, maxPrecision: 2, locale: $locale).' h',
+            'money' => fn (?int $minorUnits): string => $minorUnits === null ? '–' : (string) Number::currency($minorUnits / 100, in: $currency, locale: $locale),
+            'formatDate' => fn (string $date): string => $this->date(CarbonImmutable::parse($date)),
+        ];
+    }
+
+    /**
+     * The filters in words, for the document header. Names are looked up within the organization.
+     *
+     * @return array<int, array{label: string, value: string}>
+     */
+    private function criteria(ReportFilters $filters): array
+    {
+        $organization = $filters->organization;
+        $criteria = [];
+
+        if (! $filters->canViewTeam()) {
+            $criteria[] = ['label' => $this->text(__('Member')), 'value' => $filters->viewer->name];
+        } elseif ($filters->userIds !== []) {
+            $criteria[] = [
+                'label' => $this->text(__('Members')),
+                'value' => $organization->members()->whereIn('users.id', $filters->userIds)->orderBy('name')->pluck('name')->implode(', '),
+            ];
+        }
+
+        if ($filters->clientIds !== []) {
+            $criteria[] = [
+                'label' => $this->text(__('Clients')),
+                'value' => Client::query()->forOrganization($organization)->whereIn('id', $filters->clientIds)->orderBy('name')->pluck('name')->implode(', '),
+            ];
+        }
+
+        if ($filters->projectIds !== []) {
+            $criteria[] = [
+                'label' => $this->text(__('Projects')),
+                'value' => Project::query()->forOrganization($organization)->whereIn('id', $filters->projectIds)->orderBy('name')->pluck('name')->implode(', '),
+            ];
+        }
+
+        if ($filters->billable !== null) {
+            $criteria[] = [
+                'label' => $this->text(__('Billable')),
+                'value' => $this->text($filters->billable ? __('Billable only') : __('Non-billable only')),
+            ];
+        }
+
+        return $criteria;
+    }
+
+    private function date(CarbonImmutable $date): string
+    {
+        return $date->settings(['locale' => app()->getLocale()])->isoFormat('D MMM YYYY');
+    }
+
+    /**
+     * @param  'portrait'|'landscape'  $orientation
+     */
+    private function pdf(View $document, string $filename, string $orientation = 'portrait'): Response
+    {
+        $pdf = Pdf::loadHTML($document->render())->setPaper('a4', $orientation);
+        $dompdf = $pdf->getDomPDF();
+        $dompdf->render();
+
+        // "1 / 3" in the bottom right corner, level with the footer (CSS cannot count the pages).
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
+
+        if ($font !== null) {
+            $canvas = $dompdf->getCanvas();
+            $size = 7;
+            $width = $dompdf->getFontMetrics()->getTextWidth('00 / 00', $font, $size);
+            $canvas->page_text($canvas->get_width() - 14 / 25.4 * 72 - $width, $canvas->get_height() - 7 / 25.4 * 72 - $size - 1.5, '{PAGE_NUM} / {PAGE_COUNT}', $font, $size, [0.44, 0.44, 0.48]);
+        }
+
+        return response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     /**
@@ -191,7 +342,7 @@ class ReportExporter
     }
 
     /**
-     * @param  'csv'|'xlsx'  $format
+     * @param  'csv'|'xlsx'|'pdf'  $format
      */
     private function filename(string $kind, ReportFilters $filters, string $format): string
     {

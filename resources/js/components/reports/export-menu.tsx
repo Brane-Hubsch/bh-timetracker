@@ -10,12 +10,14 @@ type Props = {
     filters: ReportFilterValues;
 };
 
+type Format = 'csv' | 'xlsx' | 'pdf';
+
 /**
- * Download the current report (same filters) as CSV or XLSX.
+ * Download the current report (same filters) as PDF, XLSX or CSV.
  */
 export function ExportMenu({ type, filters }: Props) {
     const { t } = useTranslation();
-    const url = (format: 'csv' | 'xlsx') =>
+    const url = (format: Format) =>
         exportMethod.url(undefined, {
             query: { ...reportQuery(filters), type, format },
         });
@@ -29,9 +31,12 @@ export function ExportMenu({ type, filters }: Props) {
             <Dropdown.Popover placement="bottom end" className="min-w-48">
                 <Dropdown.Menu
                     onAction={(key) => {
-                        window.location.href = url(key as 'csv' | 'xlsx');
+                        window.location.href = url(key as Format);
                     }}
                 >
+                    <Dropdown.Item id="pdf" textValue="PDF">
+                        <Label>PDF</Label>
+                    </Dropdown.Item>
                     <Dropdown.Item id="xlsx" textValue="Excel (XLSX)">
                         <Label>Excel (XLSX)</Label>
                     </Dropdown.Item>
