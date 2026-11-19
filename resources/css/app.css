@@ -111,6 +111,42 @@
     padding: 0 4px !important;
 }
 
+/* Paint the grips on FullCalendar's pointer targets. Each edge gets at most half the card. */
+.time-calendar-event > .time-calendar-resizer {
+    height: min(10px, calc(50% + 4px));
+    overflow: clip;
+}
+
+.time-calendar-resizer-start {
+    top: -4px;
+}
+
+.time-calendar-resizer-end {
+    bottom: -4px;
+}
+
+.time-calendar-resizer::after {
+    position: absolute;
+    left: 50%;
+    width: 8px;
+    max-width: calc(100% - 8px);
+    height: 3px;
+    transform: translateX(-50%);
+    border-block: 1px solid var(--fc-event-color);
+    border-radius: 0.5px;
+    opacity: 0.7;
+    pointer-events: none;
+    content: '';
+}
+
+.time-calendar-resizer-start::after {
+    top: clamp(4px, calc(100% - 3px), 6px);
+}
+
+.time-calendar-resizer-end::after {
+    bottom: clamp(4px, calc(100% - 3px), 6px);
+}
+
 .time-calendar-entry {
     container: time-calendar-entry / size;
 }
