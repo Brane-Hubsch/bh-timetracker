@@ -121,5 +121,37 @@ it('shows entry tags and the organization\'s tags on the time page', function ()
         ->get(tagRoute('time.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->where('entries.0.tags', ['Möte'])
-            ->where('tags', ['Buggfix', 'Möte']));
+            ->where('tags', ['Buggfix', 'Möte'])
+            ->where('recentTags', ['Möte']));
 });
+
+it('provides the ten most recently used organization tags as shortcuts', function (string $route) {
+    $tags = [];
+    $entries = TimeEntry::factory()->by($this->member, $this->project);
+    $firstDay = CarbonImmutable::parse('2026-11-04 09:00', 'UTC');
+
+    foreach (range(1, 11) as $number) {
+        $tags[$number] = Tag::factory()->for($this->organization)->create(['name' => "Tagg {$number}"]);
+        $start = $firstDay->addDays($number);
+        $entries->create(['started_at' => $start, 'ended_at' => $start->addHour()])
+            ->tags()->attach($tags[$number]);
+    }
+
+    TimeEntry::factory()->by($this->owner, $this->project)
+        ->between('2026-11-17 09:00', '2026-11-17 10:00')->create()
+        ->tags()->attach($tags[1]);
+
+    $deleted = $entries->between('2026-11-18 09:00', '2026-11-18 10:00')->create();
+    $deleted->tags()->attach($tags[2]);
+    $deleted->delete();
+
+    Tag::factory()->for($this->organization)->create(['name' => 'Oanvänd']);
+    $foreignEntry = TimeEntry::factory()->between('2026-11-18 09:00', '2026-11-18 10:00')->create();
+    $foreignEntry->tags()->attach(Tag::factory()->for($foreignEntry->organization)->create(['name' => 'Hemlig']));
+
+    $this->actingAs($this->member)
+        ->get(tagRoute($route))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('recentTags', array_map(fn (int $number) => "Tagg {$number}", [1, ...range(11, 3)]))
+            ->has('tags', 12));
+})->with(['time.index', 'dashboard']);

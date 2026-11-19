@@ -33,6 +33,7 @@ type Props = {
     projects: ProjectOption[];
     /** The organization's tag names. */
     tags: string[];
+    recentTags: string[];
     members: TimeEntryMemberOption[];
     /** Recently used project ids per member id (owners and admins). */
     recentProjects: Record<string, string[]>;
@@ -67,6 +68,7 @@ export default function Dashboard({
     recentEntries,
     projects,
     tags,
+    recentTags,
     members,
     recentProjects,
     team,
@@ -284,6 +286,7 @@ export default function Dashboard({
                 onClose={() => setDraft(null)}
                 projects={projects}
                 tags={tags}
+                recentTags={recentTags}
                 entries={recentEntries}
                 members={members}
                 recentProjects={recentProjects}

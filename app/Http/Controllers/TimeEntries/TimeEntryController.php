@@ -69,6 +69,7 @@ class TimeEntryController extends Controller
             'entries' => $entries->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone)),
             'projects' => $this->presenter->projectOptions($organization, $member),
             'tags' => $this->presenter->tagOptions($organization),
+            'recentTags' => $this->presenter->recentTags($organization),
             'member' => ['id' => $member->id, 'name' => $member->name],
             // Owners and admins can switch to another member's time.
             'members' => $members,

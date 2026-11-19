@@ -53,6 +53,7 @@ class DashboardController extends Controller
                 ->map(fn (TimeEntry $entry) => $presenter->entry($entry, $timezone)),
             'projects' => $presenter->projectOptions($organization, $user),
             'tags' => $presenter->tagOptions($organization),
+            'recentTags' => $presenter->recentTags($organization),
             // Owners and admins can report time for other members from the quick entry form.
             'members' => $members,
             'recentProjects' => $presenter->recentProjectsByMember($organization, $members),

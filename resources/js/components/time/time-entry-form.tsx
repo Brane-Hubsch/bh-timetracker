@@ -49,6 +49,7 @@ type Props = {
     members?: TimeEntryMemberOption[];
     /** The organization's tag names, suggested in the tag field. */
     tags?: string[];
+    recentTags: string[];
     /** Recently used project ids per member id, so the shortcuts follow the selected member. */
     recentProjects?: Record<string, string[]>;
     onDuplicate?: (draft: TimeEntryDraft) => void;
@@ -80,6 +81,7 @@ export function TimeEntryForm({
     entries,
     members = [],
     tags = [],
+    recentTags,
     recentProjects,
     onDuplicate,
 }: Props) {
@@ -612,6 +614,7 @@ export function TimeEntryForm({
                         value={current.tags}
                         onChange={(tags) => set({ tags })}
                         suggestions={tags}
+                        recentTags={recentTags}
                         error={
                             errors.tags ??
                             Object.entries(errors).find(([key]) =>

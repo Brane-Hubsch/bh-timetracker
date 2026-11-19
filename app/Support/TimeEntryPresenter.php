@@ -68,6 +68,29 @@ class TimeEntryPresenter
     }
 
     /**
+     * The organization's ten most recently used tags, ordered by the latest time entry start.
+     *
+     * @return array<int, string>
+     */
+    public function recentTags(Organization $organization): array
+    {
+        $lastUsed = TimeEntry::query()->forOrganization($organization)
+            ->join('tag_time_entry', 'tag_time_entry.time_entry_id', '=', 'time_entries.id')
+            ->select('tag_time_entry.tag_id')
+            ->selectRaw('MAX(time_entries.started_at) as last_used_at')
+            ->groupBy('tag_time_entry.tag_id');
+
+        return Tag::query()->forOrganization($organization)
+            ->joinSub($lastUsed, 'tag_usage', 'tag_usage.tag_id', '=', 'tags.id')
+            ->orderByDesc('tag_usage.last_used_at')
+            ->orderByDesc('tags.id')
+            ->limit(10)
+            ->get(['tags.name'])
+            ->map(fn (Tag $tag) => $tag->name)
+            ->all();
+    }
+
+    /**
      * Active members a manager can report time for, as select options.
      *
      * @return array<int, array{value: string, label: string, avatar: string|null}>
