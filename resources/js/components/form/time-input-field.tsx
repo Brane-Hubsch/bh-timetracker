@@ -1,5 +1,6 @@
 import { FieldError, Label, TimeField } from '@heroui/react';
 import { Time } from '@internationalized/date';
+import type { ReactNode } from 'react';
 
 type Props = {
     label: string;
@@ -13,6 +14,8 @@ type Props = {
     isRequired?: boolean;
     autoFocus?: boolean;
     className?: string;
+    suffix?: ReactNode;
+    isEmbedded?: boolean;
     'data-test'?: string;
 };
 
@@ -39,6 +42,8 @@ export function TimeInputField({
     isRequired,
     autoFocus,
     className,
+    suffix,
+    isEmbedded,
     'data-test': dataTest,
 }: Props) {
     return (
@@ -50,17 +55,29 @@ export function TimeInputField({
             isInvalid={isInvalid ?? Boolean(error)}
             isRequired={isRequired}
             autoFocus={autoFocus}
+            aria-label={isEmbedded ? label : undefined}
             shouldForceLeadingZeros
             validationBehavior="aria"
             fullWidth
             className={className}
             data-test={dataTest}
         >
-            <Label>{label}</Label>
-            <TimeField.Group>
+            {!isEmbedded && <Label>{label}</Label>}
+            <TimeField.Group
+                className={
+                    isEmbedded
+                        ? 'h-full rounded-none border-0 bg-transparent shadow-none outline-none'
+                        : undefined
+                }
+            >
                 <TimeField.Input>
                     {(segment) => <TimeField.Segment segment={segment} />}
                 </TimeField.Input>
+                {suffix && (
+                    <TimeField.Suffix className="pointer-events-auto me-1">
+                        {suffix}
+                    </TimeField.Suffix>
+                )}
             </TimeField.Group>
             <FieldError>{error}</FieldError>
         </TimeField>

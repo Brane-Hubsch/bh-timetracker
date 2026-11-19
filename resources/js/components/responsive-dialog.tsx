@@ -9,6 +9,7 @@ type Props = {
     children: ReactNode;
     footer?: ReactNode;
     dismissOnEscape?: boolean;
+    desktopClassName?: string;
 };
 
 /**
@@ -21,6 +22,7 @@ export function ResponsiveDialog({
     children,
     footer,
     dismissOnEscape,
+    desktopClassName = 'sm:max-w-lg',
 }: Props) {
     const isDesktop = useIsDesktop();
 
@@ -49,7 +51,10 @@ export function ResponsiveDialog({
                 isKeyboardDismissDisabled={dismissOnEscape === false}
             >
                 <Modal.Container>
-                    <Modal.Dialog className="sm:max-w-lg" render={renderDialog}>
+                    <Modal.Dialog
+                        className={desktopClassName}
+                        render={renderDialog}
+                    >
                         <Modal.CloseTrigger />
                         <Modal.Header>
                             <Modal.Heading>{title}</Modal.Heading>
