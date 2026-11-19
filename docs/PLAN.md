@@ -33,7 +33,7 @@ uppgifter (tasks), integrationer med externa kalendrar, native-app. (Taggar lade
 | Multi-tenant | Organisationer; en användare kan tillhöra flera och byter aktiv organisation |
 | AI-integration | Egen MCP-server med `laravel/mcp`, OAuth 2.1 via Laravel Passport |
 | Lokal miljö | Laravel Herd, SQLite |
-| Produktion | Postgres 17. Docker Compose med serversideup/php (FrankenPHP), se "Tillägg efter Fas 6: drift med Docker". |
+| Produktion | Postgres 17. Docker Compose med serversideup/php (FrankenPHP) och Laravel Octane, se "Tillägg efter Fas 6: drift med Docker". |
 | Språk | Kod/identifierare på engelska. UI på svenska först, förberett för engelska (i18n från start). |
 | Organisation i URL | Tenant-sidor ligger under `/{organisationens-slug}/...`; slugen sätter aktiv organisation. `current_organization_id` minns senast använda (redirect efter inloggning, standard för MCP). |
 | Personliga organisationer | Finns inte. Användare utan organisation hamnar på `/onboarding` (acceptera inbjudan eller skapa organisation). |
@@ -631,9 +631,9 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
   - Composer-beroenden utan dev-paket.
   - Frontendbygget kör Node och PHP i samma steg, eftersom Wayfinders Vite-plugin kör `php artisan`. `VITE_APP_NAME` är byggargument.
   - Inga hemligheter i imagen; allt kommer från `.env` vid körning.
-  - FrankenPHP körs i klassiskt läge (som PHP-FPM). Workerläge skulle kräva Laravel Octane, ett nytt beroende som inte ingår.
+  - FrankenPHP körs i workerläge via Laravel Octane, se "Tillägg efter Fas 6: workerläge med Octane".
 - **Tjänster** (`compose.yaml`), alla från samma image:
-  - `web`: FrankenPHP på 80/443 med automatisk HTTPS (Let's Encrypt för värden i `APP_URL`). Port 80 omdirigerar. Vid start körs `storage:link`, migreringar och `optimize` (serversideups automationer, bara i den här tjänsten). Hälsokontrollen går mot `/up`, så den startar Laravel.
+  - `web`: Octane på FrankenPHP på 80/443 med automatisk HTTPS (Let's Encrypt för värden i `APP_URL`). Port 80 omdirigerar. Vid start körs `storage:link`, migreringar och `optimize` (serversideups automationer, bara i den här tjänsten). Hälsokontrollen går mot `/up`, så den startar Laravel.
   - `queue`: `queue:work --tries=3`.
   - `scheduler`: `schedule:work`, inklusive nattlig backup. Startar först när `web` är frisk, alltså efter migreringarna.
   - `postgres`: PostgreSQL 17, bara nåbar inne i stacken.
@@ -652,6 +652,31 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
   - omstart med kvarvarande data
   - återställning enligt README
 - **Rättat:** paketet för backup validerade larmadresserna vid uppstart, så tomma `BACKUP_NOTIFICATION_EMAIL`/`MAIL_FROM_ADDRESS` stoppade alla artisan-kommandon. Nu används en giltig reservadress.
+
+### Tillägg efter Fas 6: workerläge med Octane (2026-11-19)
+
+Beställt i efterhand. `laravel/octane` är ett godkänt beroende. Webbtjänsten kör FrankenPHP i workerläge: appen startar en gång per worker och hanterar många förfrågningar, i stället för att starta om för varje förfrågan.
+
+- **Start:** `php artisan octane:start --server=frankenphp --port=8080 --caddyfile=/etc/frankenphp/Caddyfile`.
+  - Imagens egen `frankenphp` och Caddyfile används, så SSL-lägen, automatisk HTTPS, betrodda proxyer, säkerhetsheaders och hälsokontrollen fungerar som förut.
+  - `octane:install` körs inte, eftersom det skulle ladda ner ännu en FrankenPHP-binär och gitignorera worker-filen. I stället finns `config/octane.php` (standardserver `frankenphp`) och `public/frankenphp-worker.php` incheckade.
+- **Inställningar** (env):
+  - `OCTANE_WORKERS` (standard `auto`)
+  - `OCTANE_MAX_REQUESTS` (500; en worker ersätts efter så många förfrågningar, som skydd mot minnesläckor)
+  - `OCTANE_MAX_EXECUTION_TIME` (120 sekunder; höjt från Octanes 30 så att stora Clockify-importer och PDF-exporter får samma marginal som i klassiskt läge)
+- **Kodgranskning för långlivade workers:** inga ändringar behövdes.
+  - `CurrentOrganization` är `scoped` och nollställs mellan förfrågningar.
+  - `OrganizationScope` hämtar den aktiva organisationen vid varje fråga.
+  - Appen har inga statiska variabler och läser inga superglobaler.
+  - Controllrar med konstruktorinjektion rensas av Octane efter varje förfrågan, och policies skapas på nytt.
+  - Fortifys svarsklasser har inget tillstånd.
+  - Riktlinjen har fått regeln att data som hör till en förfrågan aldrig får ligga i singletons eller statiska variabler.
+- **Lokal utveckling och testsviten** körs som förut utan Octane (Herd respektive Pest).
+- **Verifierat lokalt i Docker:**
+  - Hela stacken frisk.
+  - 100 omväxlande sidladdningar för två användare i olika organisationer på två delade workers visade aldrig fel organisations data; den andra organisationens URL gav 403.
+  - `octane:reload` och omstart fungerar.
+  - Inloggningssidan svarar på median 9 ms mot 20 ms i klassiskt läge.
 
 ## 8. Senare (medvetet bortvalt i v1)
 

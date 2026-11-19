@@ -40,12 +40,12 @@ Production runs with Docker Compose on a single server: [`compose.yaml`](compose
 [`Dockerfile`](Dockerfile), built on [serversideup/php](https://serversideup.net/open-source/docker-php/docs/image-variations/frankenphp)
 with FrankenPHP (PHP 8.5, Caddy). The same image runs four services:
 
-| Service     | What it does                                                                                                                                                                          |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `web`       | FrankenPHP on ports 80/443 with automatic HTTPS (Let's Encrypt for `APP_URL`'s host). On start it links storage, runs migrations and caches config/routes/views. Health check: `/up`. |
-| `queue`     | `php artisan queue:work` (emails such as sign-in links and invitations).                                                                                                              |
-| `scheduler` | `php artisan schedule:work`: pruning and the nightly backups (see below).                                                                                                             |
-| `postgres`  | PostgreSQL 17, reachable only inside the stack.                                                                                                                                       |
+| Service     | What it does                                                                                                                                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web`       | Laravel Octane on FrankenPHP (worker mode) on ports 80/443 with automatic HTTPS (Let's Encrypt for `APP_URL`'s host). On start it links storage, runs migrations and caches config/routes/views. Health check: `/up`. |
+| `queue`     | `php artisan queue:work` (emails such as sign-in links and invitations).                                                                                                                                              |
+| `scheduler` | `php artisan schedule:work`: pruning and the nightly backups (see below).                                                                                                                                             |
+| `postgres`  | PostgreSQL 17, reachable only inside the stack.                                                                                                                                                                       |
 
 Data lives in named volumes: `postgres` (database), `storage` (uploaded images, Passport keys) and
 `caddy_data`/`caddy_config` (certificates). Logs go to the containers' output.
@@ -75,6 +75,12 @@ docker compose up -d --build
 
 `web` restarts on the new image (a few seconds of downtime, since FrankenPHP binds the ports itself) and
 runs the migrations before it reports healthy; `queue` and `scheduler` restart after it.
+
+Octane keeps the booted app in memory, so code, config and `.env` changes only take effect when the
+containers are recreated (`docker compose up -d`, as above) or the workers reload
+(`docker compose exec web php artisan octane:reload`). Tuning in `.env`: `OCTANE_WORKERS` (default
+`auto`), `OCTANE_MAX_REQUESTS` (a worker is replaced after this many requests, default 500) and
+`OCTANE_MAX_EXECUTION_TIME` (seconds per request, default 120).
 
 Useful commands:
 

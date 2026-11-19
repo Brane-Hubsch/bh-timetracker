@@ -125,6 +125,10 @@ describes; propose additions instead of building them.
   `queue`, `scheduler`, `postgres`). New PHP extensions or system packages go in the `Dockerfile`;
   runtime files belong under `storage/` (the only persistent app volume); config must work without a
   `.env` file, since containers get their settings from the environment.
+- The web container runs Laravel Octane (FrankenPHP worker mode): the app boots once per worker. Never
+  keep request or user state in singletons or static properties; bind such services with `scoped()`
+  (like `CurrentOrganization`) and resolve the request, user and config at call time, not in
+  constructors of long-lived services. Local development and tests run without Octane.
 - Durations are integers in seconds. Money is an integer in the smallest currency unit (öre);
   format it in the frontend with `Intl.NumberFormat`.
 - Lazy loading is blocked outside production (`Model::preventLazyLoading`): eager load relations used in
@@ -334,6 +338,18 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
 - When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
+
+=== laravel-octane/core rules ===
+
+# Laravel Octane
+
+This application uses Laravel Octane, a long-running PHP server. The application bootstraps once and handles many requests within the same process.
+
+- Never store request-specific state in singletons or static properties, because it can leak across requests.
+- Use `config('octane.server')` to detect the active driver (`swoole`, `roadrunner`, or `frankenphp`).
+- Prefer scoped bindings (`$this->app->scoped()`) over singletons for per-request services.
+
+When working on Octane-specific features (concurrency, shared tables, memory, driver configuration, testing), invoke `octane-development` for detailed rules.
 
 === wayfinder/core rules ===
 
