@@ -11,6 +11,7 @@ import {
     TextField,
 } from '@heroui/react';
 import { Link, router, usePage } from '@inertiajs/react';
+import { today } from '@internationalized/date';
 import { Copy, Trash2, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
@@ -22,6 +23,7 @@ import { TimeScrubLabel } from '@/components/time/time-scrub-label';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import {
+    addDays,
     formatDuration,
     minutesToTime,
     overlaps,
@@ -109,6 +111,13 @@ export function TimeEntryForm({
 
     const current = values ?? draft;
     const isEditing = Boolean(source?.id);
+    const todayDate = today(auth.user.timezone).toString();
+    const dateLabel =
+        current?.date === todayDate
+            ? t('Today')
+            : current?.date === addDays(todayDate, -1)
+              ? t('Yesterday')
+              : undefined;
 
     const set = (changes: Partial<TimeEntryDraft>) =>
         setValues((previous) =>
@@ -481,6 +490,7 @@ export function TimeEntryForm({
                                 label={t('Date')}
                                 value={current.date}
                                 onChange={(date) => set({ date })}
+                                relativeLabel={dateLabel}
                                 error={errors.date}
                                 isRequired
                                 data-test="time-entry-date"
