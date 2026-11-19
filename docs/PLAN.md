@@ -16,7 +16,7 @@ detta också ska gå att göra via en **AI-assistent över MCP**.
 - Lös produktionsmiljön sent. Håll koden databasagnostisk (SQLite lokalt, Postgres i produktion).
 
 **Uttryckligen INTE i v1**: live-timer (start/stopp), fakturering, attestflöden, kostnadspriser/lönsamhet,
-uppgifter (tasks) och taggar, integrationer med externa kalendrar, native-app.
+uppgifter (tasks), integrationer med externa kalendrar, native-app. (Taggar lades till i efterhand, se tilläggen efter Fas 6.)
 
 ## 2. Beslut som är tagna
 
@@ -509,9 +509,35 @@ Beställt i efterhand (planen sa "PDF senare"). Sammanfattningen och den detalje
 - **Behörighet:** samma regler som CSV/XLSX. Medlemmar får bara sin egen tid och inga belopp.
 - **Kod:** `ReportExporter` (format `pdf`) renderar Blade-vyerna i `resources/views/reports/pdf`.
 
+### Tillägg efter Fas 6: taggar och projektanteckningar (2026-11-19)
+
+Beställt i efterhand (taggar stod tidigare under "Senare").
+
+**Taggar** per organisation, på tidsposter:
+
+- **Skapa:** alla som rapporterar tid kan skapa taggar direkt i tidsformuläret. Fältet föreslår befintliga taggar och har "Skapa taggen …"; Enter eller komma lägger till. Namn jämförs utan hänsyn till versaler, så "möte" återanvänder "Möte".
+- **Gränser:** högst 10 taggar per post, högst 50 tecken per tagg.
+- **Hantera:** ägare och admin (rättigheten `ManageTags`) lägger till, byter namn på och tar bort taggar i organisationsinställningarna. Byter man namn till en befintlig taggs namn slås taggarna ihop. Att ta bort en tagg tar inte bort några poster. Tagglistan nås även via ⌘K.
+- **Tidsposter:** taggarna visas i listvyn. "Kopiera förra veckan" kopierar dem.
+- **Rapporter:**
+  - Filter "någon av taggarna".
+  - Gruppering per tagg. En post med flera taggar räknas under varje tagg och poster utan tagg under "Utan tagg"; det framgår på sidan och i PDF:en. Totalen påverkas inte.
+  - Taggarna visas i den detaljerade rapporten, i CSV/XLSX (egen kolumn) och i PDF.
+- **MCP:**
+  - `create_time_entries` och `update_time_entry` tar emot taggnamn. Vid uppdatering ersätter en lista alla taggar, `[]` tar bort dem och utelämnat behåller dem.
+  - `get_report` filtrerar och grupperar på taggar.
+  - `get_context` listar taggarna.
+  - Alla poster i svaren har sina taggar.
+- **Kod:**
+  - Tabellerna `tags` och `tag_time_entry`.
+  - Actions i `app/Actions/Tags` (`ResolveTags`, `CreateTag`, `RenameTag`, `DeleteTag`).
+  - `TagPolicy`.
+
+**Projektanteckningar:** ett fritextfält (`projects.notes`, högst 10 000 tecken) i projektpanelen. Anteckningarna visas på projektsidan för alla som kan se projektet.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
-Live-timer · uppgifter och taggar · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Clockify/Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.
+Live-timer · uppgifter · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Clockify/Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.
 
 ## 9. Öppna frågor
 

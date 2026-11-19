@@ -52,6 +52,10 @@ describes; propose additions instead of building them.
   with `timeZone="UTC"` so they display unchanged.
 - Parse free-form durations ("1,5", "1:30", "90m") with `App\Support\DurationParser` (PHP) or
   `parseDuration` in `@/lib/time` (React).
+- Tags (`App\Models\Tag`) belong to the organization and are attached to time entries by name: actions
+  resolve names with `App\Actions\Tags\ResolveTags` (case-insensitive, creates missing ones; anyone may
+  create tags while reporting). Renaming to an existing name merges (`RenameTag`); managing the list
+  needs `ManageTags`. Eager load `tags` wherever entries are presented (`TimeEntry::tagNames()`).
 
 ## Reports
 
