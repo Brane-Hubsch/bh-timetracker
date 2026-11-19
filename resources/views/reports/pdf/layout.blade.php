@@ -23,6 +23,9 @@
         table.data td { padding: 2mm; border-bottom: 1px solid #ececef; vertical-align: top; }
         table.data tr { page-break-inside: avoid; }
         table.data th.num, table.data td.num { text-align: right; white-space: nowrap; }
+        table.data.compact { font-size: 7.5pt; }
+        table.data.compact td { padding: 1.1mm 1.6mm; line-height: 1.3; }
+        table.data.compact th { padding: 0 1.6mm 1.5mm; }
         tr.group td { font-weight: bold; background: #fafafa; }
         tr.child td.name { padding-left: 6mm; }
         tr.total td { font-weight: bold; border-top: 1.5px solid #18181b; border-bottom: 0; padding-top: 2.5mm; }
