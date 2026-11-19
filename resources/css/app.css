@@ -198,16 +198,22 @@
     }
 }
 
-.time-calendar-slot-label {
+.time-calendar .time-calendar-slot-label {
+    border-color: transparent;
     font-size: 0.75rem;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* Room around the hour labels; FullCalendar sizes the time axis from this content. */
-.time-calendar-slot-label > div > div {
-    padding: 0.25rem 0.75rem 0 1rem;
+.time-calendar .time-calendar-slot-label-text {
+    margin-block: 0 0.5rem;
+    padding-inline: 1rem 0.75rem;
     text-align: right;
+}
+
+/* Center on the 1px grid rule. The first label stays inside the scroll area. */
+.time-calendar-slot-label-text-aligned {
+    translate: 0 calc(-50% - 0.5px);
 }
 
 .time-calendar-day-header {

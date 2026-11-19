@@ -167,7 +167,8 @@ export function TimeCalendar({
                 allDaySlot={false}
                 nowIndicator
                 height={height}
-                scrollTime="07:00:00"
+                // Leave space above 07:00 for its label to straddle the grid line.
+                scrollTime="06:30:00"
                 slotDuration="00:30:00"
                 snapDuration="00:15:00"
                 slotHeaderFormat={{
@@ -213,6 +214,11 @@ export function TimeCalendar({
                     'time-calendar-resizer time-calendar-resizer-end'
                 }
                 slotHeaderClass="time-calendar-slot-label"
+                slotHeaderInnerClass={({ isFirst }) =>
+                    isFirst
+                        ? 'time-calendar-slot-label-text'
+                        : 'time-calendar-slot-label-text time-calendar-slot-label-text-aligned'
+                }
                 dayHeaderClass="time-calendar-day-header"
                 nowIndicatorLineClass="time-calendar-now"
                 dayHeaderContent={(info) => {
