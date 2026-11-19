@@ -218,7 +218,8 @@ class OrganizationTest extends TestCase
 
     public function test_deleting_current_organization_switches_to_alphabetically_first_remaining_organization()
     {
-        $user = User::factory()->create(['name' => 'Mike']);
+        // Without the factory's own organization, whose random name could sort before "Alpha".
+        $user = User::factory()->withoutOrganization()->create(['name' => 'Mike']);
 
         $zuluOrganization = Organization::factory()->create(['name' => 'Zulu Organization']);
         $zuluOrganization->members()->attach($user, ['role' => OrganizationRole::Owner->value]);
