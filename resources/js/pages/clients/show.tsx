@@ -8,6 +8,7 @@ import {
     Plus,
 } from 'lucide-react';
 import { useState } from 'react';
+import { LogoImage } from '@/components/logo-image';
 import { ClientFormDrawer } from '@/components/client-form-drawer';
 import Heading from '@/components/heading';
 import { SelectField } from '@/components/form/select-field';
@@ -75,7 +76,12 @@ export default function ClientShow({
             <div className="grid gap-8">
                 <Heading
                     title={
-                        <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-3">
+                            <LogoImage
+                                src={client.logo}
+                                name={client.name}
+                                size={40}
+                            />
                             {client.name}
                             {client.isArchived && (
                                 <Chip size="sm" variant="soft">
