@@ -103,6 +103,11 @@ describes; propose additions instead of building them.
 
 - Store timestamps in UTC; display them in the user's timezone. Use `CarbonImmutable` (it is the app
   default via `Date::use()`).
+- Uploaded images (profile pictures, logos) go through `App\Services\Images\ImageStorage` (WebP in
+  the sizes from `config/images.php`) via the actions in `app/Actions/Images`; validate uploads with
+  `ImageUploadRequest::imageRules()` (raster only, no SVG). Store the returned directory on the model
+  and hand the frontend URLs (`logoUrl($size)`, `User::$avatar`), never storage paths. Show logos with
+  `LogoImage` (square, never cropped) and pick a size about twice the displayed one.
 - Durations are integers in seconds. Money is an integer in the smallest currency unit (öre);
   format it in the frontend with `Intl.NumberFormat`.
 - Lazy loading is blocked outside production (`Model::preventLazyLoading`): eager load relations used in
