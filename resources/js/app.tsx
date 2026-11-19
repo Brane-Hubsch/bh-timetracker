@@ -40,7 +40,20 @@ void createInertiaApp({
         return <AppProviders locale={page.props.locale}>{app}</AppProviders>;
     },
     progress: {
-        color: '#4B5563',
+        color: '#7c3aed',
+        delay: 200,
+    },
+    defaults: {
+        // Animate page changes, but not filter/paging updates (preserveState), partial reloads or
+        // form submissions, and never for users who prefer reduced motion.
+        visitOptions: (href, options) => ({
+            viewTransition:
+                options.method === 'get' &&
+                !options.preserveState &&
+                !options.async &&
+                (options.only ?? []).length === 0 &&
+                !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        }),
     },
 });
 

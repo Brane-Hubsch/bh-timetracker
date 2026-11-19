@@ -133,7 +133,7 @@ export default function Dashboard({
                                     onClick={() =>
                                         setDraft(draftFromEntry(entry))
                                     }
-                                    className="flex w-full items-center gap-3 p-4 text-left hover:bg-surface-secondary"
+                                    className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-surface-secondary"
                                 >
                                     <ProjectDot color={entry.project.color} />
                                     <div className="min-w-0 flex-1">

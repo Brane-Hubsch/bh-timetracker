@@ -66,7 +66,7 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
                             </div>
                             <div className="h-2 rounded-full bg-default">
                                 <div
-                                    className="h-2 rounded-full bg-accent"
+                                    className="h-2 origin-left animate-grow-x rounded-full bg-accent transition-[width] duration-300"
                                     style={{
                                         width: `${(project.seconds / largest) * 100}%`,
                                     }}

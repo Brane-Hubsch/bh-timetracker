@@ -32,7 +32,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <div className="flex flex-col gap-6 lg:flex-row lg:gap-12">
                 <nav
                     aria-label={t('Settings')}
-                    className="-mx-4 flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:w-48 lg:shrink-0 lg:flex-col lg:px-0"
+                    className="settings-navigation -mx-4 flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:w-48 lg:shrink-0 lg:flex-col lg:px-0"
                 >
                     {items.map((item) => {
                         const isActive = isCurrentOrParentUrl(item.href);

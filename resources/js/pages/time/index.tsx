@@ -261,38 +261,44 @@ export default function TimeIndex({
                     </div>
                 </div>
 
-                {view === 'list' ? (
-                    <TimeEntryList
-                        dates={dates}
-                        today={today}
-                        entries={entries}
-                        onEdit={(entry) => setDraft(draftFromEntry(entry))}
-                        onAdd={(day) =>
-                            setDraft(newDraft(day, entries, member.id))
-                        }
-                    />
-                ) : (
-                    <TimeCalendar
-                        view={view}
-                        date={date}
-                        weekStartsOn={weekStartsOn}
-                        now={`${today}T${new Date().toTimeString().slice(0, 5)}`}
-                        entries={entries}
-                        onSelect={(start, end) =>
-                            setDraft({
-                                ...newDraft(
-                                    start.slice(0, 10),
-                                    entries,
-                                    member.id,
-                                ),
-                                start: timeOf(start),
-                                end: timeOf(end),
-                            })
-                        }
-                        onEdit={(entry) => setDraft(draftFromEntry(entry))}
-                        onChange={move}
-                    />
-                )}
+                {/* Fades in when the week, day or view changes (not after saving an entry). */}
+                <div
+                    key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
+                    className="animate-fade-in"
+                >
+                    {view === 'list' ? (
+                        <TimeEntryList
+                            dates={dates}
+                            today={today}
+                            entries={entries}
+                            onEdit={(entry) => setDraft(draftFromEntry(entry))}
+                            onAdd={(day) =>
+                                setDraft(newDraft(day, entries, member.id))
+                            }
+                        />
+                    ) : (
+                        <TimeCalendar
+                            view={view}
+                            date={date}
+                            weekStartsOn={weekStartsOn}
+                            now={`${today}T${new Date().toTimeString().slice(0, 5)}`}
+                            entries={entries}
+                            onSelect={(start, end) =>
+                                setDraft({
+                                    ...newDraft(
+                                        start.slice(0, 10),
+                                        entries,
+                                        member.id,
+                                    ),
+                                    start: timeOf(start),
+                                    end: timeOf(end),
+                                })
+                            }
+                            onEdit={(entry) => setDraft(draftFromEntry(entry))}
+                            onChange={move}
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Big "+" on mobile. */}

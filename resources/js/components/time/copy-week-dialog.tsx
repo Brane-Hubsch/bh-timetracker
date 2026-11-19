@@ -97,7 +97,7 @@ export function CopyWeekDialog({ isOpen, onOpenChange, entries }: Props) {
                             key={entry.id}
                             isSelected={selected.has(entry.id)}
                             onChange={() => toggle(entry.id)}
-                            className="rounded-xl p-2 hover:bg-surface-secondary"
+                            className="rounded-xl p-2 transition-colors hover:bg-surface-secondary"
                         >
                             <Checkbox.Content>
                                 <Checkbox.Control>

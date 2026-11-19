@@ -134,7 +134,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                                     key={link.title}
                                     href={link.href}
                                     onClick={() => setMoreOpen(false)}
-                                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium hover:bg-default"
+                                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-default"
                                 >
                                     <link.icon className="size-5 text-muted" />
                                     {t(link.title)}

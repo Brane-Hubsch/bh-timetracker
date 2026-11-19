@@ -46,7 +46,7 @@ export function SegmentedControl<T extends string>({
                 <ToggleButton
                     key={option.id}
                     id={option.id}
-                    className="rounded-full bg-transparent px-3 text-muted data-[selected=true]:bg-segment data-[selected=true]:text-segment-foreground data-[selected=true]:shadow-sm"
+                    className="rounded-full bg-transparent px-3 text-muted transition-colors duration-200 data-[selected=true]:bg-segment data-[selected=true]:text-segment-foreground data-[selected=true]:shadow-sm"
                 >
                     {option.label}
                 </ToggleButton>

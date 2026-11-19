@@ -102,7 +102,7 @@ export function TimeEntryList({ dates, today, entries, onEdit, onAdd }: Props) {
                                     <button
                                         type="button"
                                         onClick={() => onAdd(date)}
-                                        className="flex w-full items-center justify-center gap-2 p-6 text-sm text-muted hover:bg-surface-secondary"
+                                        className="flex w-full items-center justify-center gap-2 p-6 text-sm text-muted transition-colors hover:bg-surface-secondary"
                                     >
                                         <Clock className="size-4" />
                                         {t('No time reported yet')}

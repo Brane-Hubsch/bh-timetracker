@@ -88,7 +88,7 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                     role="list"
                     aria-label={title ?? t('Hours per day')}
                 >
-                    {buckets.map((bucket) => (
+                    {buckets.map((bucket, index) => (
                         <div
                             key={bucket.key}
                             role="listitem"
@@ -103,9 +103,10 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                                 onClick={() => setSelected(bucket)}
                             >
                                 <span
-                                    className={`block w-full rounded-t-[4px] transition-colors ${selected?.key === bucket.key ? 'bg-accent' : 'bg-accent/75 group-hover:bg-accent'}`}
+                                    className={`block w-full origin-bottom animate-grow-y rounded-t-[4px] transition-[height,background-color] duration-300 ${selected?.key === bucket.key ? 'bg-accent' : 'bg-accent/75 group-hover:bg-accent'}`}
                                     style={{
                                         height: `${(bucket.seconds / 3600 / max) * 100}%`,
+                                        animationDelay: `${Math.min(index * 12, 360)}ms`,
                                     }}
                                 />
                             </button>

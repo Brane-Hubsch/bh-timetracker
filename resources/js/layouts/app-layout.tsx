@@ -31,7 +31,7 @@ export default function AppLayout({
                 <div className="md:pl-64">
                     <MobileTopBar className="md:hidden" />
 
-                    <main className="mx-auto w-full max-w-5xl px-4 pt-4 pb-28 md:px-8 md:pt-8 md:pb-12">
+                    <main className="page-transition mx-auto w-full max-w-5xl animate-enter px-4 pt-4 pb-28 md:px-8 md:pt-8 md:pb-12">
                         {breadcrumbs.length > 1 && (
                             <Breadcrumbs className="mb-6 hidden md:flex">
                                 {breadcrumbs.map((item, index) => (

@@ -113,6 +113,10 @@ describes; propose additions instead of building them.
   `SegmentedControl` (HeroUI ToggleButtonGroup), not `Tabs` without panels; icon-only buttons need an
   `aria-label`. Use the `muted`/`accent` tokens from `app.css`, which are tuned for WCAG AA.
 - Errors render the `error` page in production (`AppServiceProvider::configureErrorPages`).
+- Motion is subtle and functional: page visits use View Transitions (only the content area, see
+  `app.tsx` and `.page-transition`), not filter/paging updates or form posts. Use the `animate-enter`,
+  `animate-fade-in`, `animate-grow-x/y` tokens from `app.css` and `transition-colors` on interactive
+  rows; everything respects `prefers-reduced-motion`.
 - New pages and frequent actions get a command in the ⌘K palette (`components/command-palette.tsx`,
   respecting permissions). Pages open dialogs from the palette through `useOpenFromQuery` (`?new=1`).
 
