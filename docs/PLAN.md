@@ -33,7 +33,7 @@ uppgifter (tasks), integrationer med externa kalendrar, native-app. (Taggar lade
 | Multi-tenant | Organisationer; en användare kan tillhöra flera och byter aktiv organisation |
 | AI-integration | Egen MCP-server med `laravel/mcp`, OAuth 2.1 via Laravel Passport |
 | Lokal miljö | Laravel Herd, SQLite |
-| Produktion | Postgres. Hosting/deploy beslutas senare. |
+| Produktion | Postgres 17. Docker Compose med serversideup/php (FrankenPHP), se "Tillägg efter Fas 6: drift med Docker". |
 | Språk | Kod/identifierare på engelska. UI på svenska först, förberett för engelska (i18n från start). |
 | Organisation i URL | Tenant-sidor ligger under `/{organisationens-slug}/...`; slugen sätter aktiv organisation. `current_organization_id` minns senast använda (redirect efter inloggning, standard för MCP). |
 | Personliga organisationer | Finns inte. Användare utan organisation hamnar på `/onboarding` (acceptera inbjudan eller skapa organisation). |
@@ -232,9 +232,9 @@ resources/js/
 - Google OAuth godkänner normalt inte `.test` som redirect-URI. Använd `localhost` eller en tunnel (t.ex. `herd share`) för att testa Google-inloggning lokalt. Kontrollera i Google Cloud Console.
 - MCP via OAuth från claude.ai kräver en publik HTTPS-URL. Lokalt: tunnel, eller testa med Claude Code/MCP Inspector mot lokal URL.
 
-### 5.6 Produktion (avvaktas)
+### 5.6 Produktion
 
-Det enda som bestäms nu: Postgres, köer (database-driver räcker initialt), e-post för inbjudningar/magic links, HTTPS. Hosting och CI/CD-deploy beslutas när v1 närmar sig klart. Backup är byggd, se "Tillägg efter Fas 6: nattlig backup".
+Postgres, köer (database-driver räcker initialt), e-post för inbjudningar/magic links och HTTPS. Driften sker med Docker Compose på en egen server, se "Tillägg efter Fas 6: drift med Docker". Backup är byggd, se "Tillägg efter Fas 6: nattlig backup". CI/CD-deploy beslutas senare.
 
 ## 6. MCP-server (AI-integration)
 
@@ -308,7 +308,7 @@ ReportBuilder, sammanfattning, detaljerad, projektuppföljning, CSV/XLSX-export.
 **Fas 5 – MCP** *(klar, se Status nedan)*
 Passport + `laravel/mcp`, alla verktyg i 6.3 med tester, sidan "AI-kopplingar", test mot Claude via tunnel.
 
-**Fas 6 – Finputs inför produktion** *(klar, se Status nedan – hostingbeslut kvar)*
+**Fas 6 – Finputs inför produktion** *(klar, se Status nedan)*
 PWA-manifest, tomlägen och felhantering, tillgänglighet, prestanda (N+1, index), e-postmallar, produktionskonfig för Postgres. Beslut om hosting.
 
 ### Status Fas 0 (2026-11-18)
@@ -440,7 +440,7 @@ Avvikelser och förtydliganden:
 
 ### Status Fas 6 (2026-11-18)
 
-Klar, förutom beslut om hosting. Byggt:
+Klar. Byggt:
 
 - **PWA:**
   - Egen ikon (lila klocka) som favicon, SVG, apple-touch-icon och PNG 192/512/maskable.
@@ -471,7 +471,7 @@ Klar, förutom beslut om hosting. Byggt:
   - `.env.production.example` (Postgres med SSL, databaskö, krypterade och säkra sessionscookies, SMTP, Passport-nycklar).
   - Driftchecklista i README.
 
-Kvar att besluta: **hosting** (se förslag i sammanfattningen till beställaren). CI/CD-deploy beslutas samtidigt. Backup är byggd (se nedan) och fungerar oavsett hosting.
+Hosting är beslutad: Docker Compose (se "Tillägg efter Fas 6: drift med Docker"). Backup är byggd (se nedan). Kvar att besluta: CI/CD-deploy.
 
 ### Tillägg efter Fas 6: kommandomeny (⌘K) (2026-11-19)
 
@@ -621,6 +621,37 @@ Beställt i efterhand. Backup till en S3-kompatibel bucket, i första hand Cloud
   - Rekommenderat: en låsregel (R2 bucket lock / S3 Object Lock) så att en kapad server inte kan radera backuperna.
 - **Larm:** e-post till `BACKUP_NOTIFICATION_EMAIL` när en backup eller gallring misslyckas, och när morgonkontrollen hittar att senaste backupen saknas, är äldre än ett dygn, är under hälften så stor som den förra (`App\Support\Backups\NewestBackupIsNotMuchSmaller`) eller att backuperna tar mer än 5 GB. Ett misslyckat försök görs om efter 5 minuter. Lyckade körningar loggas men mejlas inte. Mejlen är på engelska (paketets texter).
 - **Återställning:** beskriven i README. Provas mot en tom databas en gång per kvartal.
+
+### Tillägg efter Fas 6: drift med Docker (2026-11-19)
+
+Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [serversideup/php](https://serversideup.net/open-source/docker-php/docs/image-variations/frankenphp) i FrankenPHP-varianten.
+
+- **Image** (`Dockerfile`, flerstegsbygge):
+  - Bas `serversideup/php:8.5-frankenphp-trixie`, med tilläggen `gd` och `exif` (bilder), `intl` (formatering i exporter) och `postgresql-client` (`pg_dump` 17 för backup).
+  - Composer-beroenden utan dev-paket.
+  - Frontendbygget kör Node och PHP i samma steg, eftersom Wayfinders Vite-plugin kör `php artisan`. `VITE_APP_NAME` är byggargument.
+  - Inga hemligheter i imagen; allt kommer från `.env` vid körning.
+  - FrankenPHP körs i klassiskt läge (som PHP-FPM). Workerläge skulle kräva Laravel Octane, ett nytt beroende som inte ingår.
+- **Tjänster** (`compose.yaml`), alla från samma image:
+  - `web`: FrankenPHP på 80/443 med automatisk HTTPS (Let's Encrypt för värden i `APP_URL`). Port 80 omdirigerar. Vid start körs `storage:link`, migreringar och `optimize` (serversideups automationer, bara i den här tjänsten). Hälsokontrollen går mot `/up`, så den startar Laravel.
+  - `queue`: `queue:work --tries=3`.
+  - `scheduler`: `schedule:work`, inklusive nattlig backup. Startar först när `web` är frisk, alltså efter migreringarna.
+  - `postgres`: PostgreSQL 17, bara nåbar inne i stacken.
+- **Data** i namngivna volymer:
+  - `postgres`
+  - `storage` (uppladdade bilder, Passport-nycklar, dompdf-typsnitt)
+  - `caddy_data`/`caddy_config` (certifikat, så att Let's Encrypts gränser inte nås vid omstarter)
+- **Loggar** går till containrarnas utdata (`LOG_CHANNEL=stderr`).
+- **Klientens IP:** Caddy räknar ut den och skickar den till Laravel, även bakom Cloudflare (`TRUSTED_PROXY=cloudflare`, standard). `TRUSTED_PROXIES` lämnas tomt.
+- **Deploy:** `git pull && docker compose up -d --build`. Ger några sekunders avbrott, eftersom FrankenPHP själv binder portarna. Nollavbrott skulle kräva en proxy framför; det ingår inte nu.
+- **Dokumentation:** README (Production) och `.env.production.example`.
+- **Verifierat lokalt:**
+  - hela stacken: migreringar, HTTPS-omdirigering, `/up`, statiska filer och `/storage`
+  - inloggning med magisk länk via kön
+  - backup med `pg_dump` i schemaläggaren
+  - omstart med kvarvarande data
+  - återställning enligt README
+- **Rättat:** paketet för backup validerade larmadresserna vid uppstart, så tomma `BACKUP_NOTIFICATION_EMAIL`/`MAIL_FROM_ADDRESS` stoppade alla artisan-kommandon. Nu används en giltig reservadress.
 
 ## 8. Senare (medvetet bortvalt i v1)
 
