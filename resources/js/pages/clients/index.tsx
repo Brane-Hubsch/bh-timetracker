@@ -2,6 +2,7 @@ import { Button, Chip } from '@heroui/react';
 import { Head, Link } from '@inertiajs/react';
 import { Briefcase, ChevronRight, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { LogoImage } from '@/components/logo-image';
 import { ClientFormDrawer } from '@/components/client-form-drawer';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
@@ -47,7 +48,12 @@ export default function ClientsIndex({ clients, filters }: Props) {
                                 href={show({ client: client.id })}
                                 className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-surface-secondary"
                             >
-                                <div className="min-w-0 space-y-1">
+                                <LogoImage
+                                    src={client.logo}
+                                    name={client.name}
+                                    size={40}
+                                />
+                                <div className="min-w-0 flex-1 space-y-1">
                                     <div className="flex items-center gap-2">
                                         <span className="truncate font-medium">
                                             {client.name}

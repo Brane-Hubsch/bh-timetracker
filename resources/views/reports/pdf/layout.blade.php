@@ -12,6 +12,12 @@
         body { font-family: 'Inter', 'DejaVu Sans', sans-serif; font-size: 8.5pt; line-height: 1.45; color: #18181b; }
         .muted { color: #71717a; }
         .header { margin-bottom: 6mm; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { vertical-align: top; padding: 0; }
+        .header-table td.logo { width: 16mm; padding-right: 4mm; }
+        .header-table td.client { text-align: right; width: 40mm; padding-left: 4mm; }
+        .org-logo { max-width: 14mm; max-height: 14mm; }
+        .client-logo { max-width: 12mm; max-height: 12mm; margin-bottom: 1mm; }
         .brand { font-size: 7.5pt; letter-spacing: 0.06em; text-transform: uppercase; color: #7c3aed; font-weight: bold; }
         h1 { font-size: 17pt; margin: 1.5mm 0 1mm; font-weight: bold; }
         .period { font-size: 10pt; }
@@ -61,6 +67,11 @@
     </div>
 
     <div class="header">
+      <table class="header-table"><tr>
+        @if ($organizationLogo)
+            <td class="logo"><img class="org-logo" src="{{ $organizationLogo }}" alt=""></td>
+        @endif
+        <td>
         <div class="brand">{{ $organization }}</div>
         <h1>{{ $title }}</h1>
         <div class="period">{{ $period }}</div>
@@ -74,6 +85,14 @@
                 @endforeach
             </table>
         @endif
+        </td>
+        @if ($client && $client['logo'])
+            <td class="client">
+                <img class="client-logo" src="{{ $client['logo'] }}" alt=""><br>
+                <span class="muted">{{ $client['name'] }}</span>
+            </td>
+        @endif
+      </tr></table>
     </div>
 
     @yield('content')

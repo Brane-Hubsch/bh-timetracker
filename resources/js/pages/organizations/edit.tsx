@@ -11,11 +11,12 @@ import {
     Separator,
     buttonVariants,
 } from '@heroui/react';
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { EllipsisVertical, FileUp, Mail, UserPlus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import DeleteOrganizationModal from '@/components/delete-organization-modal';
+import { ImageUploadField } from '@/components/form/image-upload-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
@@ -28,6 +29,10 @@ import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import { index, update } from '@/routes/organizations';
 import { create as createImport } from '@/routes/organizations/import';
+import {
+    destroy as destroyLogo,
+    update as updateLogo,
+} from '@/routes/organizations/logo';
 import { destroy as destroyInvitation } from '@/routes/organizations/invitations';
 import {
     deactivate as deactivateMember,
@@ -76,6 +81,13 @@ export default function OrganizationEdit({
     const [invitationToCancel, setInvitationToCancel] =
         useState<OrganizationInvitation | null>(null);
     const [isProcessing, setProcessing] = useState(false);
+    const [isUploadingLogo, setUploadingLogo] = useState(false);
+    const { errors } = usePage<{ errors: Record<string, string> }>().props;
+    const logoVisit = {
+        preserveScroll: true,
+        onStart: () => setUploadingLogo(true),
+        onFinish: () => setUploadingLogo(false),
+    };
 
     const timezones = useMemo(() => Intl.supportedValuesOf('timeZone'), []);
 
@@ -252,6 +264,49 @@ export default function OrganizationEdit({
                     title={organization.name}
                     description={t('You are a member of this organization.')}
                 />
+            )}
+
+            {permissions.canUpdateOrganization && (
+                <>
+                    <Separator />
+                    <section
+                        className="grid gap-4"
+                        data-test="organization-logo"
+                    >
+                        <Heading
+                            variant="small"
+                            title={t('Logo')}
+                            description={t(
+                                'Shown in the organization switcher and on PDF reports.',
+                            )}
+                        />
+                        <ImageUploadField
+                            label={t('Logo')}
+                            shape="square"
+                            src={organization.logo}
+                            name={organization.name}
+                            canRemove={organization.logo !== null}
+                            onSelect={(image) =>
+                                router.post(
+                                    updateLogo.url(organization.slug),
+                                    { image },
+                                    {
+                                        ...logoVisit,
+                                        forceFormData: true,
+                                    },
+                                )
+                            }
+                            onRemove={() =>
+                                router.delete(
+                                    destroyLogo.url(organization.slug),
+                                    logoVisit,
+                                )
+                            }
+                            isPending={isUploadingLogo}
+                            error={errors.image}
+                        />
+                    </section>
+                </>
             )}
 
             <Separator />

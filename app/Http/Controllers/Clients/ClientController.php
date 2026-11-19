@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Clients;
 use App\Actions\Clients\CreateClient;
 use App\Actions\Clients\SetClientArchived;
 use App\Actions\Clients\UpdateClient;
+use App\Actions\Images\UpdateClientLogo;
 use App\Enums\ReportGrouping;
 use App\Enums\ReportPeriod;
 use App\Http\Controllers\Controller;
@@ -44,6 +45,7 @@ class ClientController extends Controller
                 'name' => $client->name,
                 'organizationNumber' => $client->organization_number,
                 'email' => $client->email,
+                'logo' => $client->logoUrl(),
                 'activeProjectsCount' => $client->projects_count,
                 'isArchived' => $client->isArchived(),
             ]);
@@ -54,11 +56,15 @@ class ClientController extends Controller
         ]);
     }
 
-    public function store(ClientRequest $request, CurrentOrganization $currentOrganization, CreateClient $createClient): RedirectResponse
+    public function store(ClientRequest $request, CurrentOrganization $currentOrganization, CreateClient $createClient, UpdateClientLogo $updateLogo): RedirectResponse
     {
         Gate::authorize('create', Client::class);
 
         $client = $createClient->handle($currentOrganization->getOrFail(), $request->clientAttributes());
+
+        if ($request->logo() !== null) {
+            $updateLogo->handle($client, $request->logo());
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Client created.')]);
 
@@ -80,6 +86,7 @@ class ClientController extends Controller
                 'organizationNumber' => $client->organization_number,
                 'email' => $client->email,
                 'notes' => $client->notes,
+                'logo' => $client->logoUrl(256),
                 'isArchived' => $client->isArchived(),
             ],
             'projects' => $client->projects()
@@ -114,11 +121,15 @@ class ClientController extends Controller
         ]);
     }
 
-    public function update(ClientRequest $request, Client $client, UpdateClient $updateClient): RedirectResponse
+    public function update(ClientRequest $request, Client $client, UpdateClient $updateClient, UpdateClientLogo $updateLogo): RedirectResponse
     {
         Gate::authorize('update', $client);
 
         $updateClient->handle($client, $request->clientAttributes());
+
+        if ($request->logo() !== null || $request->removesLogo()) {
+            $updateLogo->handle($client, $request->logo());
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Client updated.')]);
 

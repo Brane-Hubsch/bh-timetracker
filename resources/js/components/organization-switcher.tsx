@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 import CreateOrganizationModal from '@/components/create-organization-modal';
+import { LogoImage } from '@/components/logo-image';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -51,8 +52,18 @@ export function OrganizationSwitcher({ className, compact = false }: Props) {
                     )}
                     data-test="organization-switcher-trigger"
                 >
-                    <span className="truncate font-medium">
-                        {currentOrganization?.name ?? t('Select organization')}
+                    <span className="flex min-w-0 items-center gap-2">
+                        {currentOrganization && !compact && (
+                            <LogoImage
+                                src={currentOrganization.logo}
+                                name={currentOrganization.name}
+                                size={28}
+                            />
+                        )}
+                        <span className="truncate font-medium">
+                            {currentOrganization?.name ??
+                                t('Select organization')}
+                        </span>
                     </span>
                     <ChevronsUpDown className="size-4 shrink-0 text-muted" />
                 </Button>
@@ -67,6 +78,11 @@ export function OrganizationSwitcher({ className, compact = false }: Props) {
                                     textValue={organization.name}
                                     data-test="organization-switcher-item"
                                 >
+                                    <LogoImage
+                                        src={organization.logo}
+                                        name={organization.name}
+                                        size={24}
+                                    />
                                     <Label>{organization.name}</Label>
                                     {organization.id ===
                                         currentOrganization?.id && (

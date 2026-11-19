@@ -2,6 +2,7 @@ import { Avatar, Button, Chip, Label, NumberField } from '@heroui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Archive, ArchiveRestore, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
+import { LogoImage } from '@/components/logo-image';
 import type { SelectOption } from '@/components/form/select-field';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
@@ -173,18 +174,27 @@ export default function ProjectShow({
                 <dl className="grid grid-cols-2 gap-4 rounded-2xl bg-surface p-4 shadow-surface sm:grid-cols-3 sm:p-6">
                     <Detail label={t('Client')}>
                         {project.client ? (
-                            can.manage ? (
-                                <Link
-                                    href={showClient({
-                                        client: project.client.id,
-                                    })}
-                                    className="text-accent"
-                                >
-                                    {project.client.name}
-                                </Link>
-                            ) : (
-                                project.client.name
-                            )
+                            <span className="flex min-w-0 items-center gap-2">
+                                <LogoImage
+                                    src={project.client.logo}
+                                    name={project.client.name}
+                                    size={24}
+                                />
+                                {can.manage ? (
+                                    <Link
+                                        href={showClient({
+                                            client: project.client.id,
+                                        })}
+                                        className="truncate text-accent"
+                                    >
+                                        {project.client.name}
+                                    </Link>
+                                ) : (
+                                    <span className="truncate">
+                                        {project.client.name}
+                                    </span>
+                                )}
+                            </span>
                         ) : (
                             t('No client')
                         )}

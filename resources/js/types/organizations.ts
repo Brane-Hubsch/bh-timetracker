@@ -7,6 +7,8 @@ export type Organization = {
     role?: OrganizationRole;
     roleLabel?: string;
     isCurrent?: boolean;
+    /** Logo URL (128 px), or null without a logo. */
+    logo?: string | null;
 };
 
 export type OrganizationSettings = Organization & {
@@ -16,6 +18,8 @@ export type OrganizationSettings = Organization & {
     /** ISO-8601 weekday, 1 = Monday. */
     weekStartsOn: number;
     timezone: string;
+    /** Logo URL in preview size (256 px), or null without a logo. */
+    logo: string | null;
 };
 
 export type OrganizationMember = {

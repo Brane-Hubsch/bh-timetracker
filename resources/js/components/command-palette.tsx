@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createContext, use, useCallback, useEffect, useState } from 'react';
+import { LogoImage } from '@/components/logo-image';
 import { ProjectDot } from '@/components/project-dot';
 import { logoutAndFlush } from '@/components/user-menu';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -81,6 +82,8 @@ type Command = {
     keywords?: string;
     icon?: LucideIcon;
     color?: string;
+    /** An organization's logo (or initial) instead of an icon. */
+    logo?: { src: string | null | undefined; name: string };
     perform: () => void;
 };
 
@@ -234,7 +237,14 @@ function CommandPalette({
                                             data-test={`command-${command.id}`}
                                         >
                                             <span className="flex size-5 shrink-0 items-center justify-center text-muted">
-                                                {command.color ? (
+                                                {command.logo ? (
+                                                    <LogoImage
+                                                        src={command.logo.src}
+                                                        name={command.logo.name}
+                                                        size={20}
+                                                        className="rounded-md"
+                                                    />
+                                                ) : command.color ? (
                                                     <ProjectDot
                                                         color={command.color}
                                                     />
@@ -580,7 +590,10 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                           label: t('Switch to :name', {
                               name: organization.name,
                           }),
-                          icon: Building2,
+                          logo: {
+                              src: organization.logo,
+                              name: organization.name,
+                          },
                           perform: () => switchOrganization(organization),
                       })),
                   },

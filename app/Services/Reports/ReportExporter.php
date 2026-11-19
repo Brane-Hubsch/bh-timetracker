@@ -6,6 +6,7 @@ use App\Enums\ReportGrouping;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Tag;
+use App\Services\Images\ImageStorage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -26,8 +27,10 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ReportExporter
 {
-    public function __construct(private readonly ReportBuilder $reports)
-    {
+    public function __construct(
+        private readonly ReportBuilder $reports,
+        private readonly ImageStorage $images,
+    ) {
         //
     }
 
@@ -196,6 +199,8 @@ class ReportExporter
         return [
             'title' => $title,
             'organization' => $filters->organization->name,
+            'organizationLogo' => $this->images->dataUri($filters->organization->logo_path),
+            'client' => $this->singleClient($filters),
             'period' => $filters->from && $filters->to
                 ? $this->date($filters->from).' – '.$this->date($filters->to)
                 : $this->text(__('All time')),
@@ -210,6 +215,22 @@ class ReportExporter
             'money' => fn (?int $minorUnits): string => $minorUnits === null ? '–' : (string) Number::currency($minorUnits / 100, in: $currency, locale: $locale),
             'formatDate' => fn (string $date): string => $this->date(CarbonImmutable::parse($date)),
         ];
+    }
+
+    /**
+     * The client a report is limited to, with its logo, when it covers exactly one.
+     *
+     * @return array{name: string, logo: string|null}|null
+     */
+    private function singleClient(ReportFilters $filters): ?array
+    {
+        if (count($filters->clientIds) !== 1) {
+            return null;
+        }
+
+        $client = Client::query()->forOrganization($filters->organization)->find($filters->clientIds[0]);
+
+        return $client === null ? null : ['name' => $client->name, 'logo' => $this->images->dataUri($client->logo_path)];
     }
 
     /**

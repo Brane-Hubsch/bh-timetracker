@@ -3,9 +3,11 @@
 use App\Http\Controllers\Organizations\OrganizationController;
 use App\Http\Controllers\Organizations\OrganizationImportController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
+use App\Http\Controllers\Organizations\OrganizationLogoController;
 use App\Http\Controllers\Organizations\OrganizationMemberController;
 use App\Http\Controllers\Organizations\OrganizationTagController;
 use App\Http\Controllers\Settings\AiConnectionController;
+use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Middleware\EnsureOrganizationMembership;
@@ -17,6 +19,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('settings/profile/avatar', [ProfileAvatarController::class, 'update'])->name('profile.avatar.update');
+    Route::delete('settings/profile/avatar', [ProfileAvatarController::class, 'destroy'])->name('profile.avatar.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -44,6 +48,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('settings/organizations/{organization}', [OrganizationController::class, 'edit'])->name('organizations.edit');
         Route::patch('settings/organizations/{organization}', [OrganizationController::class, 'update'])->name('organizations.update');
         Route::delete('settings/organizations/{organization}', [OrganizationController::class, 'destroy'])->name('organizations.destroy');
+        Route::post('settings/organizations/{organization}/logo', [OrganizationLogoController::class, 'update'])->name('organizations.logo.update');
+        Route::delete('settings/organizations/{organization}/logo', [OrganizationLogoController::class, 'destroy'])->name('organizations.logo.destroy');
         Route::post('settings/organizations/{organization}/switch', [OrganizationController::class, 'switch'])->name('organizations.switch');
         Route::delete('settings/organizations/{organization}/leave', [OrganizationController::class, 'leave'])->name('organizations.leave');
 

@@ -580,6 +580,29 @@ Beställt i efterhand (import från Clockify stod under "Senare"). Ägare och ad
   - `OrganizationImportController`.
   - `OrganizationPolicy::import`.
 
+### Tillägg efter Fas 6: profilbilder och loggor (2026-11-19)
+
+Beställt i efterhand. Designen finns i Figma-filen TimeReport på sidan "Bilder · Profil, organisation och kund", med komponenterna `TimeReport / Bilduppladdning` och `TimeReport / Logga`.
+
+- **Profilbild:** laddas upp under Inställningar → Profil. Visas i appen för kollegor, t.ex. i användarmenyn och medlemslistor. Utan uppladdad bild visas Google-bilden, annars initialer. Bilden tas bort med kontot.
+- **Organisationslogga:** laddas upp under Inställningar → Organisation av den som får ändra organisationen (ägare/admin). Visas i organisationsväljaren, i ⌘K och i PDF-rapporternas huvud.
+- **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. I PDF-huvudet visas den när rapporten gäller en enda kund.
+- **Bildbehandling** med `intervention/image` (godkänt beroende, GD-drivrutin):
+  - Varje uppladdning sparas som WebP i 64, 128, 256 och 512 px.
+  - Profilbilder beskärs kvadratiskt runt mitten. Loggor skalas för att passa, beskärs aldrig, förstoras inte och behåller transparens.
+  - EXIF-rotation tillämpas. Animationer reduceras till första bilden, och metadata (t.ex. GPS-position) försvinner vid omkodningen.
+- **Uppladdningsregler:**
+  - JPG, PNG, WebP eller GIF.
+  - Högst 5 MB och högst 6000 px per sida.
+  - Ingen SVG, eftersom SVG kan innehålla skript.
+- **Lagring:**
+  - Disken `config/images.php` (`IMAGES_DISK`, standard `public`) under `images/{avatars|logos}/{uuid}/{storlek}.webp`, med publika men ogissningsbara URL:er.
+  - I produktion: kör `php artisan storage:link` för den lokala disken, eller använd en S3-kompatibel bucket med publik läsning.
+- **Kod:**
+  - `App\Services\Images\ImageStorage` (lagra, URL, PNG-data för PDF, ta bort).
+  - Actions `App\Actions\Images\UpdateUserAvatar`, `UpdateOrganizationLogo` och `UpdateClientLogo`. Den nya bilden sparas först, sedan uppdateras kolumnen, sedan tas den gamla bort.
+  - Kolumnerna `users.avatar_path`, `organizations.logo_path` och `clients.logo_path`.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.

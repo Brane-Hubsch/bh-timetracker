@@ -1,5 +1,7 @@
 import { Button, Description, Label, TextArea, TextField } from '@heroui/react';
 import { Form } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import { ImageUploadField } from '@/components/form/image-upload-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
     SideDrawer,
@@ -22,6 +24,32 @@ type Props = {
 export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
     const { t } = useTranslation();
     const form = client ? update.form({ client: client.id }) : store.form();
+    // The logo is sent with the form: a newly chosen file, or a request to remove the current one.
+    const [logo, setLogo] = useState<File | null>(null);
+    const [removeLogo, setRemoveLogo] = useState(false);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLogo(null);
+            setRemoveLogo(false);
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!logo) {
+            setLogoPreview(null);
+
+            return;
+        }
+
+        const url = URL.createObjectURL(logo);
+        setLogoPreview(url);
+
+        return () => URL.revokeObjectURL(url);
+    }, [logo]);
+
+    const currentLogo = removeLogo ? null : (client?.logo ?? null);
 
     return (
         <SideDrawer
@@ -32,6 +60,11 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
             <Form
                 {...form}
                 options={{ preserveScroll: true }}
+                transform={(data) => ({
+                    ...data,
+                    ...(logo ? { logo } : {}),
+                    remove_logo: removeLogo ? 1 : 0,
+                })}
                 onSuccess={() => onOpenChange(false)}
                 className={sideDrawerFormClass}
             >
@@ -47,6 +80,23 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                                     isRequired
                                     autoFocus={!client}
                                     data-test="client-name"
+                                />
+                                <ImageUploadField
+                                    label={t('Logo')}
+                                    shape="square"
+                                    src={logoPreview ?? currentLogo}
+                                    name={client?.name ?? '?'}
+                                    canRemove={Boolean(logo ?? currentLogo)}
+                                    onSelect={(file) => {
+                                        setLogo(file);
+                                        setRemoveLogo(false);
+                                    }}
+                                    onRemove={() => {
+                                        setLogo(null);
+                                        setRemoveLogo(true);
+                                    }}
+                                    error={errors.logo}
+                                    data-test="client-logo"
                                 />
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <TextInputField

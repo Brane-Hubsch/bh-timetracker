@@ -3,6 +3,8 @@ export type User = {
     name: string;
     email: string;
     avatar_url: string | null;
+    /** The picture to show (128 px): the uploaded one, else the one from Google. */
+    avatar: string | null;
     locale: string;
     timezone: string;
     email_verified_at: string | null;

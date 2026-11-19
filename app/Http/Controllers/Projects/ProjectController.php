@@ -101,7 +101,7 @@ class ProjectController extends Controller
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
-                'avatar' => $member->avatar_url,
+                'avatar' => $member->avatar,
                 'hourlyRate' => $canViewRates ? $this->assignment($member)?->hourly_rate : null,
             ]),
             'assignableMembers' => $canManage
@@ -199,7 +199,7 @@ class ProjectController extends Controller
             'name' => $project->name,
             'code' => $project->code,
             'color' => $project->color,
-            'client' => $project->client ? ['id' => $project->client->id, 'name' => $project->client->name] : null,
+            'client' => $project->client ? ['id' => $project->client->id, 'name' => $project->client->name, 'logo' => $project->client->logoUrl()] : null,
             'isBillable' => $project->is_billable,
             'estimateSeconds' => $project->estimate_seconds,
             'isPrivate' => $project->visibility === ProjectVisibility::Private,

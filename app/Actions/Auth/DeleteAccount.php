@@ -3,13 +3,20 @@
 namespace App\Actions\Auth;
 
 use App\Models\User;
+use App\Services\Images\ImageStorage;
 use Illuminate\Validation\ValidationException;
 
 class DeleteAccount
 {
+    public function __construct(private readonly ImageStorage $images)
+    {
+        //
+    }
+
     /**
      * Delete the user's account. Owners must delete their organizations first, so an organization
-     * never loses its owner. Memberships, passkeys and links are removed by foreign key cascades.
+     * never loses its owner. Memberships, passkeys and links are removed by foreign key cascades,
+     * and the uploaded profile picture is deleted.
      *
      * @throws ValidationException
      */
@@ -18,6 +25,7 @@ class DeleteAccount
         $this->ensureDeletable($user);
 
         $user->delete();
+        $this->images->delete($user->avatar_path);
     }
 
     /**
