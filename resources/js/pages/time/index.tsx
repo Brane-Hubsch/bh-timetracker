@@ -1,4 +1,4 @@
-import { Button } from '@heroui/react';
+import { Avatar, Button } from '@heroui/react';
 import { Head, router, setLayoutProps, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, CopyPlus, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ import {
     draftFromEntry,
 } from '@/components/time/time-entry-form';
 import { TimeEntryList } from '@/components/time/time-entry-list';
+import { useInitials } from '@/hooks/use-initials';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
@@ -69,6 +70,7 @@ export default function TimeIndex({
     previousWeek,
 }: Props) {
     const { t, intlLocale } = useTranslation();
+    const getInitials = useInitials();
     const isDesktop = useIsDesktop();
     const { url } = usePage();
     const params = new URLSearchParams(url.split('?')[1] ?? '');
@@ -235,6 +237,31 @@ export default function TimeIndex({
                                     visit({ user: Number(value) })
                                 }
                                 options={members}
+                                renderOption={({ label, avatar }) => (
+                                    <span className="flex min-w-0 items-center gap-3 font-medium in-data-[slot=select-value]:gap-2">
+                                        <Avatar
+                                            size="sm"
+                                            variant="soft"
+                                            color="accent"
+                                            className="size-9 rounded-full in-data-[slot=select-value]:size-4"
+                                            aria-hidden="true"
+                                        >
+                                            {avatar && (
+                                                <Avatar.Image
+                                                    src={avatar}
+                                                    alt=""
+                                                    className="object-cover"
+                                                />
+                                            )}
+                                            <Avatar.Fallback className="in-data-[slot=select-value]:text-[9px]">
+                                                {getInitials(label)}
+                                            </Avatar.Fallback>
+                                        </Avatar>
+                                        <span className="truncate">
+                                            {label}
+                                        </span>
+                                    </span>
+                                )}
                                 className="min-w-0 flex-1 md:w-44 md:flex-none"
                                 data-test="member-select"
                             />
