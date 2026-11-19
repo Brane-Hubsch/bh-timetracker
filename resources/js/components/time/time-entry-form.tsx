@@ -2,7 +2,6 @@ import {
     Alert,
     Button,
     Description,
-    Input,
     Label,
     Switch,
     TextArea,
@@ -11,8 +10,11 @@ import {
 import { Link, router, usePage } from '@inertiajs/react';
 import { Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
 import type { SelectOption } from '@/components/form/select-field';
+import { TextInputField } from '@/components/form/text-input-field';
+import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
 import { useTranslation } from '@/lib/i18n';
@@ -40,6 +42,18 @@ type Props = {
     onDuplicate?: (draft: TimeEntryDraft) => void;
 };
 
+const FORM_ID = 'time-entry-form';
+
+function durationOf(draft: TimeEntryDraft): string {
+    return draft.end
+        ? formatDuration(secondsBetween(draft.start, draft.end))
+        : '';
+}
+
+/**
+ * Report or edit time in a dialog (bottom sheet on mobile). Actions sit in the dialog footer so they
+ * stay reachable while the fields scroll.
+ */
 export function TimeEntryForm({
     draft,
     onClose,
@@ -49,63 +63,46 @@ export function TimeEntryForm({
     onDuplicate,
 }: Props) {
     const { t } = useTranslation();
-
-    return (
-        <ResponsiveDialog
-            isOpen={draft !== null}
-            onOpenChange={(isOpen) => !isOpen && onClose()}
-            title={draft?.id ? t('Edit time') : t('Report time')}
-        >
-            {draft && (
-                <TimeEntryFields
-                    key={`${draft.id ?? 'new'}-${draft.date}-${draft.start}`}
-                    draft={draft}
-                    onClose={onClose}
-                    projects={projects}
-                    entries={entries}
-                    members={members}
-                    onDuplicate={onDuplicate}
-                />
-            )}
-        </ResponsiveDialog>
-    );
-}
-
-function TimeEntryFields({
-    draft,
-    onClose,
-    projects,
-    entries,
-    members = [],
-    onDuplicate,
-}: Omit<Props, 'draft'> & { draft: TimeEntryDraft }) {
-    const { t } = useTranslation();
     const { can } = usePage().props;
-    const [values, setValues] = useState(draft);
-    const [duration, setDuration] = useState(
-        draft.end ? formatDuration(secondsBetween(draft.start, draft.end)) : '',
-    );
+    // The last opened draft: kept while the dialog animates out.
+    const [source, setSource] = useState(draft);
+    const [values, setValues] = useState<TimeEntryDraft | null>(draft);
+    const [duration, setDuration] = useState(draft ? durationOf(draft) : '');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
 
+    // Start from the draft each time a new one is opened.
+    if (draft && draft !== source) {
+        setSource(draft);
+        setValues(draft);
+        setDuration(durationOf(draft));
+        setErrors({});
+    }
+
+    const current = values ?? draft;
+    const isEditing = Boolean(source?.id);
+
     const set = (changes: Partial<TimeEntryDraft>) =>
-        setValues((current) => ({ ...current, ...changes }));
+        setValues((previous) =>
+            previous ? { ...previous, ...changes } : previous,
+        );
 
     const changeStart = (start: string) => {
         const seconds = parseDuration(duration);
         set({
             start,
-            end: seconds
-                ? minutesToTime(timeToMinutes(start) + seconds / 60)
-                : values.end,
+            end:
+                seconds && start
+                    ? minutesToTime(timeToMinutes(start) + seconds / 60)
+                    : current?.end,
         });
     };
 
     const changeEnd = (end: string) => {
         set({ end });
         setDuration(
-            end && values.start
-                ? formatDuration(secondsBetween(values.start, end))
+            end && current?.start
+                ? formatDuration(secondsBetween(current.start, end))
                 : '',
         );
     };
@@ -114,10 +111,11 @@ function TimeEntryFields({
         setDuration(value);
         const seconds = parseDuration(value);
 
-        if (seconds && values.start) {
+        if (seconds && current?.start) {
             set({
                 end: minutesToTime(
-                    timeToMinutes(values.start) + Math.min(seconds, 86400) / 60,
+                    timeToMinutes(current.start) +
+                        Math.min(seconds, 86400) / 60,
                 ),
             });
         }
@@ -128,23 +126,24 @@ function TimeEntryFields({
         // New entries inherit "billable" from the project; edits keep their own value.
         set({
             projectId,
-            isBillable: draft.id
-                ? values.isBillable
+            isBillable: isEditing
+                ? current?.isBillable
                 : (project?.isBillable ?? true),
         });
     };
 
     const durationSeconds =
-        values.start && values.end
-            ? secondsBetween(values.start, values.end)
+        current?.start && current.end
+            ? secondsBetween(current.start, current.end)
             : null;
-    const startAt = `${values.date}T${values.start}`;
+    const startAt = current ? `${current.date}T${current.start}` : '';
     const overlapping =
+        current !== null &&
         durationSeconds !== null &&
         entries.some(
             (entry) =>
-                entry.id !== draft.id &&
-                entry.userId === values.userId &&
+                entry.id !== source?.id &&
+                entry.userId === current.userId &&
                 overlaps(
                     {
                         start: startAt,
@@ -154,234 +153,261 @@ function TimeEntryFields({
                 ),
         );
 
+    const requestOptions = {
+        preserveScroll: true,
+        preserveState: true,
+        onStart: () => setProcessing(true),
+        onFinish: () => setProcessing(false),
+        onSuccess: () => onClose(),
+    };
+
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
+
+        if (!current) {
+            return;
+        }
+
         const data = {
-            user_id: values.userId,
+            user_id: current.userId,
             project_id:
-                values.projectId === '' ? null : Number(values.projectId),
-            description: values.description,
-            date: values.date,
-            start: values.start,
-            end: values.end || null,
-            duration: values.end ? null : duration,
-            is_billable: values.isBillable,
+                current.projectId === '' ? null : Number(current.projectId),
+            description: current.description,
+            date: current.date,
+            start: current.start,
+            end: current.end || null,
+            duration: current.end ? null : duration,
+            is_billable: current.isBillable,
         };
         const options = {
-            preserveScroll: true,
-            preserveState: true,
-            onStart: () => setProcessing(true),
-            onFinish: () => setProcessing(false),
+            ...requestOptions,
             onError: (errorBag: Record<string, string>) => setErrors(errorBag),
-            onSuccess: () => onClose(),
         };
 
-        if (draft.id) {
-            router.patch(update.url({ timeEntry: draft.id }), data, options);
+        if (source?.id) {
+            router.patch(update.url({ timeEntry: source.id }), data, options);
         } else {
             router.post(store.url(), data, options);
         }
     };
 
     const remove = () => {
-        if (!draft.id) {
-            return;
+        if (source?.id) {
+            router.delete(
+                destroy.url({ timeEntry: source.id }),
+                requestOptions,
+            );
         }
-
-        router.delete(destroy.url({ timeEntry: draft.id }), {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => onClose(),
-        });
     };
 
+    const timeError =
+        errors.ended_at ?? errors.duration ?? errors.end ?? errors.start;
+
     return (
-        <form
-            onSubmit={submit}
-            className="grid gap-4"
-            data-test="time-entry-form"
+        <ResponsiveDialog
+            isOpen={draft !== null}
+            onOpenChange={(isOpen) => !isOpen && onClose()}
+            title={isEditing ? t('Edit time') : t('Report time')}
+            footer={
+                <div className="flex w-full items-center gap-2">
+                    {isEditing && (
+                        <Button
+                            variant="danger-soft"
+                            onPress={remove}
+                            aria-label={t('Delete')}
+                            data-test="time-entry-delete"
+                        >
+                            <Trash2 className="size-4" />
+                            <span className="hidden sm:inline">
+                                {t('Delete')}
+                            </span>
+                        </Button>
+                    )}
+                    {isEditing && onDuplicate && current && (
+                        <Button
+                            variant="tertiary"
+                            onPress={() =>
+                                onDuplicate({ ...current, id: undefined })
+                            }
+                            aria-label={t('Duplicate')}
+                            data-test="time-entry-duplicate"
+                        >
+                            <Copy className="size-4" />
+                            <span className="hidden sm:inline">
+                                {t('Duplicate')}
+                            </span>
+                        </Button>
+                    )}
+                    <div className="ml-auto flex gap-2">
+                        <Button slot="close" variant="tertiary">
+                            {t('Cancel')}
+                        </Button>
+                        <Button
+                            type="submit"
+                            form={FORM_ID}
+                            isPending={processing}
+                            data-test="time-entry-save"
+                        >
+                            {t('Save')}
+                        </Button>
+                    </div>
+                </div>
+            }
         >
-            {members.length > 1 && (
-                <SelectField
-                    name="user_id"
-                    label={t('Member')}
-                    options={members}
-                    value={String(values.userId)}
-                    onChange={(userId) => set({ userId: Number(userId) })}
-                    error={errors.user_id}
-                    data-test="time-entry-member"
-                />
-            )}
-
-            {projects.length === 0 && (
-                <Alert status="warning" data-test="no-projects">
-                    <Alert.Indicator />
-                    <Alert.Content>
-                        <Alert.Description>
-                            {can?.canManageProjects ? (
-                                <>
-                                    {t(
-                                        'There are no projects to report time on yet.',
-                                    )}{' '}
-                                    <Link
-                                        href={projectsIndex(undefined, {
-                                            query: { new: 1 },
-                                        })}
-                                        className="font-medium underline"
-                                    >
-                                        {t('Create a project')}
-                                    </Link>
-                                </>
-                            ) : (
-                                t(
-                                    'There are no projects to report time on yet. Ask an administrator to add one.',
-                                )
-                            )}
-                        </Alert.Description>
-                    </Alert.Content>
-                </Alert>
-            )}
-
-            <ProjectPicker
-                projects={projects}
-                value={values.projectId}
-                onChange={changeProject}
-                error={errors.project_id}
-                autoFocus={!draft.id && values.projectId === ''}
-            />
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <label className="col-span-2 grid gap-1 text-sm sm:col-span-1">
-                    <span className="font-medium">{t('Date')}</span>
-                    <Input
-                        type="date"
-                        required
-                        value={values.date}
-                        onChange={(event) => set({ date: event.target.value })}
-                    />
-                </label>
-                <label className="grid gap-1 text-sm">
-                    <span className="font-medium">{t('Start')}</span>
-                    <Input
-                        type="time"
-                        required
-                        value={values.start}
-                        onChange={(event) => changeStart(event.target.value)}
-                        data-test="time-entry-start"
-                    />
-                </label>
-                <label className="grid gap-1 text-sm">
-                    <span className="font-medium">{t('End')}</span>
-                    <Input
-                        type="time"
-                        value={values.end}
-                        onChange={(event) => changeEnd(event.target.value)}
-                        data-test="time-entry-end"
-                    />
-                </label>
-                <label className="col-span-2 grid gap-1 text-sm sm:col-span-1">
-                    <span className="font-medium">{t('Duration')}</span>
-                    <Input
-                        inputMode="decimal"
-                        placeholder="1:30"
-                        value={duration}
-                        onChange={(event) => changeDuration(event.target.value)}
-                        data-test="time-entry-duration"
-                    />
-                </label>
-            </div>
-            {(errors.start ||
-                errors.end ||
-                errors.ended_at ||
-                errors.duration ||
-                errors.date) && (
-                <p className="text-sm text-danger">
-                    {errors.ended_at ??
-                        errors.duration ??
-                        errors.end ??
-                        errors.start ??
-                        errors.date}
-                </p>
-            )}
-            <p className="-mt-2 text-xs text-muted">
-                {t('Enter an end time or a duration such as 1,5, 1:30 or 90m.')}
-            </p>
-
-            {overlapping && (
-                <Alert status="warning">
-                    <Alert.Indicator />
-                    <Alert.Content>
-                        <Alert.Description>
-                            {t('This overlaps another entry.')}
-                        </Alert.Description>
-                    </Alert.Content>
-                </Alert>
-            )}
-
-            <TextField
-                value={values.description}
-                onChange={(description) => set({ description })}
-                isInvalid={Boolean(errors.description)}
-                className="w-full"
-            >
-                <Label>{t('Description')}</Label>
-                <TextArea rows={2} placeholder={t('What did you work on?')} />
-                {errors.description && (
-                    <Description className="text-danger">
-                        {errors.description}
-                    </Description>
-                )}
-            </TextField>
-
-            <Switch
-                isSelected={values.isBillable ?? true}
-                onChange={(isBillable) => set({ isBillable })}
-            >
-                <Switch.Control>
-                    <Switch.Thumb />
-                </Switch.Control>
-                <Switch.Content>
-                    <Label>{t('Billable')}</Label>
-                </Switch.Content>
-            </Switch>
-
-            {errors.user_id && members.length <= 1 && (
-                <p className="text-sm text-danger">{errors.user_id}</p>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-                <Button
-                    type="submit"
-                    isPending={processing}
-                    data-test="time-entry-save"
+            {current && (
+                <form
+                    id={FORM_ID}
+                    onSubmit={submit}
+                    className="grid gap-5"
+                    data-test="time-entry-form"
                 >
-                    {t('Save')}
-                </Button>
-                {draft.id && onDuplicate && (
-                    <Button
-                        variant="secondary"
-                        onPress={() =>
-                            onDuplicate({ ...values, id: undefined })
-                        }
-                        data-test="time-entry-duplicate"
+                    {members.length > 1 && (
+                        <SelectField
+                            name="user_id"
+                            label={t('Member')}
+                            options={members}
+                            value={String(current.userId)}
+                            onChange={(userId) =>
+                                set({ userId: Number(userId) })
+                            }
+                            error={errors.user_id}
+                            data-test="time-entry-member"
+                        />
+                    )}
+
+                    {projects.length === 0 && (
+                        <Alert status="warning" data-test="no-projects">
+                            <Alert.Indicator />
+                            <Alert.Content>
+                                <Alert.Description>
+                                    {can?.canManageProjects ? (
+                                        <>
+                                            {t(
+                                                'There are no projects to report time on yet.',
+                                            )}{' '}
+                                            <Link
+                                                href={projectsIndex(undefined, {
+                                                    query: { new: 1 },
+                                                })}
+                                                className="font-medium underline"
+                                            >
+                                                {t('Create a project')}
+                                            </Link>
+                                        </>
+                                    ) : (
+                                        t(
+                                            'There are no projects to report time on yet. Ask an administrator to add one.',
+                                        )
+                                    )}
+                                </Alert.Description>
+                            </Alert.Content>
+                        </Alert>
+                    )}
+
+                    <ProjectPicker
+                        projects={projects}
+                        value={current.projectId}
+                        onChange={changeProject}
+                        error={errors.project_id}
+                        autoFocus={!isEditing && current.projectId === ''}
+                    />
+
+                    <DatePickerField
+                        label={t('Date')}
+                        value={current.date}
+                        onChange={(date) => set({ date })}
+                        error={errors.date}
+                        isRequired
+                        data-test="time-entry-date"
+                    />
+
+                    <div className="grid gap-2">
+                        <div className="grid grid-cols-3 gap-3">
+                            <TimeInputField
+                                label={t('Start')}
+                                value={current.start}
+                                onChange={changeStart}
+                                isInvalid={Boolean(errors.start)}
+                                isRequired
+                                data-test="time-entry-start"
+                            />
+                            <TimeInputField
+                                label={t('End')}
+                                value={current.end}
+                                onChange={changeEnd}
+                                isInvalid={Boolean(
+                                    errors.end ?? errors.ended_at,
+                                )}
+                                data-test="time-entry-end"
+                            />
+                            <TextInputField
+                                name="duration"
+                                label={t('Duration')}
+                                inputMode="decimal"
+                                placeholder="1:30"
+                                value={duration}
+                                onChange={changeDuration}
+                                data-test="time-entry-duration"
+                            />
+                        </div>
+                        {timeError ? (
+                            <p className="text-sm text-danger">{timeError}</p>
+                        ) : (
+                            <p className="text-xs text-muted">
+                                {t(
+                                    'Enter an end time or a duration such as 1,5, 1:30 or 90m.',
+                                )}
+                            </p>
+                        )}
+                    </div>
+
+                    {overlapping && (
+                        <Alert status="warning">
+                            <Alert.Indicator />
+                            <Alert.Content>
+                                <Alert.Description>
+                                    {t('This overlaps another entry.')}
+                                </Alert.Description>
+                            </Alert.Content>
+                        </Alert>
+                    )}
+
+                    <TextField
+                        value={current.description}
+                        onChange={(description) => set({ description })}
+                        isInvalid={Boolean(errors.description)}
+                        className="w-full"
                     >
-                        <Copy className="size-4" />
-                        {t('Duplicate')}
-                    </Button>
-                )}
-                {draft.id && (
-                    <Button
-                        variant="danger-soft"
-                        className="ml-auto"
-                        onPress={remove}
-                        data-test="time-entry-delete"
+                        <Label>{t('Description')}</Label>
+                        <TextArea
+                            rows={3}
+                            placeholder={t('What did you work on?')}
+                        />
+                        {errors.description && (
+                            <Description className="text-danger">
+                                {errors.description}
+                            </Description>
+                        )}
+                    </TextField>
+
+                    <Switch
+                        isSelected={current.isBillable ?? true}
+                        onChange={(isBillable) => set({ isBillable })}
                     >
-                        <Trash2 className="size-4" />
-                        {t('Delete')}
-                    </Button>
-                )}
-            </div>
-        </form>
+                        <Switch.Content>
+                            <Switch.Control>
+                                <Switch.Thumb />
+                            </Switch.Control>
+                            <Label>{t('Billable')}</Label>
+                        </Switch.Content>
+                    </Switch>
+
+                    {errors.user_id && members.length <= 1 && (
+                        <p className="text-sm text-danger">{errors.user_id}</p>
+                    )}
+                </form>
+            )}
+        </ResponsiveDialog>
     );
 }
 

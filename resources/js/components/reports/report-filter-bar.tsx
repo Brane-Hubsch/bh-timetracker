@@ -1,6 +1,6 @@
-import { Input } from '@heroui/react';
 import { router } from '@inertiajs/react';
 import { useState } from 'react';
+import { DatePickerField } from '@/components/form/date-picker-field';
 import { MultiSelectField } from '@/components/form/multi-select-field';
 import { SelectField } from '@/components/form/select-field';
 import { useTranslation } from '@/lib/i18n';
@@ -20,6 +20,14 @@ export function ReportFilterBar({ filters, options }: Props) {
     const { t } = useTranslation();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
+    const [shown, setShown] = useState({ from: filters.from, to: filters.to });
+
+    // Follow the period the server resolved (e.g. after choosing "Last month").
+    if (filters.from !== shown.from || filters.to !== shown.to) {
+        setShown({ from: filters.from, to: filters.to });
+        setFrom(filters.from);
+        setTo(filters.to);
+    }
 
     const apply = (changes: Partial<ReportFilterValues>) =>
         router.get(window.location.pathname, reportQuery(filters, changes), {
@@ -56,28 +64,20 @@ export function ReportFilterBar({ filters, options }: Props) {
             />
 
             <div className="grid grid-cols-2 gap-2 sm:col-span-2">
-                <label className="grid min-w-0 gap-1 text-sm">
-                    <span className="font-medium">{t('From')}</span>
-                    <Input
-                        type="date"
-                        className="w-full min-w-0"
-                        value={from}
-                        onChange={(event) => applyDates(event.target.value, to)}
-                        data-test="report-from"
-                    />
-                </label>
-                <label className="grid min-w-0 gap-1 text-sm">
-                    <span className="font-medium">{t('To')}</span>
-                    <Input
-                        type="date"
-                        className="w-full min-w-0"
-                        value={to}
-                        onChange={(event) =>
-                            applyDates(from, event.target.value)
-                        }
-                        data-test="report-to"
-                    />
-                </label>
+                <DatePickerField
+                    label={t('From')}
+                    value={from}
+                    onChange={(value) => applyDates(value, to)}
+                    className="min-w-0"
+                    data-test="report-from"
+                />
+                <DatePickerField
+                    label={t('To')}
+                    value={to}
+                    onChange={(value) => applyDates(from, value)}
+                    className="min-w-0"
+                    data-test="report-to"
+                />
             </div>
 
             {options.members.length > 0 && (

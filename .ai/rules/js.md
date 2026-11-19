@@ -13,3 +13,6 @@ Open quick data-entry forms (time entries) with `ResponsiveDialog` (`@/component
 
 ## Create/edit forms for records open in a side drawer
 Create/edit forms for clients and projects use `SideDrawer` (`@/components/side-drawer`): a right-hand panel on desktop and a bottom sheet on mobile. Compose it from `SideDrawerBody` and `SideDrawerFooter` (actions pinned at the bottom) and wrap both in the form element with `sideDrawerFormClass`. Open it on the page the record belongs to (create on the list, edit on the detail page) and link to it from elsewhere with `?new=1` via `useOpenFromQuery`; do not add separate create/edit pages. Quick data entry (time entries) and confirmations stay in `ResponsiveDialog`/`Modal`.
+
+## Dates and times use HeroUI fields
+Use `DatePickerField` and `TimeInputField` (`@/components/form/...`, HeroUI DatePicker/TimeField) with `YYYY-MM-DD` / `HH:mm` strings instead of native `<input type="date|time">`: they follow the app locale (24-hour times and Monday-first calendars in Swedish) and match the height of other fields. Dialog actions go in the dialog footer (`footer` prop, submit button with `form=`), so they stay reachable on mobile.

@@ -3,7 +3,6 @@ import {
     ColorSwatchPicker,
     Description,
     FieldError,
-    Input,
     Label,
     NumberField,
     Radio,
@@ -13,6 +12,7 @@ import {
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
+import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
@@ -271,46 +271,22 @@ export function ProjectFormDrawer({
 
                     <div className="grid gap-4 border-t border-separator pt-6">
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="grid gap-1 text-sm">
-                                <span className="font-medium">
-                                    {t('Starts on')}
-                                </span>
-                                <Input
-                                    type="date"
-                                    value={form.data.starts_on}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'starts_on',
-                                            event.target.value,
-                                        )
-                                    }
-                                />
-                                {form.errors.starts_on && (
-                                    <span className="text-danger">
-                                        {form.errors.starts_on}
-                                    </span>
-                                )}
-                            </label>
-                            <label className="grid gap-1 text-sm">
-                                <span className="font-medium">
-                                    {t('Ends on')}
-                                </span>
-                                <Input
-                                    type="date"
-                                    value={form.data.ends_on}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'ends_on',
-                                            event.target.value,
-                                        )
-                                    }
-                                />
-                                {form.errors.ends_on && (
-                                    <span className="text-danger">
-                                        {form.errors.ends_on}
-                                    </span>
-                                )}
-                            </label>
+                            <DatePickerField
+                                label={t('Starts on')}
+                                value={form.data.starts_on}
+                                onChange={(value) =>
+                                    form.setData('starts_on', value)
+                                }
+                                error={form.errors.starts_on}
+                            />
+                            <DatePickerField
+                                label={t('Ends on')}
+                                value={form.data.ends_on}
+                                onChange={(value) =>
+                                    form.setData('ends_on', value)
+                                }
+                                error={form.errors.ends_on}
+                            />
                         </div>
 
                         <RadioGroup
