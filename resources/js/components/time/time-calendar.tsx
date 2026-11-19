@@ -6,7 +6,6 @@ import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import {
     formatDate,
@@ -34,48 +33,57 @@ type Props = {
     ) => void;
 };
 
-/** Space kept below the calendar on desktop: the content area's bottom padding (md:pb-12). */
-const BOTTOM_GAP = 48;
-
 /**
- * Fills the viewport below the calendar's top edge on desktop, so it uses all available height
- * whatever the toolbar above it wraps to. Mobile keeps a fixed offset for the bottom navigation.
+ * Fills the viewport below the calendar's top edge, so it uses all available height whatever the
+ * toolbar above it wraps to. It stops at the content area's bottom padding, which on mobile also
+ * keeps it clear of the bottom navigation, so the page itself never scrolls.
  */
 function useFillHeight(): [
     React.RefObject<HTMLDivElement | null>,
     number | string,
 ] {
     const ref = useRef<HTMLDivElement>(null);
-    const isDesktop = useIsDesktop();
     const [height, setHeight] = useState<number | null>(null);
 
     useLayoutEffect(() => {
-        if (!isDesktop) {
-            return;
-        }
-
         const measure = () => {
-            const top =
-                (ref.current?.getBoundingClientRect().top ?? 0) +
-                window.scrollY;
+            const element = ref.current;
+
+            if (!element) {
+                return;
+            }
+
+            const top = element.getBoundingClientRect().top + window.scrollY;
+            const main = element.closest('main');
+            const bottomPadding = main
+                ? Number.parseFloat(getComputedStyle(main).paddingBottom)
+                : 0;
+
             setHeight(
                 Math.max(
-                    480,
-                    Math.floor(window.innerHeight - top - BOTTOM_GAP),
+                    240,
+                    Math.floor(window.innerHeight - top - bottomPadding),
                 ),
             );
         };
 
         measure();
         window.addEventListener('resize', measure);
+        // The toolbar above can change height after the first paint (fonts, wrapping).
+        const observer = new ResizeObserver(measure);
+        const main = ref.current?.closest('main');
 
-        return () => window.removeEventListener('resize', measure);
-    }, [isDesktop]);
+        if (main) {
+            observer.observe(main);
+        }
 
-    return [
-        ref,
-        isDesktop && height !== null ? height : 'calc(100svh - 13rem)',
-    ];
+        return () => {
+            window.removeEventListener('resize', measure);
+            observer.disconnect();
+        };
+    }, []);
+
+    return [ref, height ?? 'calc(100svh - 13rem)'];
 }
 
 /**
@@ -117,6 +125,8 @@ export function TimeCalendar({
                 locale={locale === 'sv' ? 'sv' : 'en-gb'}
                 firstDay={weekStartsOn % 7}
                 headerToolbar={false}
+                // The day view's date and total are in the page header above.
+                dayHeaders={view === 'week'}
                 borderless
                 allDaySlot={false}
                 nowIndicator

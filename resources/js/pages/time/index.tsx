@@ -100,6 +100,9 @@ export default function TimeIndex({
         (sum, entry) => sum + entry.durationSeconds,
         0,
     );
+    const dayTotal = entries
+        .filter((entry) => entry.date === date)
+        .reduce((sum, entry) => sum + entry.durationSeconds, 0);
 
     const visit = (changes: { date?: string; view?: View; user?: number }) =>
         router.get(
@@ -198,9 +201,13 @@ export default function TimeIndex({
                         className="text-sm text-muted tabular-nums"
                         data-test="week-total"
                     >
-                        {t('Week total :hours', {
-                            hours: formatDuration(weekTotal),
-                        })}
+                        {view === 'day'
+                            ? t('Day total :hours', {
+                                  hours: formatDuration(dayTotal),
+                              })
+                            : t('Week total :hours', {
+                                  hours: formatDuration(weekTotal),
+                              })}
                     </span>
 
                     <div className="ml-auto flex flex-wrap items-center gap-2">
