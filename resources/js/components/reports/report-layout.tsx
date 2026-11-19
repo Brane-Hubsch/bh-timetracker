@@ -53,7 +53,7 @@ export function ReportLayout({ current, filters, actions, children }: Props) {
                     onSelectionChange={(key) => open(key as ReportKind)}
                     className="grid grid-cols-1 gap-6"
                 >
-                    <Tabs.ListContainer className="overflow-x-auto">
+                    <Tabs.ListContainer className="overflow-x-auto sm:w-fit">
                         <Tabs.List aria-label={t('Reports')}>
                             {(Object.keys(titles) as ReportKind[]).map(
                                 (kind) => (

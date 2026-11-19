@@ -66,44 +66,49 @@ export default function ReportsSummary({
             </div>
 
             <section className="grid grid-cols-1 gap-3">
-                <div className="flex flex-wrap items-end gap-3">
-                    <SelectField
-                        name="group"
-                        label={t('Group by')}
-                        options={options.groupings}
-                        value={filters.group}
-                        onChange={(group) =>
-                            regroup({
-                                group: group as ReportGroupingKey,
-                                subgroup:
-                                    filters.subgroup === group
-                                        ? 'none'
-                                        : filters.subgroup,
-                            })
-                        }
-                        className="w-44"
-                        data-test="report-group"
-                    />
-                    <SelectField
-                        name="subgroup"
-                        label={t('Then by')}
-                        options={[
-                            { value: 'none', label: t('Nothing') },
-                            ...options.groupings.filter(
-                                (option) => option.value !== filters.group,
-                            ),
-                        ]}
-                        value={filters.subgroup}
-                        onChange={(subgroup) =>
-                            regroup({
-                                subgroup: subgroup as
-                                    | ReportGroupingKey
-                                    | 'none',
-                            })
-                        }
-                        className="w-44"
-                        data-test="report-subgroup"
-                    />
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                    <h2 className="text-base font-semibold">
+                        {t('Breakdown')}
+                    </h2>
+                    <div className="grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto">
+                        <SelectField
+                            name="group"
+                            label={t('Group by')}
+                            options={options.groupings}
+                            value={filters.group}
+                            onChange={(group) =>
+                                regroup({
+                                    group: group as ReportGroupingKey,
+                                    subgroup:
+                                        filters.subgroup === group
+                                            ? 'none'
+                                            : filters.subgroup,
+                                })
+                            }
+                            className="min-w-0 sm:w-44"
+                            data-test="report-group"
+                        />
+                        <SelectField
+                            name="subgroup"
+                            label={t('Then by')}
+                            options={[
+                                { value: 'none', label: t('Nothing') },
+                                ...options.groupings.filter(
+                                    (option) => option.value !== filters.group,
+                                ),
+                            ]}
+                            value={filters.subgroup}
+                            onChange={(subgroup) =>
+                                regroup({
+                                    subgroup: subgroup as
+                                        | ReportGroupingKey
+                                        | 'none',
+                                })
+                            }
+                            className="min-w-0 sm:w-44"
+                            data-test="report-subgroup"
+                        />
+                    </div>
                 </div>
 
                 <GroupTable

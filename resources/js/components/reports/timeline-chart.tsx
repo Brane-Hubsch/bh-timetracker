@@ -22,8 +22,9 @@ function axis(maxSeconds: number): { max: number; step: number } {
 }
 
 /**
- * Hours per day or week as bars. One series, so no legend; the selected bar (hover, focus or
- * tap) is read out above the plot, and every bar has an accessible label.
+ * Hours per day or week as bars, split into billable (solid) and non-billable (light) time with a
+ * legend when both occur. The selected bar (hover, focus or tap) is read out above the plot, and
+ * every bar has an accessible label.
  */
 export function TimelineChart({ unit, buckets, title }: Props) {
     const { t, intlLocale } = useTranslation();
@@ -36,6 +37,10 @@ export function TimelineChart({ unit, buckets, title }: Props) {
         (_, index) => index * step,
     );
     const labelEvery = Math.max(1, Math.ceil(buckets.length / 8));
+    const hasBillable = buckets.some((bucket) => bucket.billableSeconds > 0);
+    const hasNonBillable = buckets.some(
+        (bucket) => bucket.seconds > bucket.billableSeconds,
+    );
 
     const describe = (bucket: TimelineBucket) =>
         `${formatBucket(bucket.key, unit, intlLocale, (week) => t('Week :number', { number: week }))}: ${formatDecimalHours(bucket.seconds, intlLocale)}`;
@@ -50,16 +55,33 @@ export function TimelineChart({ unit, buckets, title }: Props) {
 
     return (
         <section
-            className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface"
+            className="grid h-full content-between gap-3 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="timeline-chart"
         >
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-sm font-semibold">
-                    {title ??
-                        (unit === 'week'
-                            ? t('Hours per week')
-                            : t('Hours per day'))}
-                </h2>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <h2 className="text-sm font-semibold">
+                        {title ??
+                            (unit === 'week'
+                                ? t('Hours per week')
+                                : t('Hours per day'))}
+                    </h2>
+                    {hasBillable && hasNonBillable && (
+                        <ul
+                            className="flex items-center gap-3 text-xs text-muted"
+                            data-test="timeline-legend"
+                        >
+                            <li className="flex items-center gap-1.5">
+                                <span className="size-2.5 rounded-xs bg-accent" />
+                                {t('Billable')}
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                                <span className="size-2.5 rounded-xs bg-accent/35" />
+                                {t('Non-billable')}
+                            </li>
+                        </ul>
+                    )}
+                </div>
                 <p
                     className="min-h-5 text-sm text-muted tabular-nums"
                     aria-live="polite"
@@ -70,7 +92,7 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                 </p>
             </div>
 
-            <div className="relative h-44 pl-10">
+            <div className="relative h-48 pl-10">
                 {gridlines.map((hours) => (
                     <div
                         key={hours}
@@ -97,18 +119,39 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                             <button
                                 type="button"
                                 aria-label={describe(bucket)}
-                                className="group flex h-full w-full items-end rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                className="group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
                                 onMouseEnter={() => setSelected(bucket)}
                                 onFocus={() => setSelected(bucket)}
                                 onClick={() => setSelected(bucket)}
                             >
                                 <span
-                                    className={`block w-full origin-bottom animate-grow-y rounded-t-[4px] transition-[height,background-color] duration-300 ${selected?.key === bucket.key ? 'bg-accent' : 'bg-accent/75 group-hover:bg-accent'}`}
+                                    className={`flex w-full max-w-6 origin-bottom animate-grow-y flex-col gap-0.5 overflow-hidden rounded-t-[4px] transition-[height,opacity] duration-300 ${selected === null || selected.key === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`}
                                     style={{
                                         height: `${(bucket.seconds / 3600 / max) * 100}%`,
                                         animationDelay: `${Math.min(index * 12, 360)}ms`,
                                     }}
-                                />
+                                >
+                                    {bucket.seconds >
+                                        bucket.billableSeconds && (
+                                        <span
+                                            className="min-h-px basis-0 bg-accent/35"
+                                            style={{
+                                                flexGrow:
+                                                    bucket.seconds -
+                                                    bucket.billableSeconds,
+                                            }}
+                                        />
+                                    )}
+                                    {bucket.billableSeconds > 0 && (
+                                        <span
+                                            className="min-h-px basis-0 bg-accent"
+                                            style={{
+                                                flexGrow:
+                                                    bucket.billableSeconds,
+                                            }}
+                                        />
+                                    )}
+                                </span>
                             </button>
                         </div>
                     ))}
