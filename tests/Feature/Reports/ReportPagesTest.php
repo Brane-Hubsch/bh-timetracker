@@ -178,6 +178,38 @@ it('builds PDF documents with only their own time and no amounts for members', f
     }
 });
 
+it('adds hours per day and time per project charts to the PDF documents', function () {
+    $exporter = app(ReportExporter::class);
+    $filters = new ReportFilters($this->organization, $this->owner, CarbonImmutable::parse('2026-11-01'), CarbonImmutable::parse('2026-11-30'));
+
+    $summary = $exporter->summaryDocument($filters, ReportGrouping::Client, ReportGrouping::Project)->render();
+    $detailed = $exporter->detailedDocument($filters, 'date', 'desc')->render();
+
+    expect($summary)->toContain(__('Hours per day'), __('Time per project'), '100 %')
+        ->and($detailed)->toContain(__('Hours per day'))
+        ->and($detailed)->not->toContain(__('Time per project'));
+});
+
+it('keeps the folded "Other projects" row last in the PDF chart', function () {
+    foreach (range(1, 9) as $number) {
+        $project = Project::factory()->for($this->organization)->create(['name' => "Extra {$number}"]);
+        TimeEntry::factory()->by($this->owner, $project)
+            ->between(CarbonImmutable::parse('2026-11-10 08:00'), CarbonImmutable::parse('2026-11-10 08:00')->addMinutes(10 + $number))
+            ->create();
+    }
+
+    $document = app(ReportExporter::class)->summaryDocument(
+        new ReportFilters($this->organization, $this->owner, CarbonImmutable::parse('2026-11-01'), CarbonImmutable::parse('2026-11-30')),
+        ReportGrouping::Member,
+        null,
+    )->render();
+    $other = __('Other projects (:count)', ['count' => 3]);
+
+    expect($document)->toContain($other, 'Extra 4')
+        ->and($document)->not->toContain('Extra 3')
+        ->and(strpos($document, $other))->toBeGreaterThan(strpos($document, 'Extra 4'));
+});
+
 it('rejects unknown export formats', function () {
     $this->actingAs($this->owner)
         ->get(reportRoute('reports.export', ['type' => 'detailed', 'format' => 'docx']))

@@ -3,6 +3,10 @@
 @section('content')
     @include('reports.pdf.stats', ['totals' => $totals])
 
+    @if ($totals['seconds'] > 0)
+        @include('reports.pdf.timeline-chart', ['chart' => $timeline, 'width' => 269, 'height' => 28])
+    @endif
+
     @if ($totals['seconds'] === 0)
         <p class="empty">{{ __('No time in this period.') }}</p>
     @else

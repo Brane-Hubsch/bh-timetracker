@@ -144,11 +144,15 @@ class ReportExporter
      */
     public function summaryDocument(ReportFilters $filters, ReportGrouping $grouping, ?ReportGrouping $subGrouping): View
     {
+        $summary = $this->reports->summary($filters, $grouping, $subGrouping);
+
         return view('reports.pdf.summary', [
             ...$this->documentContext($filters, $this->text(__('Summary'))),
             'grouping' => $grouping,
             'subGrouping' => $subGrouping === $grouping ? null : $subGrouping,
-            'summary' => $this->reports->summary($filters, $grouping, $subGrouping),
+            'summary' => $summary,
+            'timeline' => $this->timelineChart($summary['timeline']),
+            'projectShares' => $this->projectChart($summary['projects'], $summary['totals']['seconds']),
         ]);
     }
 
@@ -166,10 +170,13 @@ class ReportExporter
             }
         })();
 
+        $summary = $this->reports->summary($filters, ReportGrouping::Project);
+
         return view('reports.pdf.detailed', [
             ...$this->documentContext($filters, $this->text(__('Detailed report'))),
             'rows' => $rows,
-            'totals' => $this->reports->totalsFor($filters),
+            'totals' => $summary['totals'],
+            'timeline' => $this->timelineChart($summary['timeline']),
         ]);
     }
 
@@ -200,6 +207,64 @@ class ReportExporter
             'money' => fn (?int $minorUnits): string => $minorUnits === null ? '–' : (string) Number::currency($minorUnits / 100, in: $currency, locale: $locale),
             'formatDate' => fn (string $date): string => $this->date(CarbonImmutable::parse($date)),
         ];
+    }
+
+    /**
+     * Hours per day (or week) as columns: a round axis with at most four steps, one bar per bucket
+     * and a label on every few buckets so they never collide.
+     *
+     * @param  array{unit: string, buckets: array<int, array{key: string, seconds: int, billableSeconds: int}>}  $timeline
+     * @return array{title: string, max: int, ticks: array<int, int>, bars: array<int, array{ratio: float, label: string}>}
+     */
+    private function timelineChart(array $timeline): array
+    {
+        $buckets = $timeline['buckets'];
+        $maxHours = max(1, max([0, ...array_column($buckets, 'seconds')]) / 3600);
+        $step = 1000;
+
+        foreach ([1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 250, 500] as $candidate) {
+            if ($maxHours / $candidate <= 4) {
+                $step = $candidate;
+                break;
+            }
+        }
+
+        $max = (int) (ceil($maxHours / $step) * $step);
+        $labelEvery = max(1, (int) ceil(count($buckets) / 10));
+        $isWeekly = $timeline['unit'] === ReportGrouping::Week->value;
+
+        return [
+            'title' => $this->text($isWeekly ? __('Hours per week') : __('Hours per day')),
+            'max' => $max,
+            'ticks' => range(0, $max, $step),
+            'bars' => array_map(fn (array $bucket, int $index) => [
+                'ratio' => $bucket['seconds'] / 3600 / $max,
+                'label' => $index % $labelEvery !== 0 ? '' : ($isWeekly
+                    ? $this->text(__('w. :number', ['number' => CarbonImmutable::parse($bucket['key'])->isoWeek()]))
+                    : CarbonImmutable::parse($bucket['key'])->format('j/n')),
+            ], $buckets, array_keys($buckets)),
+        ];
+    }
+
+    /**
+     * Time per project as horizontal bars in the builder's order (largest first, with the smallest
+     * projects already folded into "Other projects" at the end), scaled to the largest bar.
+     *
+     * @param  array<int, array{id: int|null, name: string, color: string|null, clientName: string|null, seconds: int}>  $projects
+     * @return array<int, array{name: string, clientName: string|null, color: string, seconds: int, percent: int, ratio: float}>
+     */
+    private function projectChart(array $projects, int $totalSeconds): array
+    {
+        $largest = max(1, max([0, ...array_column($projects, 'seconds')]));
+
+        return array_map(fn (array $project) => [
+            'name' => $project['name'],
+            'clientName' => $project['clientName'],
+            'color' => $project['color'] ?? '#a1a1aa',
+            'seconds' => $project['seconds'],
+            'percent' => $totalSeconds > 0 ? (int) round($project['seconds'] / $totalSeconds * 100) : 0,
+            'ratio' => $project['seconds'] / $largest,
+        ], $projects);
     }
 
     /**

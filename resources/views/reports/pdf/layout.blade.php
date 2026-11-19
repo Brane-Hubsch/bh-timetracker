@@ -29,6 +29,22 @@
         tr.group td { font-weight: bold; background: #fafafa; }
         tr.child td.name { padding-left: 6mm; }
         tr.total td { font-weight: bold; border-top: 1.5px solid #18181b; border-bottom: 0; padding-top: 2.5mm; }
+        .chart { margin-bottom: 7mm; page-break-inside: avoid; }
+        .chart-title { font-weight: bold; font-size: 9pt; margin-bottom: 3mm; }
+        .gridline { position: absolute; height: 0; border-top: 0.6px solid #ececef; }
+        .gridline.baseline { border-top-color: #c4c4cc; }
+        .tick { position: absolute; left: 0; text-align: right; font-size: 6.5pt; color: #71717a; }
+        table.columns { position: absolute; top: 0; border-collapse: collapse; table-layout: fixed; }
+        table.columns td { vertical-align: bottom; padding: 0; text-align: center; }
+        .column { margin: 0 auto; background: #7c3aed; border-radius: 0.8mm 0.8mm 0 0; }
+        table.column-labels { border-collapse: collapse; table-layout: fixed; margin-top: 1.2mm; }
+        table.column-labels td { padding: 0; text-align: center; font-size: 6.5pt; color: #71717a; white-space: nowrap; }
+        table.hbars { width: 100%; border-collapse: collapse; }
+        table.hbars td { padding: 1.1mm 0; vertical-align: middle; }
+        td.hbar-label { width: 34%; padding-right: 3mm; }
+        td.hbar-track { width: 48%; }
+        td.hbar-value { width: 18%; text-align: right; white-space: nowrap; padding-left: 3mm; }
+        .hbar { height: 2.6mm; border-radius: 0 0.8mm 0.8mm 0; }
         .dot { display: inline-block; width: 2.2mm; height: 2.2mm; border-radius: 1.1mm; margin-right: 1.5mm; }
         .small { font-size: 7.5pt; }
         .empty { padding: 8mm 0; text-align: center; color: #71717a; }

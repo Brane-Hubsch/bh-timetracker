@@ -505,6 +505,7 @@ Beställt i efterhand (planen sa "PDF senare"). Sammanfattningen och den detalje
 - **Innehåll:** organisation, rubrik, period och aktiva filter (namn slås upp inom organisationen), nyckeltal (timmar, debiterbara timmar och belopp), tabell och sidfot med skapad tid, användare och sidnummer.
   - Sammanfattningen är stående A4 med grupper och undergrupper.
   - Den detaljerade rapporten är liggande A4 med en rad per post.
+- **Diagram:** timmar per dag (per vecka för långa perioder) i båda rapporterna, och tid per projekt i sammanfattningen. Diagrammen byggs i HTML/CSS och visar namn och värde på varje stapel, så att färgen aldrig är det enda som skiljer projekten åt.
 - **Behörighet:** samma regler som CSV/XLSX. Medlemmar får bara sin egen tid och inga belopp.
 - **Kod:** `ReportExporter` (format `pdf`) renderar Blade-vyerna i `resources/views/reports/pdf`.
 
