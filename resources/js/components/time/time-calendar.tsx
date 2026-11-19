@@ -159,6 +159,7 @@ export function TimeCalendar({
                     extendedProps: {
                         description: entry.description,
                         color: entry.project.color,
+                        tags: entry.tags,
                     },
                 }))}
                 eventClass="time-calendar-event"
@@ -190,6 +191,7 @@ export function TimeCalendar({
                 }}
                 eventContent={(info) => {
                     const color = String(info.event.extendedProps.color);
+                    const tags = info.event.extendedProps.tags as string[];
 
                     return (
                         <div
@@ -216,6 +218,18 @@ export function TimeCalendar({
                                 {info.event.end &&
                                     timeOf(fromCalendarDate(info.event.end))}
                             </div>
+                            {tags.length > 0 && (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                    {tags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="max-w-full truncate rounded-full bg-surface/70 px-1.5 py-px text-[0.6875rem] text-foreground"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     );
                 }}
