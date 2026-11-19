@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Organizations;
 
 use App\Actions\Organizations\AcceptOrganizationInvitation;
+use App\Actions\Organizations\CancelOrganizationInvitation;
 use App\Actions\Organizations\CreateOrganizationInvitation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Organizations\CreateOrganizationInvitationRequest;
@@ -39,13 +40,13 @@ class OrganizationInvitationController extends Controller
     /**
      * Cancel the specified invitation.
      */
-    public function destroy(Organization $organization, OrganizationInvitation $invitation): RedirectResponse
+    public function destroy(Organization $organization, OrganizationInvitation $invitation, CancelOrganizationInvitation $cancelInvitation): RedirectResponse
     {
         abort_unless($invitation->organization_id === $organization->id, 404);
 
         Gate::authorize('cancelInvitation', $organization);
 
-        $invitation->delete();
+        $cancelInvitation->handle($invitation);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation cancelled.')]);
 

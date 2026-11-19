@@ -535,6 +535,29 @@ Beställt i efterhand (taggar stod tidigare under "Senare").
 
 **Projektanteckningar:** ett fritextfält (`projects.notes`, högst 10 000 tecken) i projektpanelen. Anteckningarna visas på projektsidan för alla som kan se projektet.
 
+### Tillägg efter Fas 6: fler MCP-verktyg (2026-11-19)
+
+Beställt i efterhand. Verktygen utökar tabellen i 6.3. De återanvänder befintliga actions och policies och har samma behörigheter som webben.
+
+| Verktyg | Typ | Beskrivning |
+|---|---|---|
+| `list_members` | läs | Medlemmar (roll, aktiv/inaktiverad) och väntande inbjudningar. Timpriser visas bara för ägare och admin. |
+| `invite_member` | skriv | Bjud in via e-post som medlem eller admin (inte ägare). |
+| `cancel_invitation` | skriv (destruktiv) | Avbryt en väntande inbjudan. |
+| `update_member` | skriv | Ändra roll, timpris eller aktiv status. Ägarens roll kan inte ändras och ägaren kan inte inaktiveras. |
+| `remove_member` | skriv (destruktiv) | Ta bort en medlem, aldrig ägaren. |
+| `rename_tag` | skriv | Byt namn på en tagg. Namnet på en befintlig tagg slår ihop dem. |
+| `delete_tag` | skriv (destruktiv) | Ta bort en tagg. Posterna finns kvar. |
+| `update_client` / `update_project` | skriv | Ändra bara angivna fält. `null` rensar ett valfritt fält. |
+| `archive_client` / `archive_project` | skriv | Arkivera, eller återställ med `archived=false`. |
+| `export_report` | läs | Länk till exporten (PDF, XLSX eller CSV) med samma filter som `get_report`. |
+
+- **Hantering:** medlemmar, taggar, kunder och projekt kräver samma rättigheter som i webben (`UpdateMember`, `ManageTags`, `ManageClients`, `ManageProjects` m.fl.).
+- **Export:** `export_report` returnerar en nedladdningslänk till webbappens befintliga export och en länk till samma rapport i appen. Användaren öppnar länken inloggad, så appen kontrollerar behörigheten igen. Ingen ny publik väg och inga delade länkar. AI:n kan inte läsa filen själv och använder `get_report` för siffrorna.
+- **Projektanteckningar:** `create_project` och `update_project` tar emot `notes`.
+- **Avbryta inbjudan:** gick tidigare direkt i controllern. Nu är det en egen action, `CancelOrganizationInvitation`, som både webben och MCP använder.
+- **Verktygslistan:** servern listar alla verktyg på en sida (`defaultPaginationLength = 50`), så klienter som inte följer pagineringen ser allt.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Clockify/Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.

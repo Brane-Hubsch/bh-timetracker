@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Organizations\AcceptOrganizationInvitation;
+use App\Actions\Organizations\CancelOrganizationInvitation;
 use App\Actions\Organizations\CreateOrganizationInvitation;
 use App\Enums\OrganizationRole;
 use App\Models\OrganizationInvitation;
@@ -105,4 +106,17 @@ it('rejects owner as invitation role in the request', function () {
         ->assertSessionHasErrors('role');
 
     expect($owner->currentOrganization->invitations()->count())->toBe(0);
+});
+
+it('cancels an invitation so it can no longer be found', function () {
+    $owner = User::factory()->create();
+    $invitation = OrganizationInvitation::factory()->create([
+        'organization_id' => $owner->current_organization_id,
+        'email' => 'invitee@example.com',
+        'invited_by' => $owner->id,
+    ]);
+
+    app(CancelOrganizationInvitation::class)->handle($invitation);
+
+    expect(OrganizationInvitation::query()->whereKey($invitation->id)->exists())->toBeFalse();
 });

@@ -68,11 +68,11 @@ class GetReportTool extends TimetrackerTool
             viewer: $context->user,
             from: $from,
             to: $to,
-            userIds: $this->ids($request, 'members', fn (mixed $reference, string $field) => $this->lookup->member($context, $reference, $field)->id),
-            clientIds: $this->ids($request, 'clients', fn (mixed $reference, string $field) => $this->lookup->client($context, $reference, $field)->id),
-            projectIds: $this->ids($request, 'projects', fn (mixed $reference, string $field) => $this->lookup->project($context, $reference, $field)->id),
+            userIds: $this->references($request, 'members', fn (mixed $reference, string $field) => $this->lookup->member($context, $reference, $field)->id),
+            clientIds: $this->references($request, 'clients', fn (mixed $reference, string $field) => $this->lookup->client($context, $reference, $field)->id),
+            projectIds: $this->references($request, 'projects', fn (mixed $reference, string $field) => $this->lookup->project($context, $reference, $field)->id),
             billable: $this->boolArgument($request, 'billable'),
-            tagIds: $this->ids($request, 'tags', fn (mixed $reference, string $field) => $this->lookup->tag($context, $reference, $field)->id),
+            tagIds: $this->references($request, 'tags', fn (mixed $reference, string $field) => $this->lookup->tag($context, $reference, $field)->id),
         );
 
         $summary = $this->reports->summary($filters, $grouping, $subGrouping);
@@ -93,21 +93,6 @@ class GetReportTool extends TimetrackerTool
                 ] : []),
             ], $summary['groups']),
         ]);
-    }
-
-    /**
-     * @param  callable(mixed, string): int  $resolve
-     * @return array<int, int>
-     */
-    private function ids(Request $request, string $key, callable $resolve): array
-    {
-        $references = $request->get($key);
-
-        if (! is_array($references)) {
-            return [];
-        }
-
-        return array_map(fn (mixed $reference, int|string $index) => $resolve($reference, "{$key}.{$index}"), $references, array_keys($references));
     }
 
     /**

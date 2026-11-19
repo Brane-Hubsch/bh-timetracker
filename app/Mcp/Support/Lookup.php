@@ -36,7 +36,7 @@ class Lookup
                     ->whereNull('client_id')
                     ->orWhereHas('client', fn (Builder $query) => $query->whereNull('archived_at'))));
 
-        return $this->find($query->get(), $reference, $field, 'project', fn (Project $project) => [
+        return $this->find($this->inOrganization($query->get(), $context), $reference, $field, 'project', fn (Project $project) => [
             $project->name,
             $project->code ?? '',
             $project->client->name ?? '',
@@ -58,7 +58,7 @@ class Lookup
             ),
         );
 
-        return $this->find($query->get(), $reference, $field, 'client', fn (Client $client) => [
+        return $this->find($this->inOrganization($query->get(), $context), $reference, $field, 'client', fn (Client $client) => [
             $client->name,
             $client->organization_number ?? '',
         ], fn (Client $client) => sprintf('%s (id %d)', $client->name, $client->id));
@@ -70,7 +70,7 @@ class Lookup
     public function tag(McpContext $context, mixed $reference, string $field = 'tag'): Tag
     {
         return $this->find(
-            Tag::query()->forOrganization($context->organization)->orderBy('name')->get(),
+            $this->inOrganization(Tag::query()->forOrganization($context->organization)->orderBy('name')->get(), $context),
             $reference,
             $field,
             'tag',
@@ -97,6 +97,35 @@ class Lookup
         }
 
         return $member;
+    }
+
+    /**
+     * Any member of the organization, including deactivated ones, by id, email or name. Used to manage
+     * members, so the caller authorizes the change.
+     */
+    public function anyMember(McpContext $context, mixed $reference, string $field = 'member'): User
+    {
+        return $this->find(
+            $context->organization->members()->orderBy('name')->get(),
+            $reference,
+            $field,
+            'member',
+            fn (User $user) => [$user->name, $user->email],
+            fn (User $user) => sprintf('%s <%s> (id %d)', $user->name, $user->email, $user->id),
+        );
+    }
+
+    /**
+     * Set the (already known) organization on the candidates, so policies don't lazy load it.
+     *
+     * @template TModel of Model
+     *
+     * @param  Collection<int, TModel>  $models
+     * @return Collection<int, TModel>
+     */
+    private function inOrganization(Collection $models, McpContext $context): Collection
+    {
+        return $models->each(fn (Model $model) => $model->setRelation('organization', $context->organization));
     }
 
     /**
