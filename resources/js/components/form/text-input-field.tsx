@@ -2,6 +2,7 @@ import {
     Description,
     FieldError,
     Input,
+    InputGroup,
     Label,
     TextField,
 } from '@heroui/react';
@@ -21,6 +22,7 @@ type TextInputFieldProps = {
     isDisabled?: boolean;
     isReadOnly?: boolean;
     className?: string;
+    suffix?: ReactNode;
 } & Omit<
     ComponentProps<typeof Input>,
     'name' | 'type' | 'defaultValue' | 'value' | 'onChange' | 'className'
@@ -43,6 +45,7 @@ export function TextInputField({
     isDisabled,
     isReadOnly,
     className,
+    suffix,
     ...inputProps
 }: TextInputFieldProps) {
     return (
@@ -60,7 +63,16 @@ export function TextInputField({
             className={className ?? 'w-full'}
         >
             <Label>{label}</Label>
-            <Input {...inputProps} />
+            {suffix ? (
+                <InputGroup>
+                    <InputGroup.Input {...inputProps} className="min-w-0" />
+                    <InputGroup.Suffix className="border-0 px-1">
+                        {suffix}
+                    </InputGroup.Suffix>
+                </InputGroup>
+            ) : (
+                <Input {...inputProps} />
+            )}
             {description && <Description>{description}</Description>}
             <FieldError>{error}</FieldError>
         </TextField>

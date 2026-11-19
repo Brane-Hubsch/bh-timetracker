@@ -113,6 +113,8 @@ describes; propose additions instead of building them.
 
 ## Frontend
 
+- Start every UI change in the [TimeReport Figma file](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport)
+  before editing the application code.
 - Inertia 3 + React 19 + TypeScript (strict) + Tailwind CSS 4.
 - Typeface: Inter (400/500/600 from Bunny Fonts via `vite.config.ts`, `--font-sans` in `app.css`). PDFs
   embed the same family from `resources/fonts/inter` (Regular/Bold, OFL) with font subsetting.
