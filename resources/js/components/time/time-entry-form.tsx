@@ -13,7 +13,13 @@ import {
 } from '@heroui/react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
-import { Banknote, Copy, Trash2, UserRound } from 'lucide-react';
+import {
+    Banknote,
+    Copy,
+    EllipsisVertical,
+    Trash2,
+    UserRound,
+} from 'lucide-react';
 import { useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { TagInput } from '@/components/form/tag-input';
@@ -129,6 +135,7 @@ export function TimeEntryForm({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
+    const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
 
     // Start from the draft each time a new one is opened.
     if (draft && draft !== source) {
@@ -138,6 +145,7 @@ export function TimeEntryForm({
         setHasTyped(false);
         setErrors({});
         setIsMemberPickerOpen(false);
+        setIsActionsMenuOpen(false);
     }
 
     const current = values ?? draft;
@@ -322,7 +330,7 @@ export function TimeEntryForm({
             isOpen={draft !== null}
             onOpenChange={(isOpen) => !isOpen && onClose()}
             dismissOnEscape={
-                draft?.fromCalendar && !isMemberPickerOpen
+                draft?.fromCalendar && !isMemberPickerOpen && !isActionsMenuOpen
                     ? values === source && !hasTyped && !processing
                     : undefined
             }
@@ -396,35 +404,63 @@ export function TimeEntryForm({
                 ))
             }
             desktopClassName="sm:max-w-[40rem]"
+            containerClassName={
+                isEditing
+                    ? 'data-[entering=true]:animate-fade-in! motion-reduce:data-[entering=true]:animate-none!'
+                    : undefined
+            }
             footer={
                 <div className="flex w-full items-center gap-2">
                     {isEditing && (
-                        <Button
-                            variant="danger-soft"
-                            onPress={remove}
-                            aria-label={t('Delete')}
-                            data-test="time-entry-delete"
-                        >
-                            <Trash2 className="size-4" />
-                            <span className="hidden sm:inline">
-                                {t('Delete')}
-                            </span>
-                        </Button>
-                    )}
-                    {isEditing && onDuplicate && current && (
-                        <Button
-                            variant="tertiary"
-                            onPress={() =>
-                                onDuplicate({ ...current, id: undefined })
-                            }
-                            aria-label={t('Duplicate')}
-                            data-test="time-entry-duplicate"
-                        >
-                            <Copy className="size-4" />
-                            <span className="hidden sm:inline">
-                                {t('Duplicate')}
-                            </span>
-                        </Button>
+                        <Dropdown onOpenChange={setIsActionsMenuOpen}>
+                            <Button
+                                type="button"
+                                variant="tertiary"
+                                isIconOnly
+                                aria-label={t('Time entry actions')}
+                                data-test="time-entry-actions"
+                            >
+                                <EllipsisVertical className="size-4" />
+                            </Button>
+                            <Dropdown.Popover
+                                placement="bottom start"
+                                className="min-w-40 rounded-3xl"
+                            >
+                                <Dropdown.Menu
+                                    aria-label={t('Time entry actions')}
+                                    className="gap-0"
+                                >
+                                    {onDuplicate && current && (
+                                        <Dropdown.Item
+                                            id="duplicate"
+                                            textValue={t('Duplicate')}
+                                            onAction={() =>
+                                                onDuplicate({
+                                                    ...current,
+                                                    id: undefined,
+                                                })
+                                            }
+                                            className="px-3"
+                                            data-test="time-entry-duplicate"
+                                        >
+                                            <Copy className="size-4 shrink-0" />
+                                            <Label>{t('Duplicate')}</Label>
+                                        </Dropdown.Item>
+                                    )}
+                                    <Dropdown.Item
+                                        id="delete"
+                                        textValue={t('Delete')}
+                                        onAction={remove}
+                                        variant="danger"
+                                        className="px-3"
+                                        data-test="time-entry-delete"
+                                    >
+                                        <Trash2 className="size-4 shrink-0 text-danger" />
+                                        <Label>{t('Delete')}</Label>
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
+                        </Dropdown>
                     )}
                     <div className="ml-auto flex gap-2">
                         <Button slot="close" variant="tertiary">
