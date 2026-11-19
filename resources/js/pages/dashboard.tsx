@@ -2,7 +2,6 @@ import { Button, Modal } from '@heroui/react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Clock, Plus } from 'lucide-react';
 import { useState } from 'react';
-import type { SelectOption } from '@/components/form/select-field';
 import { EstimateProgress } from '@/components/estimate-progress';
 import Heading from '@/components/heading';
 import { PendingInvitationList } from '@/components/pending-invitation-list';
@@ -22,6 +21,7 @@ import type {
     ProjectOption,
     TimeEntry,
     TimeEntryDraft,
+    TimeEntryMemberOption,
 } from '@/types';
 
 type Props = {
@@ -33,7 +33,7 @@ type Props = {
     projects: ProjectOption[];
     /** The organization's tag names. */
     tags: string[];
-    members: SelectOption[];
+    members: TimeEntryMemberOption[];
     /** Recently used project ids per member id (owners and admins). */
     recentProjects: Record<string, string[]>;
     team: { id: number; name: string; seconds: number }[] | null;

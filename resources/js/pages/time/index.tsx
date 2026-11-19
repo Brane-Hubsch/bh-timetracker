@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, CopyPlus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import { SegmentedControl } from '@/components/segmented-control';
-import type { SelectOption } from '@/components/form/select-field';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import { newDraft } from '@/components/time/drafts';
@@ -28,7 +27,12 @@ import {
     weekDates,
 } from '@/lib/time';
 import { index, update } from '@/routes/time';
-import type { ProjectOption, TimeEntry, TimeEntryDraft } from '@/types';
+import type {
+    ProjectOption,
+    TimeEntry,
+    TimeEntryDraft,
+    TimeEntryMemberOption,
+} from '@/types';
 
 type View = 'list' | 'week' | 'day';
 
@@ -43,7 +47,7 @@ type Props = {
     /** The organization's tag names. */
     tags: string[];
     member: { id: number; name: string };
-    members: SelectOption[];
+    members: TimeEntryMemberOption[];
     /** Recently used project ids per member id (owners and admins). */
     recentProjects: Record<string, string[]>;
     previousWeek?: TimeEntry[];

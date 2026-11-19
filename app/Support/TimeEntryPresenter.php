@@ -70,15 +70,19 @@ class TimeEntryPresenter
     /**
      * Active members a manager can report time for, as select options.
      *
-     * @return array<int, array{value: string, label: string}>
+     * @return array<int, array{value: string, label: string, avatar: string|null}>
      */
     public function memberOptions(Organization $organization): array
     {
         return $organization->members()
             ->wherePivotNull('deactivated_at')
             ->orderBy('name')
-            ->get(['users.id', 'users.name'])
-            ->map(fn (User $member) => ['value' => (string) $member->id, 'label' => $member->name])
+            ->get(['users.id', 'users.name', 'users.avatar_path', 'users.avatar_url'])
+            ->map(fn (User $member) => [
+                'value' => (string) $member->id,
+                'label' => $member->name,
+                'avatar' => $member->avatar,
+            ])
             ->values()
             ->all();
     }
@@ -117,7 +121,7 @@ class TimeEntryPresenter
      * Recently used project ids per member, for the time entry form's member picker: keyed by member
      * id (a JSON object), with the project ids as strings like the project options.
      *
-     * @param  array<int, array{value: string, label: string}>  $members
+     * @param  array<int, array{value: string, label: string, avatar: string|null}>  $members
      * @return array<int, array<int, string>>
      */
     public function recentProjectsByMember(Organization $organization, array $members): array

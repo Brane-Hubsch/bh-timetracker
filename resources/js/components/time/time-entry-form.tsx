@@ -1,7 +1,9 @@
 import {
     Alert,
+    Avatar,
     Button,
     Description,
+    Dropdown,
     Input,
     Label,
     Switch,
@@ -9,16 +11,15 @@ import {
     TextField,
 } from '@heroui/react';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Copy, Trash2 } from 'lucide-react';
+import { Copy, Trash2, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { TagInput } from '@/components/form/tag-input';
-import { SelectField } from '@/components/form/select-field';
-import type { SelectOption } from '@/components/form/select-field';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
 import { TimeScrubLabel } from '@/components/time/time-scrub-label';
+import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import {
     formatDuration,
@@ -31,7 +32,12 @@ import {
 } from '@/lib/time';
 import { index as projectsIndex } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/time';
-import type { ProjectOption, TimeEntry, TimeEntryDraft } from '@/types';
+import type {
+    ProjectOption,
+    TimeEntry,
+    TimeEntryDraft,
+    TimeEntryMemberOption,
+} from '@/types';
 
 type Props = {
     draft: TimeEntryDraft | null;
@@ -39,8 +45,8 @@ type Props = {
     projects: ProjectOption[];
     /** Entries already loaded, used to warn about overlaps. */
     entries: TimeEntry[];
-    /** Members the viewer may report time for (owners and admins); hidden when empty. */
-    members?: SelectOption[];
+    /** Members the viewer may report time for (owners and admins). */
+    members?: TimeEntryMemberOption[];
     /** The organization's tag names, suggested in the tag field. */
     tags?: string[];
     /** Recently used project ids per member id, so the shortcuts follow the selected member. */
@@ -49,6 +55,7 @@ type Props = {
 };
 
 const FORM_ID = 'time-entry-form';
+const MEMBER_ERROR_ID = 'time-entry-member-error';
 
 function durationOf(draft: TimeEntryDraft): string {
     return draft.end
@@ -77,7 +84,8 @@ export function TimeEntryForm({
     onDuplicate,
 }: Props) {
     const { t } = useTranslation();
-    const { can } = usePage().props;
+    const { auth, can } = usePage().props;
+    const getInitials = useInitials();
     // The last opened draft: kept while the dialog animates out.
     const [source, setSource] = useState(draft);
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
@@ -85,6 +93,7 @@ export function TimeEntryForm({
     const [hasTyped, setHasTyped] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
+    const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
 
     // Start from the draft each time a new one is opened.
     if (draft && draft !== source) {
@@ -93,6 +102,7 @@ export function TimeEntryForm({
         setDuration(durationOf(draft));
         setHasTyped(false);
         setErrors({});
+        setIsMemberPickerOpen(false);
     }
 
     const current = values ?? draft;
@@ -248,17 +258,114 @@ export function TimeEntryForm({
 
     const timeError =
         errors.ended_at ?? errors.duration ?? errors.end ?? errors.start;
+    const memberId = String(current?.userId ?? '');
+    const member = members.find((option) => option.value === memberId);
+    const isSelf = current?.userId === auth.user.id;
+    const memberName = isSelf ? auth.user.name : member?.label;
+    const memberAvatar = isSelf ? auth.user.avatar : member?.avatar;
+    const canChangeMember = members.length > 1;
+    const memberLabel = memberName
+        ? t('Reporting for :name', { name: memberName })
+        : t('Member');
+    const avatar = (
+        <Avatar
+            size="sm"
+            variant="soft"
+            color="accent"
+            className="rounded-full"
+            aria-hidden="true"
+            title={memberLabel}
+        >
+            {memberAvatar && (
+                <Avatar.Image
+                    src={memberAvatar}
+                    alt=""
+                    className="object-cover"
+                />
+            )}
+            <Avatar.Fallback>
+                {memberName ? (
+                    getInitials(memberName)
+                ) : (
+                    <UserRound className="size-4" />
+                )}
+            </Avatar.Fallback>
+        </Avatar>
+    );
 
     return (
         <ResponsiveDialog
             isOpen={draft !== null}
             onOpenChange={(isOpen) => !isOpen && onClose()}
             dismissOnEscape={
-                draft?.fromCalendar
+                draft?.fromCalendar && !isMemberPickerOpen
                     ? values === source && !hasTyped && !processing
                     : undefined
             }
             title={isEditing ? t('Edit time') : t('Report time')}
+            headerActions={
+                current &&
+                (canChangeMember ? (
+                    <Dropdown onOpenChange={setIsMemberPickerOpen}>
+                        <Button
+                            variant="ghost"
+                            isIconOnly
+                            className="size-9 min-w-0 shrink-0 rounded-full p-0"
+                            aria-label={
+                                memberName
+                                    ? t('Change member (:name)', {
+                                          name: memberName,
+                                      })
+                                    : t('Change member')
+                            }
+                            aria-describedby={
+                                errors.user_id ? MEMBER_ERROR_ID : undefined
+                            }
+                            data-test="time-entry-member"
+                        >
+                            {avatar}
+                        </Button>
+                        <Dropdown.Popover
+                            placement="bottom end"
+                            className="min-w-48"
+                        >
+                            <Dropdown.Menu
+                                aria-label={t('Choose a member')}
+                                selectionMode="single"
+                                disallowEmptySelection
+                                selectedKeys={[memberId]}
+                                onSelectionChange={(keys) => {
+                                    if (keys !== 'all') {
+                                        const [userId] = keys;
+                                        if (userId !== undefined) {
+                                            set({ userId: Number(userId) });
+                                        }
+                                    }
+                                }}
+                            >
+                                {members.map(({ value, label }) => (
+                                    <Dropdown.Item
+                                        key={value}
+                                        id={value}
+                                        textValue={label}
+                                    >
+                                        <Label>{label}</Label>
+                                        <Dropdown.ItemIndicator />
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown.Popover>
+                    </Dropdown>
+                ) : (
+                    <span
+                        className="flex size-9 items-center justify-center"
+                        role="img"
+                        aria-label={memberLabel}
+                    >
+                        {avatar}
+                    </span>
+                ))
+            }
             desktopClassName="sm:max-w-[40rem]"
             footer={
                 <div className="flex w-full items-center gap-2">
@@ -314,18 +421,14 @@ export function TimeEntryForm({
                     className="grid gap-5"
                     data-test="time-entry-form"
                 >
-                    {members.length > 1 && (
-                        <SelectField
-                            name="user_id"
-                            label={t('Member')}
-                            options={members}
-                            value={String(current.userId)}
-                            onChange={(userId) =>
-                                set({ userId: Number(userId) })
-                            }
-                            error={errors.user_id}
-                            data-test="time-entry-member"
-                        />
+                    {errors.user_id && (
+                        <p
+                            id={MEMBER_ERROR_ID}
+                            role="alert"
+                            className="text-sm text-danger"
+                        >
+                            {errors.user_id}
+                        </p>
                     )}
 
                     {projects.length === 0 && (
@@ -360,9 +463,8 @@ export function TimeEntryForm({
                     <ProjectPicker
                         projects={projects}
                         recentIds={
-                            members.length > 1
-                                ? (recentProjects?.[String(current.userId)] ??
-                                  [])
+                            canChangeMember
+                                ? (recentProjects?.[memberId] ?? [])
                                 : undefined
                         }
                         value={current.projectId}
