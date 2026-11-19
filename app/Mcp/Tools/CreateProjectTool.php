@@ -37,6 +37,7 @@ class CreateProjectTool extends TimetrackerTool
             'private' => $schema->boolean()->description('Only assigned members can see it. Default false.'),
             'starts_on' => $schema->string()->description('Start date, YYYY-MM-DD.'),
             'ends_on' => $schema->string()->description('End date, YYYY-MM-DD.'),
+            'notes' => $schema->string()->description('Notes shown on the project page to everyone on the project (scope, contacts, links).'),
             'organization' => $this->organizationArgument($schema),
         ];
     }
@@ -55,6 +56,7 @@ class CreateProjectTool extends TimetrackerTool
             'private' => ['nullable', 'boolean'],
             'starts_on' => ['nullable', 'date_format:Y-m-d'],
             'ends_on' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:starts_on'],
+            'notes' => ['nullable', 'string', 'max:10000'],
         ]);
 
         $clientReference = $this->stringArgument($request, 'client');
@@ -73,6 +75,7 @@ class CreateProjectTool extends TimetrackerTool
             'visibility' => $this->boolArgument($request, 'private') ? ProjectVisibility::Private->value : ProjectVisibility::Public->value,
             'starts_on' => $this->stringArgument($request, 'starts_on'),
             'ends_on' => $this->stringArgument($request, 'ends_on'),
+            'notes' => $this->stringArgument($request, 'notes'),
         ]);
 
         return Response::structured(['created' => [

@@ -2,16 +2,28 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\ArchiveClientTool;
+use App\Mcp\Tools\ArchiveProjectTool;
+use App\Mcp\Tools\CancelInvitationTool;
 use App\Mcp\Tools\CreateClientTool;
 use App\Mcp\Tools\CreateProjectTool;
 use App\Mcp\Tools\CreateTimeEntriesTool;
+use App\Mcp\Tools\DeleteTagTool;
 use App\Mcp\Tools\DeleteTimeEntryTool;
+use App\Mcp\Tools\ExportReportTool;
 use App\Mcp\Tools\GetContextTool;
 use App\Mcp\Tools\GetProjectStatusTool;
 use App\Mcp\Tools\GetReportTool;
+use App\Mcp\Tools\InviteMemberTool;
 use App\Mcp\Tools\ListClientsTool;
+use App\Mcp\Tools\ListMembersTool;
 use App\Mcp\Tools\ListProjectsTool;
 use App\Mcp\Tools\ListTimeEntriesTool;
+use App\Mcp\Tools\RemoveMemberTool;
+use App\Mcp\Tools\RenameTagTool;
+use App\Mcp\Tools\UpdateClientTool;
+use App\Mcp\Tools\UpdateMemberTool;
+use App\Mcp\Tools\UpdateProjectTool;
 use App\Mcp\Tools\UpdateTimeEntryTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
@@ -36,11 +48,19 @@ amounts; owners and admins can see and report time for others and manage clients
   from 13:00. An entry is at most 24 hours; entries may cross midnight.
 - Before creating several entries (e.g. "fill in my week"), updating or deleting, show the user what you
   are about to do and get a confirmation. Deleting cannot be undone through these tools.
+- Owners and admins can also manage members and invitations, rename/merge/delete tags and change or
+  archive clients and projects. Archiving can be undone (archived=false); removing a member, cancelling
+  an invitation and deleting a tag cannot, so confirm those first.
+- export_report gives a download link to a PDF, Excel or CSV file for the user to open in their browser;
+  use get_report when you need the numbers yourself.
 - Answer in the user's language (often Swedish). Hours are decimals; amounts are in the organization's
   currency.
 TEXT)]
 class TimetrackerServer extends Server
 {
+    /** List every tool on one page; some clients don't follow the pagination cursor. */
+    public int $defaultPaginationLength = 50;
+
     /**
      * @var array<int, class-string<Server\Tool>>
      */
@@ -48,13 +68,25 @@ class TimetrackerServer extends Server
         GetContextTool::class,
         ListClientsTool::class,
         CreateClientTool::class,
+        UpdateClientTool::class,
+        ArchiveClientTool::class,
         ListProjectsTool::class,
         CreateProjectTool::class,
+        UpdateProjectTool::class,
+        ArchiveProjectTool::class,
         ListTimeEntriesTool::class,
         CreateTimeEntriesTool::class,
         UpdateTimeEntryTool::class,
         DeleteTimeEntryTool::class,
         GetReportTool::class,
+        ExportReportTool::class,
         GetProjectStatusTool::class,
+        RenameTagTool::class,
+        DeleteTagTool::class,
+        ListMembersTool::class,
+        InviteMemberTool::class,
+        CancelInvitationTool::class,
+        UpdateMemberTool::class,
+        RemoveMemberTool::class,
     ];
 }

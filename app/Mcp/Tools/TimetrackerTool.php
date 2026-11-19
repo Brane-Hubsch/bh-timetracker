@@ -86,6 +86,14 @@ abstract class TimetrackerTool extends Tool
         return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
+    /**
+     * Whether the argument was sent at all (also when null), to tell "clear" from "keep".
+     */
+    protected function provided(Request $request, string $key): bool
+    {
+        return array_key_exists($key, $request->all());
+    }
+
     protected function intArgument(Request $request, string $key): ?int
     {
         $value = $request->get($key);
@@ -98,6 +106,23 @@ abstract class TimetrackerTool extends Tool
         $value = $request->get($key);
 
         return $value === null ? null : filter_var($value, FILTER_VALIDATE_BOOL);
+    }
+
+    /**
+     * Resolve a list argument (ids or names) to ids, reporting errors per item ("projects.1").
+     *
+     * @param  callable(mixed, string): int  $resolve
+     * @return array<int, int>
+     */
+    protected function references(Request $request, string $key, callable $resolve): array
+    {
+        $references = $request->get($key);
+
+        if (! is_array($references)) {
+            return [];
+        }
+
+        return array_map(fn (mixed $reference, int|string $index) => $resolve($reference, "{$key}.{$index}"), $references, array_keys($references));
     }
 
     protected function hours(int $seconds): float
