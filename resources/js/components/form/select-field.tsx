@@ -6,10 +6,11 @@ export type SelectOption = {
     label: string;
 };
 
-type SelectFieldProps = {
+type SelectFieldProps<Option extends SelectOption> = {
     name: string;
     label: ReactNode;
-    options: SelectOption[];
+    options: Option[];
+    renderOption?: (option: Option) => ReactNode;
     error?: string;
     description?: ReactNode;
     placeholder?: string;
@@ -25,10 +26,11 @@ type SelectFieldProps = {
 /**
  * HeroUI select wired for Inertia forms: submits its value under `name`.
  */
-export function SelectField({
+export function SelectField<Option extends SelectOption>({
     name,
     label,
     options,
+    renderOption,
     error,
     description,
     placeholder,
@@ -39,7 +41,7 @@ export function SelectField({
     isDisabled,
     className,
     'data-test': dataTest,
-}: SelectFieldProps) {
+}: SelectFieldProps<Option>) {
     return (
         <Select
             name={name}
@@ -69,7 +71,11 @@ export function SelectField({
                             id={option.value}
                             textValue={option.label}
                         >
-                            <Label>{option.label}</Label>
+                            {renderOption ? (
+                                renderOption(option)
+                            ) : (
+                                <Label>{option.label}</Label>
+                            )}
                             <ListBox.ItemIndicator />
                         </ListBox.Item>
                     ))}
