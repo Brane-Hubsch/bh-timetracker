@@ -1,0 +1,122 @@
+# Production stack: docker compose up -d --build (see the README's Production section).
+#
+# - web: Laravel Octane on FrankenPHP (worker mode) on ports 80/443 with automatic HTTPS (Let's Encrypt
+#   for the host in APP_URL). Runs the start-up automations first: storage:link, migrations, optimize.
+# - queue / scheduler: the same image running queue:work and schedule:work (incl. nightly backups).
+# - postgres: the database, reachable only inside the stack.
+#
+# Settings come from .env next to this file (start from .env.production.example).
+
+name: bh-timetracker
+
+x-app: &app
+    image: ${APP_IMAGE:-bh-timetracker:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment: &app-environment
+        APP_ENV: production
+        DB_CONNECTION: pgsql
+        DB_HOST: postgres
+        DB_PORT: '5432'
+    volumes:
+        - storage:/var/www/html/storage
+
+services:
+    web:
+        <<: *app
+        build:
+            context: .
+            target: production
+            args:
+                VITE_APP_NAME: ${VITE_APP_NAME:-BH Timetracker}
+        # Worker mode: the app boots once per worker and serves many requests. Octane uses the image's
+        # Caddyfile, so SSL_MODE, trusted proxies, security headers and the health check still apply.
+        # A worker is replaced after --max-requests requests to keep memory in check.
+        command:
+            [
+                'php',
+                'artisan',
+                'octane:start',
+                '--server=frankenphp',
+                '--port=8080',
+                '--caddyfile=/etc/frankenphp/Caddyfile',
+                '--workers=${OCTANE_WORKERS:-auto}',
+                '--max-requests=${OCTANE_MAX_REQUESTS:-500}',
+            ]
+        stop_signal: SIGTERM
+        stop_grace_period: 30s
+        environment:
+            <<: *app-environment
+            # Start-up automations, on this service only so they run once per deploy.
+            AUTORUN_ENABLED: 'true'
+            AUTORUN_LARAVEL_MIGRATION_TIMEOUT: '60'
+            # HTTPS on 443 with a certificate from Let's Encrypt for APP_URL's host; port 80 redirects.
+            SSL_MODE: full
+            CADDY_AUTO_HTTPS: ${CADDY_AUTO_HTTPS:-on}
+            CADDY_HTTPS_SERVER_ADDRESS: ${APP_URL:?Set APP_URL in .env}
+            # The health check boots Laravel (/up), not only Caddy.
+            HEALTHCHECK_PATH: /up
+        # HTTP/1.1 and HTTP/2 only: Caddy advertises HTTP/3 on its internal port, which isn't published.
+        ports:
+            - '80:8080'
+            - '443:8443'
+        volumes:
+            - storage:/var/www/html/storage
+            - caddy_data:/data
+            - caddy_config:/config
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    queue:
+        <<: *app
+        command:
+            ['php', 'artisan', 'queue:work', '--tries=3', '--max-time=3600']
+        stop_signal: SIGTERM
+        stop_grace_period: 60s
+        healthcheck:
+            test: ['CMD', 'healthcheck-queue']
+            start_period: 10s
+        depends_on:
+            web:
+                condition: service_healthy
+
+    scheduler:
+        <<: *app
+        command: ['php', 'artisan', 'schedule:work']
+        stop_signal: SIGTERM
+        # Long enough for a running backup to finish uploading.
+        stop_grace_period: 5m
+        healthcheck:
+            test: ['CMD', 'healthcheck-schedule']
+            start_period: 10s
+        depends_on:
+            web:
+                condition: service_healthy
+
+    postgres:
+        image: postgres:17
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:?Set DB_DATABASE in .env}
+            POSTGRES_USER: ${DB_USERNAME:?Set DB_USERNAME in .env}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+        volumes:
+            - postgres:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"',
+                ]
+            interval: 5s
+            timeout: 3s
+            retries: 10
+
+volumes:
+    # Uploaded images (backed up nightly with the database), Passport keys and other runtime files.
+    storage:
+    postgres:
+    # Caddy's certificates; keeping them avoids hitting Let's Encrypt's rate limits on redeploys.
+    caddy_data:
+    caddy_config:

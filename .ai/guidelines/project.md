@@ -118,6 +118,14 @@ describes; propose additions instead of building them.
 - Nightly backups (`config/backup.php`, spatie/laravel-backup) cover the database and
   `storage/app/public/images` only. Keep new uploaded files under that directory, or add their
   directory to the backup's `include`.
+- Production runs the `Dockerfile` with `compose.yaml` (serversideup/php FrankenPHP; services `web`,
+  `queue`, `scheduler`, `postgres`). New PHP extensions or system packages go in the `Dockerfile`;
+  runtime files belong under `storage/` (the only persistent app volume); config must work without a
+  `.env` file, since containers get their settings from the environment.
+- The web container runs Laravel Octane (FrankenPHP worker mode): the app boots once per worker. Never
+  keep request or user state in singletons or static properties; bind such services with `scoped()`
+  (like `CurrentOrganization`) and resolve the request, user and config at call time, not in
+  constructors of long-lived services. Local development and tests run without Octane.
 - Durations are integers in seconds. Money is an integer in the smallest currency unit (öre);
   format it in the frontend with `Intl.NumberFormat`.
 - Lazy loading is blocked outside production (`Model::preventLazyLoading`): eager load relations used in

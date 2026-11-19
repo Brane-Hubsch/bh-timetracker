@@ -118,11 +118,15 @@ return [
 
         'notifiable' => Notifiable::class,
 
+        /*
+         * The package validates these addresses whenever the app boots, so an empty or missing value
+         * must fall back to a valid address instead of breaking every artisan command.
+         */
         'mail' => [
-            'to' => env('BACKUP_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS')),
+            'to' => env('BACKUP_NOTIFICATION_EMAIL') ?: (env('MAIL_FROM_ADDRESS') ?: 'hello@example.com'),
 
             'from' => [
-                'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+                'address' => env('MAIL_FROM_ADDRESS') ?: 'hello@example.com',
                 'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'BH Timetracker')),
             ],
         ],
