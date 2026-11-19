@@ -2,7 +2,7 @@ import { Button, Chip } from '@heroui/react';
 import { Head, Link } from '@inertiajs/react';
 import { Briefcase, ChevronRight, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { ClientFormModal } from '@/components/client-form-modal';
+import { ClientFormDrawer } from '@/components/client-form-drawer';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
@@ -89,7 +89,7 @@ export default function ClientsIndex({ clients, filters }: Props) {
                 </ul>
             </div>
 
-            <ClientFormModal
+            <ClientFormDrawer
                 client={null}
                 isOpen={isCreateOpen}
                 onOpenChange={setCreateOpen}

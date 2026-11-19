@@ -15,7 +15,12 @@ import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
-import { SideDrawer } from '@/components/side-drawer';
+import {
+    SideDrawer,
+    SideDrawerBody,
+    SideDrawerFooter,
+    sideDrawerFormClass,
+} from '@/components/side-drawer';
 import { toMinorUnits } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { store, update } from '@/routes/projects';
@@ -110,9 +115,234 @@ export function ProjectFormDrawer({
             isOpen={isOpen}
             onOpenChange={onOpenChange}
             title={project ? t('Edit project') : t('New project')}
-            onSubmit={submit}
-            footer={
-                <>
+        >
+            <form onSubmit={submit} className={sideDrawerFormClass}>
+                <SideDrawerBody>
+                    <div className="grid gap-4">
+                        <TextInputField
+                            name="name"
+                            label={t('Name')}
+                            value={form.data.name}
+                            onChange={(value) => form.setData('name', value)}
+                            error={form.errors.name}
+                            isRequired
+                            autoFocus={!project}
+                            data-test="project-name"
+                        />
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <SelectField
+                                name="client_id"
+                                label={t('Client')}
+                                value={form.data.client_id}
+                                onChange={(value) =>
+                                    form.setData('client_id', value)
+                                }
+                                options={[
+                                    { value: NO_CLIENT, label: t('No client') },
+                                    ...clients,
+                                ]}
+                                error={form.errors.client_id}
+                            />
+                            <TextInputField
+                                name="code"
+                                label={t('Code')}
+                                description={t(
+                                    'Optional short code, e.g. ACME-01.',
+                                )}
+                                value={form.data.code}
+                                onChange={(value) =>
+                                    form.setData('code', value)
+                                }
+                                error={form.errors.code}
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>{t('Colour')}</Label>
+                            <ColorSwatchPicker
+                                aria-label={t('Colour')}
+                                value={parseColor(form.data.color)}
+                                onChange={(color) =>
+                                    form.setData(
+                                        'color',
+                                        color.toString('hex').toLowerCase(),
+                                    )
+                                }
+                            >
+                                {colors.map((color) => (
+                                    <ColorSwatchPicker.Item
+                                        key={color}
+                                        color={color}
+                                    >
+                                        <ColorSwatchPicker.Swatch />
+                                        <ColorSwatchPicker.Indicator />
+                                    </ColorSwatchPicker.Item>
+                                ))}
+                            </ColorSwatchPicker>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 border-t border-separator pt-6">
+                        <Switch
+                            isSelected={form.data.is_billable}
+                            onChange={(value) =>
+                                form.setData('is_billable', value)
+                            }
+                        >
+                            <Switch.Content>
+                                <Switch.Control>
+                                    <Switch.Thumb />
+                                </Switch.Control>
+                                <div className="flex flex-col gap-0.5">
+                                    <Label>{t('Billable')}</Label>
+                                    <Description>
+                                        {t(
+                                            'New time entries on the project are billable by default.',
+                                        )}
+                                    </Description>
+                                </div>
+                            </Switch.Content>
+                        </Switch>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <NumberField
+                                value={
+                                    form.data.hourly_rate === ''
+                                        ? Number.NaN
+                                        : Number(form.data.hourly_rate)
+                                }
+                                onChange={(value) =>
+                                    form.setData(
+                                        'hourly_rate',
+                                        Number.isNaN(value)
+                                            ? ''
+                                            : String(value),
+                                    )
+                                }
+                                minValue={0}
+                                formatOptions={{ maximumFractionDigits: 2 }}
+                                isInvalid={Boolean(form.errors.hourly_rate)}
+                                className="w-full"
+                            >
+                                <Label>
+                                    {t('Hourly rate')} ({currency}/h)
+                                </Label>
+                                <NumberField.Group>
+                                    <NumberField.Input />
+                                </NumberField.Group>
+                                <Description>
+                                    {t(
+                                        'Leave empty to use the member or organization rate.',
+                                    )}
+                                </Description>
+                                <FieldError>
+                                    {form.errors.hourly_rate}
+                                </FieldError>
+                            </NumberField>
+                            <NumberField
+                                value={
+                                    form.data.estimate_hours === ''
+                                        ? Number.NaN
+                                        : Number(form.data.estimate_hours)
+                                }
+                                onChange={(value) =>
+                                    form.setData(
+                                        'estimate_hours',
+                                        Number.isNaN(value)
+                                            ? ''
+                                            : String(value),
+                                    )
+                                }
+                                minValue={0}
+                                formatOptions={{ maximumFractionDigits: 2 }}
+                                isInvalid={Boolean(form.errors.estimate_hours)}
+                                className="w-full"
+                            >
+                                <Label>{t('Estimate (hours)')}</Label>
+                                <NumberField.Group>
+                                    <NumberField.Input />
+                                </NumberField.Group>
+                                <FieldError>
+                                    {form.errors.estimate_hours}
+                                </FieldError>
+                            </NumberField>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 border-t border-separator pt-6">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <label className="grid gap-1 text-sm">
+                                <span className="font-medium">
+                                    {t('Starts on')}
+                                </span>
+                                <Input
+                                    type="date"
+                                    value={form.data.starts_on}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'starts_on',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                {form.errors.starts_on && (
+                                    <span className="text-danger">
+                                        {form.errors.starts_on}
+                                    </span>
+                                )}
+                            </label>
+                            <label className="grid gap-1 text-sm">
+                                <span className="font-medium">
+                                    {t('Ends on')}
+                                </span>
+                                <Input
+                                    type="date"
+                                    value={form.data.ends_on}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'ends_on',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                {form.errors.ends_on && (
+                                    <span className="text-danger">
+                                        {form.errors.ends_on}
+                                    </span>
+                                )}
+                            </label>
+                        </div>
+
+                        <RadioGroup
+                            value={form.data.visibility}
+                            onChange={(value) =>
+                                form.setData(
+                                    'visibility',
+                                    value as 'public' | 'private',
+                                )
+                            }
+                        >
+                            <Label>{t('Visibility')}</Label>
+                            <Radio value="public">
+                                <Radio.Content>
+                                    <Radio.Control>
+                                        <Radio.Indicator />
+                                    </Radio.Control>
+                                    {t('Public: every member can report time')}
+                                </Radio.Content>
+                            </Radio>
+                            <Radio value="private">
+                                <Radio.Content>
+                                    <Radio.Control>
+                                        <Radio.Indicator />
+                                    </Radio.Control>
+                                    {t('Private: only assigned members')}
+                                </Radio.Content>
+                            </Radio>
+                        </RadioGroup>
+                    </div>
+                </SideDrawerBody>
+                <SideDrawerFooter>
                     <Button slot="close" variant="tertiary">
                         {t('Cancel')}
                     </Button>
@@ -123,203 +353,8 @@ export function ProjectFormDrawer({
                     >
                         {t('Save')}
                     </Button>
-                </>
-            }
-        >
-            <div className="grid gap-4">
-                <TextInputField
-                    name="name"
-                    label={t('Name')}
-                    value={form.data.name}
-                    onChange={(value) => form.setData('name', value)}
-                    error={form.errors.name}
-                    isRequired
-                    autoFocus={!project}
-                    data-test="project-name"
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <SelectField
-                        name="client_id"
-                        label={t('Client')}
-                        value={form.data.client_id}
-                        onChange={(value) => form.setData('client_id', value)}
-                        options={[
-                            { value: NO_CLIENT, label: t('No client') },
-                            ...clients,
-                        ]}
-                        error={form.errors.client_id}
-                    />
-                    <TextInputField
-                        name="code"
-                        label={t('Code')}
-                        description={t('Optional short code, e.g. ACME-01.')}
-                        value={form.data.code}
-                        onChange={(value) => form.setData('code', value)}
-                        error={form.errors.code}
-                    />
-                </div>
-
-                <div className="grid gap-2">
-                    <Label>{t('Colour')}</Label>
-                    <ColorSwatchPicker
-                        aria-label={t('Colour')}
-                        value={parseColor(form.data.color)}
-                        onChange={(color) =>
-                            form.setData(
-                                'color',
-                                color.toString('hex').toLowerCase(),
-                            )
-                        }
-                    >
-                        {colors.map((color) => (
-                            <ColorSwatchPicker.Item key={color} color={color}>
-                                <ColorSwatchPicker.Swatch />
-                                <ColorSwatchPicker.Indicator />
-                            </ColorSwatchPicker.Item>
-                        ))}
-                    </ColorSwatchPicker>
-                </div>
-            </div>
-
-            <div className="grid gap-4 border-t border-separator pt-6">
-                <Switch
-                    isSelected={form.data.is_billable}
-                    onChange={(value) => form.setData('is_billable', value)}
-                >
-                    <Switch.Content>
-                        <Switch.Control>
-                            <Switch.Thumb />
-                        </Switch.Control>
-                        <div className="flex flex-col gap-0.5">
-                            <Label>{t('Billable')}</Label>
-                            <Description>
-                                {t(
-                                    'New time entries on the project are billable by default.',
-                                )}
-                            </Description>
-                        </div>
-                    </Switch.Content>
-                </Switch>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <NumberField
-                        value={
-                            form.data.hourly_rate === ''
-                                ? Number.NaN
-                                : Number(form.data.hourly_rate)
-                        }
-                        onChange={(value) =>
-                            form.setData(
-                                'hourly_rate',
-                                Number.isNaN(value) ? '' : String(value),
-                            )
-                        }
-                        minValue={0}
-                        formatOptions={{ maximumFractionDigits: 2 }}
-                        isInvalid={Boolean(form.errors.hourly_rate)}
-                        className="w-full"
-                    >
-                        <Label>
-                            {t('Hourly rate')} ({currency}/h)
-                        </Label>
-                        <NumberField.Group>
-                            <NumberField.Input />
-                        </NumberField.Group>
-                        <Description>
-                            {t(
-                                'Leave empty to use the member or organization rate.',
-                            )}
-                        </Description>
-                        <FieldError>{form.errors.hourly_rate}</FieldError>
-                    </NumberField>
-                    <NumberField
-                        value={
-                            form.data.estimate_hours === ''
-                                ? Number.NaN
-                                : Number(form.data.estimate_hours)
-                        }
-                        onChange={(value) =>
-                            form.setData(
-                                'estimate_hours',
-                                Number.isNaN(value) ? '' : String(value),
-                            )
-                        }
-                        minValue={0}
-                        formatOptions={{ maximumFractionDigits: 2 }}
-                        isInvalid={Boolean(form.errors.estimate_hours)}
-                        className="w-full"
-                    >
-                        <Label>{t('Estimate (hours)')}</Label>
-                        <NumberField.Group>
-                            <NumberField.Input />
-                        </NumberField.Group>
-                        <FieldError>{form.errors.estimate_hours}</FieldError>
-                    </NumberField>
-                </div>
-            </div>
-
-            <div className="grid gap-4 border-t border-separator pt-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="grid gap-1 text-sm">
-                        <span className="font-medium">{t('Starts on')}</span>
-                        <Input
-                            type="date"
-                            value={form.data.starts_on}
-                            onChange={(event) =>
-                                form.setData('starts_on', event.target.value)
-                            }
-                        />
-                        {form.errors.starts_on && (
-                            <span className="text-danger">
-                                {form.errors.starts_on}
-                            </span>
-                        )}
-                    </label>
-                    <label className="grid gap-1 text-sm">
-                        <span className="font-medium">{t('Ends on')}</span>
-                        <Input
-                            type="date"
-                            value={form.data.ends_on}
-                            onChange={(event) =>
-                                form.setData('ends_on', event.target.value)
-                            }
-                        />
-                        {form.errors.ends_on && (
-                            <span className="text-danger">
-                                {form.errors.ends_on}
-                            </span>
-                        )}
-                    </label>
-                </div>
-
-                <RadioGroup
-                    value={form.data.visibility}
-                    onChange={(value) =>
-                        form.setData(
-                            'visibility',
-                            value as 'public' | 'private',
-                        )
-                    }
-                >
-                    <Label>{t('Visibility')}</Label>
-                    <Radio value="public">
-                        <Radio.Content>
-                            <Radio.Control>
-                                <Radio.Indicator />
-                            </Radio.Control>
-                            {t('Public: every member can report time')}
-                        </Radio.Content>
-                    </Radio>
-                    <Radio value="private">
-                        <Radio.Content>
-                            <Radio.Control>
-                                <Radio.Indicator />
-                            </Radio.Control>
-                            {t('Private: only assigned members')}
-                        </Radio.Content>
-                    </Radio>
-                </RadioGroup>
-            </div>
+                </SideDrawerFooter>
+            </form>
         </SideDrawer>
     );
 }

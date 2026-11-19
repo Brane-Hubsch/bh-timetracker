@@ -1,50 +1,24 @@
 import { Drawer } from '@heroui/react';
-import type { FormEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useIsDesktop } from '@/hooks/use-media-query';
 
 type Props = {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     title: ReactNode;
+    /** `SideDrawerBody` and `SideDrawerFooter`, optionally wrapped in a form with `sideDrawerFormClass`. */
     children: ReactNode;
-    /** Actions, pinned to the bottom of the panel. */
-    footer?: ReactNode;
-    /** Wrap body and footer in a form so the footer's submit button submits it. */
-    onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-/**
- * A panel that slides in from the right on desktop and up from the bottom on mobile. For larger
- * forms (create/edit a project) that need more room than a dialog, without leaving the page.
- */
-export function SideDrawer({
-    isOpen,
-    onOpenChange,
-    title,
-    children,
-    footer,
-    onSubmit,
-}: Props) {
-    const isDesktop = useIsDesktop();
+/** Classes for a form around the body and footer, so the body scrolls and the footer stays put. */
+export const sideDrawerFormClass = 'flex min-h-0 flex-1 flex-col';
 
-    const content = (
-        <>
-            <Drawer.Body className="grid content-start gap-6 text-foreground">
-                {children}
-            </Drawer.Body>
-            {footer && (
-                <Drawer.Footer
-                    className={
-                        isDesktop
-                            ? '-mx-6 -mb-6 border-t border-separator px-6 py-4'
-                            : ''
-                    }
-                >
-                    {footer}
-                </Drawer.Footer>
-            )}
-        </>
-    );
+/**
+ * A panel that slides in from the right on desktop and up from the bottom on mobile, for create/edit
+ * forms that open on the page they belong to.
+ */
+export function SideDrawer({ isOpen, onOpenChange, title, children }: Props) {
+    const isDesktop = useIsDesktop();
 
     return (
         <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -62,18 +36,27 @@ export function SideDrawer({
                             {title}
                         </Drawer.Heading>
                     </Drawer.Header>
-                    {onSubmit ? (
-                        <form
-                            onSubmit={onSubmit}
-                            className="flex min-h-0 flex-1 flex-col"
-                        >
-                            {content}
-                        </form>
-                    ) : (
-                        content
-                    )}
+                    {children}
                 </Drawer.Dialog>
             </Drawer.Content>
         </Drawer.Backdrop>
+    );
+}
+
+/** The scrollable content; groups are spaced apart. */
+export function SideDrawerBody({ children }: { children: ReactNode }) {
+    return (
+        <Drawer.Body className="grid content-start gap-6 text-foreground">
+            {children}
+        </Drawer.Body>
+    );
+}
+
+/** Actions, pinned to the bottom of the panel. */
+export function SideDrawerFooter({ children }: { children: ReactNode }) {
+    return (
+        <Drawer.Footer className="-mx-6 -mb-6 border-t border-separator px-6 py-4">
+            {children}
+        </Drawer.Footer>
     );
 }

@@ -8,7 +8,7 @@ import {
     Plus,
 } from 'lucide-react';
 import { useState } from 'react';
-import { ClientFormModal } from '@/components/client-form-modal';
+import { ClientFormDrawer } from '@/components/client-form-drawer';
 import Heading from '@/components/heading';
 import { SelectField } from '@/components/form/select-field';
 import type { SelectOption } from '@/components/form/select-field';
@@ -255,7 +255,7 @@ export default function ClientShow({
                 </section>
             </div>
 
-            <ClientFormModal
+            <ClientFormDrawer
                 client={client}
                 isOpen={isEditOpen}
                 onOpenChange={setEditOpen}

@@ -490,11 +490,12 @@ Beställt i efterhand (inte i ursprungsplanen). Kommandomenyn öppnas med ⌘K /
 
 ### Tillägg efter Fas 6: sidopaneler (side drawers) (2026-11-19)
 
-Beställt i efterhand. Större formulär öppnas i en sidopanel i stället för på en egen sida: från höger på desktop och som bottenark på mobil (HeroUI Drawer, komponenten `SideDrawer`). Små formulär (tidpost, kund) ligger kvar i modal/bottenark.
+Beställt i efterhand. Formulär för att skapa och redigera projekt och kunder öppnas i en sidopanel i stället för på en egen sida eller i en modal: från höger på desktop och som bottenark på mobil (HeroUI Drawer, komponenten `SideDrawer`). Tidposter ligger kvar i modal/bottenark eftersom de registreras snabbt och ofta.
 
 - **Projekt:** "Nytt projekt" öppnar panelen på projektlistan och på kundsidan (med kunden förvald). "Redigera" öppnar den på projektsidan. Ett nytt projekt öppnar projektsidan efter sparande; en ändring stänger panelen.
 - Sidorna `projects/create` och `projects/{project}/edit` är borttagna. Kommandomenyn och länken i tidformuläret öppnar panelen via `projekt?new=1`.
 - Formulärets val (kunder, färger, valuta) skickas bara till användare som får skapa eller ändra projekt.
+- **Kunder:** "Ny kund" öppnar panelen på kundlistan (även via kommandomenyn) och "Redigera" på kundsidan.
 
 ## 8. Senare (medvetet bortvalt i v1)
 
