@@ -4,6 +4,16 @@ The product and technical plan lives in `docs/PLAN.md` and is the source of trut
 plan looks wrong or contradictory, raise it instead of silently deviating. Build only what the plan
 describes; propose additions instead of building them.
 
+## Pull request workflow
+
+- Before editing files for a new task, create a dedicated branch from the latest `origin/main`. Never
+  commit or push directly to `main`.
+- Push the first commit and open a draft pull request targeting `main` as soon as there is a commit
+  to share. Keep all work and follow-up changes for that task on the same branch and pull request.
+- Mark the pull request ready for review when the work is complete and verified. Merge it through
+  GitHub once the user approves the merge and the required checks have passed. Verify that GitHub
+  shows the pull request as merged and closed.
+
 ## Domain layer
 
 - All write/business logic lives in `app/Actions` (one class per operation, e.g. `CreateTimeEntry`,
@@ -155,5 +165,4 @@ describes; propose additions instead of building them.
 - Pest for tests, Larastan (see `phpstan.neon` for the level), Pint, `vp check` (Oxlint + Oxfmt via
   Vite+) and `tsc --noEmit`. Run `composer ci:check` before committing.
 - Identifiers and code comments in English; UI copy in Swedish via translation files.
-- Small commits with clear messages on feature branches. Never push to `main` or open PRs without
-  asking.
+- Keep commits small and write clear commit messages.
