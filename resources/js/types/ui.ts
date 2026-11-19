@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react';
 import type { BreadcrumbItem } from '@/types/navigation';
 
+/** Content width: `default` for lists, detail pages and forms; `wide` for the calendar and reports. */
+export type ContentWidth = 'default' | 'wide';
+
 export type AppLayoutProps = {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
+    width?: ContentWidth;
 };
 
 export type AppVariant = 'header' | 'sidebar';

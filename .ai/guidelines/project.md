@@ -109,6 +109,9 @@ describes; propose additions instead of building them.
   the default, English `en` is prepared). Use the `useTranslation()` hook / `t()` from
   `@/lib/i18n` in React and `__()` in PHP. Keys are the English source strings.
 - Mobile first for data entry, desktop first for reports and administration. No hover-only features.
+- Content width: pages default to `max-w-7xl`; the calendar (week/day) and reports set the `wide` width
+  (`Page.layout = { width: 'wide' }` or `setLayoutProps`) to use wide screens. Use responsive grids
+  (e.g. `xl:` columns, auto-fit filter grids) rather than stretching single columns.
 - Accessibility: one `h1` per page (`Heading` renders it), view switchers and filters use
   `SegmentedControl` (HeroUI ToggleButtonGroup), not `Tabs` without panels; icon-only buttons need an
   `aria-label`. Use the `muted`/`accent` tokens from `app.css`, which are tuned for WCAG AA.

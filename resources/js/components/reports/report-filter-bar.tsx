@@ -39,7 +39,7 @@ export function ReportFilterBar({ filters, options }: Props) {
 
     return (
         <div
-            className="grid grid-cols-1 gap-3 rounded-2xl bg-surface p-4 shadow-surface sm:grid-cols-2 lg:grid-cols-4"
+            className="grid grid-cols-1 gap-3 rounded-2xl bg-surface p-4 shadow-surface sm:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]"
             data-test="report-filters"
         >
             <SelectField
@@ -55,7 +55,7 @@ export function ReportFilterBar({ filters, options }: Props) {
                 data-test="report-period"
             />
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:col-span-2">
                 <label className="grid min-w-0 gap-1 text-sm">
                     <span className="font-medium">{t('From')}</span>
                     <Input

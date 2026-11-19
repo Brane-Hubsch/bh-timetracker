@@ -29,7 +29,10 @@ export default function ReportsProjects({ projects }: Props) {
                     {t('No active projects.')}
                 </p>
             ) : (
-                <ul className="grid gap-3 md:grid-cols-2" data-test="follow-up">
+                <ul
+                    className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3"
+                    data-test="follow-up"
+                >
                     {sorted.map((project) => (
                         <li
                             key={project.id}
@@ -94,3 +97,5 @@ export default function ReportsProjects({ projects }: Props) {
         </ReportLayout>
     );
 }
+
+ReportsProjects.layout = { width: 'wide' };

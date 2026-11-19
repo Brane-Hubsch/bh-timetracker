@@ -1,5 +1,4 @@
 import { Breadcrumbs } from '@heroui/react';
-import type { ReactNode } from 'react';
 import { AppSidebar } from '@/components/app-shell/app-sidebar';
 import { CommandPaletteProvider } from '@/components/command-palette';
 import {
@@ -8,19 +7,23 @@ import {
 } from '@/components/app-shell/mobile-navigation';
 import { useTranslation } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
+import type { AppLayoutProps, ContentWidth } from '@/types';
+
+const WIDTHS: Record<ContentWidth, string> = {
+    default: 'max-w-7xl',
+    wide: 'max-w-[120rem]',
+};
 
 /**
  * Authenticated app shell: sidebar on desktop, top bar + bottom navigation on mobile, and the ⌘K
- * command palette.
+ * command palette. Pages that benefit from wide screens (calendar, reports) set the `wide` width
+ * through layout props.
  */
 export default function AppLayout({
     breadcrumbs = [],
+    width = 'default',
     children,
-}: {
-    breadcrumbs?: BreadcrumbItem[];
-    children: ReactNode;
-}) {
+}: AppLayoutProps) {
     const { t } = useTranslation();
 
     return (
@@ -31,7 +34,9 @@ export default function AppLayout({
                 <div className="md:pl-64">
                     <MobileTopBar className="md:hidden" />
 
-                    <main className="page-transition mx-auto w-full max-w-5xl animate-enter px-4 pt-4 pb-28 md:px-8 md:pt-8 md:pb-12">
+                    <main
+                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-4 pb-28 md:px-8 md:pt-8 md:pb-12`}
+                    >
                         {breadcrumbs.length > 1 && (
                             <Breadcrumbs className="mb-6 hidden md:flex">
                                 {breadcrumbs.map((item, index) => (

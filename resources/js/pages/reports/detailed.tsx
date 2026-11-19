@@ -217,3 +217,5 @@ export default function ReportsDetailed({
         </ReportLayout>
     );
 }
+
+ReportsDetailed.layout = { width: 'wide' };

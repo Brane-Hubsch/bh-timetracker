@@ -1,5 +1,5 @@
 import { Button } from '@heroui/react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, setLayoutProps, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, CopyPlus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
@@ -62,6 +62,9 @@ export default function TimeIndex({
     const params = new URLSearchParams(url.split('?')[1] ?? '');
     const requestedView = params.get('view') as View | null;
     const view: View = requestedView ?? (isDesktop ? 'week' : 'list');
+
+    // The calendar uses the full width of wide screens; the list reads better in a narrower column.
+    setLayoutProps({ width: view === 'list' ? 'default' : 'wide' });
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
 

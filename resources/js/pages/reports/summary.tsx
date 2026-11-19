@@ -117,3 +117,5 @@ export default function ReportsSummary({
         </ReportLayout>
     );
 }
+
+ReportsSummary.layout = { width: 'wide' };

@@ -73,6 +73,10 @@ export default function Dashboard({
     );
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const todaysEntries = recentEntries.filter((entry) => entry.date === today);
+    // Team and projects sit beside the recent entries on wide screens.
+    const hasSidebar =
+        team !== null ||
+        (projectsNearEstimate !== null && projectsNearEstimate.length > 0);
 
     return (
         <>
@@ -112,131 +116,161 @@ export default function Dashboard({
                     <Stat label={t('This week')} seconds={weekSeconds} />
                 </div>
 
-                <section className="grid gap-3">
-                    <Heading
-                        variant="small"
-                        title={t('Recent entries')}
-                        actions={
-                            <Link
-                                href={timeIndex()}
-                                className="text-sm font-medium text-accent"
-                            >
-                                {t('Show calendar')}
-                            </Link>
-                        }
-                    />
-                    <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
-                        {recentEntries.map((entry) => (
-                            <li key={entry.id}>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setDraft(draftFromEntry(entry))
-                                    }
-                                    className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-surface-secondary"
-                                >
-                                    <ProjectDot color={entry.project.color} />
-                                    <div className="min-w-0 flex-1">
-                                        <div className="truncate font-medium">
-                                            {entry.project.name}
-                                        </div>
-                                        <div className="truncate text-sm text-muted">
-                                            {entry.description ||
-                                                t('No description')}
-                                        </div>
-                                    </div>
-                                    <div className="shrink-0 text-right text-sm tabular-nums">
-                                        <div className="font-medium">
-                                            {formatDuration(
-                                                entry.durationSeconds,
-                                            )}
-                                        </div>
-                                        <div className="text-muted first-letter:uppercase">
-                                            {entry.date === today
-                                                ? t('Today')
-                                                : formatDate(
-                                                      entry.date,
-                                                      intlLocale,
-                                                  )}{' '}
-                                            {timeOf(entry.start)}
-                                        </div>
-                                    </div>
-                                </button>
-                            </li>
-                        ))}
-                        {recentEntries.length === 0 && (
-                            <li className="grid justify-items-center gap-2 p-10 text-center">
-                                <Clock className="size-8 text-muted" />
-                                <p className="font-medium">
-                                    {t('No time reported yet')}
-                                </p>
-                                <p className="text-sm text-muted">
-                                    {t(
-                                        'Report your first hours with the button above.',
-                                    )}
-                                </p>
-                            </li>
-                        )}
-                    </ul>
-                </section>
-
-                {team && (
-                    <section className="grid gap-3">
-                        <Heading variant="small" title={t('Team this week')} />
-                        <ul className="divide-y divide-separator rounded-2xl bg-surface shadow-surface">
-                            {team.map((member) => (
-                                <li
-                                    key={member.id}
-                                    className="flex items-center justify-between p-4 text-sm"
-                                >
-                                    <Link
-                                        href={timeIndex(undefined, {
-                                            query: { user: member.id },
-                                        })}
-                                        className="font-medium"
-                                    >
-                                        {member.name}
-                                    </Link>
-                                    <span className="tabular-nums">
-                                        {formatDuration(member.seconds)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
-
-                {projectsNearEstimate && projectsNearEstimate.length > 0 && (
+                <div
+                    className={`grid items-start gap-6 ${hasSidebar ? 'xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]' : ''}`}
+                >
                     <section className="grid gap-3">
                         <Heading
                             variant="small"
-                            title={t('Projects close to their estimate')}
+                            title={t('Recent entries')}
+                            actions={
+                                <Link
+                                    href={timeIndex()}
+                                    className="text-sm font-medium text-accent"
+                                >
+                                    {t('Show calendar')}
+                                </Link>
+                            }
                         />
-                        <ul className="divide-y divide-separator rounded-2xl bg-surface shadow-surface">
-                            {projectsNearEstimate.map((project) => (
-                                <li key={project.id} className="grid gap-2 p-4">
-                                    <Link
-                                        href={showProject({
-                                            project: project.id,
-                                        })}
-                                        className="flex items-center gap-2 font-medium"
+                        <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
+                            {recentEntries.map((entry) => (
+                                <li key={entry.id}>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setDraft(draftFromEntry(entry))
+                                        }
+                                        className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-surface-secondary"
                                     >
-                                        <ProjectDot color={project.color} />
-                                        {project.name}
-                                    </Link>
-                                    <EstimateProgress
-                                        consumedSeconds={
-                                            project.consumedSeconds
-                                        }
-                                        estimateSeconds={
-                                            project.estimateSeconds
-                                        }
-                                    />
+                                        <ProjectDot
+                                            color={entry.project.color}
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="truncate font-medium">
+                                                {entry.project.name}
+                                            </div>
+                                            <div className="truncate text-sm text-muted">
+                                                {entry.description ||
+                                                    t('No description')}
+                                            </div>
+                                        </div>
+                                        <div className="shrink-0 text-right text-sm tabular-nums">
+                                            <div className="font-medium">
+                                                {formatDuration(
+                                                    entry.durationSeconds,
+                                                )}
+                                            </div>
+                                            <div className="text-muted first-letter:uppercase">
+                                                {entry.date === today
+                                                    ? t('Today')
+                                                    : formatDate(
+                                                          entry.date,
+                                                          intlLocale,
+                                                      )}{' '}
+                                                {timeOf(entry.start)}
+                                            </div>
+                                        </div>
+                                    </button>
                                 </li>
                             ))}
+                            {recentEntries.length === 0 && (
+                                <li className="grid justify-items-center gap-2 p-10 text-center">
+                                    <Clock className="size-8 text-muted" />
+                                    <p className="font-medium">
+                                        {t('No time reported yet')}
+                                    </p>
+                                    <p className="text-sm text-muted">
+                                        {t(
+                                            'Report your first hours with the button above.',
+                                        )}
+                                    </p>
+                                </li>
+                            )}
                         </ul>
                     </section>
-                )}
+
+                    {hasSidebar && (
+                        <div className="grid content-start gap-6">
+                            {team && (
+                                <section className="grid gap-3">
+                                    <Heading
+                                        variant="small"
+                                        title={t('Team this week')}
+                                    />
+                                    <ul className="divide-y divide-separator rounded-2xl bg-surface shadow-surface">
+                                        {team.map((member) => (
+                                            <li
+                                                key={member.id}
+                                                className="flex items-center justify-between p-4 text-sm"
+                                            >
+                                                <Link
+                                                    href={timeIndex(undefined, {
+                                                        query: {
+                                                            user: member.id,
+                                                        },
+                                                    })}
+                                                    className="font-medium"
+                                                >
+                                                    {member.name}
+                                                </Link>
+                                                <span className="tabular-nums">
+                                                    {formatDuration(
+                                                        member.seconds,
+                                                    )}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
+                            )}
+
+                            {projectsNearEstimate &&
+                                projectsNearEstimate.length > 0 && (
+                                    <section className="grid gap-3">
+                                        <Heading
+                                            variant="small"
+                                            title={t(
+                                                'Projects close to their estimate',
+                                            )}
+                                        />
+                                        <ul className="divide-y divide-separator rounded-2xl bg-surface shadow-surface">
+                                            {projectsNearEstimate.map(
+                                                (project) => (
+                                                    <li
+                                                        key={project.id}
+                                                        className="grid gap-2 p-4"
+                                                    >
+                                                        <Link
+                                                            href={showProject({
+                                                                project:
+                                                                    project.id,
+                                                            })}
+                                                            className="flex items-center gap-2 font-medium"
+                                                        >
+                                                            <ProjectDot
+                                                                color={
+                                                                    project.color
+                                                                }
+                                                            />
+                                                            {project.name}
+                                                        </Link>
+                                                        <EstimateProgress
+                                                            consumedSeconds={
+                                                                project.consumedSeconds
+                                                            }
+                                                            estimateSeconds={
+                                                                project.estimateSeconds
+                                                            }
+                                                        />
+                                                    </li>
+                                                ),
+                                            )}
+                                        </ul>
+                                    </section>
+                                )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             <TimeEntryForm

@@ -23,6 +23,9 @@ declare module '@inertiajs/core' {
             can: OrganizationPermissions | null;
             [key: string]: unknown;
         };
+        layoutProps: {
+            width: import('@/types/ui').ContentWidth;
+        };
     }
 }
 
