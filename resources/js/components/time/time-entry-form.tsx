@@ -2,6 +2,7 @@ import {
     Alert,
     Button,
     Description,
+    Input,
     Label,
     Switch,
     TextArea,
@@ -14,11 +15,10 @@ import { DatePickerField } from '@/components/form/date-picker-field';
 import { TagInput } from '@/components/form/tag-input';
 import { SelectField } from '@/components/form/select-field';
 import type { SelectOption } from '@/components/form/select-field';
-import { TextInputField } from '@/components/form/text-input-field';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
-import { TimeDragHandle } from '@/components/time/time-drag-handle';
+import { TimeScrubLabel } from '@/components/time/time-scrub-label';
 import { useTranslation } from '@/lib/i18n';
 import {
     formatDuration,
@@ -381,13 +381,40 @@ export function TimeEntryForm({
                                 isRequired
                                 data-test="time-entry-date"
                             />
-                            <fieldset className="min-w-0">
+                            <fieldset
+                                aria-label={t('Start and end time')}
+                                className="min-w-0"
+                            >
                                 <legend className="label mb-1 grid w-full grid-cols-2">
-                                    <span>
-                                        {t('Start')}{' '}
-                                        <span aria-hidden="true">*</span>
-                                    </span>
-                                    <span>{t('End')}</span>
+                                    <TimeScrubLabel
+                                        label={t('Start')}
+                                        value={current.start}
+                                        minutes={
+                                            current.start
+                                                ? timeToMinutes(current.start)
+                                                : undefined
+                                        }
+                                        isRequired
+                                        onAdjust={(offset) =>
+                                            changeStart(
+                                                offsetTime(
+                                                    current.start,
+                                                    source?.start ?? '',
+                                                    offset,
+                                                ),
+                                            )
+                                        }
+                                    />
+                                    <TimeScrubLabel
+                                        label={t('End')}
+                                        value={current.end}
+                                        minutes={
+                                            current.end
+                                                ? timeToMinutes(current.end)
+                                                : undefined
+                                        }
+                                        onAdjust={adjustEnd}
+                                    />
                                 </legend>
                                 <div
                                     className="grid h-9 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field"
@@ -405,28 +432,6 @@ export function TimeEntryForm({
                                         isRequired
                                         isEmbedded
                                         data-test="time-entry-start"
-                                        suffix={
-                                            <TimeDragHandle
-                                                label={t('Start')}
-                                                value={current.start}
-                                                minutes={
-                                                    current.start
-                                                        ? timeToMinutes(
-                                                              current.start,
-                                                          )
-                                                        : undefined
-                                                }
-                                                onAdjust={(offset) =>
-                                                    changeStart(
-                                                        offsetTime(
-                                                            current.start,
-                                                            source?.start ?? '',
-                                                            offset,
-                                                        ),
-                                                    )
-                                                }
-                                            />
-                                        }
                                     />
                                     <span
                                         aria-hidden="true"
@@ -441,33 +446,21 @@ export function TimeEntryForm({
                                         )}
                                         isEmbedded
                                         data-test="time-entry-end"
-                                        suffix={
-                                            <TimeDragHandle
-                                                label={t('End')}
-                                                value={current.end}
-                                                minutes={
-                                                    current.end
-                                                        ? timeToMinutes(
-                                                              current.end,
-                                                          )
-                                                        : undefined
-                                                }
-                                                onAdjust={adjustEnd}
-                                            />
-                                        }
                                     />
                                 </div>
                             </fieldset>
-                            <TextInputField
+                            <TextField
                                 name="duration"
-                                label={t('Duration')}
-                                inputMode="decimal"
-                                placeholder="1:30"
                                 value={duration}
                                 onChange={changeDuration}
-                                data-test="time-entry-duration"
-                                suffix={
-                                    <TimeDragHandle
+                                validationBehavior="aria"
+                                className="w-full"
+                            >
+                                <Label className="sr-only">
+                                    {t('Duration')}
+                                </Label>
+                                <span className="label">
+                                    <TimeScrubLabel
                                         label={t('Duration')}
                                         value={duration}
                                         minutes={
@@ -480,8 +473,13 @@ export function TimeEntryForm({
                                         maxMinutes={1440}
                                         onAdjust={adjustDuration}
                                     />
-                                }
-                            />
+                                </span>
+                                <Input
+                                    inputMode="decimal"
+                                    placeholder="1:30"
+                                    data-test="time-entry-duration"
+                                />
+                            </TextField>
                         </div>
                         {timeError ? (
                             <p className="text-sm text-danger">{timeError}</p>
@@ -491,7 +489,7 @@ export function TimeEntryForm({
                                     'Enter an end time or a duration such as 1,5, 1:30 or 90m.',
                                 )}{' '}
                                 {t(
-                                    'Drag the arrows to adjust in 15-minute steps.',
+                                    'Drag the field label sideways to adjust in 15-minute steps.',
                                 )}
                             </p>
                         )}
