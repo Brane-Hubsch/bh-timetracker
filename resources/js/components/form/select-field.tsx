@@ -55,8 +55,8 @@ export function SelectField({
             data-test={dataTest}
         >
             <Label>{label}</Label>
-            <Select.Trigger>
-                <Select.Value />
+            <Select.Trigger className="min-w-0">
+                <Select.Value className="min-w-0 truncate" />
                 <Select.Indicator />
             </Select.Trigger>
             {description && <Description>{description}</Description>}

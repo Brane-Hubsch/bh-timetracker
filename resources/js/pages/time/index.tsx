@@ -157,9 +157,10 @@ export default function TimeIndex({
         <>
             <Head title={t('Calendar')} />
 
-            <div className="grid gap-4">
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1">
+            <div className="grid grid-cols-1 gap-4">
+                {/* Two rows on mobile (navigation and title, then filters and actions); one on desktop. */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
+                    <div className="flex shrink-0 items-center gap-1">
                         <Button
                             isIconOnly
                             variant="ghost"
@@ -188,29 +189,27 @@ export default function TimeIndex({
                             <ChevronRight className="size-4" />
                         </Button>
                     </div>
-                    <h1
-                        className={
-                            view === 'day'
-                                ? 'text-lg font-semibold first-letter:uppercase'
-                                : 'text-lg font-semibold'
-                        }
-                    >
-                        {title}
-                    </h1>
-                    <span
-                        className="text-sm text-muted tabular-nums"
-                        data-test="week-total"
-                    >
-                        {view === 'day'
-                            ? t('Day total :hours', {
-                                  hours: formatDuration(dayTotal),
-                              })
-                            : t('Week total :hours', {
-                                  hours: formatDuration(weekTotal),
-                              })}
-                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col md:flex-none md:flex-row md:items-baseline md:gap-2">
+                        <h1
+                            className={`truncate text-base font-semibold md:text-lg ${view === 'day' ? 'first-letter:uppercase' : ''}`}
+                        >
+                            {title}
+                        </h1>
+                        <span
+                            className="text-xs text-muted tabular-nums md:text-sm"
+                            data-test="week-total"
+                        >
+                            {view === 'day'
+                                ? t('Day total :hours', {
+                                      hours: formatDuration(dayTotal),
+                                  })
+                                : t('Week total :hours', {
+                                      hours: formatDuration(weekTotal),
+                                  })}
+                        </span>
+                    </div>
 
-                    <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto md:flex-wrap md:justify-end">
                         {members.length > 1 && (
                             <SelectField
                                 name="user"
@@ -224,7 +223,7 @@ export default function TimeIndex({
                                     visit({ user: Number(value) })
                                 }
                                 options={members}
-                                className="w-44"
+                                className="min-w-0 flex-1 md:w-44 md:flex-none"
                                 data-test="member-select"
                             />
                         )}
@@ -232,6 +231,11 @@ export default function TimeIndex({
                             aria-label={t('View')}
                             value={view}
                             onChange={(next) => visit({ view: next })}
+                            className={
+                                members.length > 1
+                                    ? 'shrink-0'
+                                    : 'flex-1 md:flex-none [&>*]:flex-1 md:[&>*]:flex-none'
+                            }
                             options={[
                                 { id: 'list', label: t('List') },
                                 { id: 'week', label: t('Week') },
@@ -241,6 +245,7 @@ export default function TimeIndex({
                         />
                         <Button
                             variant="tertiary"
+                            className="shrink-0"
                             onPress={() => setCopyOpen(true)}
                             aria-label={t('Copy previous week')}
                             data-test="copy-week-button"
