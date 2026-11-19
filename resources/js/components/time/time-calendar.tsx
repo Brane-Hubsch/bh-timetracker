@@ -295,7 +295,10 @@ export function TimeCalendar({
                                             {entry.tags.map((tag) => (
                                                 <span
                                                     key={tag}
-                                                    className="max-w-full truncate rounded-full bg-surface/70 px-1.5 py-px text-[11px]/3.5 font-medium"
+                                                    className="max-w-full truncate rounded-full px-1.5 py-px text-[10px]/3 font-medium"
+                                                    style={{
+                                                        backgroundColor: `color-mix(in oklab, ${color} 20%, transparent)`,
+                                                    }}
                                                 >
                                                     {tag}
                                                 </span>
