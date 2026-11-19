@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Models;
+
+use App\Concerns\GeneratesUniqueOrganizationSlugs;
+use App\Enums\OrganizationRole;
+use Database\Factories\OrganizationFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string $currency
+ * @property int|null $default_hourly_rate
+ * @property int $week_starts_on
+ * @property string $timezone
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ * @property-read Collection<int, OrganizationInvitation> $invitations
+ * @property-read Collection<int, Membership> $memberships
+ * @property-read Collection<int, User> $members
+ * @property-read Collection<int, Client> $clients
+ * @property-read Collection<int, Project> $projects
+ */
+#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone'])]
+class Organization extends Model
+{
+    /** @use HasFactory<OrganizationFactory> */
+    use GeneratesUniqueOrganizationSlugs, HasFactory, SoftDeletes;
+
+    /**
+     * Mirrors the column defaults so freshly created organizations have them before a reload.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'currency' => 'SEK',
+        'week_starts_on' => 1,
+        'timezone' => 'Europe/Stockholm',
+    ];
+
+    /**
+     * Bootstrap the model and its traits.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Organization $organization) {
+            if (empty($organization->slug)) {
+                $organization->slug = static::generateUniqueOrganizationSlug($organization->name);
+            }
+        });
+
+        static::updating(function (Organization $organization) {
+            if ($organization->isDirty('name')) {
+                $organization->slug = static::generateUniqueOrganizationSlug($organization->name, $organization->id);
+            }
+        });
+    }
+
+    /**
+     * Get the organization owner.
+     */
+    public function owner(): ?Model
+    {
+        return $this->members()
+            ->wherePivot('role', OrganizationRole::Owner->value)
+            ->first();
+    }
+
+    /**
+     * Get all members of this organization.
+     *
+     * @return BelongsToMany<User, $this, Membership, 'pivot'>
+     */
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'organization_members', 'organization_id', 'user_id')
+            ->using(Membership::class)
+            ->withPivot(['role', 'hourly_rate', 'deactivated_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<Client, $this>
+     */
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    /**
+     * @return HasMany<Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Get all memberships for this organization.
+     *
+     * @return HasMany<Membership, $this>
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    /**
+     * Get all invitations for this organization.
+     *
+     * @return HasMany<OrganizationInvitation, $this>
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(OrganizationInvitation::class);
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'default_hourly_rate' => 'integer',
+            'week_starts_on' => 'integer',
+        ];
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+}
