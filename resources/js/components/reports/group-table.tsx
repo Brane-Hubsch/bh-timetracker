@@ -16,7 +16,8 @@ type Props = {
 type Line = ReportGroup & { id: string; level: 0 | 1; type: ReportGroupingKey };
 
 /**
- * The summary as a table: groups with their sub-groups indented, and a total row.
+ * The summary as a table: groups with their sub-groups indented, each with its share of the total
+ * hours, and a total row.
  */
 export function GroupTable({
     groups,
@@ -27,6 +28,12 @@ export function GroupTable({
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const showAmounts = totals.amount !== null;
+    const percent = new Intl.NumberFormat(intlLocale, {
+        style: 'percent',
+        maximumFractionDigits: 0,
+    });
+    const share = (seconds: number) =>
+        totals.seconds > 0 ? seconds / totals.seconds : 0;
 
     const lines: Line[] = groups.flatMap((group) => [
         { ...group, id: group.key, level: 0, type: grouping },
@@ -55,19 +62,24 @@ export function GroupTable({
             <Table.ScrollContainer>
                 <Table.Content
                     aria-label={t('Summary')}
-                    className="min-w-[480px]"
+                    className="min-w-[560px]"
                     data-test="report-group-table"
                 >
                     <Table.Header>
-                        <Table.Column isRowHeader>{t('Name')}</Table.Column>
-                        <Table.Column className="text-right">
+                        <Table.Column isRowHeader className="w-full">
+                            {t('Name')}
+                        </Table.Column>
+                        <Table.Column className="text-right whitespace-nowrap">
                             {t('Hours')}
                         </Table.Column>
-                        <Table.Column className="text-right">
+                        <Table.Column className="whitespace-nowrap">
+                            {t('Share')}
+                        </Table.Column>
+                        <Table.Column className="text-right whitespace-nowrap">
                             {t('Billable')}
                         </Table.Column>
                         {showAmounts ? (
-                            <Table.Column className="text-right">
+                            <Table.Column className="text-right whitespace-nowrap">
                                 {t('Amount')}
                             </Table.Column>
                         ) : null}
@@ -94,20 +106,38 @@ export function GroupTable({
                                             {label(line)}
                                         </span>
                                     </Table.Cell>
-                                    <Table.Cell className="text-right tabular-nums">
+                                    <Table.Cell className="text-right whitespace-nowrap tabular-nums">
                                         {formatDecimalHours(
                                             line.seconds,
                                             intlLocale,
                                         )}
                                     </Table.Cell>
-                                    <Table.Cell className="text-right tabular-nums">
+                                    <Table.Cell>
+                                        <span className="flex items-center gap-2 text-sm text-muted tabular-nums">
+                                            <span
+                                                className={`hidden h-1.5 w-16 shrink-0 rounded-full bg-default sm:block ${line.level === 1 ? 'invisible' : ''}`}
+                                                aria-hidden="true"
+                                            >
+                                                <span
+                                                    className="block h-full rounded-full bg-accent"
+                                                    style={{
+                                                        width: `${Math.min(1, share(line.seconds)) * 100}%`,
+                                                    }}
+                                                />
+                                            </span>
+                                            {percent.format(
+                                                share(line.seconds),
+                                            )}
+                                        </span>
+                                    </Table.Cell>
+                                    <Table.Cell className="text-right whitespace-nowrap tabular-nums">
                                         {formatDecimalHours(
                                             line.billableSeconds,
                                             intlLocale,
                                         )}
                                     </Table.Cell>
                                     {showAmounts ? (
-                                        <Table.Cell className="text-right tabular-nums">
+                                        <Table.Cell className="text-right whitespace-nowrap tabular-nums">
                                             {money(line.amount)}
                                         </Table.Cell>
                                     ) : null}
@@ -115,26 +145,31 @@ export function GroupTable({
                             )),
                             ...(lines.length > 0
                                 ? [
-                                      <Table.Row key="total" id="total">
+                                      <Table.Row
+                                          key="total"
+                                          id="total"
+                                          className="[&>td]:border-t [&>td]:border-separator [&>td]:bg-default/40"
+                                      >
                                           <Table.Cell>
                                               <span className="font-semibold">
                                                   {t('Total')}
                                               </span>
                                           </Table.Cell>
-                                          <Table.Cell className="text-right font-semibold tabular-nums">
+                                          <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
                                               {formatDecimalHours(
                                                   totals.seconds,
                                                   intlLocale,
                                               )}
                                           </Table.Cell>
-                                          <Table.Cell className="text-right font-semibold tabular-nums">
+                                          <Table.Cell>{''}</Table.Cell>
+                                          <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
                                               {formatDecimalHours(
                                                   totals.billableSeconds,
                                                   intlLocale,
                                               )}
                                           </Table.Cell>
                                           {showAmounts ? (
-                                              <Table.Cell className="text-right font-semibold tabular-nums">
+                                              <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
                                                   {money(totals.amount)}
                                               </Table.Cell>
                                           ) : null}

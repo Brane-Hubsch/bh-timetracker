@@ -9,12 +9,14 @@ type Props = {
 };
 
 /**
- * Share of time per project as labelled horizontal bars (largest first). Identity comes from the
- * project name and dot, never from colour alone.
+ * Share of time per project as labelled horizontal bars (largest first). Each bar is the project's
+ * share of the total, in the project colour; identity comes from the name and dot, never from
+ * colour alone.
  */
 export function ProjectDistribution({ projects, totalSeconds }: Props) {
     const { t, intlLocale } = useTranslation();
-    const largest = Math.max(1, ...projects.map((project) => project.seconds));
+    const share = (seconds: number) =>
+        totalSeconds > 0 ? seconds / totalSeconds : 0;
     const percent = new Intl.NumberFormat(intlLocale, {
         style: 'percent',
         maximumFractionDigits: 0,
@@ -22,7 +24,7 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
 
     return (
         <section
-            className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface"
+            className="grid h-full content-start gap-4 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="project-distribution"
         >
             <h2 className="text-sm font-semibold">{t('Time per project')}</h2>
@@ -32,7 +34,7 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
                     {t('No time in this period.')}
                 </p>
             ) : (
-                <ul className="grid gap-3">
+                <ul className="grid gap-3.5">
                     {projects.map((project) => (
                         <li key={project.id ?? 'other'} className="grid gap-1">
                             <div className="flex items-baseline justify-between gap-3 text-sm">
@@ -56,19 +58,17 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
                                         intlLocale,
                                     )}
                                     <span className="ml-2 text-muted">
-                                        {percent.format(
-                                            totalSeconds > 0
-                                                ? project.seconds / totalSeconds
-                                                : 0,
-                                        )}
+                                        {percent.format(share(project.seconds))}
                                     </span>
                                 </span>
                             </div>
                             <div className="h-2 rounded-full bg-default">
                                 <div
-                                    className="h-2 origin-left animate-grow-x rounded-full bg-accent transition-[width] duration-300"
+                                    className="h-2 origin-left animate-grow-x rounded-full bg-muted transition-[width] duration-300"
                                     style={{
-                                        width: `${(project.seconds / largest) * 100}%`,
+                                        width: `${share(project.seconds) * 100}%`,
+                                        backgroundColor:
+                                            project.color ?? undefined,
                                     }}
                                 />
                             </div>
