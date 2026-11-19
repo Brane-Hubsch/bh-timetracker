@@ -1,8 +1,11 @@
 name: tests
 
+# Paused to save Actions minutes: runs only when started manually (Actions → tests → Run workflow).
+# Restore automatic runs by putting back:
+#   push:
+#   pull_request:
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
