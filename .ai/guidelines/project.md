@@ -78,6 +78,9 @@ describes; propose additions instead of building them.
   `TimeEntrySource::Mcp`.
 - Tool descriptions and error messages are English (read by the AI). Mark read tools `#[IsReadOnly]`
   and destructive ones `#[IsDestructive]`.
+- Update tools change only the arguments that were sent (`provided()`); an explicit `null` clears an
+  optional field. Files are not returned through MCP: `export_report` links to the web export, which
+  checks access again when the signed-in user opens it.
 
 ## Authentication
 
