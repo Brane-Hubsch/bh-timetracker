@@ -1,10 +1,12 @@
 import FullCalendar from '@fullcalendar/react';
+import type { CalendarRef } from '@fullcalendar/react';
 import interactionPlugin from '@fullcalendar/react/interaction';
 import svLocale from '@fullcalendar/react/locales/sv';
 import classicTheme from '@fullcalendar/react/themes/classic';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
+import { Banknote } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -100,8 +102,41 @@ export function TimeCalendar({
     onEdit,
     onChange,
 }: Props) {
-    const { locale, intlLocale } = useTranslation();
+    const { t, locale, intlLocale } = useTranslation();
     const [containerRef, height] = useFillHeight();
+    const calendarRef = useRef<CalendarRef>(null);
+    const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
+
+    useLayoutEffect(() => {
+        const cancelSelection = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape' || selection.current !== 'selecting') {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            selection.current = 'cancelled';
+            calendarRef.current?.getApi().unselect();
+        };
+
+        // FullCalendar commits on mouseup or touchend before the event reaches window.
+        const finishSelection = () => {
+            selection.current = 'idle';
+        };
+
+        const listeners = new AbortController();
+        const { signal } = listeners;
+        window.addEventListener('keydown', cancelSelection, {
+            capture: true,
+            signal,
+        });
+        window.addEventListener('mouseup', finishSelection, { signal });
+        window.addEventListener('touchend', finishSelection, { signal });
+        window.addEventListener('touchcancel', finishSelection, { signal });
+
+        return () => listeners.abort();
+    }, []);
+
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
     const dayTotal = (day: string) =>
         entries
@@ -115,6 +150,7 @@ export function TimeCalendar({
             data-view={view}
         >
             <FullCalendar
+                ref={calendarRef}
                 key={`${view}-${date}`}
                 plugins={[timeGridPlugin, interactionPlugin, classicTheme]}
                 initialView={view === 'week' ? 'timeGridWeek' : 'timeGridDay'}
@@ -146,7 +182,17 @@ export function TimeCalendar({
                 }}
                 selectable
                 selectMirror
+                selectAllow={() => {
+                    if (selection.current === 'cancelled') {
+                        return false;
+                    }
+
+                    selection.current = 'selecting';
+
+                    return true;
+                }}
                 editable
+                eventMinHeight={28}
                 eventResizableFromStart
                 events={entries.map((entry) => ({
                     id: String(entry.id),
@@ -160,6 +206,7 @@ export function TimeCalendar({
                         description: entry.description,
                         color: entry.project.color,
                         tags: entry.tags,
+                        isBillable: entry.isBillable,
                     },
                 }))}
                 eventClass="time-calendar-event"
@@ -196,17 +243,37 @@ export function TimeCalendar({
                         (info.event.extendedProps.tags as
                             | string[]
                             | undefined) ?? [];
+                    const billableLabel =
+                        info.event.extendedProps.isBillable === true
+                            ? t('Billable')
+                            : null;
 
                     return (
                         <div
-                            className="h-full overflow-hidden rounded-lg border-l-[3px] px-2 py-1 text-xs leading-tight text-foreground"
+                            className="h-full w-full overflow-hidden rounded-lg border-l-[3px] px-2 py-0.5 text-xs leading-tight text-foreground"
                             style={{
                                 borderLeftColor: color,
                                 backgroundColor: `color-mix(in oklab, ${color} 18%, var(--surface))`,
                             }}
                         >
-                            <div className="truncate font-semibold">
-                                {info.event.title}
+                            <div className="flex items-center gap-1">
+                                <div className="min-w-0 flex-1 truncate font-semibold">
+                                    {info.event.title}
+                                </div>
+                                {billableLabel && (
+                                    <span
+                                        className="flex max-w-[70%] shrink-0 items-center gap-1 text-muted"
+                                        title={billableLabel}
+                                    >
+                                        <Banknote
+                                            aria-hidden="true"
+                                            className="size-3.5 shrink-0"
+                                        />
+                                        <span className="truncate">
+                                            {billableLabel}
+                                        </span>
+                                    </span>
+                                )}
                             </div>
                             {info.event.extendedProps.description && (
                                 <div className="truncate text-muted">
@@ -237,12 +304,18 @@ export function TimeCalendar({
                         </div>
                     );
                 }}
-                select={(info) =>
+                select={(info) => {
+                    // FullCalendar can still report the last range when released without moving.
+                    if (selection.current === 'cancelled') {
+                        return;
+                    }
+
+                    calendarRef.current?.getApi().unselect();
                     onSelect(
                         fromCalendarDate(info.start),
                         fromCalendarDate(info.end),
-                    )
-                }
+                    );
+                }}
                 eventClick={(info) => {
                     const entry = byId.get(info.event.id);
 

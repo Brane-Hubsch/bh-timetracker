@@ -75,6 +75,7 @@ export function TimeEntryForm({
     const [source, setSource] = useState(draft);
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
     const [duration, setDuration] = useState(draft ? durationOf(draft) : '');
+    const [hasTyped, setHasTyped] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
 
@@ -83,6 +84,7 @@ export function TimeEntryForm({
         setSource(draft);
         setValues(draft);
         setDuration(durationOf(draft));
+        setHasTyped(false);
         setErrors({});
     }
 
@@ -215,6 +217,11 @@ export function TimeEntryForm({
         <ResponsiveDialog
             isOpen={draft !== null}
             onOpenChange={(isOpen) => !isOpen && onClose()}
+            dismissOnEscape={
+                draft?.fromCalendar
+                    ? values === source && !hasTyped && !processing
+                    : undefined
+            }
             title={isEditing ? t('Edit time') : t('Report time')}
             footer={
                 <div className="flex w-full items-center gap-2">
@@ -266,6 +273,7 @@ export function TimeEntryForm({
                 <form
                     id={FORM_ID}
                     onSubmit={submit}
+                    onChange={() => setHasTyped(true)}
                     className="grid gap-5"
                     data-test="time-entry-form"
                 >

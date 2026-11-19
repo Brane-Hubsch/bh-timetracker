@@ -1,5 +1,5 @@
 import { Drawer, Modal } from '@heroui/react';
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithRef, KeyboardEvent, ReactNode } from 'react';
 import { useIsDesktop } from '@/hooks/use-media-query';
 
 type Props = {
@@ -8,6 +8,7 @@ type Props = {
     title: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
+    dismissOnEscape?: boolean;
 };
 
 /**
@@ -19,14 +20,36 @@ export function ResponsiveDialog({
     title,
     children,
     footer,
+    dismissOnEscape,
 }: Props) {
     const isDesktop = useIsDesktop();
 
+    const onKeyDownCapture = (event: KeyboardEvent<HTMLElement>) => {
+        // Catch Escape before an open field popover handles it.
+        if (
+            isOpen &&
+            dismissOnEscape === true &&
+            event.key === 'Escape' &&
+            !event.nativeEvent.isComposing
+        ) {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpenChange(false);
+        }
+    };
+    const renderDialog = (props: ComponentPropsWithRef<'section'>) => (
+        <section {...props} onKeyDownCapture={onKeyDownCapture} />
+    );
+
     if (isDesktop) {
         return (
-            <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+            <Modal.Backdrop
+                isOpen={isOpen}
+                onOpenChange={onOpenChange}
+                isKeyboardDismissDisabled={dismissOnEscape === false}
+            >
                 <Modal.Container>
-                    <Modal.Dialog className="sm:max-w-lg">
+                    <Modal.Dialog className="sm:max-w-lg" render={renderDialog}>
                         <Modal.CloseTrigger />
                         <Modal.Header>
                             <Modal.Heading>{title}</Modal.Heading>
@@ -40,9 +63,13 @@ export function ResponsiveDialog({
     }
 
     return (
-        <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Drawer.Backdrop
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            isKeyboardDismissDisabled={dismissOnEscape === false}
+        >
             <Drawer.Content placement="bottom">
-                <Drawer.Dialog className="max-h-[92svh]">
+                <Drawer.Dialog className="max-h-[92svh]" render={renderDialog}>
                     <Drawer.Handle />
                     <Drawer.Header>
                         <Drawer.Heading>{title}</Drawer.Heading>

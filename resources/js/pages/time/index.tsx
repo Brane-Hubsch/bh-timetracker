@@ -313,6 +313,7 @@ export default function TimeIndex({
                                     ),
                                     start: timeOf(start),
                                     end: timeOf(end),
+                                    fromCalendar: true,
                                 })
                             }
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}
