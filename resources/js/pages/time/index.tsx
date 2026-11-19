@@ -1,5 +1,5 @@
 import { Button } from '@heroui/react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, CopyPlus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
@@ -58,9 +58,8 @@ export default function TimeIndex({
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const isDesktop = useIsDesktop();
-    const params = new URLSearchParams(
-        typeof window === 'undefined' ? '' : window.location.search,
-    );
+    const { url } = usePage();
+    const params = new URLSearchParams(url.split('?')[1] ?? '');
     const requestedView = params.get('view') as View | null;
     const view: View = requestedView ?? (isDesktop ? 'week' : 'list');
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);

@@ -54,7 +54,10 @@ export function TimeCalendar({
             .reduce((sum, entry) => sum + entry.durationSeconds, 0);
 
     return (
-        <div className="time-calendar overflow-hidden rounded-2xl bg-surface p-2 shadow-surface">
+        <div
+            className="time-calendar overflow-hidden rounded-2xl bg-surface shadow-surface"
+            data-view={view}
+        >
             <FullCalendar
                 key={`${view}-${date}`}
                 plugins={[timeGridPlugin, interactionPlugin, classicTheme]}
@@ -66,6 +69,7 @@ export function TimeCalendar({
                 locale={locale === 'sv' ? 'sv' : 'en-gb'}
                 firstDay={weekStartsOn % 7}
                 headerToolbar={false}
+                borderless
                 allDaySlot={false}
                 nowIndicator
                 height="calc(100svh - 13rem)"
@@ -91,45 +95,72 @@ export function TimeCalendar({
                     title: entry.project.name,
                     start: `${entry.start}:00Z`,
                     end: `${entry.end}:00Z`,
-                    color: entry.project.color,
-                    extendedProps: { description: entry.description },
+                    // Drawn by eventContent as a soft card in the project colour.
+                    backgroundColor: 'transparent',
+                    borderColor: 'transparent',
+                    extendedProps: {
+                        description: entry.description,
+                        color: entry.project.color,
+                    },
                 }))}
+                eventClass="time-calendar-event"
+                slotHeaderClass="time-calendar-slot-label"
+                dayHeaderClass="time-calendar-day-header"
+                nowIndicatorLineClass="time-calendar-now"
                 dayHeaderContent={(info) => {
                     const day = fromCalendarDate(info.date).slice(0, 10);
 
                     return (
-                        <span className="flex flex-col items-center py-1 text-xs font-medium">
-                            <span className="first-letter:uppercase">
+                        <span className="flex flex-col items-center gap-0.5 py-2">
+                            <span className="text-xs text-muted first-letter:uppercase">
                                 {formatDate(day, intlLocale, {
                                     weekday: 'short',
+                                })}
+                            </span>
+                            <span
+                                className={`flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums ${info.isToday ? 'bg-accent text-accent-foreground' : ''}`}
+                            >
+                                {formatDate(day, intlLocale, {
                                     day: 'numeric',
                                 })}
                             </span>
-                            <span className="text-muted tabular-nums">
+                            <span className="text-xs text-muted tabular-nums">
                                 {formatDuration(dayTotal(day))}
                             </span>
                         </span>
                     );
                 }}
-                eventContent={(info) => (
-                    <div className="overflow-hidden px-1 text-xs leading-tight text-white">
-                        <div className="truncate font-semibold">
-                            {info.event.title}
-                        </div>
-                        {info.event.extendedProps.description && (
-                            <div className="truncate opacity-90">
-                                {String(info.event.extendedProps.description)}
+                eventContent={(info) => {
+                    const color = String(info.event.extendedProps.color);
+
+                    return (
+                        <div
+                            className="h-full overflow-hidden rounded-lg border-l-[3px] px-2 py-1 text-xs leading-tight text-foreground"
+                            style={{
+                                borderLeftColor: color,
+                                backgroundColor: `color-mix(in oklab, ${color} 18%, var(--surface))`,
+                            }}
+                        >
+                            <div className="truncate font-semibold">
+                                {info.event.title}
                             </div>
-                        )}
-                        <div className="opacity-80">
-                            {info.event.start &&
-                                timeOf(fromCalendarDate(info.event.start))}
-                            –
-                            {info.event.end &&
-                                timeOf(fromCalendarDate(info.event.end))}
+                            {info.event.extendedProps.description && (
+                                <div className="truncate text-muted">
+                                    {String(
+                                        info.event.extendedProps.description,
+                                    )}
+                                </div>
+                            )}
+                            <div className="text-muted tabular-nums">
+                                {info.event.start &&
+                                    timeOf(fromCalendarDate(info.event.start))}
+                                –
+                                {info.event.end &&
+                                    timeOf(fromCalendarDate(info.event.end))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                }}
                 select={(info) =>
                     onSelect(
                         fromCalendarDate(info.start),
