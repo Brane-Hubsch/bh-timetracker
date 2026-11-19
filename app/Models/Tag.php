@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Organization $organization
  * @property-read Collection<int, TimeEntry> $timeEntries
+ * @property-read int|null $time_entries_count Set by withCount('timeEntries').
  */
 #[Fillable(['organization_id', 'name'])]
 class Tag extends Model

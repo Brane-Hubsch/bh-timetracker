@@ -18,6 +18,8 @@ import DeleteOrganizationModal from '@/components/delete-organization-modal';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
+import { TagManager } from '@/components/organizations/tag-manager';
+import type { OrganizationTag } from '@/components/organizations/tag-manager';
 import InviteMemberModal from '@/components/invite-member-modal';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
@@ -46,6 +48,8 @@ type Props = {
     invitations: OrganizationInvitation[];
     permissions: OrganizationPermissions;
     availableRoles: RoleOption[];
+    /** For owners and admins only. */
+    tags: OrganizationTag[] | null;
 };
 
 const currencies = ['SEK', 'EUR', 'NOK', 'DKK', 'USD', 'GBP'];
@@ -56,6 +60,7 @@ export default function OrganizationEdit({
     invitations,
     permissions,
     availableRoles,
+    tags,
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
@@ -482,6 +487,10 @@ export default function OrganizationEdit({
                         ))}
                     </ul>
                 </section>
+            )}
+
+            {tags && (
+                <TagManager organizationSlug={organization.slug} tags={tags} />
             )}
 
             {permissions.canDeleteOrganization && (

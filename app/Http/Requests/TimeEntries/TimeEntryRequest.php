@@ -4,6 +4,7 @@ namespace App\Http\Requests\TimeEntries;
 
 use App\Data\TimeEntryData;
 use App\Enums\TimeEntrySource;
+use App\Models\Tag;
 use App\Models\User;
 use App\Support\DurationParser;
 use App\Support\LocalTimes;
@@ -32,6 +33,8 @@ class TimeEntryRequest extends FormRequest
             'start' => ['required', 'date_format:H:i'],
             'end' => ['nullable', 'required_without:duration', 'date_format:H:i'],
             'duration' => ['nullable', 'required_without:end', 'string', 'max:32'],
+            'tags' => ['nullable', 'array', 'max:'.Tag::MAX_PER_ENTRY],
+            'tags.*' => ['string', 'max:'.Tag::MAX_NAME_LENGTH],
         ];
     }
 
@@ -75,6 +78,18 @@ class TimeEntryRequest extends FormRequest
             description: $this->filled('description') ? $this->string('description')->value() : null,
             isBillable: $this->has('is_billable') && $this->input('is_billable') !== null ? $this->boolean('is_billable') : null,
             source: TimeEntrySource::Web,
+            // The form always sends the full list; a request without it leaves the tags alone.
+            tags: $this->has('tags') ? $this->tagNames() : null,
         );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function tagNames(): array
+    {
+        $tags = $this->input('tags');
+
+        return is_array($tags) ? array_values(array_filter($tags, 'is_string')) : [];
     }
 }

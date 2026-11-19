@@ -9,6 +9,8 @@ export type TimeEntry = {
         clientName: string | null;
     };
     description: string | null;
+    /** Tag names, alphabetical. */
+    tags: string[];
     /** Local date the entry starts on (YYYY-MM-DD). */
     date: string;
     /** Local wall-clock start/end (YYYY-MM-DDTHH:mm) in the viewer's time zone. */
@@ -33,6 +35,7 @@ export type TimeEntryDraft = {
     userId: number;
     projectId: string;
     description: string;
+    tags: string[];
     date: string;
     start: string;
     end: string;

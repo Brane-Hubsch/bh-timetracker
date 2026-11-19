@@ -32,6 +32,7 @@ import {
     Plus,
     Sparkles,
     Sun,
+    Tags,
     Target,
     UserPlus,
     UserRound,
@@ -450,6 +451,17 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     icon: Building2,
                     perform: go(editOrganization.url(slug)),
                 },
+                ...(can?.canManageTags
+                    ? [
+                          {
+                              id: 'go-tags',
+                              label: t('Tags'),
+                              keywords: t('rename merge'),
+                              icon: Tags,
+                              perform: go(`${editOrganization.url(slug)}#tags`),
+                          },
+                      ]
+                    : []),
                 {
                     id: 'go-ai',
                     label: t('AI connections'),

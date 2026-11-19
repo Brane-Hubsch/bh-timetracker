@@ -11,6 +11,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
+import { TagInput } from '@/components/form/tag-input';
 import { SelectField } from '@/components/form/select-field';
 import type { SelectOption } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
@@ -39,6 +40,8 @@ type Props = {
     entries: TimeEntry[];
     /** Members the viewer may report time for (owners and admins); hidden when empty. */
     members?: SelectOption[];
+    /** The organization's tag names, suggested in the tag field. */
+    tags?: string[];
     /** Recently used project ids per member id, so the shortcuts follow the selected member. */
     recentProjects?: Record<string, string[]>;
     onDuplicate?: (draft: TimeEntryDraft) => void;
@@ -62,6 +65,7 @@ export function TimeEntryForm({
     projects,
     entries,
     members = [],
+    tags = [],
     recentProjects,
     onDuplicate,
 }: Props) {
@@ -176,6 +180,7 @@ export function TimeEntryForm({
             project_id:
                 current.projectId === '' ? null : Number(current.projectId),
             description: current.description,
+            tags: current.tags,
             date: current.date,
             start: current.start,
             end: current.end || null,
@@ -381,6 +386,18 @@ export function TimeEntryForm({
                         </Alert>
                     )}
 
+                    <TagInput
+                        value={current.tags}
+                        onChange={(tags) => set({ tags })}
+                        suggestions={tags}
+                        error={
+                            errors.tags ??
+                            Object.entries(errors).find(([key]) =>
+                                key.startsWith('tags.'),
+                            )?.[1]
+                        }
+                    />
+
                     <TextField
                         value={current.description}
                         onChange={(description) => set({ description })}
@@ -433,6 +450,7 @@ export function draftFromEntry(entry: TimeEntry): TimeEntryDraft {
         userId: entry.userId,
         projectId: String(entry.project.id),
         description: entry.description ?? '',
+        tags: entry.tags,
         date: entry.date,
         start: timeOf(entry.start),
         end: timeOf(entry.end),

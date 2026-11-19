@@ -46,12 +46,13 @@ class DashboardController extends Controller
             'weekSeconds' => (int) (clone $myWeek)->sum('duration_seconds'),
             'recentEntries' => TimeEntry::query()
                 ->where('user_id', $user->id)
-                ->with('project.client')
+                ->with(['project.client', 'tags'])
                 ->latest('started_at')
                 ->limit(5)
                 ->get()
                 ->map(fn (TimeEntry $entry) => $presenter->entry($entry, $timezone)),
             'projects' => $presenter->projectOptions($organization, $user),
+            'tags' => $presenter->tagOptions($organization),
             // Owners and admins can report time for other members from the quick entry form.
             'members' => $members,
             'recentProjects' => $presenter->recentProjectsByMember($organization, $members),

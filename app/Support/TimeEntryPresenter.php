@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -25,7 +26,7 @@ class TimeEntryPresenter
     }
 
     /**
-     * @return array{id: int, userId: int, project: array{id: int, name: string, code: string|null, color: string, clientName: string|null}, description: string|null, date: string, start: string, end: string, durationSeconds: int, isBillable: bool}
+     * @return array{id: int, userId: int, project: array{id: int, name: string, code: string|null, color: string, clientName: string|null}, description: string|null, tags: array<int, string>, date: string, start: string, end: string, durationSeconds: int, isBillable: bool}
      */
     public function entry(TimeEntry $entry, string $timezone): array
     {
@@ -43,12 +44,27 @@ class TimeEntryPresenter
                 'clientName' => $entry->project->client?->name,
             ],
             'description' => $entry->description,
+            'tags' => $entry->tagNames(),
             'date' => $start->toDateString(),
             'start' => $start->format('Y-m-d\TH:i'),
             'end' => $end->format('Y-m-d\TH:i'),
             'durationSeconds' => $entry->duration_seconds,
             'isBillable' => $entry->is_billable,
         ];
+    }
+
+    /**
+     * The organization's tag names, alphabetical, as suggestions for the tag field.
+     *
+     * @return array<int, string>
+     */
+    public function tagOptions(Organization $organization): array
+    {
+        return Tag::query()->forOrganization($organization)->get(['id', 'name'])
+            ->sortBy(fn (Tag $tag) => mb_strtolower($tag->name))
+            ->map(fn (Tag $tag) => $tag->name)
+            ->values()
+            ->all();
     }
 
     /**

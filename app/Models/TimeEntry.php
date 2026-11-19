@@ -77,6 +77,16 @@ class TimeEntry extends Model
     }
 
     /**
+     * The tag names, in alphabetical order (load `tags` first when listing entries).
+     *
+     * @return array<int, string>
+     */
+    public function tagNames(): array
+    {
+        return $this->tags->map(fn (Tag $tag) => $tag->name)->values()->all();
+    }
+
+    /**
      * Entries starting in [from, to).
      *
      * @param  Builder<static>  $query

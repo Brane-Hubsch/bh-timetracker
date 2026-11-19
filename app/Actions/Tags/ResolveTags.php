@@ -19,7 +19,7 @@ class ResolveTags
      *
      * @throws ValidationException
      */
-    public function handle(Organization $organization, array $names, string $errorKey = 'tags'): Collection
+    public function handle(Organization $organization, array $names, string $errorKey = 'tags', ?int $max = null): Collection
     {
         $wanted = collect($names)
             ->map(fn (string $name) => Tag::clean($name))
@@ -29,6 +29,10 @@ class ResolveTags
 
         if ($wanted->contains(fn (string $name) => mb_strlen($name) > Tag::MAX_NAME_LENGTH)) {
             throw ValidationException::withMessages([$errorKey => __('A tag can be at most :max characters.', ['max' => Tag::MAX_NAME_LENGTH])]);
+        }
+
+        if ($max !== null && $wanted->count() > $max) {
+            throw ValidationException::withMessages([$errorKey => __('A time entry can have at most :max tags.', ['max' => $max])]);
         }
 
         if ($wanted->isEmpty()) {

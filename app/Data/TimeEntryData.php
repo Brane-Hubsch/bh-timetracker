@@ -19,6 +19,12 @@ readonly class TimeEntryData
         /** Null means: inherit from the project (on create) or keep the current value (on update). */
         public ?bool $isBillable = null,
         public TimeEntrySource $source = TimeEntrySource::Web,
+        /**
+         * Tag names (created when missing). Null keeps the current tags on update and adds none on create.
+         *
+         * @var array<int, string>|null
+         */
+        public ?array $tags = null,
     ) {
         //
     }

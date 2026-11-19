@@ -13,6 +13,7 @@ use App\Http\Requests\Organizations\SaveOrganizationRequest;
 use App\Http\Requests\Organizations\UpdateOrganizationRequest;
 use App\Models\Membership;
 use App\Models\Organization;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -89,6 +90,13 @@ class OrganizationController extends Controller
                     'role_label' => $invitation->role->label(),
                     'created_at' => $invitation->created_at?->toISOString(),
                 ]),
+            // The tag list with usage, for owners and admins.
+            'tags' => $user->can('manage', [Tag::class, $organization])
+                ? Tag::query()->forOrganization($organization)->withCount('timeEntries')->get()
+                    ->sortBy(fn (Tag $tag) => mb_strtolower($tag->name))
+                    ->map(fn (Tag $tag) => ['id' => $tag->id, 'name' => $tag->name, 'entryCount' => $tag->time_entries_count ?? 0])
+                    ->values()
+                : null,
             'permissions' => $user->toOrganizationPermissions($organization),
             'availableRoles' => OrganizationRole::assignable(),
         ]);

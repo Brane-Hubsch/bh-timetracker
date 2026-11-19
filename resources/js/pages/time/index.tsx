@@ -40,6 +40,8 @@ type Props = {
     timezone: string;
     entries: TimeEntry[];
     projects: ProjectOption[];
+    /** The organization's tag names. */
+    tags: string[];
     member: { id: number; name: string };
     members: SelectOption[];
     /** Recently used project ids per member id (owners and admins). */
@@ -54,6 +56,7 @@ export default function TimeIndex({
     weekStartsOn,
     entries,
     projects,
+    tags,
     member,
     members,
     recentProjects,
@@ -342,6 +345,7 @@ export default function TimeIndex({
                 draft={draft}
                 onClose={() => setDraft(null)}
                 projects={projects}
+                tags={tags}
                 entries={entries}
                 members={members}
                 recentProjects={recentProjects}

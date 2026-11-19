@@ -2,11 +2,14 @@
 
 namespace App\Actions\TimeEntries;
 
+use App\Actions\Tags\ResolveTags;
 use App\Data\TimeEntryData;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -55,5 +58,20 @@ trait ValidatesTimeEntries
         }
 
         return [$user, $project];
+    }
+
+    /**
+     * The entry's tags by name, created in the organization when missing; null when the data
+     * leaves the tags alone.
+     *
+     * @return Collection<int, Tag>|null
+     *
+     * @throws ValidationException
+     */
+    protected function resolveTags(Organization $organization, TimeEntryData $data): ?Collection
+    {
+        return $data->tags === null
+            ? null
+            : app(ResolveTags::class)->handle($organization, $data->tags, 'tags', Tag::MAX_PER_ENTRY);
     }
 }

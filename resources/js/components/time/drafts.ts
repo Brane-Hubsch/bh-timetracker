@@ -19,6 +19,7 @@ export function newDraft(
         userId,
         projectId: '',
         description: '',
+        tags: [],
         date,
         start: lastEnd ?? '08:00',
         end: '',

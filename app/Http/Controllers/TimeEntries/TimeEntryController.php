@@ -50,7 +50,7 @@ class TimeEntryController extends Controller
         $entries = TimeEntry::query()
             ->where('user_id', $member->id)
             ->startingBetween($weekStart, $weekEnd)
-            ->with(['project.client'])
+            ->with(['project.client', 'tags'])
             ->orderBy('started_at')
             ->get();
 
@@ -68,6 +68,7 @@ class TimeEntryController extends Controller
             'timezone' => $timezone,
             'entries' => $entries->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone)),
             'projects' => $this->presenter->projectOptions($organization, $member),
+            'tags' => $this->presenter->tagOptions($organization),
             'member' => ['id' => $member->id, 'name' => $member->name],
             // Owners and admins can switch to another member's time.
             'members' => $members,
@@ -77,7 +78,7 @@ class TimeEntryController extends Controller
             'previousWeek' => Inertia::optional(fn () => TimeEntry::query()
                 ->where('user_id', $member->id)
                 ->startingBetween($previousWeekStart, $weekStart)
-                ->with(['project.client'])
+                ->with(['project.client', 'tags'])
                 ->orderBy('started_at')
                 ->get()
                 ->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone))),
@@ -144,7 +145,7 @@ class TimeEntryController extends Controller
     {
         $organization = $this->currentOrganization->getOrFail();
 
-        $sources = TimeEntry::query()->whereKey($request->entryIds())->with('organization')->get();
+        $sources = TimeEntry::query()->whereKey($request->entryIds())->with(['organization', 'tags'])->get();
         abort_if($sources->count() !== count($request->entryIds()), 404);
 
         $data = $sources->map(function (TimeEntry $entry) use ($user, $organization) {
@@ -158,6 +159,7 @@ class TimeEntryController extends Controller
                 endedAt: $entry->ended_at->addWeek(),
                 description: $entry->description,
                 isBillable: $entry->is_billable,
+                tags: $entry->tagNames(),
             );
         })->all();
 

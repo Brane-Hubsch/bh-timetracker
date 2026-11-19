@@ -82,6 +82,18 @@ export function TimeEntryList({ dates, today, entries, onEdit, onAdd }: Props) {
                                                 {entry.description ||
                                                     t('No description')}
                                             </div>
+                                            {entry.tags.length > 0 && (
+                                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                                    {entry.tags.map((tag) => (
+                                                        <span
+                                                            key={tag}
+                                                            className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
+                                                        >
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="shrink-0 text-right text-sm tabular-nums">
                                             <div className="font-medium">
