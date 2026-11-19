@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from '@/lib/i18n';
-import adjustTimeIcon from './adjust-time.svg';
 
 const MINUTES_PER_STEP = 15;
 const PIXELS_PER_STEP = 12;
@@ -11,21 +10,23 @@ type Props = {
     value: string;
     minutes?: number;
     maxMinutes?: number;
+    isRequired?: boolean;
     onAdjust: (offset: number) => void;
 };
 
-export function TimeDragHandle({
+export function TimeScrubLabel({
     label,
     value,
     minutes,
     maxMinutes = 1439,
+    isRequired,
     onAdjust,
 }: Props) {
     const { t } = useTranslation();
     const drag = useRef<AbortController | null>(null);
     useEffect(() => () => drag.current?.abort(), []);
 
-    const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const startDrag = (event: ReactPointerEvent<HTMLSpanElement>) => {
         if (!event.isPrimary || event.button !== 0) {
             return;
         }
@@ -57,7 +58,7 @@ export function TimeDragHandle({
                 controller.abort();
             }
         };
-        // Follow the pointer across both halves of the field and beyond the dialog.
+        // Follow the pointer beyond the label and the dialog.
         const options = { capture: true, signal: controller.signal };
         window.addEventListener('pointermove', move, options);
         window.addEventListener(
@@ -74,7 +75,7 @@ export function TimeDragHandle({
         });
     };
 
-    const adjustWithKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const adjustWithKey = (event: KeyboardEvent<HTMLSpanElement>) => {
         switch (event.key) {
             case 'ArrowLeft':
             case 'ArrowDown':
@@ -92,25 +93,21 @@ export function TimeDragHandle({
     };
 
     return (
-        <div
+        <span
             role="spinbutton"
             tabIndex={0}
-            aria-label={t('Adjust :field', { field: label })}
+            aria-label={label}
             aria-valuemin={0}
             aria-valuemax={maxMinutes}
             aria-valuenow={minutes}
             aria-valuetext={value || undefined}
             title={t('Drag or use the arrow keys to adjust by 15 minutes.')}
-            className="flex size-8 cursor-ew-resize touch-none items-center justify-center rounded-field select-none hover:bg-default focus-visible:bg-default"
+            className="inline-block w-fit cursor-ew-resize touch-none rounded-sm select-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
             onPointerDown={startDrag}
             onKeyDown={adjustWithKey}
-            onClick={(event) => event.stopPropagation()}
         >
-            <img
-                className="pointer-events-none dark:invert"
-                src={adjustTimeIcon}
-                alt=""
-            />
-        </div>
+            {label}
+            {isRequired && <span aria-hidden="true"> *</span>}
+        </span>
     );
 }
