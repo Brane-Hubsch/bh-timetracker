@@ -488,6 +488,14 @@ Beställt i efterhand (inte i ursprungsplanen). Kommandomenyn öppnas med ⌘K /
 - **Data:** projekt, kunder och medlemmar hämtas från `GET /{org}/command-palette` första gången menyn öppnas, med samma behörigheter som resten av appen.
 - **Direktöppning:** sidor öppnar formulär och dialoger via URL-parametrar (`?new=1`, `?copy=1`, `?invite=1`), som tas bort ur adressen efteråt.
 
+### Tillägg efter Fas 6: sidopaneler (side drawers) (2026-11-19)
+
+Beställt i efterhand. Större formulär öppnas i en sidopanel i stället för på en egen sida: från höger på desktop och som bottenark på mobil (HeroUI Drawer, komponenten `SideDrawer`). Små formulär (tidpost, kund) ligger kvar i modal/bottenark.
+
+- **Projekt:** "Nytt projekt" öppnar panelen på projektlistan och på kundsidan (med kunden förvald). "Redigera" öppnar den på projektsidan. Ett nytt projekt öppnar projektsidan efter sparande; en ändring stänger panelen.
+- Sidorna `projects/create` och `projects/{project}/edit` är borttagna. Kommandomenyn och länken i tidformuläret öppnar panelen via `projekt?new=1`.
+- Formulärets val (kunder, färger, valuta) skickas bara till användare som får skapa eller ändra projekt.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter och taggar · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Clockify/Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.

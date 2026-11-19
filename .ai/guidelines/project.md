@@ -119,6 +119,10 @@ describes; propose additions instead of building them.
   rows; everything respects `prefers-reduced-motion`.
 - New pages and frequent actions get a command in the ⌘K palette (`components/command-palette.tsx`,
   respecting permissions). Pages open dialogs from the palette through `useOpenFromQuery` (`?new=1`).
+- Small forms open in `ResponsiveDialog` (modal on desktop, bottom sheet on mobile). Larger create/edit
+  forms open in `SideDrawer` (right-hand panel on desktop, bottom sheet on mobile) on the page they
+  belong to, not on a separate page; the controller sends the form's options only to users who may
+  use it (e.g. `projectForm` via `App\Support\ProjectFormOptions`).
 
 ## Code quality
 
