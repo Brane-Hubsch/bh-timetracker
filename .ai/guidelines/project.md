@@ -110,7 +110,8 @@ describes; propose additions instead of building them.
   `@/lib/i18n` in React and `__()` in PHP. Keys are the English source strings.
 - Mobile first for data entry, desktop first for reports and administration. No hover-only features.
 - Content width: pages default to `max-w-7xl`; the calendar (week/day) and reports set the `wide` width
-  (`Page.layout = { width: 'wide' }` or `setLayoutProps`) to use wide screens. Use responsive grids
+  (`Page.layout = { width: 'wide' }` or `setLayoutProps`), which uses the full available width; the
+  calendar also fills the viewport height on desktop. Use responsive grids
   (e.g. `xl:` columns, auto-fit filter grids) rather than stretching single columns.
 - Accessibility: one `h1` per page (`Heading` renders it), view switchers and filters use
   `SegmentedControl` (HeroUI ToggleButtonGroup), not `Tabs` without panels; icon-only buttons need an

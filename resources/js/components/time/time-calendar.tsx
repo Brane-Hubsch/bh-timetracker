@@ -5,6 +5,8 @@ import classicTheme from '@fullcalendar/react/themes/classic';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import {
     formatDate,
@@ -32,6 +34,50 @@ type Props = {
     ) => void;
 };
 
+/** Space kept below the calendar on desktop: the content area's bottom padding (md:pb-12). */
+const BOTTOM_GAP = 48;
+
+/**
+ * Fills the viewport below the calendar's top edge on desktop, so it uses all available height
+ * whatever the toolbar above it wraps to. Mobile keeps a fixed offset for the bottom navigation.
+ */
+function useFillHeight(): [
+    React.RefObject<HTMLDivElement | null>,
+    number | string,
+] {
+    const ref = useRef<HTMLDivElement>(null);
+    const isDesktop = useIsDesktop();
+    const [height, setHeight] = useState<number | null>(null);
+
+    useLayoutEffect(() => {
+        if (!isDesktop) {
+            return;
+        }
+
+        const measure = () => {
+            const top =
+                (ref.current?.getBoundingClientRect().top ?? 0) +
+                window.scrollY;
+            setHeight(
+                Math.max(
+                    480,
+                    Math.floor(window.innerHeight - top - BOTTOM_GAP),
+                ),
+            );
+        };
+
+        measure();
+        window.addEventListener('resize', measure);
+
+        return () => window.removeEventListener('resize', measure);
+    }, [isDesktop]);
+
+    return [
+        ref,
+        isDesktop && height !== null ? height : 'calc(100svh - 13rem)',
+    ];
+}
+
 /**
  * Week/day calendar (FullCalendar time grid). Entries are local wall-clock strings, so the calendar
  * runs in "UTC" mode and shows them as-is in the user's time zone.
@@ -47,6 +93,7 @@ export function TimeCalendar({
     onChange,
 }: Props) {
     const { locale, intlLocale } = useTranslation();
+    const [containerRef, height] = useFillHeight();
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
     const dayTotal = (day: string) =>
         entries
@@ -55,6 +102,7 @@ export function TimeCalendar({
 
     return (
         <div
+            ref={containerRef}
             className="time-calendar overflow-hidden rounded-2xl bg-surface shadow-surface"
             data-view={view}
         >
@@ -72,7 +120,7 @@ export function TimeCalendar({
                 borderless
                 allDaySlot={false}
                 nowIndicator
-                height="calc(100svh - 13rem)"
+                height={height}
                 scrollTime="07:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:15:00"

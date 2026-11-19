@@ -11,7 +11,7 @@ import type { AppLayoutProps, ContentWidth } from '@/types';
 
 const WIDTHS: Record<ContentWidth, string> = {
     default: 'max-w-7xl',
-    wide: 'max-w-[120rem]',
+    wide: 'max-w-none',
 };
 
 /**
