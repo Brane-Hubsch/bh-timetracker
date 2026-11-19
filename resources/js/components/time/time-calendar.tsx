@@ -199,11 +199,19 @@ export function TimeCalendar({
                     title: entry.project.name,
                     start: `${entry.start}:00Z`,
                     end: `${entry.end}:00Z`,
-                    // Drawn by eventContent as a soft card in the project colour.
-                    backgroundColor: 'transparent',
-                    borderColor: 'transparent',
+                    color: entry.project.color,
                 }))}
                 eventClass="time-calendar-event"
+                eventBeforeClass={(info) =>
+                    info.isStartResizable &&
+                    !info.isSelected &&
+                    'time-calendar-resizer time-calendar-resizer-start'
+                }
+                eventAfterClass={(info) =>
+                    info.isEndResizable &&
+                    !info.isSelected &&
+                    'time-calendar-resizer time-calendar-resizer-end'
+                }
                 slotHeaderClass="time-calendar-slot-label"
                 dayHeaderClass="time-calendar-day-header"
                 nowIndicatorLineClass="time-calendar-now"
