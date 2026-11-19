@@ -23,7 +23,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="grid gap-6">
+        <div className="grid grid-cols-1 gap-6">
             <Heading
                 title={t('Settings')}
                 description={t('Your account, security and organizations.')}
