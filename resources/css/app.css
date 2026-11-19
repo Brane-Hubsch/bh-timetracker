@@ -107,7 +107,59 @@
     border: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
-    padding: 2px 4px !important;
+    margin-bottom: 0 !important;
+    padding: 0 4px !important;
+}
+
+.time-calendar-entry {
+    container: time-calendar-entry / size;
+}
+
+/* Account for the SVG's built-in whitespace so the visible strokes are equally inset. */
+.time-calendar-entry-icon {
+    bottom: 2.67px;
+    left: 5px;
+}
+
+@container time-calendar-entry (height < 74px) {
+    .time-calendar-entry-layout {
+        padding-top: 0.25rem;
+    }
+
+    .time-calendar-entry-detail {
+        display: none;
+    }
+}
+
+/* Keep the title and duration on one line when the time slot is too short for a footer. */
+@container time-calendar-entry (height < 58px) {
+    .time-calendar-entry-layout {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0 0.25rem;
+    }
+
+    .time-calendar-entry-range {
+        display: none;
+    }
+
+    .time-calendar-entry-icon {
+        position: static;
+    }
+}
+
+@container time-calendar-entry (height < 15px) {
+    .time-calendar-entry-layout > div {
+        font-size: 10px;
+        line-height: 12px;
+    }
+}
+
+@container time-calendar-entry (height < 12px) {
+    .time-calendar-entry-layout {
+        opacity: 0;
+    }
 }
 
 .time-calendar-slot-label {
