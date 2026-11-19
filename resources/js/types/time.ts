@@ -29,6 +29,12 @@ export type ProjectOption = {
     isRecent: boolean;
 };
 
+export type TimeEntryMemberOption = {
+    value: string;
+    label: string;
+    avatar: string | null;
+};
+
 /** Values to start the time entry form with. */
 export type TimeEntryDraft = {
     id?: number;

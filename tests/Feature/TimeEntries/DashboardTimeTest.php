@@ -5,6 +5,7 @@ use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -12,7 +13,11 @@ beforeEach(function () {
 
     $this->owner = User::factory()->create(['name' => 'Olivia Owner']);
     $this->organization = $this->owner->currentOrganization;
-    $this->member = User::factory()->withoutOrganization()->create(['name' => 'Mia Member']);
+    $this->member = User::factory()->withoutOrganization()->create([
+        'name' => 'Mia Member',
+        'avatar_path' => 'images/avatars/mia',
+        'avatar_url' => 'https://example.test/mia.png',
+    ]);
     $this->organization->members()->attach($this->member, ['role' => OrganizationRole::Member->value]);
     $this->project = Project::factory()->for($this->organization)->create(['estimate_seconds' => 10 * 3600]);
     $this->other = Project::factory()->for($this->organization)->create(['estimate_seconds' => 100 * 3600]);
@@ -48,8 +53,8 @@ it('shows owners and admins the team week and projects near their estimate', fun
         ->assertInertia(fn (Assert $page) => $page
             ->where('weekSeconds', 3600)
             ->where('members', [
-                ['value' => (string) $this->member->id, 'label' => 'Mia Member'],
-                ['value' => (string) $this->owner->id, 'label' => 'Olivia Owner'],
+                ['value' => (string) $this->member->id, 'label' => 'Mia Member', 'avatar' => Storage::disk('public')->url('images/avatars/mia/128.webp')],
+                ['value' => (string) $this->owner->id, 'label' => 'Olivia Owner', 'avatar' => null],
             ])
             ->has('team', 2)
             ->where('team.0.name', 'Mia Member')
