@@ -51,6 +51,13 @@ export type ProjectFormValues = {
     endsOn: string | null;
 };
 
+/** Choices for the project form; only sent to users who may create or edit projects. */
+export type ProjectFormOptions = {
+    clients: { value: string; label: string }[];
+    colors: string[];
+    currency: string;
+};
+
 export type ProjectMemberItem = {
     id: number;
     name: string;

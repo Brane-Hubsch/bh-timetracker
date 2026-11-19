@@ -1,11 +1,4 @@
-import {
-    Avatar,
-    Button,
-    Chip,
-    Label,
-    NumberField,
-    buttonVariants,
-} from '@heroui/react';
+import { Avatar, Button, Chip, Label, NumberField } from '@heroui/react';
 import { Head, Link, router } from '@inertiajs/react';
 import { Archive, ArchiveRestore, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
@@ -14,6 +7,7 @@ import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import { EstimateProgress } from '@/components/estimate-progress';
 import { ProjectDot } from '@/components/project-dot';
+import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
 import { TimelineChart } from '@/components/reports/timeline-chart';
@@ -25,7 +19,7 @@ import {
 } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { show as showClient } from '@/routes/clients';
-import { archive, edit, index, restore } from '@/routes/projects';
+import { archive, index, restore } from '@/routes/projects';
 import { summary as reportSummary } from '@/routes/reports';
 import {
     destroy as unassignMember,
@@ -34,6 +28,7 @@ import {
 } from '@/routes/projects/members';
 import type {
     ProjectDetails,
+    ProjectFormOptions,
     ProjectMemberItem,
     ReportTotals,
     TimelineBucket,
@@ -45,6 +40,8 @@ type Props = {
     assignableMembers: SelectOption[];
     currency: string;
     abilities: { manage: boolean; viewRates: boolean };
+    /** Null when the viewer may not edit the project. */
+    projectForm: ProjectFormOptions | null;
     /** Time per member and week; only for owners and admins. */
     breakdown: {
         totals: ReportTotals;
@@ -75,11 +72,13 @@ export default function ProjectShow({
     currency,
     abilities: can,
     breakdown,
+    projectForm,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const getInitials = useInitials();
     const [newMemberId, setNewMemberId] = useState('');
     const [newMemberRate, setNewMemberRate] = useState(Number.NaN);
+    const [isEditOpen, setEditOpen] = useState(false);
 
     const money = (minor: number | null) =>
         minor === null
@@ -133,16 +132,14 @@ export default function ProjectShow({
                     actions={
                         can.manage && (
                             <div className="flex gap-2">
-                                <Link
-                                    href={edit({ project: project.id })}
-                                    className={buttonVariants({
-                                        variant: 'secondary',
-                                    })}
+                                <Button
+                                    variant="secondary"
+                                    onPress={() => setEditOpen(true)}
                                     data-test="edit-project-button"
                                 >
                                     <Pencil className="size-4" />
                                     {t('Edit')}
-                                </Link>
+                                </Button>
                                 <Button
                                     variant="tertiary"
                                     onPress={() =>
@@ -450,6 +447,27 @@ export default function ProjectShow({
                     )}
                 </section>
             </div>
+
+            {projectForm && (
+                <ProjectFormDrawer
+                    project={{
+                        id: project.id,
+                        name: project.name,
+                        clientId: project.client?.id ?? null,
+                        code: project.code,
+                        color: project.color,
+                        isBillable: project.isBillable,
+                        hourlyRate: project.hourlyRate,
+                        estimateSeconds: project.estimateSeconds,
+                        visibility: project.visibility,
+                        startsOn: project.startsOn,
+                        endsOn: project.endsOn,
+                    }}
+                    options={projectForm}
+                    isOpen={isEditOpen}
+                    onOpenChange={setEditOpen}
+                />
+            )}
         </>
     );
 }

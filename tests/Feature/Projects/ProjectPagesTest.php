@@ -103,15 +103,34 @@ it('keeps members from managing projects', function () {
     $project = Project::factory()->for($this->organization)->create();
     $route = fn (string $name, array $extra = []) => route($name, ['current_organization' => $this->slug, 'project' => $project->id, ...$extra]);
 
-    $this->actingAs($this->member)->get(route('projects.create', ['current_organization' => $this->slug]))->assertForbidden();
     $this->actingAs($this->member)->post(route('projects.store', ['current_organization' => $this->slug]), projectPayload())->assertForbidden();
-    $this->actingAs($this->member)->get($route('projects.edit'))->assertForbidden();
     $this->actingAs($this->member)->patch($route('projects.update'), projectPayload())->assertForbidden();
     $this->actingAs($this->member)->post($route('projects.archive'))->assertForbidden();
     $this->actingAs($this->member)->post($route('projects.members.store'), ['user_id' => $this->member->id])->assertForbidden();
 
     expect($project->fresh()->isArchived())->toBeFalse()
         ->and($project->members()->count())->toBe(0);
+});
+
+it('sends project form options only to users who may manage projects', function () {
+    $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
+    Client::factory()->for($this->organization)->archived()->create();
+    Client::factory()->create(['name' => 'Other organization']);
+    $project = Project::factory()->for($this->organization)->create();
+    $pages = [
+        route('projects.index', ['current_organization' => $this->slug]),
+        route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]),
+    ];
+
+    foreach ($pages as $page) {
+        $this->actingAs($this->owner)->get($page)->assertInertia(fn (Assert $page) => $page
+            ->has('projectForm.clients', 1)
+            ->where('projectForm.clients.0', ['value' => (string) $client->id, 'label' => 'Acme'])
+            ->where('projectForm.colors', Project::COLORS)
+            ->where('projectForm.currency', $this->organization->currency));
+
+        $this->actingAs($this->member)->get($page)->assertInertia(fn (Assert $page) => $page->where('projectForm', null));
+    }
 });
 
 it('hides private projects from members who are not assigned', function () {

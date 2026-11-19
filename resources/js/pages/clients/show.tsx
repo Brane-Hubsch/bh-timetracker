@@ -1,22 +1,26 @@
 import { Button, Chip } from '@heroui/react';
 import { Head, Link, router } from '@inertiajs/react';
-import { Archive, ArchiveRestore, ChevronRight, Pencil } from 'lucide-react';
+import {
+    Archive,
+    ArchiveRestore,
+    ChevronRight,
+    Pencil,
+    Plus,
+} from 'lucide-react';
 import { useState } from 'react';
 import { ClientFormModal } from '@/components/client-form-modal';
 import Heading from '@/components/heading';
 import { SelectField } from '@/components/form/select-field';
 import type { SelectOption } from '@/components/form/select-field';
 import { ProjectDot } from '@/components/project-dot';
+import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
 import { ReportStats } from '@/components/reports/report-stats';
 import { formatDecimalHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { archive, index, restore } from '@/routes/clients';
-import {
-    create as createProject,
-    show as showProject,
-} from '@/routes/projects';
+import { show as showProject } from '@/routes/projects';
 import { summary as reportSummary } from '@/routes/reports';
-import type { ClientDetails, ReportTotals } from '@/types';
+import type { ClientDetails, ProjectFormOptions, ReportTotals } from '@/types';
 
 type Props = {
     client: ClientDetails;
@@ -41,6 +45,8 @@ type Props = {
         })[];
     };
     currency: string;
+    /** Null when the viewer may not create projects. */
+    projectForm: ProjectFormOptions | null;
 };
 
 export default function ClientShow({
@@ -48,9 +54,11 @@ export default function ClientShow({
     projects,
     report,
     currency,
+    projectForm,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const [isEditOpen, setEditOpen] = useState(false);
+    const [isProjectOpen, setProjectOpen] = useState(false);
 
     const toggleArchived = () =>
         router.visit(
@@ -200,14 +208,17 @@ export default function ClientShow({
                         variant="small"
                         title={t('Projects')}
                         actions={
-                            <Link
-                                href={createProject(undefined, {
-                                    query: { client: client.id },
-                                })}
-                                className="text-sm font-medium text-accent"
-                            >
-                                {t('New project')}
-                            </Link>
+                            projectForm && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onPress={() => setProjectOpen(true)}
+                                    data-test="new-client-project-button"
+                                >
+                                    <Plus className="size-4" />
+                                    {t('New project')}
+                                </Button>
+                            )
                         }
                     />
                     <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
@@ -249,6 +260,16 @@ export default function ClientShow({
                 isOpen={isEditOpen}
                 onOpenChange={setEditOpen}
             />
+
+            {projectForm && (
+                <ProjectFormDrawer
+                    project={null}
+                    defaultClientId={client.id}
+                    options={projectForm}
+                    isOpen={isProjectOpen}
+                    onOpenChange={setProjectOpen}
+                />
+            )}
         </>
     );
 }

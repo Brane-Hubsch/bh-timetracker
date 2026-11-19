@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Reports\ReportBuilder;
 use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
+use App\Support\ProjectFormOptions;
 use App\Support\TimeEntryPresenter;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -32,7 +33,7 @@ class ProjectController extends Controller
         //
     }
 
-    public function index(Request $request, #[CurrentUser] User $user): Response
+    public function index(Request $request, #[CurrentUser] User $user, ProjectFormOptions $formOptions): Response
     {
         Gate::authorize('viewAny', Project::class);
 
@@ -57,17 +58,7 @@ class ProjectController extends Controller
                     ->whereIn('id', $projects->pluck('client_id')->filter()->all())
                     ->values()),
             'filters' => ['search' => $search, 'status' => $status, 'client' => $clientId],
-        ]);
-    }
-
-    public function create(Request $request): Response
-    {
-        Gate::authorize('create', Project::class);
-
-        return Inertia::render('projects/form', [
-            'project' => null,
-            'defaultClientId' => $request->integer('client') ?: null,
-            ...$this->formOptions(),
+            'projectForm' => $user->can('create', Project::class) ? $formOptions->for($organization) : null,
         ]);
     }
 
@@ -82,7 +73,7 @@ class ProjectController extends Controller
         return to_route('projects.show', ['project' => $project->id]);
     }
 
-    public function show(#[CurrentUser] User $user, Project $project, ReportBuilder $reports, TimeEntryPresenter $presenter): Response
+    public function show(#[CurrentUser] User $user, Project $project, ReportBuilder $reports, TimeEntryPresenter $presenter, ProjectFormOptions $formOptions): Response
     {
         Gate::authorize('view', $project);
 
@@ -121,6 +112,7 @@ class ProjectController extends Controller
                 ? $this->breakdown($reports, $presenter, $project, $user)
                 : null,
             'currency' => $organization->currency,
+            'projectForm' => $canManage ? $formOptions->for($organization) : null,
             'abilities' => [
                 'manage' => $canManage,
                 'viewRates' => $canViewRates,
@@ -156,29 +148,6 @@ class ProjectController extends Controller
             ], $allTime['groups']),
             'weeks' => $recent['timeline']['buckets'],
         ];
-    }
-
-    public function edit(#[CurrentUser] User $user, Project $project): Response
-    {
-        Gate::authorize('update', $project);
-
-        return Inertia::render('projects/form', [
-            'project' => [
-                'id' => $project->id,
-                'name' => $project->name,
-                'clientId' => $project->client_id,
-                'code' => $project->code,
-                'color' => $project->color,
-                'isBillable' => $project->is_billable,
-                'hourlyRate' => $project->hourly_rate,
-                'estimateSeconds' => $project->estimate_seconds,
-                'visibility' => $project->visibility->value,
-                'startsOn' => $project->starts_on?->toDateString(),
-                'endsOn' => $project->ends_on?->toDateString(),
-            ],
-            'defaultClientId' => null,
-            ...$this->formOptions(),
-        ]);
     }
 
     public function update(ProjectRequest $request, Project $project, SaveProject $saveProject): RedirectResponse
@@ -229,21 +198,6 @@ class ProjectController extends Controller
             'estimateSeconds' => $project->estimate_seconds,
             'isPrivate' => $project->visibility === ProjectVisibility::Private,
             'isArchived' => $project->isArchived(),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function formOptions(): array
-    {
-        $organization = $this->currentOrganization->getOrFail();
-
-        return [
-            'clients' => Client::query()->active()->orderBy('name')->get()
-                ->map(fn (Client $client) => ['value' => (string) $client->id, 'label' => $client->name]),
-            'colors' => Project::COLORS,
-            'currency' => $organization->currency,
         ];
     }
 

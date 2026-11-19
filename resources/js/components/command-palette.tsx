@@ -49,11 +49,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { index as clientsIndex, show as showClient } from '@/routes/clients';
 import { edit as editOrganization } from '@/routes/organizations';
 import { edit as editProfile } from '@/routes/profile';
-import {
-    create as createProject,
-    index as projectsIndex,
-    show as showProject,
-} from '@/routes/projects';
+import { index as projectsIndex, show as showProject } from '@/routes/projects';
 import {
     detailed as detailedReport,
     projects as projectFollowUp,
@@ -336,7 +332,11 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                               id: 'new-project',
                               label: t('New project'),
                               icon: FolderPlus,
-                              perform: go(createProject.url(slug)),
+                              perform: go(
+                                  projectsIndex.url(slug, {
+                                      query: { new: 1 },
+                                  }),
+                              ),
                           },
                       ]
                     : []),

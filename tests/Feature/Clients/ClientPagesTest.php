@@ -85,5 +85,7 @@ it('shows a client with its projects', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('clients/show')
             ->where('client.id', $client->id)
-            ->has('projects', 1));
+            ->has('projects', 1)
+            // For creating a project for the client in the side drawer.
+            ->where('projectForm.clients.0.value', (string) $client->id));
 });

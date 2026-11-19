@@ -25,7 +25,7 @@ import {
     timeOf,
     timeToMinutes,
 } from '@/lib/time';
-import { create as createProject } from '@/routes/projects';
+import { index as projectsIndex } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/time';
 import type { ProjectOption, TimeEntry, TimeEntryDraft } from '@/types';
 
@@ -224,7 +224,9 @@ function TimeEntryFields({
                                         'There are no projects to report time on yet.',
                                     )}{' '}
                                     <Link
-                                        href={createProject()}
+                                        href={projectsIndex(undefined, {
+                                            query: { new: 1 },
+                                        })}
                                         className="font-medium underline"
                                     >
                                         {t('Create a project')}

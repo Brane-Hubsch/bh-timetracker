@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Reports\ReportBuilder;
 use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
+use App\Support\ProjectFormOptions;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ class ClientController extends Controller
         return to_route('clients.show', ['client' => $client->id]);
     }
 
-    public function show(ReportRequest $request, #[CurrentUser] User $user, Client $client, ReportBuilder $reports, CurrentOrganization $currentOrganization): Response
+    public function show(ReportRequest $request, #[CurrentUser] User $user, Client $client, ReportBuilder $reports, CurrentOrganization $currentOrganization, ProjectFormOptions $formOptions): Response
     {
         Gate::authorize('view', $client);
 
@@ -109,6 +110,7 @@ class ClientController extends Controller
                 ], $summary['groups']),
             ],
             'currency' => $currentOrganization->getOrFail()->currency,
+            'projectForm' => $user->can('create', Project::class) ? $formOptions->for($period->organization) : null,
         ]);
     }
 

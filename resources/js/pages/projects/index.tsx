@@ -1,14 +1,17 @@
-import { Chip, buttonVariants } from '@heroui/react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Button, Chip } from '@heroui/react';
+import { Head, Link } from '@inertiajs/react';
 import { ChevronRight, FolderKanban, Lock, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
 import { ProjectDot } from '@/components/project-dot';
+import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
+import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { create, show } from '@/routes/projects';
-import type { ProjectListItem } from '@/types';
+import { show } from '@/routes/projects';
+import type { ProjectFormOptions, ProjectListItem } from '@/types';
 
 type Props = {
     projects: ProjectListItem[];
@@ -18,13 +21,23 @@ type Props = {
         status: 'active' | 'archived';
         client: number | null;
     };
+    /** Null when the viewer may not create projects. */
+    projectForm: ProjectFormOptions | null;
 };
 
 const ALL = 'all';
 
-export default function ProjectsIndex({ projects, clients, filters }: Props) {
+export default function ProjectsIndex({
+    projects,
+    clients,
+    filters,
+    projectForm,
+}: Props) {
     const { t, intlLocale } = useTranslation();
-    const { can } = usePage().props;
+    const [isCreateOpen, setCreateOpen] = useState(false);
+
+    // ?new=1 from the command palette and links on other pages.
+    useOpenFromQuery('new', () => setCreateOpen(projectForm !== null));
 
     return (
         <>
@@ -34,15 +47,14 @@ export default function ProjectsIndex({ projects, clients, filters }: Props) {
                 <Heading
                     title={t('Projects')}
                     actions={
-                        can?.canManageProjects && (
-                            <Link
-                                href={create()}
-                                className={buttonVariants()}
+                        projectForm && (
+                            <Button
+                                onPress={() => setCreateOpen(true)}
                                 data-test="new-project-button"
                             >
                                 <Plus className="size-4" />
                                 {t('New project')}
-                            </Link>
+                            </Button>
                         )
                     }
                 />
@@ -146,6 +158,15 @@ export default function ProjectsIndex({ projects, clients, filters }: Props) {
                     )}
                 </ul>
             </div>
+
+            {projectForm && (
+                <ProjectFormDrawer
+                    project={null}
+                    options={projectForm}
+                    isOpen={isCreateOpen}
+                    onOpenChange={setCreateOpen}
+                />
+            )}
         </>
     );
 }
