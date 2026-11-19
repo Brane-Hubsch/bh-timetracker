@@ -100,6 +100,8 @@ describes; propose additions instead of building them.
 ## Frontend
 
 - Inertia 3 + React 19 + TypeScript (strict) + Tailwind CSS 4.
+- Typeface: Inter (400/500/600 from Bunny Fonts via `vite.config.ts`, `--font-sans` in `app.css`). PDFs
+  embed the same family from `resources/fonts/inter` (Regular/Bold, OFL) with font subsetting.
 - UI components come from HeroUI v3 (`@heroui/react`). Use the HeroUI MCP server / docs for current
   APIs instead of guessing — v3 is compound-component based (e.g. `Card.Header`, `Modal.Dialog`) and
   uses `onPress`, not `onClick`. Our own reusable components live in `resources/js/components` and are

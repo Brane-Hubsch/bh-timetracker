@@ -20,7 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Writes reports to CSV, XLSX or PDF. Hours are decimal numbers; amounts are in the currency's major
  * unit and only included for viewers who may see them. CSV uses semicolons and decimal commas so
- * Swedish Excel opens it directly. PDFs are rendered from Blade views (`reports/pdf`) with dompdf.
+ * Swedish Excel opens it directly. PDFs are rendered from Blade views (`reports/pdf`) with dompdf,
+ * in the app's typeface (Inter, bundled in resources/fonts/inter).
  */
 class ReportExporter
 {
@@ -320,12 +321,15 @@ class ReportExporter
      */
     private function pdf(View $document, string $filename, string $orientation = 'portrait'): Response
     {
-        $pdf = Pdf::loadHTML($document->render())->setPaper('a4', $orientation);
+        // Embed only the glyphs that are used, so the bundled Inter files keep PDFs small.
+        $pdf = Pdf::setOption('isFontSubsettingEnabled', true)
+            ->loadHTML($document->render())
+            ->setPaper('a4', $orientation);
         $dompdf = $pdf->getDomPDF();
         $dompdf->render();
 
         // "1 / 3" in the bottom right corner, level with the footer (CSS cannot count the pages).
-        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
+        $font = $dompdf->getFontMetrics()->getFont('Inter') ?? $dompdf->getFontMetrics()->getFont('DejaVu Sans');
 
         if ($font !== null) {
             $canvas = $dompdf->getCanvas();

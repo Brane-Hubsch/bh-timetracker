@@ -5,10 +5,13 @@
     <meta charset="utf-8">
     <title>{{ $title }} – {{ $organization }}</title>
     <style>
+        {{-- Inter, the app's typeface (resources/fonts/inter, SIL Open Font License). --}}
+        @font-face { font-family: 'Inter'; font-weight: normal; font-style: normal; src: url('{{ resource_path('fonts/inter/Inter-Regular.ttf') }}') format('truetype'); }
+        @font-face { font-family: 'Inter'; font-weight: bold; font-style: normal; src: url('{{ resource_path('fonts/inter/Inter-Bold.ttf') }}') format('truetype'); }
         @page { margin: 16mm 14mm 18mm; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 8.5pt; line-height: 1.45; color: #18181b; }
+        body { font-family: 'Inter', 'DejaVu Sans', sans-serif; font-size: 8.5pt; line-height: 1.45; color: #18181b; }
         .muted { color: #71717a; }
-        .header { margin-bottom: 7mm; }
+        .header { margin-bottom: 6mm; }
         .brand { font-size: 7.5pt; letter-spacing: 0.06em; text-transform: uppercase; color: #7c3aed; font-weight: bold; }
         h1 { font-size: 17pt; margin: 1.5mm 0 1mm; font-weight: bold; }
         .period { font-size: 10pt; }
@@ -20,7 +23,7 @@
         .stats .value { font-size: 14pt; font-weight: bold; margin-top: 0.5mm; }
         table.data { width: 100%; border-collapse: collapse; }
         table.data th { text-align: left; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.05em; color: #71717a; font-weight: bold; padding: 0 2mm 2mm; border-bottom: 1px solid #d4d4d8; }
-        table.data td { padding: 2mm; border-bottom: 1px solid #ececef; vertical-align: top; }
+        table.data td { padding: 1.7mm 2mm; border-bottom: 1px solid #ececef; vertical-align: top; }
         table.data tr { page-break-inside: avoid; }
         table.data th.num, table.data td.num { text-align: right; white-space: nowrap; }
         table.data.compact { font-size: 7.5pt; }
@@ -29,7 +32,7 @@
         tr.group td { font-weight: bold; background: #fafafa; }
         tr.child td.name { padding-left: 6mm; }
         tr.total td { font-weight: bold; border-top: 1.5px solid #18181b; border-bottom: 0; padding-top: 2.5mm; }
-        .chart { margin-bottom: 7mm; page-break-inside: avoid; }
+        .chart { margin-bottom: 6mm; page-break-inside: avoid; }
         .chart-title { font-weight: bold; font-size: 9pt; margin-bottom: 3mm; }
         .gridline { position: absolute; height: 0; border-top: 0.6px solid #ececef; }
         .gridline.baseline { border-top-color: #c4c4cc; }
