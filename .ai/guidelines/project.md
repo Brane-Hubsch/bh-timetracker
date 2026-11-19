@@ -49,6 +49,10 @@ describes; propose additions instead of building them.
   with `timeZone="UTC"` so they display unchanged.
 - Parse free-form durations ("1,5", "1:30", "90m") with `App\Support\DurationParser` (PHP) or
   `parseDuration` in `@/lib/time` (React).
+- Clockify imports read the CSV with `App\Services\Imports\ClockifyCsv`, decide everything in
+  `ClockifyImportPlan` (the preview and the import share it) and write through
+  `App\Actions\Imports\ImportClockifyEntries`, which creates entries with `CreateTimeEntry` and
+  `TimeEntrySource::Import`. Skipped rows carry a reason; nothing is saved before the import step.
 - Tags (`App\Models\Tag`) belong to the organization and are attached to time entries by name: actions
   resolve names with `App\Actions\Tags\ResolveTags` (case-insensitive, creates missing ones; anyone may
   create tags while reporting). Renaming to an existing name merges (`RenameTag`); managing the list
@@ -96,6 +100,11 @@ describes; propose additions instead of building them.
 
 - Store timestamps in UTC; display them in the user's timezone. Use `CarbonImmutable` (it is the app
   default via `Date::use()`).
+- Uploaded images (profile pictures, logos) go through `App\Services\Images\ImageStorage` (WebP in
+  the sizes from `config/images.php`) via the actions in `app/Actions/Images`; validate uploads with
+  `ImageUploadRequest::imageRules()` (raster only, no SVG). Store the returned directory on the model
+  and hand the frontend URLs (`logoUrl($size)`, `User::$avatar`), never storage paths. Show logos with
+  `LogoImage` (square, never cropped) and pick a size about twice the displayed one.
 - Durations are integers in seconds. Money is an integer in the smallest currency unit (öre);
   format it in the frontend with `Intl.NumberFormat`.
 - Lazy loading is blocked outside production (`Model::preventLazyLoading`): eager load relations used in

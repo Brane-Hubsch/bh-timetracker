@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Archivable;
 use App\Models\Concerns\BelongsToOrganization;
+use App\Services\Images\ImageStorage;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -22,12 +23,13 @@ use Illuminate\Support\Carbon;
  * @property string|null $email
  * @property string|null $notes
  * @property Carbon|null $archived_at
+ * @property string|null $logo_path Uploaded logo (directory in ImageStorage)
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Organization $organization
  * @property-read Collection<int, Project> $projects
  */
-#[Fillable(['organization_id', 'name', 'organization_number', 'email', 'notes', 'archived_at'])]
+#[Fillable(['organization_id', 'name', 'organization_number', 'email', 'notes', 'archived_at', 'logo_path'])]
 class Client extends Model
 {
     /** @use HasFactory<ClientFactory> */
@@ -69,5 +71,13 @@ class Client extends Model
         return [
             'archived_at' => 'datetime',
         ];
+    }
+
+    /**
+     * URL of the logo in the size closest to the requested one, or null without a logo.
+     */
+    public function logoUrl(int $size = 128): ?string
+    {
+        return app(ImageStorage::class)->url($this->logo_path, $size);
     }
 }

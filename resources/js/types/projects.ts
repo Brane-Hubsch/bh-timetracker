@@ -3,6 +3,8 @@ export type ClientListItem = {
     name: string;
     organizationNumber: string | null;
     email: string | null;
+    /** Logo URL (128 px), or null without a logo. */
+    logo: string | null;
     activeProjectsCount: number;
     isArchived: boolean;
 };
@@ -13,6 +15,8 @@ export type ClientDetails = {
     organizationNumber: string | null;
     email: string | null;
     notes: string | null;
+    /** Logo URL (256 px), or null without a logo. */
+    logo: string | null;
     isArchived: boolean;
 };
 
@@ -21,7 +25,7 @@ export type ProjectListItem = {
     name: string;
     code: string | null;
     color: string;
-    client: { id: number; name: string } | null;
+    client: { id: number; name: string; logo: string | null } | null;
     isBillable: boolean;
     estimateSeconds: number | null;
     isPrivate: boolean;

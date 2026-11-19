@@ -13,6 +13,7 @@ import {
 import { router, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import {
+    FileUp,
     Briefcase,
     Building2,
     CalendarDays,
@@ -39,6 +40,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createContext, use, useCallback, useEffect, useState } from 'react';
+import { LogoImage } from '@/components/logo-image';
 import { ProjectDot } from '@/components/project-dot';
 import { logoutAndFlush } from '@/components/user-menu';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -49,6 +51,7 @@ import { edit as editAiConnections } from '@/routes/ai-connections';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as clientsIndex, show as showClient } from '@/routes/clients';
 import { edit as editOrganization } from '@/routes/organizations';
+import { create as createImport } from '@/routes/organizations/import';
 import { edit as editProfile } from '@/routes/profile';
 import { index as projectsIndex, show as showProject } from '@/routes/projects';
 import {
@@ -79,6 +82,8 @@ type Command = {
     keywords?: string;
     icon?: LucideIcon;
     color?: string;
+    /** An organization's logo (or initial) instead of an icon. */
+    logo?: { src: string | null | undefined; name: string };
     perform: () => void;
 };
 
@@ -232,7 +237,14 @@ function CommandPalette({
                                             data-test={`command-${command.id}`}
                                         >
                                             <span className="flex size-5 shrink-0 items-center justify-center text-muted">
-                                                {command.color ? (
+                                                {command.logo ? (
+                                                    <LogoImage
+                                                        src={command.logo.src}
+                                                        name={command.logo.name}
+                                                        size={20}
+                                                        className="rounded-md"
+                                                    />
+                                                ) : command.color ? (
                                                     <ProjectDot
                                                         color={command.color}
                                                     />
@@ -462,6 +474,19 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                           },
                       ]
                     : []),
+                ...(can?.canManageClients &&
+                can.canManageProjects &&
+                can.canManageTeamTime
+                    ? [
+                          {
+                              id: 'go-import',
+                              label: t('Import from Clockify'),
+                              keywords: t('csv clockify import'),
+                              icon: FileUp,
+                              perform: go(createImport.url(slug)),
+                          },
+                      ]
+                    : []),
                 {
                     id: 'go-ai',
                     label: t('AI connections'),
@@ -565,7 +590,10 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                           label: t('Switch to :name', {
                               name: organization.name,
                           }),
-                          icon: Building2,
+                          logo: {
+                              src: organization.logo,
+                              name: organization.name,
+                          },
                           perform: () => switchOrganization(organization),
                       })),
                   },

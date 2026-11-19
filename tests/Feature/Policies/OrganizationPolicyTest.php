@@ -26,6 +26,7 @@ dataset('abilities', [
     'removeMember' => ['removeMember', true, true, false, false],
     'inviteMember' => ['inviteMember', true, true, false, false],
     'cancelInvitation' => ['cancelInvitation', true, true, false, false],
+    'import' => ['import', true, true, false, false],
     'leave' => ['leave', false, true, true, false],
 ]);
 

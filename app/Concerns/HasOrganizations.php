@@ -149,6 +149,7 @@ trait HasOrganizations
             role: $role?->value,
             roleLabel: $role?->label(),
             isCurrent: $this->isCurrentOrganization($organization),
+            logo: $organization->logoUrl(),
         );
     }
 
