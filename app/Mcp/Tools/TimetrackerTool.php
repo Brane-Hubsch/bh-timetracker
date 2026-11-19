@@ -132,6 +132,7 @@ abstract class TimetrackerTool extends Tool
             'project' => ['id' => $entry->project_id, 'name' => $entry->project->name],
             'client' => $entry->project->client?->name,
             'description' => $entry->description,
+            'tags' => $entry->tagNames(),
             'billable' => $entry->is_billable,
             'hourly_rate' => $showAmounts ? $this->money($entry->hourly_rate) : null,
             'source' => $entry->source->value,

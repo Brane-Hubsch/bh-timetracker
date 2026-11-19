@@ -5,6 +5,7 @@ namespace App\Mcp\Support;
 use App\Enums\OrganizationPermission;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -61,6 +62,21 @@ class Lookup
             $client->name,
             $client->organization_number ?? '',
         ], fn (Client $client) => sprintf('%s (id %d)', $client->name, $client->id));
+    }
+
+    /**
+     * A tag in the organization, by id or name (case-insensitive).
+     */
+    public function tag(McpContext $context, mixed $reference, string $field = 'tag'): Tag
+    {
+        return $this->find(
+            Tag::query()->forOrganization($context->organization)->orderBy('name')->get(),
+            $reference,
+            $field,
+            'tag',
+            fn (Tag $tag) => [$tag->name],
+            fn (Tag $tag) => sprintf('%s (id %d)', $tag->name, $tag->id),
+        );
     }
 
     /**

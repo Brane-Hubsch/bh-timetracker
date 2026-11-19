@@ -20,7 +20,7 @@ class GetReportTool extends TimetrackerTool
 {
     protected string $name = 'get_report';
 
-    protected string $description = 'Summarised time for a period (default: this month), grouped in up to two levels (client, project, member, day, week, month), as in the Reports page. Members only get their own time; amounts (in the organization currency) only for owners and admins.';
+    protected string $description = 'Summarised time for a period (default: this month), grouped in up to two levels (client, project, member, tag, day, week, month), as in the Reports page. Grouped by tag, an entry with several tags counts under each of them. Members only get their own time; amounts (in the organization currency) only for owners and admins.';
 
     public function __construct(
         private readonly Lookup $lookup,
@@ -40,6 +40,7 @@ class GetReportTool extends TimetrackerTool
             'members' => $schema->array()->items($schema->string())->description('Member ids, emails or names (owners/admins).'),
             'clients' => $schema->array()->items($schema->string())->description('Client ids or names.'),
             'projects' => $schema->array()->items($schema->string())->description('Project ids or names.'),
+            'tags' => $schema->array()->items($schema->string())->description('Tag ids or names; entries with any of them.'),
             'billable' => $schema->boolean()->description('Only billable (true) or non-billable (false) time.'),
             'organization' => $this->organizationArgument($schema),
         ];
@@ -54,6 +55,7 @@ class GetReportTool extends TimetrackerTool
             'members' => ['nullable', 'array', 'max:50'],
             'clients' => ['nullable', 'array', 'max:50'],
             'projects' => ['nullable', 'array', 'max:50'],
+            'tags' => ['nullable', 'array', 'max:50'],
             'billable' => ['nullable', 'boolean'],
         ]);
         $context = McpContext::from($request);
@@ -70,6 +72,7 @@ class GetReportTool extends TimetrackerTool
             clientIds: $this->ids($request, 'clients', fn (mixed $reference, string $field) => $this->lookup->client($context, $reference, $field)->id),
             projectIds: $this->ids($request, 'projects', fn (mixed $reference, string $field) => $this->lookup->project($context, $reference, $field)->id),
             billable: $this->boolArgument($request, 'billable'),
+            tagIds: $this->ids($request, 'tags', fn (mixed $reference, string $field) => $this->lookup->tag($context, $reference, $field)->id),
         );
 
         $summary = $this->reports->summary($filters, $grouping, $subGrouping);

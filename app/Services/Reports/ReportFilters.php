@@ -22,6 +22,7 @@ final readonly class ReportFilters
      * @param  array<int, int>  $userIds
      * @param  array<int, int>  $clientIds
      * @param  array<int, int>  $projectIds
+     * @param  array<int, int>  $tagIds  Entries with any of these tags.
      */
     public function __construct(
         public Organization $organization,
@@ -32,6 +33,7 @@ final readonly class ReportFilters
         public array $clientIds = [],
         public array $projectIds = [],
         public ?bool $billable = null,
+        public array $tagIds = [],
     ) {
         $this->role = $viewer->organizationRole($organization);
     }

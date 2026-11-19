@@ -69,7 +69,7 @@ class ListTimeEntriesTool extends TimetrackerTool
 
         $limit = is_numeric($request->get('limit')) ? (int) $request->get('limit') : 100;
         $entries = $this->reports->query($filters)
-            ->with(['project.client', 'user:id,name'])
+            ->with(['project.client', 'user:id,name', 'tags'])
             ->orderBy('started_at')
             ->limit($limit + 1)
             ->get();

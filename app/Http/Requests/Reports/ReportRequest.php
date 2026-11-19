@@ -32,6 +32,8 @@ class ReportRequest extends FormRequest
             'clients.*' => ['integer'],
             'projects' => ['nullable', 'array', 'max:500'],
             'projects.*' => ['integer'],
+            'tags' => ['nullable', 'array', 'max:200'],
+            'tags.*' => ['integer'],
             'billable' => ['nullable', 'boolean'],
             'group' => ['nullable', Rule::enum(ReportGrouping::class)],
             'subgroup' => ['nullable', Rule::in([...array_column(ReportGrouping::cases(), 'value'), 'none'])],
@@ -109,13 +111,14 @@ class ReportRequest extends FormRequest
             clientIds: $this->ids('clients'),
             projectIds: $this->ids('projects'),
             billable: $this->billable(),
+            tagIds: $this->ids('tags'),
         );
     }
 
     /**
      * The filters as sent to the page (to prefill the controls).
      *
-     * @return array{period: string, from: string, to: string, members: array<int, string>, clients: array<int, string>, projects: array<int, string>, billable: string|null, group: string, subgroup: string, sort: string, direction: string}
+     * @return array{period: string, from: string, to: string, members: array<int, string>, clients: array<int, string>, projects: array<int, string>, tags: array<int, string>, billable: string|null, group: string, subgroup: string, sort: string, direction: string}
      */
     public function echo(ReportFilters $filters): array
     {
@@ -128,6 +131,7 @@ class ReportRequest extends FormRequest
             'members' => $strings($filters->userIds),
             'clients' => $strings($filters->clientIds),
             'projects' => $strings($filters->projectIds),
+            'tags' => $strings($filters->tagIds),
             'billable' => $filters->billable === null ? null : ($filters->billable ? '1' : '0'),
             'group' => $this->grouping()->value,
             'subgroup' => $this->subGrouping()->value ?? 'none',

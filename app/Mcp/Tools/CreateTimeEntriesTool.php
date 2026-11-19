@@ -7,6 +7,7 @@ use App\Data\TimeEntryData;
 use App\Enums\TimeEntrySource;
 use App\Mcp\Support\Lookup;
 use App\Mcp\Support\McpContext;
+use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Support\DurationParser;
 use App\Support\LocalTimes;
@@ -44,6 +45,7 @@ class CreateTimeEntriesTool extends TimetrackerTool
                 'duration' => $schema->string()->description('Instead of end: "1,5", "1.5", "1:30", "90m" or "1h 30m".'),
                 'description' => $schema->string()->description('What was done.'),
                 'billable' => $schema->boolean()->description('Defaults to the project\'s setting.'),
+                'tags' => $schema->array()->items($schema->string())->max(Tag::MAX_PER_ENTRY)->description('Tag names, e.g. ["Möte"]. Existing tags are matched case-insensitively; new ones are created (see get_context for the list).'),
                 'member' => $schema->string()->description('Member id, email or name to report for (owners/admins). Default: the user.'),
             ]))->min(1)->max(self::MAX_ENTRIES)->required(),
             'organization' => $this->organizationArgument($schema),
@@ -61,6 +63,8 @@ class CreateTimeEntriesTool extends TimetrackerTool
             'entries.*.duration' => ['nullable', 'string', 'max:32'],
             'entries.*.description' => ['nullable', 'string', 'max:5000'],
             'entries.*.billable' => ['nullable', 'boolean'],
+            'entries.*.tags' => ['nullable', 'array', 'max:'.Tag::MAX_PER_ENTRY],
+            'entries.*.tags.*' => ['string', 'max:'.Tag::MAX_NAME_LENGTH],
         ], [
             'entries.*.end.required_without' => 'Entry :position needs an end time or a duration.',
         ]);
@@ -97,11 +101,12 @@ class CreateTimeEntriesTool extends TimetrackerTool
                 description: $value('description'),
                 isBillable: isset($entry['billable']) ? filter_var($entry['billable'], FILTER_VALIDATE_BOOL) : null,
                 source: TimeEntrySource::Mcp,
+                tags: isset($entry['tags']) && is_array($entry['tags']) ? array_values(array_filter($entry['tags'], 'is_string')) : null,
             );
         }
 
         $created = $createTimeEntries->handle($context->organization, $data)
-            ->each(fn (TimeEntry $entry) => $entry->load(['project.client', 'user:id,name']));
+            ->each(fn (TimeEntry $entry) => $entry->load(['project.client', 'user:id,name', 'tags']));
 
         return Response::structured([
             'created' => $created->map(fn (TimeEntry $entry) => $this->entry($entry, $context))->values()->all(),

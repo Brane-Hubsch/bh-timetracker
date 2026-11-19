@@ -38,7 +38,12 @@
                         <td>
                             <span class="dot" style="background: {{ $row['project']['color'] }};"></span>{{ $row['project']['name'] }}@if ($row['project']['clientName'])<span class="muted"> · {{ $row['project']['clientName'] }}</span>@endif
                         </td>
-                        <td>{{ $row['description'] }}</td>
+                        <td>
+                            {{ $row['description'] }}
+                            @if ($row['tags'] !== [])
+                                <div class="muted small">{{ implode(' · ', $row['tags']) }}</div>
+                            @endif
+                        </td>
                         <td class="num">{{ $hours($row['durationSeconds']) }}</td>
                         <td @class(['muted' => ! $row['isBillable']])>{{ $row['isBillable'] ? __('Yes') : __('No') }}</td>
                         @if ($showAmounts)

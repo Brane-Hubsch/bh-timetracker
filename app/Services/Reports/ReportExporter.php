@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\ReportGrouping;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\Tag;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -102,7 +103,7 @@ class ReportExporter
         }
 
         $amounts = $filters->canViewAmounts();
-        $header = [$this->text(__('Date')), $this->text(__('Start')), $this->text(__('End')), $this->text(__('Member')), $this->text(__('Client')), $this->text(__('Project')), $this->text(__('Description')), $this->text(__('Hours')), $this->text(__('Billable'))];
+        $header = [$this->text(__('Date')), $this->text(__('Start')), $this->text(__('End')), $this->text(__('Member')), $this->text(__('Client')), $this->text(__('Project')), $this->text(__('Description')), $this->text(__('Tags')), $this->text(__('Hours')), $this->text(__('Billable'))];
 
         if ($amounts) {
             array_push(
@@ -125,6 +126,7 @@ class ReportExporter
                     $row['project']['clientName'] ?? '',
                     $row['project']['name'],
                     $row['description'] ?? '',
+                    implode(', ', $row['tags']),
                     $this->hours($row['durationSeconds'], $format),
                     $row['isBillable'] ? $this->text(__('Yes')) : $this->text(__('No')),
                 ];
@@ -298,6 +300,16 @@ class ReportExporter
             $criteria[] = [
                 'label' => $this->text(__('Projects')),
                 'value' => Project::query()->forOrganization($organization)->whereIn('id', $filters->projectIds)->orderBy('name')->pluck('name')->implode(', '),
+            ];
+        }
+
+        if ($filters->tagIds !== []) {
+            $criteria[] = [
+                'label' => $this->text(__('Tags')),
+                'value' => Tag::query()->forOrganization($organization)->whereIn('id', $filters->tagIds)->get(['id', 'name'])
+                    ->sortBy(fn (Tag $tag) => mb_strtolower($tag->name))
+                    ->map(fn (Tag $tag) => $tag->name)
+                    ->implode(', '),
             ];
         }
 

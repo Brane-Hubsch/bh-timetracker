@@ -4,6 +4,7 @@ export type ReportGroupingKey =
     | 'client'
     | 'project'
     | 'member'
+    | 'tag'
     | 'day'
     | 'week'
     | 'month';
@@ -16,6 +17,7 @@ export type ReportFilterValues = {
     members: string[];
     clients: string[];
     projects: string[];
+    tags: string[];
     billable: string | null;
     group: ReportGroupingKey;
     subgroup: ReportGroupingKey | 'none';
@@ -29,6 +31,7 @@ export type ReportOptions = {
     members: SelectOption[];
     clients: SelectOption[];
     projects: SelectOption[];
+    tags: SelectOption[];
 };
 
 export type ReportAbilities = {
@@ -84,6 +87,7 @@ export type ReportRow = {
         clientName: string | null;
     };
     description: string | null;
+    tags: string[];
     date: string;
     start: string;
     end: string;

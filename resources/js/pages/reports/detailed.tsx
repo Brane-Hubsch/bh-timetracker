@@ -150,6 +150,18 @@ export default function ReportsDetailed({
                                         <span className="line-clamp-2">
                                             {entry.description}
                                         </span>
+                                        {entry.tags.length > 0 && (
+                                            <span className="mt-1 flex flex-wrap gap-1">
+                                                {entry.tags.map((tag) => (
+                                                    <span
+                                                        key={tag}
+                                                        className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
+                                                    >
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </span>
+                                        )}
                                     </Table.Cell>
                                     <Table.Cell className="tabular-nums">
                                         {formatDuration(entry.durationSeconds)}

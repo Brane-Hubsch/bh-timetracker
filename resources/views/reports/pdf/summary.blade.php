@@ -49,6 +49,11 @@
                         @endforeach
                     @endif
                 @endforeach
+                @if ($grouping === \App\Enums\ReportGrouping::Tag || $subGrouping === \App\Enums\ReportGrouping::Tag)
+                    <tr>
+                        <td colspan="{{ $showAmounts ? 4 : 3 }}" class="muted small" style="border-bottom: 0;">{{ __('An entry with several tags counts under each of them, so the tags can add up to more than the total.') }}</td>
+                    </tr>
+                @endif
                 <tr class="total">
                     <td>{{ __('Total') }}</td>
                     <td class="num">{{ $hours($summary['totals']['seconds']) }}</td>

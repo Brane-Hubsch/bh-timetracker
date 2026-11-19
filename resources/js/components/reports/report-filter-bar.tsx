@@ -111,6 +111,17 @@ export function ReportFilterBar({ filters, options }: Props) {
                 data-test="report-projects"
             />
 
+            {options.tags.length > 0 && (
+                <MultiSelectField
+                    label={t('Tags')}
+                    placeholder={t('All tags')}
+                    options={options.tags}
+                    value={filters.tags}
+                    onChange={(tags) => apply({ tags })}
+                    data-test="report-tags"
+                />
+            )}
+
             <SelectField
                 name="billable"
                 label={t('Billable')}

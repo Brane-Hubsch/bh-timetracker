@@ -6,6 +6,7 @@ use App\Actions\TimeEntries\UpdateTimeEntry;
 use App\Data\TimeEntryData;
 use App\Mcp\Support\Lookup;
 use App\Mcp\Support\McpContext;
+use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Support\DurationParser;
 use App\Support\LocalTimes;
@@ -42,6 +43,7 @@ class UpdateTimeEntryTool extends TimetrackerTool
             'duration' => $schema->string()->description('New duration instead of end, e.g. "2", "1:30", "45m".'),
             'description' => $schema->string()->description('New description (empty string clears it).'),
             'billable' => $schema->boolean()->description('Billable or not.'),
+            'tags' => $schema->array()->items($schema->string())->max(Tag::MAX_PER_ENTRY)->description('Replaces all tags (names; new ones are created). [] removes them; leave out to keep them.'),
             'member' => $schema->string()->description('Move the entry to another member (owners/admins).'),
             'organization' => $this->organizationArgument($schema),
         ];
@@ -57,6 +59,8 @@ class UpdateTimeEntryTool extends TimetrackerTool
             'duration' => ['nullable', 'string', 'max:32'],
             'description' => ['nullable', 'string', 'max:5000'],
             'billable' => ['nullable', 'boolean'],
+            'tags' => ['nullable', 'array', 'max:'.Tag::MAX_PER_ENTRY],
+            'tags.*' => ['string', 'max:'.Tag::MAX_NAME_LENGTH],
         ]);
 
         $context = McpContext::from($request);
@@ -97,8 +101,9 @@ class UpdateTimeEntryTool extends TimetrackerTool
             description: is_string($description) ? (trim($description) === '' ? null : $description) : $entry->description,
             isBillable: $this->boolArgument($request, 'billable') ?? $entry->is_billable,
             source: $entry->source,
+            tags: is_array($tags = $request->get('tags')) ? array_values(array_filter($tags, 'is_string')) : null,
         ));
 
-        return Response::structured(['updated' => $this->entry($entry->refresh()->load(['project.client', 'user:id,name']), $context)]);
+        return Response::structured(['updated' => $this->entry($entry->refresh()->load(['project.client', 'user:id,name', 'tags']), $context)]);
     }
 }

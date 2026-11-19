@@ -5,6 +5,7 @@ namespace App\Mcp\Tools;
 use App\Enums\OrganizationPermission;
 use App\Mcp\Support\McpContext;
 use App\Models\Organization;
+use App\Models\Tag;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -51,6 +52,8 @@ class GetContextTool extends TimetrackerTool
                     'see_rates_and_amounts' => $context->can(OrganizationPermission::ViewRates),
                 ],
             ],
+            // Existing tags, to reuse instead of creating near-duplicates.
+            'tags' => Tag::query()->forOrganization($context->organization)->orderBy('name')->pluck('name')->all(),
             'organizations' => $user->organizations()->orderBy('name')->get()
                 ->map(fn (Organization $organization) => ['slug' => $organization->slug, 'name' => $organization->name])
                 ->values()

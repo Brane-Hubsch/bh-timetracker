@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\Reports\ReportBuilder;
@@ -107,6 +108,11 @@ class ReportController extends Controller
                 'members' => $filters->canViewTeam() ? $this->memberOptions($organization) : [],
                 'clients' => $this->clientOptions($organization, $filters->viewer),
                 'projects' => $this->projectOptions($organization, $filters->viewer),
+                'tags' => Tag::query()->forOrganization($organization)->get(['id', 'name'])
+                    ->sortBy(fn (Tag $tag) => mb_strtolower($tag->name))
+                    ->map(fn (Tag $tag) => ['value' => (string) $tag->id, 'label' => $tag->name])
+                    ->values()
+                    ->all(),
             ],
             'abilities' => [
                 'canViewTeam' => $filters->canViewTeam(),

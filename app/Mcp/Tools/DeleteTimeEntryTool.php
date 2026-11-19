@@ -33,7 +33,7 @@ class DeleteTimeEntryTool extends TimetrackerTool
         $request->validate(['id' => ['required', 'integer']]);
         $context = McpContext::from($request);
 
-        $entry = TimeEntry::query()->with(['project.client', 'user:id,name'])->find($id = $this->intArgument($request, 'id') ?? 0)
+        $entry = TimeEntry::query()->with(['project.client', 'user:id,name', 'tags'])->find($id = $this->intArgument($request, 'id') ?? 0)
             ?? throw ValidationException::withMessages(['id' => "No time entry with id {$id} in this organization."]);
         Gate::forUser($context->user)->authorize('delete', $entry);
 

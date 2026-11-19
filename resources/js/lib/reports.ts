@@ -19,6 +19,7 @@ export function reportQuery(
         members: values.members,
         clients: values.clients,
         projects: values.projects,
+        tags: values.tags,
         billable: values.billable ?? undefined,
         group: values.group,
         subgroup: values.subgroup,

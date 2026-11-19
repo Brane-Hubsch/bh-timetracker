@@ -113,6 +113,13 @@ export default function ReportsSummary({
                     subGrouping={filters.subgroup}
                     currency={currency}
                 />
+                {(filters.group === 'tag' || filters.subgroup === 'tag') && (
+                    <p className="text-sm text-muted">
+                        {t(
+                            'An entry with several tags counts under each of them, so the tags can add up to more than the total.',
+                        )}
+                    </p>
+                )}
             </section>
         </ReportLayout>
     );

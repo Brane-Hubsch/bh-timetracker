@@ -5,12 +5,14 @@ namespace App\Services\Reports;
 use App\Enums\ReportGrouping;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Turns report filters and groupings into aggregated results. Used by the report pages, exports and
@@ -57,6 +59,11 @@ class ReportBuilder
                 Project::query()->forOrganization($organization)->whereIn('client_id', $filters->clientIds)->select('id'),
             ))
             ->when($filters->billable !== null, fn (Builder $query) => $query->where('is_billable', $filters->billable))
+            // Through the pivot: entries are already limited to the organization, and so are their tags.
+            ->when($filters->tagIds !== [], fn (Builder $query) => $query->whereIn(
+                'id',
+                DB::table('tag_time_entry')->whereIn('tag_id', $filters->tagIds)->select('time_entry_id'),
+            ))
             ->when($filters->startsAt(), fn (Builder $query, CarbonImmutable $at) => $query->where('started_at', '>=', $at))
             ->when($filters->endsBefore(), fn (Builder $query, CarbonImmutable $at) => $query->where('started_at', '<', $at));
     }
@@ -69,8 +76,9 @@ class ReportBuilder
      */
     public function summary(ReportFilters $filters, ReportGrouping $grouping, ?ReportGrouping $subGrouping = null): array
     {
+        $usesTags = in_array(ReportGrouping::Tag, [$grouping, $subGrouping], true);
         $entries = $this->query($filters)
-            ->with(['project:id,name,color,client_id', 'project.client:id,name', 'user:id,name'])
+            ->with(['project:id,name,color,client_id', 'project.client:id,name', 'user:id,name', ...($usesTags ? ['tags:id,name'] : [])])
             ->get(['id', 'user_id', 'project_id', 'started_at', 'duration_seconds', 'is_billable', 'hourly_rate']);
 
         return [
@@ -102,7 +110,7 @@ class ReportBuilder
     public function detailed(ReportFilters $filters, string $sort = 'date', string $direction = 'desc', int $perPage = 50): LengthAwarePaginator
     {
         return $this->sorted($this->query($filters), $sort, $direction)
-            ->with(['project.client', 'user:id,name'])
+            ->with(['project.client', 'user:id,name', 'tags:id,name'])
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -117,14 +125,14 @@ class ReportBuilder
     public function detailedForExport(ReportFilters $filters, string $sort = 'date', string $direction = 'desc'): iterable
     {
         return $this->sorted($this->query($filters), $sort, $direction)
-            ->with(['project.client', 'user:id,name'])
+            ->with(['project.client', 'user:id,name', 'tags:id,name'])
             ->lazy(500);
     }
 
     /**
      * A detailed report row: the entry as on the time pages plus member, rate and amount.
      *
-     * @return array{id: int, userId: int, memberName: string, project: array{id: int, name: string, code: string|null, color: string, clientName: string|null}, description: string|null, date: string, start: string, end: string, durationSeconds: int, isBillable: bool, hourlyRate: int|null, amount: int|null}
+     * @return array{id: int, userId: int, memberName: string, project: array{id: int, name: string, code: string|null, color: string, clientName: string|null}, description: string|null, tags: array<int, string>, date: string, start: string, end: string, durationSeconds: int, isBillable: bool, hourlyRate: int|null, amount: int|null}
      */
     public function row(TimeEntry $entry, ReportFilters $filters): array
     {
@@ -144,6 +152,7 @@ class ReportBuilder
                 'clientName' => $entry->project->client?->name,
             ],
             'description' => $entry->description,
+            'tags' => $entry->tagNames(),
             'date' => $start->toDateString(),
             'start' => $start->format('Y-m-d\TH:i'),
             'end' => $end->format('Y-m-d\TH:i'),
@@ -234,14 +243,13 @@ class ReportBuilder
     {
         $groups = [];
 
-        foreach ($entries->groupBy(fn (TimeEntry $entry) => $this->key($entry, $grouping, $filters)) as $key => $items) {
-            /** @var TimeEntry $first */
-            $first = $items->first();
+        foreach ($this->buckets($entries, $grouping, $filters) as $key => $bucket) {
+            $items = $bucket['entries'];
 
             $groups[] = [
                 'key' => (string) $key,
-                'label' => $this->label($first, $grouping, (string) $key),
-                'color' => $grouping === ReportGrouping::Project ? $first->project->color : null,
+                'label' => $bucket['label'],
+                'color' => $bucket['color'],
                 ...$this->totals($items, $filters),
                 'children' => $subGrouping ? $this->group($items, $filters, $subGrouping, null) : [],
             ];
@@ -254,6 +262,40 @@ class ReportBuilder
         return $groups;
     }
 
+    /**
+     * The entries per group key. Most groupings put each entry in one group; tags put an entry in
+     * each of its tags (or "No tag"), so tag groups can add up to more than the total.
+     *
+     * @param  Collection<int, TimeEntry>  $entries
+     * @return array<string, array{label: string, color: string|null, entries: Collection<int, TimeEntry>}>
+     */
+    private function buckets(Collection $entries, ReportGrouping $grouping, ReportFilters $filters): array
+    {
+        $buckets = [];
+
+        foreach ($entries as $entry) {
+            if ($grouping === ReportGrouping::Tag) {
+                $memberships = $entry->tags->isEmpty()
+                    ? ['none' => __('No tag')]
+                    : $entry->tags->mapWithKeys(fn (Tag $tag) => [(string) $tag->id => $tag->name])->all();
+            } else {
+                $key = $this->key($entry, $grouping, $filters);
+                $memberships = [$key => $this->label($entry, $grouping, $key)];
+            }
+
+            foreach ($memberships as $key => $label) {
+                $buckets[(string) $key] ??= [
+                    'label' => (string) $label,
+                    'color' => $grouping === ReportGrouping::Project ? $entry->project->color : null,
+                    'entries' => new Collection,
+                ];
+                $buckets[(string) $key]['entries']->push($entry);
+            }
+        }
+
+        return $buckets;
+    }
+
     private function key(TimeEntry $entry, ReportGrouping $grouping, ReportFilters $filters): string
     {
         $date = $entry->started_at->setTimezone($filters->timezone());
@@ -262,6 +304,8 @@ class ReportBuilder
             ReportGrouping::Client => (string) ($entry->project->client_id ?? 'none'),
             ReportGrouping::Project => (string) $entry->project_id,
             ReportGrouping::Member => (string) $entry->user_id,
+            // Handled per tag in buckets().
+            ReportGrouping::Tag => 'none',
             ReportGrouping::Day => $date->toDateString(),
             ReportGrouping::Week => $this->weekStart($date, $filters)->toDateString(),
             ReportGrouping::Month => $date->startOfMonth()->toDateString(),
@@ -274,6 +318,7 @@ class ReportBuilder
             ReportGrouping::Client => $entry->project->client->name ?? __('No client'),
             ReportGrouping::Project => $entry->project->name,
             ReportGrouping::Member => $entry->user->name,
+            ReportGrouping::Tag => __('No tag'),
             // Time buckets are formatted in the frontend from the key (a local date).
             ReportGrouping::Day, ReportGrouping::Week, ReportGrouping::Month => $key,
         };

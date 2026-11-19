@@ -10,6 +10,8 @@ enum ReportGrouping: string
     case Client = 'client';
     case Project = 'project';
     case Member = 'member';
+    /** An entry with several tags counts in each of them. */
+    case Tag = 'tag';
     case Day = 'day';
     case Week = 'week';
     case Month = 'month';
@@ -20,6 +22,7 @@ enum ReportGrouping: string
             self::Client => __('Client'),
             self::Project => __('Project'),
             self::Member => __('Member'),
+            self::Tag => __('Tag'),
             self::Day => __('Day'),
             self::Week => __('Week'),
             self::Month => __('Month'),
