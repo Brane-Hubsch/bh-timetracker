@@ -66,6 +66,93 @@
     --muted: oklch(0.72 0.012 286);
 }
 
+.report-period-icon {
+    @apply block size-4 shrink-0 bg-current;
+    mask: var(--report-period-icon) center no-repeat;
+}
+
+.report-period-icon--previous {
+    --report-period-icon: url('../js/assets/report-chevron-left.svg');
+}
+
+.report-period-icon--next {
+    --report-period-icon: url('../js/assets/report-chevron-right.svg');
+}
+
+.report-period-icon--open {
+    --report-period-icon: url('../js/assets/report-chevron-down.svg');
+}
+
+.report-period-icon--check {
+    --report-period-icon: url('../js/assets/report-check.svg');
+}
+
+.report-period-icon--close {
+    --report-period-icon: url('../js/assets/report-close.svg');
+}
+
+.report-period-preset[data-selected='true'] {
+    @apply bg-accent/15;
+}
+
+.report-period-preset__indicator:not([data-visible]) {
+    visibility: hidden;
+}
+
+.report-period-panel:has([data-picking-end]) {
+    .report-period-preset[data-selected='true']:not([data-hovered='true']) {
+        @apply bg-transparent;
+    }
+
+    .report-period-preset__indicator {
+        visibility: hidden;
+    }
+}
+
+.report-period-calendar {
+    .range-calendar__cell {
+        @apply my-px;
+    }
+
+    .range-calendar__cell-button {
+        @apply relative mx-auto h-9 max-w-9;
+    }
+
+    .range-calendar__cell[data-outside-month='true'] {
+        @apply bg-transparent;
+    }
+
+    .range-calendar__cell[data-selected='true']:not(
+            [data-outside-month='true']
+        ) {
+        @apply bg-accent/15;
+
+        &[data-selection-start='true'][data-selection-end='true'] {
+            @apply bg-transparent;
+        }
+    }
+
+    .report-period-calendar__today {
+        @apply bg-current;
+    }
+
+    [data-picking-end] .range-calendar__cell:not([data-outside-month='true']) {
+        &[data-range-anchor='true'] .range-calendar__cell-button {
+            @apply bg-accent text-accent-foreground;
+        }
+
+        &[data-range-preview-end='true'] .range-calendar__cell-button {
+            @apply bg-transparent text-foreground;
+
+            &::after {
+                @apply absolute size-8 bg-accent content-[''];
+                mask: url('../js/assets/report-range-preview.svg') center
+                    no-repeat;
+            }
+        }
+    }
+}
+
 /* Inset the grip within the native resize target so it clears the rounded border. */
 @media not (forced-colors: active) {
     .textarea::-webkit-resizer {

@@ -715,7 +715,9 @@ Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (peri
 - **Period:** en kontroll med pilar för föregående och nästa period.
   - Hela månader stegar per månad, andra perioder med sin längd.
   - Knappen visar periodens namn och datum, t.ex. "Denna månad 1–30 nov.", "Oktober 2026 1–31 okt." eller "Vecka 48 23–29 nov.".
-  - Den öppnar snabbvalen och en kalender för eget intervall, med organisationens första veckodag.
+  - Den öppnar [periodväljaren i Figma](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport?node-id=168-887) med två månader bredvid snabbvalen på större skärmar och en månad under snabbvalen i en bottenpanel på mindre skärmar.
+  - Snabbvalen är Idag, Igår, Denna vecka, Förra veckan, Senaste 14 dagarna (inklusive idag), Denna månad, Förra månaden, I år och Förra året. Ett snabbval uppdaterar rapporten direkt.
+  - Kalendern använder organisationens första veckodag. Första datumet startar ett eget intervall, som förhandsvisas fram till datumet under pekaren eller i fokus. Det andra datumvalet uppdaterar rapporten. Escape stänger väljaren och återställer fokus till periodknappen.
 - **Filter som knappar:** Medlemmar (avatarer), Kunder (loggor), Projekt (färgprickar, kund som undertext), Taggar och Debitering.
   - Förhandsvisningarnas behållare är transparenta och visar de rundade konturerna hela, även när filtret är valt.
   - Utan val visar knappen filtrets namn och ett smakprov.

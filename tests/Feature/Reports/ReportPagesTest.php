@@ -53,6 +53,27 @@ it('shows owners the whole team with amounts', function () {
             ->where('abilities', ['canViewTeam' => true, 'canViewAmounts' => true]));
 });
 
+it('resolves quick date presets in the viewer’s time zone', function (string $period, string $from, string $to) {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-01-01 23:30:00', 'UTC'));
+    $this->owner->update(['timezone' => 'Europe/Stockholm']);
+
+    $this->actingAs($this->owner)
+        ->get(reportRoute('reports.summary', ['period' => $period]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.period', $period)
+            ->where('filters.from', $from)
+            ->where('filters.to', $to)
+            ->where('options.periods', fn ($options) => $options->pluck('value')->all() === [
+                'today', 'yesterday', 'this_week', 'last_week', 'last_14_days',
+                'this_month', 'last_month', 'this_year', 'last_year', 'custom',
+            ]));
+})->with([
+    'today' => ['today', '2026-01-02', '2026-01-02'],
+    'yesterday' => ['yesterday', '2026-01-01', '2026-01-01'],
+    'last 14 days' => ['last_14_days', '2025-12-20', '2026-01-02'],
+    'last year' => ['last_year', '2025-01-01', '2025-12-31'],
+]);
+
 it('stacks daily and weekly report hours by reported project', function () {
     $internal = Project::factory()->for($this->organization)->create(['name' => 'Intern', 'color' => '#059669']);
     TimeEntry::factory()->by($this->member, $internal)
