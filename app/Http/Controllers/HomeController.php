@@ -19,6 +19,6 @@ class HomeController extends Controller
             return to_route('login');
         }
 
-        return redirect($this->redirectPathForCurrentOrganization($request, '/dashboard'));
+        return redirect($this->redirectPathForCurrentOrganization($request, config()->string('fortify.home')));
     }
 }

@@ -206,7 +206,7 @@ class OrganizationInvitationTest extends TestCase
             ->actingAs($invitedUser)
             ->post(route('invitations.accept', $invitation));
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('time.index'));
         $response->assertInertiaFlash('toast', ['type' => 'success', 'message' => __('Invitation accepted.')]);
 
         $this->assertTrue($invitedUser->fresh()->belongsToOrganization($organization));
@@ -231,7 +231,7 @@ class OrganizationInvitationTest extends TestCase
             ->actingAs($invitedUser)
             ->delete(route('invitations.decline', $invitation));
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('time.index'));
 
         $this->assertDatabaseMissing('organization_invitations', [
             'id' => $invitation->id,

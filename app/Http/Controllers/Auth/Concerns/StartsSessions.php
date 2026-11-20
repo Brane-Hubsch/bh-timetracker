@@ -41,6 +41,6 @@ trait StartsSessions
             return to_route('passkey-setup');
         }
 
-        return redirect()->intended($this->redirectPathForCurrentOrganization($request, '/dashboard'));
+        return redirect()->intended($this->redirectPathForCurrentOrganization($request, config()->string('fortify.home')));
     }
 }

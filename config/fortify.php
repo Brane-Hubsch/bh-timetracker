@@ -73,7 +73,9 @@ return [
     |
     */
 
-    'home' => '/dashboard',
+    // The start page inside the user's current organization: the calendar, where time is reported.
+    // (The "Today" dashboard is paused; it is still at /{organization}/dashboard.)
+    'home' => '/time',
 
     /*
     |--------------------------------------------------------------------------

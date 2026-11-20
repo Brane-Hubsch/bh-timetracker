@@ -23,12 +23,12 @@ it('shows onboarding with pending invitations to users without an organization',
             ->where('pendingInvitations.0.organization.slug', $owner->currentOrganization->slug));
 });
 
-it('redirects users that already have an organization to their dashboard', function () {
+it('redirects users that already have an organization to their calendar', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
         ->get(route('onboarding'))
-        ->assertRedirect(route('dashboard', ['current_organization' => $user->currentOrganization->slug]));
+        ->assertRedirect(route('time.index', ['current_organization' => $user->currentOrganization->slug]));
 });
 
 it('recovers a missing current organization from memberships', function () {
@@ -38,12 +38,12 @@ it('recovers a missing current organization from memberships', function () {
 
     $this->actingAs($user->fresh())
         ->get(route('onboarding'))
-        ->assertRedirect(route('dashboard', ['current_organization' => $organization->slug]));
+        ->assertRedirect(route('time.index', ['current_organization' => $organization->slug]));
 
     expect($user->fresh()->current_organization_id)->toBe($organization->id);
 });
 
-it('creates the first organization and redirects to its dashboard', function () {
+it('creates the first organization and redirects to its calendar', function () {
     $user = User::factory()->withoutOrganization()->create();
 
     $response = $this->actingAs($user)->post(route('onboarding.store'), ['name' => 'Brane Hubsch']);
@@ -51,7 +51,7 @@ it('creates the first organization and redirects to its dashboard', function () 
     $organization = $user->fresh()->currentOrganization;
     expect($organization->name)->toBe('Brane Hubsch')
         ->and($user->organizationRole($organization))->toBe(OrganizationRole::Owner);
-    $response->assertRedirect(route('dashboard', ['current_organization' => $organization->slug]));
+    $response->assertRedirect(route('time.index', ['current_organization' => $organization->slug]));
 });
 
 it('validates the organization name', function () {

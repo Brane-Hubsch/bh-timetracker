@@ -23,7 +23,6 @@ import {
     CopyPlus,
     FolderKanban,
     FolderPlus,
-    House,
     KeyRound,
     List,
     LogOut,
@@ -46,7 +45,7 @@ import { logoutAndFlush } from '@/components/user-menu';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
-import { commandPalette, dashboard } from '@/routes';
+import { commandPalette } from '@/routes';
 import { edit as editAiConnections } from '@/routes/ai-connections';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as clientsIndex, show as showClient } from '@/routes/clients';
@@ -387,13 +386,6 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
             id: 'navigation',
             title: t('Go to'),
             commands: [
-                {
-                    id: 'go-dashboard',
-                    label: t('Today'),
-                    keywords: t('dashboard start'),
-                    icon: House,
-                    perform: go(dashboard.url(slug)),
-                },
                 {
                     id: 'go-calendar',
                     label: t('Calendar'),

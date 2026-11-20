@@ -43,7 +43,7 @@ it('signs in a user already linked to the Google account', function () {
     fakeGoogle();
 
     $this->get(route('google.callback'))
-        ->assertRedirect(route('dashboard', ['current_organization' => $user->currentOrganization->slug]));
+        ->assertRedirect(route('time.index', ['current_organization' => $user->currentOrganization->slug]));
 
     $this->assertAuthenticatedAs($user);
 });
@@ -65,7 +65,7 @@ it('does not suggest a passkey to existing Google users without one', function (
     fakeGoogle();
 
     $this->get(route('google.callback'))
-        ->assertRedirect(route('dashboard', ['current_organization' => $user->currentOrganization->slug]));
+        ->assertRedirect(route('time.index', ['current_organization' => $user->currentOrganization->slug]));
 });
 
 it('refuses unknown users when registration is closed and there is no invitation', function () {

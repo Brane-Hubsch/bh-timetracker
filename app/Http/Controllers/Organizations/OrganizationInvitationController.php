@@ -62,7 +62,7 @@ class OrganizationInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation accepted.')]);
 
-        return to_route('dashboard', ['current_organization' => $organization->slug]);
+        return to_route('time.index', ['current_organization' => $organization->slug]);
     }
 
     /**
@@ -77,7 +77,7 @@ class OrganizationInvitationController extends Controller
         $organization = $user->currentOrganization;
 
         return $organization
-            ? to_route('dashboard', ['current_organization' => $organization->slug])
+            ? to_route('time.index', ['current_organization' => $organization->slug])
             : to_route('onboarding');
     }
 }

@@ -22,7 +22,7 @@ class OnboardingController extends Controller
     {
 
         if ($organization = $user->currentOrganization ?? $user->resetCurrentOrganization()) {
-            return to_route('dashboard', ['current_organization' => $organization->slug]);
+            return to_route('time.index', ['current_organization' => $organization->slug]);
         }
 
         return Inertia::render('onboarding', [
@@ -46,6 +46,6 @@ class OnboardingController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Organization created.')]);
 
-        return to_route('dashboard', ['current_organization' => $organization->slug]);
+        return to_route('time.index', ['current_organization' => $organization->slug]);
     }
 }

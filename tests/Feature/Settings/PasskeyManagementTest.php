@@ -98,5 +98,5 @@ it('shows the passkey setup page after sign-up', function () {
         ->get(route('passkey-setup'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('auth/passkey-setup')
-            ->where('continueTo', '/'.$user->currentOrganization->slug.'/dashboard'));
+            ->where('continueTo', '/'.$user->currentOrganization->slug.'/time'));
 });

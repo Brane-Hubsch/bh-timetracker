@@ -6,9 +6,7 @@ import {
     CalendarDays,
     ChartColumn,
     FolderKanban,
-    House,
 } from 'lucide-react';
-import { dashboard } from '@/routes';
 import { index as clients } from '@/routes/clients';
 import { index as projects } from '@/routes/projects';
 import { summary as reports } from '@/routes/reports';
@@ -35,8 +33,8 @@ export function useMainNavigation(): MainNavItem[] {
 
     const slug = currentOrganization.slug;
 
+    // The "Today" dashboard is paused: the calendar is the start page.
     return [
-        { title: 'Today', href: dashboard(slug), icon: House, mobile: true },
         {
             title: 'Calendar',
             href: time(slug),
