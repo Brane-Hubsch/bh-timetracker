@@ -495,9 +495,10 @@ export default function ProjectShow({
     );
 }
 
-ProjectShow.layout = {
+// A function, so the link gets the page's organization (a static object is built before it is known).
+ProjectShow.layout = (props: { currentOrganization: { slug: string } }) => ({
     breadcrumbs: [
-        { title: 'Projects', href: index() },
+        { title: 'Projects', href: index(props.currentOrganization.slug) },
         { title: 'Project', href: '#' },
     ],
-};
+});
