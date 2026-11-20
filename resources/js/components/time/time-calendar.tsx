@@ -275,7 +275,7 @@ export function TimeCalendar({
                     const localEnd = end && fromCalendarDate(end);
                     const range =
                         localStart && localEnd
-                            ? `${timeOf(localStart)}–${timeOf(localEnd)}`
+                            ? `${timeOf(localStart)} – ${timeOf(localEnd)}`
                             : '';
                     // Use the saved duration, including across DST changes. While resizing,
                     // FullCalendar's preview has updated wall-clock times.
