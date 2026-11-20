@@ -333,8 +333,10 @@ export function TimeCalendar({
                                         {title || range}
                                     </div>
                                     {entry?.description && (
-                                        <div className="time-calendar-entry-detail shrink-0 truncate text-[11px]/3.5 text-muted">
-                                            {entry.description}
+                                        <div className="time-calendar-entry-detail min-h-3.5">
+                                            <div className="max-h-[round(down,100%,1lh)] overflow-hidden text-[11px]/3.5 wrap-anywhere whitespace-pre-wrap text-muted">
+                                                {entry.description}
+                                            </div>
                                         </div>
                                     )}
                                     {title && range && (
