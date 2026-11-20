@@ -22,6 +22,7 @@ type SelectFieldProps<Option extends SelectOption> = {
     className?: string;
     /** Extra classes for the trigger, e.g. a pill-shaped toolbar picker. */
     triggerClassName?: string;
+    hideIndicator?: boolean;
     'data-test'?: string;
 };
 
@@ -43,6 +44,7 @@ export function SelectField<Option extends SelectOption>({
     isDisabled,
     className,
     triggerClassName,
+    hideIndicator,
     'data-test': dataTest,
 }: SelectFieldProps<Option>) {
     return (
@@ -62,7 +64,7 @@ export function SelectField<Option extends SelectOption>({
             <Label>{label}</Label>
             <Select.Trigger className={`min-w-0 ${triggerClassName ?? ''}`}>
                 <Select.Value className="min-w-0 truncate" />
-                <Select.Indicator />
+                {!hideIndicator && <Select.Indicator />}
             </Select.Trigger>
             {description && <Description>{description}</Description>}
             <FieldError>{error}</FieldError>

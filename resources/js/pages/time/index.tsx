@@ -253,7 +253,7 @@ export default function TimeIndex({
                                             size="sm"
                                             variant="soft"
                                             color="accent"
-                                            className="size-9 rounded-full in-data-[slot=select-value]:size-4"
+                                            className="size-9 rounded-full in-data-[slot=select-value]:size-6"
                                             aria-hidden="true"
                                         >
                                             {avatar && (
@@ -263,7 +263,7 @@ export default function TimeIndex({
                                                     className="object-cover"
                                                 />
                                             )}
-                                            <Avatar.Fallback className="in-data-[slot=select-value]:text-[9px]">
+                                            <Avatar.Fallback>
                                                 {getInitials(label)}
                                             </Avatar.Fallback>
                                         </Avatar>
@@ -273,7 +273,8 @@ export default function TimeIndex({
                                     </span>
                                 )}
                                 className="min-w-0 flex-1 md:w-auto md:max-w-56 md:flex-none"
-                                triggerClassName="h-9 rounded-full bg-transparent ps-4 pe-10 shadow-none [&_.select__indicator]:end-4 [&_.select__indicator]:text-foreground"
+                                triggerClassName="h-9 items-center rounded-full bg-transparent py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-4 shadow-none"
+                                hideIndicator
                                 data-test="member-select"
                             />
                         )}
