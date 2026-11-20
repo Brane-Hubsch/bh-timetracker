@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { SelectField } from '@/components/form/select-field';
 import { ExportMenu } from '@/components/reports/export-menu';
 import { GroupTable } from '@/components/reports/group-table';
+import { MemberProjectTable } from '@/components/reports/member-project-table';
 import { ProjectDistribution } from '@/components/reports/project-distribution';
 import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
@@ -34,6 +35,8 @@ export default function ReportsSummary({
     summary,
 }: Props) {
     const { t } = useTranslation();
+    const byMemberAndProject =
+        filters.group === 'member' && filters.subgroup === 'project';
 
     const regroup = (changes: Partial<ReportFilterValues>) =>
         router.get(window.location.pathname, reportQuery(filters, changes), {
@@ -113,13 +116,22 @@ export default function ReportsSummary({
                     </div>
                 </div>
 
-                <GroupTable
-                    groups={summary.groups}
-                    totals={summary.totals}
-                    grouping={filters.group}
-                    subGrouping={filters.subgroup}
-                    currency={currency}
-                />
+                {byMemberAndProject ? (
+                    <MemberProjectTable
+                        groups={summary.groups}
+                        members={options.members}
+                        showAmounts={summary.totals.amount !== null}
+                        currency={currency}
+                    />
+                ) : (
+                    <GroupTable
+                        groups={summary.groups}
+                        totals={summary.totals}
+                        grouping={filters.group}
+                        subGrouping={filters.subgroup}
+                        currency={currency}
+                    />
+                )}
                 {(filters.group === 'tag' || filters.subgroup === 'tag') && (
                     <p className="text-sm text-muted">
                         {t(
