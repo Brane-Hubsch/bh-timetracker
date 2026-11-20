@@ -1,5 +1,5 @@
-import { Button } from '@heroui/react';
-import { Form, Head } from '@inertiajs/react';
+import { Button, buttonVariants } from '@heroui/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     index as confirmOptions,
     store as confirmStore,
@@ -10,6 +10,7 @@ import { TextInputField } from '@/components/form/text-input-field';
 import { useTranslation } from '@/lib/i18n';
 import { confirm as requestConfirmationLink } from '@/routes/magic-link';
 import { store as confirmWithPassword } from '@/routes/password/confirm';
+import { edit as editProfile } from '@/routes/profile';
 
 type Props = {
     status?: string;
@@ -93,6 +94,17 @@ export default function ConfirmAccess({
                     )}
                 </Form>
             )}
+
+            <Link
+                href={editProfile()}
+                replace
+                className={buttonVariants({
+                    variant: 'ghost',
+                    fullWidth: true,
+                })}
+            >
+                {t('Back to settings')}
+            </Link>
         </>
     );
 }
