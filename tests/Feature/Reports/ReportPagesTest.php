@@ -53,6 +53,38 @@ it('shows owners the whole team with amounts', function () {
             ->where('abilities', ['canViewTeam' => true, 'canViewAmounts' => true]));
 });
 
+it('stacks daily and weekly report hours by reported project', function () {
+    $internal = Project::factory()->for($this->organization)->create(['name' => 'Intern', 'color' => '#059669']);
+    TimeEntry::factory()->by($this->member, $internal)
+        ->between(CarbonImmutable::parse('2026-11-15 23:30', 'UTC'), CarbonImmutable::parse('2026-11-16 00:00', 'UTC'))
+        ->create(['is_billable' => false]);
+    TimeEntry::factory()->by($this->member, $this->project)
+        ->between(CarbonImmutable::parse('2026-11-16 10:00', 'UTC'), CarbonImmutable::parse('2026-11-16 10:30', 'UTC'))
+        ->create(['is_billable' => false]);
+
+    $this->actingAs($this->member)
+        ->get(reportRoute('reports.summary', ['group' => 'tag']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.timeline.unit', 'day')
+            ->where('summary.timeline.projects', [
+                ['id' => $this->project->id, 'name' => 'Webb', 'clientName' => 'Acme', 'color' => $this->project->color],
+                ['id' => $internal->id, 'name' => 'Intern', 'clientName' => null, 'color' => '#059669'],
+            ])
+            ->where('summary.timeline.buckets.15.key', '2026-11-16')
+            ->where('summary.timeline.buckets.15.seconds', 9000)
+            ->where('summary.timeline.buckets.15.projectSeconds', [$this->project->id => 7200, $internal->id => 1800])
+            ->missing('summary.timeline.buckets.16.projectSeconds'));
+
+    $this->actingAs($this->member)
+        ->get(reportRoute('reports.summary', ['period' => 'custom', 'from' => '2026-10-01', 'to' => '2026-11-30', 'projects' => [$internal->id]]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.timeline.unit', 'week')
+            ->has('summary.timeline.projects', 1)
+            ->where('summary.timeline.projects.0.id', $internal->id)
+            ->where('summary.timeline.buckets.7.key', '2026-11-16')
+            ->where('summary.timeline.buckets.7.projectSeconds', [$internal->id => 1800]));
+});
+
 it('gives the filters member pictures, inactive members and client logos', function () {
     $this->owner->update(['avatar_url' => 'https://lh3.googleusercontent.com/olivia.jpg']);
     $this->organization->members()->updateExistingPivot($this->member->id, ['deactivated_at' => now()]);
@@ -242,6 +274,8 @@ it('does not show another organization in reports or exports', function () {
         ->get(reportRoute('reports.summary', ['projects' => [$foreign->id, $this->project->id], 'members' => [$otherOwner->id, $this->member->id]]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('summary.totals.seconds', 5400)
+            ->has('summary.timeline.projects', 1)
+            ->where('summary.timeline.projects.0.id', $this->project->id)
             ->where('options.projects', [[
                 'value' => (string) $this->project->id,
                 'label' => 'Webb · Acme',

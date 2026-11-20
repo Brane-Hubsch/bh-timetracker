@@ -56,20 +56,16 @@ export default function ReportsSummary({
 
             <ReportStats totals={summary.totals} currency={currency} />
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-                <div className="lg:col-span-3">
-                    <TimelineChart
-                        unit={summary.timeline.unit}
-                        buckets={summary.timeline.buckets}
-                    />
-                </div>
-                <div className="lg:col-span-2">
-                    <ProjectDistribution
-                        projects={summary.projects}
-                        totalSeconds={summary.totals.seconds}
-                    />
-                </div>
-            </div>
+            <TimelineChart
+                unit={summary.timeline.unit}
+                buckets={summary.timeline.buckets}
+                projects={summary.timeline.projects}
+            />
+
+            <ProjectDistribution
+                projects={summary.projects}
+                totalSeconds={summary.totals.seconds}
+            />
 
             <section className="grid grid-cols-1 gap-3">
                 <div className="flex flex-wrap items-end justify-between gap-3">

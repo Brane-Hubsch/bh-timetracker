@@ -44,7 +44,12 @@ class ReportController extends Controller
 
         return Inertia::render('reports/summary', [
             ...$this->shared($request, $filters),
-            'summary' => $this->reports->summary($filters, $request->grouping(), $request->subGrouping()),
+            'summary' => $this->reports->summary(
+                $filters,
+                $request->grouping(),
+                $request->subGrouping(),
+                includeTimelineProjects: true,
+            ),
         ]);
     }
 
