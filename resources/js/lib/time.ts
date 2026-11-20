@@ -130,14 +130,6 @@ export function timeOf(localDateTime: string): string {
     return localDateTime.slice(11, 16);
 }
 
-/** Whether two local periods overlap. */
-export function overlaps(
-    a: { start: string; end: string },
-    b: { start: string; end: string },
-): boolean {
-    return a.start < b.end && b.start < a.end;
-}
-
 /** A Date that FullCalendar created in UTC mode → local wall-clock string. */
 export function fromCalendarDate(date: Date): string {
     return date.toISOString().slice(0, 16);

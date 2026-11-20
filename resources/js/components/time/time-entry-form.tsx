@@ -25,7 +25,6 @@ import {
     addDays,
     formatDuration,
     minutesToTime,
-    overlaps,
     parseDuration,
     secondsBetween,
     timeOf,
@@ -45,8 +44,6 @@ type Props = {
     draft: TimeEntryDraft | null;
     onClose: () => void;
     projects: ProjectOption[];
-    /** Entries already loaded, used to warn about overlaps. */
-    entries: TimeEntry[];
     /** Members the viewer may report time for (owners and admins). */
     members?: TimeEntryMemberOption[];
     /** The organization's tag names, suggested in the tag field. */
@@ -110,7 +107,6 @@ export function TimeEntryForm({
     draft,
     onClose,
     projects,
-    entries,
     members = [],
     tags = [],
     recentTags,
@@ -228,27 +224,6 @@ export function TimeEntryForm({
                 : (project?.isBillable ?? true),
         });
     };
-
-    const durationSeconds =
-        current?.start && current.end
-            ? secondsBetween(current.start, current.end)
-            : null;
-    const startAt = current ? `${current.date}T${current.start}` : '';
-    const overlapping =
-        current !== null &&
-        durationSeconds !== null &&
-        entries.some(
-            (entry) =>
-                entry.id !== source?.id &&
-                entry.userId === current.userId &&
-                overlaps(
-                    {
-                        start: startAt,
-                        end: addSeconds(startAt, durationSeconds),
-                    },
-                    entry,
-                ),
-        );
 
     const requestOptions = {
         preserveScroll: true,
@@ -653,17 +628,6 @@ export function TimeEntryForm({
                         )}
                     </div>
 
-                    {overlapping && (
-                        <Alert status="warning">
-                            <Alert.Indicator />
-                            <Alert.Content>
-                                <Alert.Description>
-                                    {t('This overlaps another entry.')}
-                                </Alert.Description>
-                            </Alert.Content>
-                        </Alert>
-                    )}
-
                     <TextField
                         value={current.description}
                         onChange={(description) => set({ description })}
@@ -702,13 +666,6 @@ export function TimeEntryForm({
             )}
         </ResponsiveDialog>
     );
-}
-
-function addSeconds(localDateTime: string, seconds: number): string {
-    const value = new Date(`${localDateTime}:00Z`);
-    value.setUTCSeconds(value.getUTCSeconds() + seconds);
-
-    return value.toISOString().slice(0, 16);
 }
 
 export function draftFromEntry(entry: TimeEntry): TimeEntryDraft {

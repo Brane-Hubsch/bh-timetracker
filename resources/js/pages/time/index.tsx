@@ -405,7 +405,6 @@ export default function TimeIndex({
                 projects={projects}
                 tags={tags}
                 recentTags={recentTags}
-                entries={entries}
                 members={members}
                 recentProjects={recentProjects}
                 onDuplicate={(values) => {
