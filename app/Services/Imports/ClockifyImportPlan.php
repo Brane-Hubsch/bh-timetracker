@@ -3,11 +3,13 @@
 namespace App\Services\Imports;
 
 use App\Data\ClockifyRow;
+use App\Enums\TimeEntrySource;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Support\RateResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
@@ -18,6 +20,10 @@ use Illuminate\Support\Collection;
  *
  * Times in the file are read in the importing user's time zone. Projects match on client and
  * project name (case-insensitive); users match active members on email unless mapped by hand.
+ *
+ * Every member with time on a project gets an hourly rate: the one chosen in the preview, else the
+ * one the rate order gives. Rows that an earlier import already created are listed separately, so
+ * their rate and billable setting can be updated instead of importing them again.
  */
 final class ClockifyImportPlan
 {
@@ -44,6 +50,21 @@ final class ClockifyImportPlan
      */
     public array $entries = [];
 
+    /**
+     * Rows an earlier import created (same member, project and times), which can be updated.
+     *
+     * @var array<int, array{entryId: int, row: ClockifyRow, userId: int, projectKey: string}>
+     */
+    public array $alreadyImported = [];
+
+    /**
+     * Hourly rate (minor units) per member and project, for the entries above and the already
+     * imported ones. "defaultRate" is what the rate order gives; "rate" is the one that applies.
+     *
+     * @var array<int, array{projectKey: string, userId: int, name: string, avatar: string|null, entries: int, seconds: int, defaultRate: int|null, rate: int|null}>
+     */
+    public array $rates = [];
+
     public ?string $from = null;
 
     public ?string $to = null;
@@ -51,6 +72,7 @@ final class ClockifyImportPlan
     /**
      * @param  array<string, int|null>  $memberMap  email => member id (null skips the user); missing emails match on email
      * @param  array<string, bool>  $billableByProject  project key => billable, for new projects
+     * @param  array<string, int|null>  $chosenRates  rateKey() => hourly rate in minor units (null uses the rate order)
      */
     public function __construct(
         public readonly Organization $organization,
@@ -58,8 +80,38 @@ final class ClockifyImportPlan
         public readonly ClockifyCsv $csv,
         array $memberMap = [],
         array $billableByProject = [],
+        array $chosenRates = [],
     ) {
         $this->build($memberMap, $billableByProject);
+        $this->buildRates($chosenRates);
+    }
+
+    /**
+     * The key a chosen rate is sent with: project match key and member id.
+     */
+    public static function rateKey(string $projectKey, int $userId): string
+    {
+        return $projectKey.'|'.$userId;
+    }
+
+    /**
+     * Rates that differ from the rate order, for billable projects: they are saved as the member's
+     * rate on the project, so time reported later gets the same rate.
+     *
+     * @return array<int, array{projectKey: string, userId: int, rate: int}>
+     */
+    public function changedRates(): array
+    {
+        $billable = array_column($this->projects, 'billable', 'key');
+        $changed = [];
+
+        foreach ($this->rates as $rate) {
+            if ($rate['rate'] !== null && $rate['rate'] !== $rate['defaultRate'] && ($billable[$rate['projectKey']] ?? false)) {
+                $changed[] = ['projectKey' => $rate['projectKey'], 'userId' => $rate['userId'], 'rate' => $rate['rate']];
+            }
+        }
+
+        return $changed;
     }
 
     public function timezone(): string
@@ -226,7 +278,15 @@ final class ClockifyImportPlan
 
             $seen[$entryKey] = true;
 
-            if ($project['projectId'] !== null && isset($existingKeys[$userId.'|'.$project['projectId'].'|'.$startedAt->utc()->toIso8601String().'|'.$endedAt->utc()->toIso8601String()])) {
+            $existing = $project['projectId'] === null ? null : ($existingKeys[$userId.'|'.$project['projectId'].'|'.$startedAt->utc()->toIso8601String().'|'.$endedAt->utc()->toIso8601String()] ?? null);
+
+            if ($existing !== null && $existing['imported']) {
+                $this->alreadyImported[] = ['entryId' => $existing['id'], 'row' => $row, 'userId' => $userId, 'projectKey' => $key];
+
+                continue;
+            }
+
+            if ($existing !== null) {
                 $skip(__('The entry already exists.'));
 
                 continue;
@@ -258,6 +318,66 @@ final class ClockifyImportPlan
     }
 
     /**
+     * The rate per member and project for the importable and already imported rows.
+     *
+     * @param  array<string, int|null>  $chosenRates
+     */
+    private function buildRates(array $chosenRates): void
+    {
+        $pairs = [];
+        $timezone = $this->timezone();
+
+        foreach ($this->entries as $entry) {
+            $pairs[self::rateKey($entry['projectKey'], $entry['userId'])][] = (int) $entry['startedAt']->diffInSeconds($entry['endedAt']);
+        }
+
+        foreach ($this->alreadyImported as $entry) {
+            $pairs[self::rateKey($entry['projectKey'], $entry['userId'])][] = (int) CarbonImmutable::parse($entry['row']->start, $timezone)->diffInSeconds(CarbonImmutable::parse($entry['row']->end, $timezone));
+        }
+
+        if ($pairs === []) {
+            return;
+        }
+
+        $resolver = app(RateResolver::class);
+        $existingProjects = Project::query()
+            ->forOrganization($this->organization)
+            ->whereIn('id', array_filter(array_column($this->projects, 'projectId')))
+            ->with('organization')
+            ->get()
+            ->keyBy('id');
+        $users = $this->organization->members()
+            ->whereIn('users.id', array_unique(array_merge(array_column($this->entries, 'userId'), array_column($this->alreadyImported, 'userId'))))
+            ->orderBy('name')
+            ->get()
+            ->keyBy('id');
+
+        foreach ($this->projects as $project) {
+            foreach ($users as $user) {
+                $rateKey = self::rateKey($project['key'], $user->id);
+
+                if (! isset($pairs[$rateKey])) {
+                    continue;
+                }
+
+                $existing = $project['projectId'] === null ? null : $existingProjects->get($project['projectId']);
+                $defaultRate = $existing !== null ? $resolver->resolve($existing, $user) : $resolver->forMember($this->organization, $user);
+
+                $this->rates[] = [
+                    'projectKey' => $project['key'],
+                    'userId' => $user->id,
+                    'name' => $user->name,
+                    'avatar' => $user->avatar,
+                    'entries' => count($pairs[$rateKey]),
+                    'seconds' => array_sum($pairs[$rateKey]),
+                    'defaultRate' => $defaultRate,
+                    'rate' => $chosenRates[$rateKey] ?? $defaultRate,
+                ];
+            }
+        }
+    }
+
+    /**
      * The organization's projects by match key, preferring active ones when names repeat.
      *
      * @return Collection<string, Project>
@@ -280,10 +400,11 @@ final class ClockifyImportPlan
     }
 
     /**
-     * Existing entries in the file's period ("user|project|start|end" in UTC), to skip duplicates when
-     * the same export is imported twice.
+     * Existing entries in the file's period by "user|project|start|end" (UTC), to recognize rows that
+     * are already there when the same export is imported twice. An entry from an import wins over
+     * one reported in the app at the same time.
      *
-     * @return array<string, true>
+     * @return array<string, array{id: int, imported: bool}>
      */
     private function existingEntryKeys(string $timezone): array
     {
@@ -298,9 +419,15 @@ final class ClockifyImportPlan
         TimeEntry::query()
             ->forOrganization($this->organization)
             ->whereBetween('started_at', [min($starts), max($starts)])
-            ->get(['user_id', 'project_id', 'started_at', 'ended_at'])
+            ->orderBy('id')
+            ->get(['id', 'user_id', 'project_id', 'started_at', 'ended_at', 'source'])
             ->each(function (TimeEntry $entry) use (&$keys) {
-                $keys[$entry->user_id.'|'.$entry->project_id.'|'.$entry->started_at->utc()->toIso8601String().'|'.$entry->ended_at->utc()->toIso8601String()] = true;
+                $key = $entry->user_id.'|'.$entry->project_id.'|'.$entry->started_at->utc()->toIso8601String().'|'.$entry->ended_at->utc()->toIso8601String();
+                $imported = $entry->source === TimeEntrySource::Import;
+
+                if (! isset($keys[$key]) || ($imported && ! $keys[$key]['imported'])) {
+                    $keys[$key] = ['id' => $entry->id, 'imported' => $imported];
+                }
             });
 
         return $keys;

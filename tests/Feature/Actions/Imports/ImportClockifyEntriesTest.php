@@ -6,6 +6,7 @@ use App\Enums\ProjectVisibility;
 use App\Enums\TimeEntrySource;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\ProjectMember;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\Imports\ClockifyCsv;
@@ -20,8 +21,8 @@ beforeEach(function () {
     $this->organization->members()->attach($this->member, ['role' => OrganizationRole::Member->value]);
     app(CurrentOrganization::class)->set($this->organization);
 
-    $this->import = fn (string $csv, array $members = [], array $billable = []) => app(ImportClockifyEntries::class)
-        ->handle($this->organization, $this->owner, ClockifyCsv::fromString($csv), $members, $billable);
+    $this->import = fn (string $csv, array $members = [], array $billable = [], array $rates = []) => app(ImportClockifyEntries::class)
+        ->handle($this->organization, $this->owner, ClockifyCsv::fromString($csv), $members, $billable, $rates);
 });
 
 it('creates clients, projects and entries, matching members on email', function () {
@@ -144,4 +145,63 @@ it('creates its own client and project when another organization has the same na
         ->and($entry->project->organization_id)->toBe($this->organization->id)
         ->and($entry->project->client->organization_id)->toBe($this->organization->id)
         ->and(TimeEntry::query()->withoutGlobalScopes()->where('project_id', $foreignProject->id)->exists())->toBeFalse();
+});
+
+it('gives each member the chosen rate and saves changed rates on the project', function () {
+    $this->organization->update(['default_hourly_rate' => 100000]);
+    $key = ClockifyImportPlan::projectKey('Acme', 'Webbshop');
+
+    ($this->import)(clockifyCsv([
+        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+        clockifyRow('Webbshop', 'Acme', 'olivia@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+    ]), rates: [
+        ClockifyImportPlan::rateKey($key, $this->member->id) => 125000,
+        ClockifyImportPlan::rateKey($key, $this->owner->id) => null,
+    ]);
+
+    $project = Project::query()->where('name', 'Webbshop')->sole();
+    expect(TimeEntry::query()->where('user_id', $this->member->id)->sole()->hourly_rate)->toBe(125000)
+        ->and(TimeEntry::query()->where('user_id', $this->owner->id)->sole()->hourly_rate)->toBe(100000)
+        // Only the changed rate is saved, so later time gets it too.
+        ->and(ProjectMember::query()->where('project_id', $project->id)->pluck('hourly_rate', 'user_id')->all())->toBe([$this->member->id => 125000]);
+});
+
+it('ignores rates on projects that are not billable', function () {
+    $key = ClockifyImportPlan::projectKey(null, 'Kontoret');
+
+    ($this->import)(clockifyCsv([
+        clockifyRow('Kontoret', '', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+    ]), billable: [$key => false], rates: [ClockifyImportPlan::rateKey($key, $this->member->id) => 125000]);
+
+    expect(ProjectMember::query()->exists())->toBeFalse()
+        ->and(TimeEntry::query()->sole()->hourly_rate)->toBeNull();
+});
+
+it('updates the rate and billable setting of entries an earlier import created, never time reported in the app', function () {
+    $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
+    $project = Project::factory()->for($this->organization)->for($client)->create(['name' => 'Webbshop', 'is_billable' => true]);
+    $reported = TimeEntry::factory()->by($this->owner, $project)->between('2026-11-30 08:00', '2026-11-30 09:00')->create(['hourly_rate' => 500, 'is_billable' => false]);
+    $csv = clockifyCsv([
+        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+        clockifyRow('Webbshop', 'Acme', 'olivia@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+    ]);
+
+    ($this->import)($csv);
+    $imported = TimeEntry::query()->where('user_id', $this->member->id)->sole();
+    expect($imported->hourly_rate)->toBeNull();
+
+    // Without updating, there is nothing left to import.
+    expect(fn () => ($this->import)($csv))->toThrow(ValidationException::class);
+
+    // E.g. the project was not billable at the first import.
+    $imported->update(['is_billable' => false]);
+    $rates = [ClockifyImportPlan::rateKey('acme|webbshop', $this->member->id) => 125000, ClockifyImportPlan::rateKey('acme|webbshop', $this->owner->id) => 125000];
+    $result = app(ImportClockifyEntries::class)->handle($this->organization, $this->owner, ClockifyCsv::fromString($csv), [], [], $rates, updateExisting: true);
+
+    expect($result)->toMatchArray(['created' => 0, 'updated' => 1])
+        ->and($imported->fresh()->hourly_rate)->toBe(125000)
+        ->and($imported->fresh()->is_billable)->toBeTrue()
+        ->and($reported->fresh()->hourly_rate)->toBe(500)
+        ->and($reported->fresh()->is_billable)->toBeFalse()
+        ->and(TimeEntry::query()->count())->toBe(2);
 });

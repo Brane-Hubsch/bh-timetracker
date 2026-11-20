@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Imports;
 
+use App\Services\Imports\ClockifyImportPlan;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * The choices made in the import preview: which member each Clockify user's time goes to (or
- * "skip"), and whether new projects are billable. Sent as lists, since emails and project keys
- * contain characters that don't work as input names.
+ * "skip"), whether new projects are billable, the hourly rate per member and project, and whether
+ * rows that were already imported are updated. Sent as lists, since emails and project keys contain
+ * characters that don't work as input names.
  */
 class ClockifyImportChoicesRequest extends FormRequest
 {
@@ -23,6 +25,11 @@ class ClockifyImportChoicesRequest extends FormRequest
             'projects' => ['nullable', 'array', 'max:2000'],
             'projects.*.key' => ['required', 'string', 'max:600'],
             'projects.*.billable' => ['required', 'boolean'],
+            'rates' => ['nullable', 'array', 'max:5000'],
+            'rates.*.project' => ['required', 'string', 'max:600'],
+            'rates.*.member' => ['required', 'integer'],
+            'rates.*.rate' => ['nullable', 'integer', 'min:0', 'max:100000000'],
+            'update_existing' => ['nullable', 'boolean'],
         ];
     }
 
@@ -63,5 +70,34 @@ class ClockifyImportChoicesRequest extends FormRequest
         }
 
         return $billable;
+    }
+
+    /**
+     * Hourly rate in minor units per ClockifyImportPlan::rateKey(); null uses the rate order.
+     *
+     * @return array<string, int|null>
+     */
+    public function rates(): array
+    {
+        $rates = [];
+
+        foreach ((array) $this->input('rates', []) as $choice) {
+            if (! is_array($choice) || ! is_string($choice['project'] ?? null) || ! is_numeric($choice['member'] ?? null)) {
+                continue;
+            }
+
+            $rate = $choice['rate'] ?? null;
+            $rates[ClockifyImportPlan::rateKey($choice['project'], (int) $choice['member'])] = is_numeric($rate) ? (int) $rate : null;
+        }
+
+        return $rates;
+    }
+
+    /**
+     * Whether rows an earlier import created get the current rate and billable setting.
+     */
+    public function updateExisting(): bool
+    {
+        return $this->boolean('update_existing');
     }
 }
