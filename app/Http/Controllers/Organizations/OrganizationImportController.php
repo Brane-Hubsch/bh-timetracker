@@ -19,7 +19,8 @@ use Inertia\Response;
 
 /**
  * Import from Clockify in three steps: upload the CSV export, review a preview (map users to
- * members, choose billable for new projects), then import.
+ * members, choose billable for new projects and the hourly rate per member and project), then
+ * import. Rates are only shown to and taken from users who may see rates.
  */
 class OrganizationImportController extends Controller
 {
@@ -64,7 +65,9 @@ class OrganizationImportController extends Controller
             return $this->expired($organization);
         }
 
-        $plan = new ClockifyImportPlan($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject());
+        $canSetRates = $user->can('viewRates', $organization);
+        $plan = new ClockifyImportPlan($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject(), $canSetRates ? $request->rates() : []);
+        $rates = collect($plan->rates)->groupBy('projectKey');
 
         return Inertia::render('organizations/import', [
             'organization' => ['name' => $organization->name, 'slug' => $organization->slug],
@@ -87,7 +90,18 @@ class OrganizationImportController extends Controller
                     'billable' => $project['billable'],
                     'entries' => $project['entries'],
                     'seconds' => $project['seconds'],
+                    'rates' => $canSetRates ? $rates->get($project['key'], collect())->map(fn (array $rate) => [
+                        'memberId' => $rate['userId'],
+                        'name' => $rate['name'],
+                        'avatar' => $rate['avatar'],
+                        'entries' => $rate['entries'],
+                        'seconds' => $rate['seconds'],
+                        'defaultRate' => $rate['defaultRate'],
+                        'rate' => $rate['rate'],
+                    ])->values()->all() : null,
                 ], $plan->projects),
+                'currency' => $organization->currency,
+                'alreadyImported' => count($plan->alreadyImported),
                 'newClients' => $plan->newClients,
                 'skipped' => array_slice($plan->skipped, 0, self::MAX_LISTED_SKIPPED),
                 'skippedCount' => count($plan->skipped),
@@ -109,7 +123,8 @@ class OrganizationImportController extends Controller
             return $this->expired($organization);
         }
 
-        $result = $importEntries->handle($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject());
+        $rates = $user->can('viewRates', $organization) ? $request->rates() : [];
+        $result = $importEntries->handle($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject(), $rates, $request->updateExisting());
         $this->pendingImports->forget($organization, $user, $import);
 
         Inertia::flash('importResult', [
@@ -117,7 +132,9 @@ class OrganizationImportController extends Controller
             'skipped' => array_slice($result['skipped'], 0, self::MAX_LISTED_SKIPPED),
             'skippedCount' => count($result['skipped']),
         ]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice(':count entry imported.|:count entries imported.', $result['created'], ['count' => $result['created']])]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $result['created'] === 0
+            ? trans_choice(':count entry updated.|:count entries updated.', $result['updated'], ['count' => $result['updated']])
+            : trans_choice(':count entry imported.|:count entries imported.', $result['created'], ['count' => $result['created']])]);
 
         return to_route('organizations.import.create', ['organization' => $organization->slug]);
     }

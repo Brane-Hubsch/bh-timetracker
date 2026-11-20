@@ -3,6 +3,7 @@
 use App\Actions\TimeEntries\CreateTimeEntries;
 use App\Actions\TimeEntries\CreateTimeEntry;
 use App\Actions\TimeEntries\DeleteTimeEntry;
+use App\Actions\TimeEntries\RepriceTimeEntry;
 use App\Actions\TimeEntries\RestoreTimeEntry;
 use App\Actions\TimeEntries\UpdateTimeEntry;
 use App\Data\TimeEntryData;
@@ -145,4 +146,15 @@ it('creates several entries all or nothing', function () {
 
     $created = app(CreateTimeEntries::class)->handle($this->organization, [$entries[0], entryData($this->owner, $this->project)]);
     expect($created)->toHaveCount(2);
+});
+
+it('reprices an entry with the current rate order and billable setting', function () {
+    $entry = TimeEntry::factory()->by($this->member, $this->project)->create(['hourly_rate' => 50000, 'is_billable' => true]);
+    $this->project->members()->attach($this->member, ['hourly_rate' => 120000]);
+
+    expect(app(RepriceTimeEntry::class)->handle($entry, false))->toBeTrue()
+        ->and($entry->fresh()->hourly_rate)->toBe(120000)
+        ->and($entry->fresh()->is_billable)->toBeFalse()
+        // Nothing left to change.
+        ->and(app(RepriceTimeEntry::class)->handle($entry->fresh(), false))->toBeFalse();
 });

@@ -50,7 +50,7 @@ describes; propose additions instead of building them.
 ## Time entries
 
 - Time entries are written only through `app/Actions/TimeEntries` (`CreateTimeEntry`, `UpdateTimeEntry`,
-  `CreateTimeEntries`, `DeleteTimeEntry`, `RestoreTimeEntry`); the shared `ValidatesTimeEntries` rules
+  `CreateTimeEntries`, `DeleteTimeEntry`, `RestoreTimeEntry`, `RepriceTimeEntry`); the shared `ValidatesTimeEntries` rules
   (active member, accessible non-archived project, end after start, at most 24 h) apply to web and MCP.
 - Members manage their own time; `ManageTeamTime` (owner/admin) may view and report for other members
   (`TimeEntryPolicy::manageFor`). Deletes are soft deletes so they can be undone.
@@ -63,6 +63,9 @@ describes; propose additions instead of building them.
   `ClockifyImportPlan` (the preview and the import share it) and write through
   `App\Actions\Imports\ImportClockifyEntries`, which creates entries with `CreateTimeEntry` and
   `TimeEntrySource::Import`. Skipped rows carry a reason; nothing is saved before the import step.
+  Rates chosen per member and project in the preview are saved as project member rates
+  (`AssignProjectMember`) before the entries are created, so the rate order snapshots them; rows an
+  earlier import created can be repriced (`RepriceTimeEntry`), never time reported in the app.
 - Tags (`App\Models\Tag`) belong to the organization and are attached to time entries by name: actions
   resolve names with `App\Actions\Tags\ResolveTags` (case-insensitive, creates missing ones; anyone may
   create tags while reporting). Renaming to an existing name merges (`RenameTag`); managing the list

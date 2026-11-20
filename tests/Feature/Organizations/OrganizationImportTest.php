@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\OrganizationRole;
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -134,4 +135,49 @@ it('cancels an upload', function () {
 
     $this->get(route('organizations.import.show', [$this->slug, $token]))
         ->assertRedirect(route('organizations.import.create', $this->slug));
+});
+
+it('prefills each member\'s rate per project from the rate order', function () {
+    $this->organization->update(['default_hourly_rate' => 90000]);
+    $this->organization->members()->updateExistingPivot($this->member->id, ['hourly_rate' => 95000]);
+    $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
+    $webbshop = Project::factory()->for($this->organization)->for($client)->create(['name' => 'Webbshop', 'hourly_rate' => 110000]);
+    $webbshop->members()->attach($this->member, ['hourly_rate' => 120000]);
+    $token = importToken((string) ($this->upload)($this->owner)->headers->get('Location'));
+
+    $this->get(route('organizations.import.show', [$this->slug, $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.currency', 'SEK')
+            // Existing project: the member's rate on the project.
+            ->where('preview.projects.0.name', 'Webbshop')
+            ->where('preview.projects.0.rates.0.memberId', $this->member->id)
+            ->where('preview.projects.0.rates.0.defaultRate', 120000)
+            ->where('preview.projects.0.rates.0.seconds', 8 * 3600)
+            // New project: the organization's default.
+            ->where('preview.projects.1.name', 'Kontoret')
+            ->where('preview.projects.1.rates.0.memberId', $this->owner->id)
+            ->where('preview.projects.1.rates.0.defaultRate', 90000));
+});
+
+it('imports with chosen rates and updates entries imported before when asked', function () {
+    $token = importToken((string) ($this->upload)($this->owner)->headers->get('Location'));
+    $this->post(route('organizations.import.run', [$this->slug, $token]))->assertRedirect();
+    expect(TimeEntry::query()->where('user_id', $this->member->id)->sole()->hourly_rate)->toBeNull();
+
+    $token = importToken((string) ($this->upload)($this->owner)->headers->get('Location'));
+    $this->get(route('organizations.import.show', [$this->slug, $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.importable', 0)
+            ->where('preview.alreadyImported', 2));
+
+    $this->post(route('organizations.import.run', [$this->slug, $token]), [
+        'rates' => [['project' => 'acme|webbshop', 'member' => $this->member->id, 'rate' => 125000]],
+        'update_existing' => true,
+    ])
+        ->assertRedirect(route('organizations.import.create', $this->slug))
+        ->assertInertiaFlash('importResult.created', 0)
+        ->assertInertiaFlash('importResult.updated', 1);
+
+    expect(TimeEntry::query()->where('user_id', $this->member->id)->sole()->hourly_rate)->toBe(125000)
+        ->and(TimeEntry::query()->count())->toBe(2);
 });
