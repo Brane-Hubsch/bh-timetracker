@@ -113,15 +113,18 @@ export function GroupTable({
                                         )}
                                     </Table.Cell>
                                     <Table.Cell>
-                                        <span className="flex items-center gap-2 text-sm text-muted tabular-nums">
+                                        <span className="flex items-center justify-between gap-2 text-sm whitespace-nowrap text-muted tabular-nums">
                                             <span
-                                                className={`hidden h-1.5 w-16 shrink-0 rounded-full bg-default sm:block ${line.level === 1 ? 'invisible' : ''}`}
+                                                className={`hidden h-2 w-24 shrink-0 rounded-full bg-default sm:block lg:w-32 xl:w-40 ${line.level === 1 ? 'invisible' : ''}`}
                                                 aria-hidden="true"
                                             >
                                                 <span
-                                                    className="block h-full rounded-full bg-accent"
+                                                    className="block h-full origin-left animate-grow-x rounded-full bg-accent motion-safe:transition-[width] motion-safe:duration-300"
                                                     style={{
                                                         width: `${Math.min(1, share(line.seconds)) * 100}%`,
+                                                        backgroundColor:
+                                                            line.color ??
+                                                            undefined,
                                                     }}
                                                 />
                                             </span>
