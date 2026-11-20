@@ -9,7 +9,7 @@ import {
     ToggleButtonGroup,
 } from '@heroui/react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useFilter } from 'react-aria-components';
 import { ProjectDot } from '@/components/project-dot';
 import { useIsDesktop } from '@/hooks/use-media-query';
@@ -63,7 +63,12 @@ export function ProjectPicker({
     const isDesktop = useIsDesktop();
     const { contains } = useFilter({ sensitivity: 'base' });
     const [query, setQuery] = useState('');
-    const createLabel = t('Create project');
+    const emptyMessageId = useId();
+    const emptyMessage =
+        projects.length === 0
+            ? t('There are no projects.')
+            : t('No projects match your search.');
+    const createLabel = t('Create one');
     const showCreate =
         Boolean(createProjectUrl) &&
         !projects.some((project) => contains(project.label, query));
@@ -122,11 +127,33 @@ export function ProjectPicker({
                     <ComboBox.Trigger />
                 </ComboBox.InputGroup>
                 <FieldError>{error}</FieldError>
-                <ComboBox.Popover>
+                <ComboBox.Popover
+                    className={
+                        showCreate
+                            ? 'flex-row flex-wrap items-center gap-x-1 px-4 py-3'
+                            : undefined
+                    }
+                >
+                    {showCreate && (
+                        <span
+                            id={emptyMessageId}
+                            className="leading-6 text-muted"
+                        >
+                            {emptyMessage}
+                        </span>
+                    )}
                     <ListBox
+                        aria-describedby={
+                            showCreate ? emptyMessageId : undefined
+                        }
+                        className={
+                            showCreate
+                                ? 'w-fit overflow-visible p-0'
+                                : undefined
+                        }
                         renderEmptyState={() => (
                             <div className="px-3 py-1.5 text-sm text-muted">
-                                {t('No projects match your search.')}
+                                {emptyMessage}
                             </div>
                         )}
                     >
@@ -159,9 +186,10 @@ export function ProjectPicker({
                                 id="create-project"
                                 href={createProjectUrl}
                                 textValue={createOptionText}
-                                className="px-3"
+                                aria-label={t('Create a project')}
+                                className="link min-h-0 rounded-sm p-0 underline hover:bg-transparent"
                             >
-                                <Label>{createLabel}</Label>
+                                {createLabel}
                             </ListBox.Item>
                         )}
                     </ListBox>
