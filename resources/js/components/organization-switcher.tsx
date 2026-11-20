@@ -1,12 +1,13 @@
 import { Button, Dropdown, Header, Label, Separator } from '@heroui/react';
 import { usePage } from '@inertiajs/react';
-import { Check, ChevronsUpDown, Plus } from 'lucide-react';
+import { Building2, Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 import CreateOrganizationModal from '@/components/create-organization-modal';
 import { LogoImage } from '@/components/logo-image';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { edit as editOrganization } from '@/routes/organizations';
 
 type Props = {
     className?: string;
@@ -68,7 +69,7 @@ export function OrganizationSwitcher({ className, compact = false }: Props) {
                     </span>
                     <ChevronsUpDown className="size-4 shrink-0 text-muted" />
                 </Button>
-                <Dropdown.Popover placement="bottom start" className="min-w-56">
+                <Dropdown.Popover placement="bottom start" className="min-w-60">
                     <Dropdown.Menu onAction={onAction}>
                         <Dropdown.Section>
                             <Header>{t('Organizations')}</Header>
@@ -94,6 +95,19 @@ export function OrganizationSwitcher({ className, compact = false }: Props) {
                             ))}
                         </Dropdown.Section>
                         <Separator />
+                        {currentOrganization && (
+                            <Dropdown.Item
+                                id="settings"
+                                href={
+                                    editOrganization(currentOrganization.slug)
+                                        .url
+                                }
+                                textValue={t('Organization settings')}
+                            >
+                                <Building2 className="size-4 shrink-0" />
+                                <Label>{t('Organization settings')}</Label>
+                            </Dropdown.Item>
+                        )}
                         <Dropdown.Item
                             id="create"
                             textValue={t('New organization')}

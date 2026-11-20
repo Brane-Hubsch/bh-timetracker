@@ -1,11 +1,10 @@
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { router, usePage } from '@inertiajs/react';
-import { Building2, LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
-import { edit as editOrganization } from '@/routes/organizations';
 import { edit as editProfile } from '@/routes/profile';
 
 export function logoutAndFlush() {
@@ -21,7 +20,7 @@ type Props = {
 
 export function UserMenu({ showName = false, className }: Props) {
     const { t } = useTranslation();
-    const { auth, currentOrganization } = usePage().props;
+    const { auth } = usePage().props;
     const getInitials = useInitials();
 
     return (
@@ -70,18 +69,6 @@ export function UserMenu({ showName = false, className }: Props) {
                         <Settings className="size-4" />
                         <Label>{t('Settings')}</Label>
                     </Dropdown.Item>
-                    {currentOrganization && (
-                        <Dropdown.Item
-                            id="organization"
-                            href={
-                                editOrganization(currentOrganization.slug).url
-                            }
-                            textValue={t('Organization settings')}
-                        >
-                            <Building2 className="size-4" />
-                            <Label>{t('Organization settings')}</Label>
-                        </Dropdown.Item>
-                    )}
                     <Separator />
                     <Dropdown.Item
                         id="logout"
