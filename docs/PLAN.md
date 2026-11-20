@@ -163,6 +163,8 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.7 Startsida (dashboard)
 
+*Pausad: kalendern är startsidan, se "Ändring efter Fas 6: kalendern är startsidan".*
+
 - Min tid idag / denna vecka (mot ev. veckomål senare), senaste poster, snabbinmatning.
 - För admin: teamets timmar denna vecka, projekt som närmar sig estimat.
 
@@ -172,7 +174,7 @@ Se avsnitt 6.
 
 ### 4.9 Mobil och desktop
 
-- Responsiv layout: sidomeny på desktop, bottennavigering (Idag / Kalender / Rapporter / Mer) på mobil.
+- Responsiv layout: sidomeny på desktop, bottennavigering (Kalender / Rapporter / Mer) på mobil. (Idag är pausad, se ändringen efter Fas 6.)
 - Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
@@ -677,6 +679,16 @@ Beställt i efterhand. `laravel/octane` är ett godkänt beroende. Webbtjänsten
   - 100 omväxlande sidladdningar för två användare i olika organisationer på två delade workers visade aldrig fel organisations data; den andra organisationens URL gav 403.
   - `octane:reload` och omstart fungerar.
   - Inloggningssidan svarar på median 9 ms mot 20 ms i klassiskt läge.
+
+### Ändring efter Fas 6: kalendern är startsidan (2026-11-20)
+
+Beslutat av beställaren: kalendern är det alla använder för att rapportera tid, så den är startsidan. Idag-sidan (dashboard, avsnitt 4.7) är pausad.
+
+- **Var man hamnar:** efter inloggning (passkey, Google, magisk länk, e-postverifiering), på `/`, efter onboarding och efter att ha tackat ja eller nej till en inbjudan hamnar man i kalendern (`/{organisation}/time`).
+  - Startsidan styrs på ett ställe: `fortify.home` (`/time`).
+- **Menyer:** Idag är borttagen ur sidomenyn, mobilens bottennavigering och ⌘K. Mobilens bottennavigering är nu Kalender / Rapporter / Mer.
+- **Kvar i koden:** `DashboardController`, sidan `dashboard` och deras tester. Sidan nås fortfarande på `/{organisation}/dashboard`.
+- **Slå på igen:** lägg tillbaka menyposten i `resources/js/lib/navigation.ts` och ⌘K-kommandot, och sätt `fortify.home` till `/dashboard`.
 
 ## 8. Senare (medvetet bortvalt i v1)
 
