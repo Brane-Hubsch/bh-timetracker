@@ -96,7 +96,8 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                 {gridlines.map((hours) => (
                     <div
                         key={hours}
-                        className="pointer-events-none absolute right-0 left-10 border-t border-separator"
+                        // The baseline is drawn over the bars, so sub-pixel rounding can't make them look uneven.
+                        className={`pointer-events-none absolute right-0 left-10 border-t border-separator ${hours === 0 ? 'z-10' : ''}`}
                         style={{ bottom: `${(hours / max) * 100}%` }}
                     >
                         <span className="absolute -top-2 -left-10 w-8 text-right text-xs text-muted tabular-nums">
@@ -124,8 +125,9 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                                 onFocus={() => setSelected(bucket)}
                                 onClick={() => setSelected(bucket)}
                             >
+                                {/* The segments shrink to fit instead of overflowing, so every bar ends exactly on the baseline. */}
                                 <span
-                                    className={`flex w-full max-w-6 origin-bottom animate-grow-y flex-col gap-0.5 overflow-hidden rounded-t-[4px] transition-[height,opacity] duration-300 ${selected === null || selected.key === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`}
+                                    className={`flex w-full max-w-6 origin-bottom animate-grow-y flex-col justify-end gap-0.5 transition-[height,opacity] duration-300 ${selected === null || selected.key === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`}
                                     style={{
                                         height: `${(bucket.seconds / 3600 / max) * 100}%`,
                                         animationDelay: `${Math.min(index * 12, 360)}ms`,
@@ -133,21 +135,13 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                                 >
                                     {bucket.seconds >
                                         bucket.billableSeconds && (
-                                        <span
-                                            className="min-h-px basis-0 bg-accent/35"
-                                            style={{
-                                                flexGrow:
-                                                    bucket.seconds -
-                                                    bucket.billableSeconds,
-                                            }}
-                                        />
+                                        <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
                                     )}
                                     {bucket.billableSeconds > 0 && (
                                         <span
-                                            className="min-h-px basis-0 bg-accent"
+                                            className="min-h-px bg-accent first:rounded-t-[4px]"
                                             style={{
-                                                flexGrow:
-                                                    bucket.billableSeconds,
+                                                height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
                                             }}
                                         />
                                     )}
