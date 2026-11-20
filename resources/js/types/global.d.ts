@@ -29,6 +29,7 @@ declare module '@inertiajs/core' {
         };
         layoutProps: {
             width: import('@/types/ui').ContentWidth;
+            compact: boolean;
         };
     }
 }

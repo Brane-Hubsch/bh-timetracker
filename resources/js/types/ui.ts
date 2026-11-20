@@ -8,6 +8,7 @@ export type AppLayoutProps = {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
     width?: ContentWidth;
+    compact?: boolean;
 };
 
 export type AppVariant = 'header' | 'sidebar';

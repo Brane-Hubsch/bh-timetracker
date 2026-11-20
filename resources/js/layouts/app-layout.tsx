@@ -22,6 +22,7 @@ const WIDTHS: Record<ContentWidth, string> = {
 export default function AppLayout({
     breadcrumbs = [],
     width = 'default',
+    compact = false,
     children,
 }: AppLayoutProps) {
     const { t } = useTranslation();
@@ -35,7 +36,7 @@ export default function AppLayout({
                     <MobileTopBar className="md:hidden" />
 
                     <main
-                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-4 pb-28 md:px-8 md:pt-8 md:pb-12`}
+                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-4 pb-28 md:px-8 ${compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12'}`}
                     >
                         {breadcrumbs.length > 1 && (
                             <Breadcrumbs className="mb-6 hidden md:flex">
