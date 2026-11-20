@@ -64,6 +64,7 @@ export default function TimeIndex({
     today,
     weekStart,
     weekStartsOn,
+    timezone,
     entries,
     projects,
     tags,
@@ -357,7 +358,7 @@ export default function TimeIndex({
                             view={view}
                             date={date}
                             weekStartsOn={weekStartsOn}
-                            now={`${today}T${new Date().toTimeString().slice(0, 5)}`}
+                            timezone={timezone}
                             entries={entries}
                             onSelect={(start, end) =>
                                 setDraft({
