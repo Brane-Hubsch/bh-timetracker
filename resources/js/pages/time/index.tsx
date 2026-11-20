@@ -53,6 +53,7 @@ type Props = {
     members: TimeEntryMemberOption[];
     /** Recently used project ids per member id (owners and admins). */
     recentProjects: Record<string, string[]>;
+    canCopyPreviousWeek: boolean;
     previousWeek?: TimeEntry[];
 };
 
@@ -68,6 +69,7 @@ export default function TimeIndex({
     member,
     members,
     recentProjects,
+    canCopyPreviousWeek,
     previousWeek,
 }: Props) {
     const { t, intlLocale } = useTranslation();
@@ -294,18 +296,20 @@ export default function TimeIndex({
                             ]}
                             data-test="time-view"
                         />
-                        <Button
-                            variant="tertiary"
-                            className="shrink-0"
-                            onPress={() => setCopyOpen(true)}
-                            aria-label={t('Copy previous week')}
-                            data-test="copy-week-button"
-                        >
-                            <Copy className="size-4" />
-                            <span className="hidden lg:inline">
-                                {t('Copy previous week')}
-                            </span>
-                        </Button>
+                        {canCopyPreviousWeek && (
+                            <Button
+                                variant="tertiary"
+                                className="shrink-0"
+                                onPress={() => setCopyOpen(true)}
+                                aria-label={t('Copy previous week')}
+                                data-test="copy-week-button"
+                            >
+                                <Copy className="size-4" />
+                                <span className="hidden lg:inline">
+                                    {t('Copy previous week')}
+                                </span>
+                            </Button>
+                        )}
                         <Button
                             className="hidden md:inline-flex"
                             onPress={() =>

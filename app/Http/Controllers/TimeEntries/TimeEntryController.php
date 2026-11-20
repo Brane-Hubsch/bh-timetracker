@@ -54,7 +54,9 @@ class TimeEntryController extends Controller
             ->orderBy('started_at')
             ->get();
 
-        $previousWeekStart = $weekStart->subWeek();
+        $previousWeek = TimeEntry::query()
+            ->where('user_id', $member->id)
+            ->startingBetween($weekStart->subWeek(), $weekStart);
 
         $members = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
             ? $this->presenter->memberOptions($organization)
@@ -75,10 +77,9 @@ class TimeEntryController extends Controller
             'members' => $members,
             // So the entry form's project shortcuts follow the member it reports for.
             'recentProjects' => $this->presenter->recentProjectsByMember($organization, $members),
+            'canCopyPreviousWeek' => fn () => $entries->isEmpty() && $previousWeek->exists(),
             // Loaded on demand for "copy previous week".
-            'previousWeek' => Inertia::optional(fn () => TimeEntry::query()
-                ->where('user_id', $member->id)
-                ->startingBetween($previousWeekStart, $weekStart)
+            'previousWeek' => Inertia::optional(fn () => (clone $previousWeek)
                 ->with(['project.client', 'tags'])
                 ->orderBy('started_at')
                 ->get()

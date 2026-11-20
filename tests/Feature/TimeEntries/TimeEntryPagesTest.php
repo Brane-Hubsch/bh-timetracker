@@ -71,6 +71,30 @@ it('shows the week of the signed-in user in their time zone', function () {
             ->missing('previousWeek'));
 });
 
+it('offers week copying only for an empty selected week with earlier entries', function (bool $selectedWeekHasEntries, bool $previousWeekHasEntries, bool $canCopy) {
+    if ($selectedWeekHasEntries) {
+        entryFor($this->member);
+    }
+
+    if ($previousWeekHasEntries) {
+        entryFor($this->member, '2026-11-09 08:00', '2026-11-09 10:00');
+    }
+
+    // A colleague's previous-week entry never makes this member's week eligible.
+    entryFor($this->colleague, '2026-11-10 08:00', '2026-11-10 10:00');
+
+    $this->actingAs($this->admin)
+        ->get(timeRoute('time.index', ['date' => '2026-11-18', 'view' => 'day', 'user' => $this->member->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canCopyPreviousWeek', $canCopy)
+            ->missing('previousWeek'));
+})->with([
+    'both weeks empty' => [false, false, false],
+    'only the previous week has entries' => [false, true, true],
+    'only the selected week has entries, on another day' => [true, false, false],
+    'both weeks have entries' => [true, true, false],
+]);
+
 it('loads the previous week on demand', function () {
     $previous = entryFor($this->member, '2026-11-09 07:00', '2026-11-09 08:00');
 
