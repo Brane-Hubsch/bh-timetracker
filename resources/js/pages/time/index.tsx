@@ -315,7 +315,9 @@ export default function TimeIndex({
                             </Button>
                         )}
                         <Button
+                            isIconOnly
                             className="hidden md:inline-flex"
+                            aria-label={t('Report time')}
                             onPress={() =>
                                 setDraft(
                                     newDraft(
@@ -330,7 +332,6 @@ export default function TimeIndex({
                             data-test="new-time-button"
                         >
                             <Plus className="size-4" />
-                            {t('Report time')}
                         </Button>
                     </div>
                 </div>
