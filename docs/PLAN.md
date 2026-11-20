@@ -718,6 +718,7 @@ Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (peri
   - Knappen visar periodens namn och datum, t.ex. "Denna månad 1–30 nov.", "Oktober 2026 1–31 okt." eller "Vecka 48 23–29 nov.".
   - Den öppnar snabbvalen och en kalender för eget intervall, med organisationens första veckodag.
 - **Filter som knappar:** Medlemmar (avatarer), Kunder (loggor), Projekt (färgprickar, kund som undertext), Taggar och Debitering.
+  - Förhandsvisningarnas behållare är transparenta och visar de rundade konturerna hela, även när filtret är valt.
   - Utan val visar knappen filtrets namn och ett smakprov.
   - Med val visar den valen i accentfärg, t.ex. "Alex Lind, Sam Ek".
   - Varje knapp öppnar en lista med flerval (Debitering: ett val). Listor med fler än sju alternativ får sökning.
