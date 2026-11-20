@@ -1,0 +1,24 @@
+# Additions for running compose.yaml on a server of your own, without Coolify: FrankenPHP terminates TLS
+# itself with a Let's Encrypt certificate for APP_URL's host, on ports 80 and 443 (80 redirects).
+# Use both files, e.g. with COMPOSE_FILE=compose.yaml:compose.standalone.yaml in .env.
+
+services:
+    web:
+        environment:
+            SSL_MODE: full
+            CADDY_AUTO_HTTPS: ${CADDY_AUTO_HTTPS:-on}
+            CADDY_HTTPS_SERVER_ADDRESS: ${APP_URL:?Set APP_URL in .env}
+            # Visitors connect to FrankenPHP directly, so no forwarded headers are trusted by default.
+            TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+        # HTTP/1.1 and HTTP/2 only: Caddy advertises HTTP/3 on its internal port, which isn't published.
+        ports:
+            - '80:8080'
+            - '443:8443'
+        volumes:
+            - caddy_data:/data
+            - caddy_config:/config
+
+volumes:
+    # Caddy's certificates; keeping them avoids hitting Let's Encrypt's rate limits on redeploys.
+    caddy_data:
+    caddy_config:
