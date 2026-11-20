@@ -7,8 +7,9 @@ import { useTranslation } from '@/lib/i18n';
 
 type Props = {
     label: string;
-    /** "round" for profile pictures, "square" for logos (never cropped). */
+    /** "round" for profile pictures, "square" for logos. */
     shape: 'round' | 'square';
+    fit?: 'contain' | 'cover';
     /** Current (or newly chosen) image. */
     src: string | null;
     /** Name used for the initials when there is no image. */
@@ -32,6 +33,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 export function ImageUploadField({
     label,
     shape,
+    fit,
     src,
     name,
     canRemove,
@@ -49,11 +51,17 @@ export function ImageUploadField({
             <div className="flex items-center gap-4">
                 {shape === 'round' ? (
                     <Avatar className="size-16 shrink-0 text-lg [--avatar-radius:9999px]">
-                        {src && <Avatar.Image src={src} alt="" />}
+                        {src && (
+                            <Avatar.Image
+                                src={src}
+                                alt=""
+                                className="object-cover"
+                            />
+                        )}
                         <Avatar.Fallback>{getInitials(name)}</Avatar.Fallback>
                     </Avatar>
                 ) : (
-                    <LogoImage src={src} name={name} size={64} />
+                    <LogoImage src={src} name={name} size={64} fit={fit} />
                 )}
                 <div className="grid min-w-0 gap-2">
                     <span className="text-sm font-medium">{label}</span>

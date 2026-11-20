@@ -117,7 +117,7 @@ describes; propose additions instead of building them.
   the sizes from `config/images.php`) via the actions in `app/Actions/Images`; validate uploads with
   `ImageUploadRequest::imageRules()` (raster only, no SVG). Store the returned directory on the model
   and hand the frontend URLs (`logoUrl($size)`, `User::$avatar`), never storage paths. Show logos with
-  `LogoImage` (square, never cropped) and pick a size about twice the displayed one.
+  `LogoImage` (cover for organization logos, contain for client logos) and pick a size about twice the displayed one.
 - Nightly backups (`config/backup.php`, spatie/laravel-backup) cover the database and
   `storage/app/public/images` only. Keep new uploaded files under that directory, or add their
   directory to the backup's `include`.

@@ -241,6 +241,7 @@ function CommandPalette({
                                                         src={command.logo.src}
                                                         name={command.logo.name}
                                                         size={20}
+                                                        fit="cover"
                                                         className="rounded-md"
                                                     />
                                                 ) : command.color ? (

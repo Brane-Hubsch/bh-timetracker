@@ -5,16 +5,24 @@ namespace App\Enums;
 /**
  * The kinds of uploaded images and how they are processed.
  */
-enum ImageKind: string
+enum ImageKind
 {
     /** Profile pictures: cropped to a square around the centre. */
-    case Avatar = 'avatars';
+    case Avatar;
 
-    /** Organization and client logos: scaled to fit, never cropped or enlarged, transparency kept. */
-    case Logo = 'logos';
+    /** Workspace icons: cropped to a square around the centre. */
+    case OrganizationLogo;
+
+    /** Client logos: scaled to fit while preserving their original proportions. */
+    case Logo;
+
+    public function directory(): string
+    {
+        return $this === self::Avatar ? 'avatars' : 'logos';
+    }
 
     public function crops(): bool
     {
-        return $this === self::Avatar;
+        return $this !== self::Logo;
     }
 }

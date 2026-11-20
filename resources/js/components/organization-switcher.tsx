@@ -58,6 +58,7 @@ export function OrganizationSwitcher({ className, compact = false }: Props) {
                                 src={currentOrganization.logo}
                                 name={currentOrganization.name}
                                 size={28}
+                                fit="cover"
                             />
                         )}
                         <span className="truncate font-medium">
@@ -82,6 +83,7 @@ export function OrganizationSwitcher({ className, compact = false }: Props) {
                                         src={organization.logo}
                                         name={organization.name}
                                         size={24}
+                                        fit="cover"
                                     />
                                     <Label>{organization.name}</Label>
                                     {organization.id ===

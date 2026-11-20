@@ -15,7 +15,7 @@ class UpdateOrganizationLogo
      */
     public function handle(Organization $organization, ?UploadedFile $file): Organization
     {
-        $this->replaceImage($organization, 'logo_path', $file, ImageKind::Logo);
+        $this->replaceImage($organization, 'logo_path', $file, ImageKind::OrganizationLogo);
 
         return $organization;
     }

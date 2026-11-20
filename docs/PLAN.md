@@ -593,7 +593,7 @@ Beställt i efterhand. Designen finns i Figma-filen TimeReport på sidan "Bilder
 - **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. I PDF-huvudet visas den när rapporten gäller en enda kund.
 - **Bildbehandling** med `intervention/image` (godkänt beroende, GD-drivrutin):
   - Varje uppladdning sparas som WebP i 64, 128, 256 och 512 px.
-  - Profilbilder beskärs kvadratiskt runt mitten. Loggor skalas för att passa, beskärs aldrig, förstoras inte och behåller transparens.
+  - Profilbilder och organisationsloggor beskärs kvadratiskt runt mitten så att de fyller bildytan. Kundloggor skalas för att passa utan beskärning eller förstoring. Transparens bevaras.
   - EXIF-rotation tillämpas. Animationer reduceras till första bilden, och metadata (t.ex. GPS-position) försvinner vid omkodningen.
 - **Uppladdningsregler:**
   - JPG, PNG, WebP eller GIF.
