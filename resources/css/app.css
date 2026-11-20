@@ -133,8 +133,8 @@
 
     @media (prefers-reduced-motion: no-preference) {
         transition:
-            top 80ms var(--ease-out-soft),
-            height 80ms var(--ease-out-soft);
+            top 50ms var(--ease-out-soft),
+            height 50ms var(--ease-out-soft);
 
         @starting-style {
             /* Start at the original edge before FullCalendar's inline position takes over. */
