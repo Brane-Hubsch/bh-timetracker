@@ -144,6 +144,28 @@
     }
 }
 
+.time-calendar-event-lane {
+    /* The classic theme adds 2px at the start of wide lanes and 1px for narrow lanes. */
+    --time-calendar-entry-shift: 1px;
+}
+
+.time-calendar-event-lane-narrow {
+    --time-calendar-entry-shift: 0px;
+}
+
+/* Standalone events have zero inline insets and no margin reserved for overlapping events. */
+.time-calendar-event-lane
+    > :is(
+        [style*='inset-inline: 0%;'],
+        [style*='inset-inline-start: 0%;'][style*='inset-inline-end: 0%;']
+    ):not([style*='margin-inline-end:'])
+    > .time-calendar-event,
+.time-calendar-event-lane .time-calendar-event-mirror {
+    margin-inline: calc(-1 * var(--time-calendar-entry-shift))
+        var(--time-calendar-entry-shift);
+    padding-inline: 0 8px !important;
+}
+
 /* Paint the grips on FullCalendar's pointer targets. Each edge gets at most half the card. */
 .time-calendar-event > .time-calendar-resizer {
     height: min(10px, calc(50% + 4px));

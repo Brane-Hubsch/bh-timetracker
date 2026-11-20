@@ -39,7 +39,7 @@ class ImageStorage
 
         // Work down from the largest size, so large photos are only decoded at full size once.
         $image = $this->resize($image, $kind, $sizes[0]);
-        $directory = "images/{$kind->value}/".Str::uuid();
+        $directory = 'images/'.$kind->directory().'/'.Str::uuid();
 
         foreach ($sizes as $size) {
             $image = $this->resize($image, $kind, $size);
@@ -64,7 +64,7 @@ class ImageStorage
     /**
      * A PNG data URI, for documents that can't load WebP or remote files (PDF exports).
      */
-    public function dataUri(?string $directory, int $size = 256): ?string
+    public function dataUri(?string $directory, int $size = 256, bool $square = false): ?string
     {
         if ($directory === null) {
             return null;
@@ -76,7 +76,15 @@ class ImageStorage
             return null;
         }
 
-        return 'data:image/png;base64,'.base64_encode($this->manager->read($contents)->toPng()->toString());
+        $image = $this->manager->read($contents);
+
+        // Organization logos uploaded before square cropping was introduced can be rectangular.
+        if ($square && $image->width() !== $image->height()) {
+            $side = min($image->width(), $image->height());
+            $image = $image->cover($side, $side);
+        }
+
+        return 'data:image/png;base64,'.base64_encode($image->toPng()->toString());
     }
 
     public function delete(?string $directory): void

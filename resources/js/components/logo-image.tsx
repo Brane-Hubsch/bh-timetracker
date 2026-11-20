@@ -6,28 +6,33 @@ type Props = {
     name: string;
     /** Edge length in pixels. */
     size?: number;
+    fit?: 'contain' | 'cover';
     className?: string;
 };
 
-/**
- * An organization or client logo: square with rounded corners so logos are never cropped (unlike
- * round avatars), on a bordered surface; the first letter of the name when there is no logo.
- */
-export function LogoImage({ src, name, size = 32, className }: Props) {
+/** A square logo with rounded corners and an initial as fallback. */
+export function LogoImage({
+    src,
+    name,
+    size = 32,
+    fit = 'contain',
+    className,
+}: Props) {
+    const inset = src && fit === 'contain';
+
     return (
         <span
             className={cn(
                 'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-lg',
-                src
-                    ? 'border border-separator bg-surface'
-                    : 'bg-default text-muted',
+                src ? 'bg-surface' : 'bg-default text-muted',
+                inset && 'border border-separator',
                 className,
             )}
             // Padding in pixels: a percentage would follow the parent's width, not the logo's.
             style={{
                 width: size,
                 height: size,
-                padding: src ? Math.round(size * 0.12) : undefined,
+                padding: inset ? Math.round(size * 0.12) : undefined,
             }}
             aria-hidden="true"
         >
@@ -35,7 +40,10 @@ export function LogoImage({ src, name, size = 32, className }: Props) {
                 <img
                     src={src}
                     alt=""
-                    className="size-full object-contain"
+                    className={cn(
+                        'size-full',
+                        fit === 'cover' ? 'object-cover' : 'object-contain',
+                    )}
                     loading="lazy"
                 />
             ) : (

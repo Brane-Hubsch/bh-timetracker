@@ -93,6 +93,8 @@ describe('organization logos', function () {
 
         $path = $this->organization->fresh()->logo_path;
         expect($path)->toStartWith('images/logos/');
+        $image = getimagesizefromstring((string) Storage::disk('public')->get("{$path}/256.webp"));
+        expect([$image[0], $image[1]])->toBe([256, 256]);
 
         // Shown in the organization switcher for every member.
         $this->actingAs($this->member)->get(route('organizations.edit', $this->organization->slug))

@@ -199,7 +199,7 @@ class ReportExporter
         return [
             'title' => $title,
             'organization' => $filters->organization->name,
-            'organizationLogo' => $this->images->dataUri($filters->organization->logo_path),
+            'organizationLogo' => $this->images->dataUri($filters->organization->logo_path, square: true),
             'client' => $this->singleClient($filters),
             'period' => $filters->from && $filters->to
                 ? $this->date($filters->from).' – '.$this->date($filters->to)

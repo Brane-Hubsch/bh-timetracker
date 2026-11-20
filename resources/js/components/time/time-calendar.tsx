@@ -15,6 +15,7 @@ import {
     fromCalendarDate,
     timeOf,
 } from '@/lib/time';
+import { cn } from '@/lib/utils';
 import type { TimeEntry } from '@/types';
 
 type Props = {
@@ -219,9 +220,13 @@ export function TimeCalendar({
                     color: entry.project.color,
                 }))}
                 eventClass={({ isMirror, isResizing }) =>
-                    isMirror && isResizing
-                        ? 'time-calendar-event time-calendar-resize-preview'
-                        : 'time-calendar-event'
+                    cn(
+                        'time-calendar-event',
+                        isMirror && 'time-calendar-event-mirror',
+                        isMirror &&
+                            isResizing &&
+                            'time-calendar-resize-preview',
+                    )
                 }
                 eventBeforeClass={(info) =>
                     info.isStartResizable &&
@@ -239,6 +244,12 @@ export function TimeCalendar({
                 dayLaneClass={(info) =>
                     (info.dow === 0 || info.dow === 6) &&
                     'time-calendar-weekend'
+                }
+                dayLaneInnerClass={({ isStack, isNarrow }) =>
+                    !isStack &&
+                    (isNarrow
+                        ? 'time-calendar-event-lane time-calendar-event-lane-narrow'
+                        : 'time-calendar-event-lane')
                 }
                 slotHeaderClass="time-calendar-slot-label"
                 slotHeaderInnerClass={({ isFirst }) =>
@@ -280,7 +291,7 @@ export function TimeCalendar({
                     const localEnd = end && fromCalendarDate(end);
                     const range =
                         localStart && localEnd
-                            ? `${timeOf(localStart)}–${timeOf(localEnd)}`
+                            ? `${timeOf(localStart)} – ${timeOf(localEnd)}`
                             : '';
                     // Use the saved duration, including across DST changes. While resizing,
                     // FullCalendar's preview has updated wall-clock times.
