@@ -3,6 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
+import Heading from '@/components/heading';
 import { SegmentedControl } from '@/components/segmented-control';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
@@ -173,25 +174,28 @@ export default function TimeIndex({
         <>
             <Head title={t('Calendar')} />
 
-            <div className="grid grid-cols-1 gap-5">
-                <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 md:mb-1">
-                    <h1 className="text-2xl font-semibold md:text-[1.75rem]">
-                        {t('Calendar')}
-                    </h1>
-                    <p
-                        className="flex items-baseline gap-2 tabular-nums"
-                        data-test="week-total"
-                    >
-                        <span className="text-xs font-medium text-muted">
-                            {view === 'day' ? t('Day total') : t('Week total')}
-                        </span>
-                        <span className="text-sm font-semibold">
-                            {formatDuration(
-                                view === 'day' ? dayTotal : weekTotal,
-                            )}
-                        </span>
-                    </p>
-                </header>
+            <div className="grid grid-cols-1 gap-5 md:gap-4">
+                <Heading
+                    className="items-center gap-y-1"
+                    title={t('Calendar')}
+                    actions={
+                        <p
+                            className="flex items-baseline gap-2 tabular-nums"
+                            data-test="week-total"
+                        >
+                            <span className="text-xs font-medium text-muted">
+                                {view === 'day'
+                                    ? t('Day total')
+                                    : t('Week total')}
+                            </span>
+                            <span className="text-sm font-semibold">
+                                {formatDuration(
+                                    view === 'day' ? dayTotal : weekTotal,
+                                )}
+                            </span>
+                        </p>
+                    }
+                />
 
                 {/* Two rows on mobile (period, then filters and actions); one on desktop. */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
@@ -431,4 +435,4 @@ export default function TimeIndex({
     );
 }
 
-TimeIndex.layout = { width: 'wide' };
+TimeIndex.layout = { width: 'wide', compact: true };
