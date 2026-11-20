@@ -15,6 +15,11 @@ type Props = {
     containerClassName?: string;
 };
 
+/** Dialog title and a plain close button, as in the TimeReport design. */
+const headingClassName = 'text-xl/7 font-semibold';
+const closeClassName =
+    'size-8 rounded-lg bg-transparent text-foreground hover:bg-default';
+
 /**
  * A modal on desktop and a bottom sheet (drawer) on mobile.
  */
@@ -64,14 +69,18 @@ export function ResponsiveDialog({
                         className={desktopClassName}
                         render={renderDialog}
                     >
-                        {!headerActions && <Modal.CloseTrigger />}
+                        {!headerActions && (
+                            <Modal.CloseTrigger className={closeClassName} />
+                        )}
                         <Modal.Header className={headerClassName}>
-                            <Modal.Heading>{title}</Modal.Heading>
+                            <Modal.Heading className={headingClassName}>
+                                {title}
+                            </Modal.Heading>
                             {headerActions && (
                                 <div className="flex shrink-0 items-center gap-2">
                                     {headerActions}
                                     <Modal.CloseTrigger
-                                        className="static size-8"
+                                        className={`static ${closeClassName}`}
                                         aria-label={t('Close')}
                                     />
                                 </div>
@@ -95,12 +104,14 @@ export function ResponsiveDialog({
                 <Drawer.Dialog className="max-h-[92svh]" render={renderDialog}>
                     <Drawer.Handle />
                     <Drawer.Header className={headerClassName}>
-                        <Drawer.Heading>{title}</Drawer.Heading>
+                        <Drawer.Heading className={headingClassName}>
+                            {title}
+                        </Drawer.Heading>
                         {headerActions && (
                             <div className="flex shrink-0 items-center gap-2">
                                 {headerActions}
                                 <Drawer.CloseTrigger
-                                    className="static size-8"
+                                    className={`static ${closeClassName}`}
                                     aria-label={t('Close')}
                                 />
                             </div>
