@@ -690,6 +690,24 @@ Beslutat av beställaren: kalendern är det alla använder för att rapportera t
 - **Kvar i koden:** `DashboardController`, sidan `dashboard` och deras tester. Sidan nås fortfarande på `/{organisation}/dashboard`.
 - **Slå på igen:** lägg tillbaka menyposten i `resources/js/lib/navigation.ts` och ⌘K-kommandot, och sätt `fortify.home` till `/dashboard`.
 
+### Tillägg efter Fas 6: enklare rapportfilter (2026-11-20)
+
+Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (period, från, till, medlemmar, kunder, projekt, debiterbart). Det är omgjort till en verktygsrad, designad i Figma (sidan "Rapporter · Filter", komponenten "TimeReport / Filterknapp").
+
+- **Period:** en kontroll med pilar för föregående och nästa period.
+  - Hela månader stegar per månad, andra perioder med sin längd.
+  - Knappen visar periodens namn och datum, t.ex. "Denna månad 1–30 nov.", "Oktober 2026 1–31 okt." eller "Vecka 48 23–29 nov.".
+  - Den öppnar snabbvalen och en kalender för eget intervall, med organisationens första veckodag.
+- **Filter som knappar:** Medlemmar (avatarer), Kunder (loggor), Projekt (färgprickar, kund som undertext), Taggar och Debitering.
+  - Utan val visar knappen filtrets namn och ett smakprov.
+  - Med val visar den valen i accentfärg, t.ex. "Alex Lind, Sam Ek".
+  - Varje knapp öppnar en lista med flerval (Debitering: ett val). Listor med fler än sju alternativ får sökning.
+  - Escape stänger listan utan att rensa valet.
+- **Rensa filter** visas när något filter är valt.
+- **Mobil:** perioden tar hela bredden och filterknapparna går att svepa i sidled.
+- **Data:** filteralternativen innehåller nu medlemmarnas bild och om de är inaktiva, kundernas logga samt projektens namn, kund och färg.
+- **URL:** filtren ligger kvar i URL:en som förut, så rapporter går att bokmärka.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.
