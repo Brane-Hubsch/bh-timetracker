@@ -483,7 +483,7 @@ export function TimeEntryForm({
                     id={FORM_ID}
                     onSubmit={submit}
                     onChange={() => setHasTyped(true)}
-                    className="grid gap-5"
+                    className="time-entry-form grid gap-5"
                     data-test="time-entry-form"
                 >
                     {errors.user_id && (
@@ -619,8 +619,9 @@ export function TimeEntryForm({
                                         onAdjust={adjustEnd}
                                     />
                                 </legend>
+                                {/* Same height as the date and duration fields (see .date-input-group). */}
                                 <div
-                                    className="grid h-9 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field"
+                                    className="grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field sm:h-[2.375rem]"
                                     data-invalid={Boolean(
                                         errors.start ||
                                         errors.end ||
@@ -709,19 +710,6 @@ export function TimeEntryForm({
                         </Alert>
                     )}
 
-                    <TagInput
-                        value={current.tags}
-                        onChange={(tags) => set({ tags })}
-                        suggestions={tags}
-                        recentTags={recentTags}
-                        error={
-                            errors.tags ??
-                            Object.entries(errors).find(([key]) =>
-                                key.startsWith('tags.'),
-                            )?.[1]
-                        }
-                    />
-
                     <TextField
                         value={current.description}
                         onChange={(description) => set({ description })}
@@ -739,6 +727,19 @@ export function TimeEntryForm({
                             </Description>
                         )}
                     </TextField>
+
+                    <TagInput
+                        value={current.tags}
+                        onChange={(tags) => set({ tags })}
+                        suggestions={tags}
+                        recentTags={recentTags}
+                        error={
+                            errors.tags ??
+                            Object.entries(errors).find(([key]) =>
+                                key.startsWith('tags.'),
+                            )?.[1]
+                        }
+                    />
 
                     {errors.user_id && members.length <= 1 && (
                         <p className="text-sm text-danger">{errors.user_id}</p>

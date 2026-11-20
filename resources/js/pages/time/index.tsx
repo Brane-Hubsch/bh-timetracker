@@ -1,6 +1,6 @@
 import { Avatar, Button } from '@heroui/react';
 import { Head, router, setLayoutProps, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, CopyPlus, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import { SegmentedControl } from '@/components/segmented-control';
@@ -19,6 +19,7 @@ import { useTranslation } from '@/lib/i18n';
 import {
     addDays,
     formatDate,
+    formatDateRange,
     formatDuration,
     isoWeek,
     minutesToTime,
@@ -165,15 +166,34 @@ export default function TimeIndex({
                   day: 'numeric',
                   month: 'long',
               })
-            : `${t('Week :number', { number: isoWeek(weekStart) })} · ${formatDate(dates[0], intlLocale, { day: 'numeric', month: 'short' })}–${formatDate(dates[6], intlLocale, { day: 'numeric', month: 'short' })}`;
+            : `${t('Week :number', { number: isoWeek(weekStart) })} · ${formatDateRange(dates[0], dates[6], intlLocale)}`;
 
     return (
         <>
             <Head title={t('Calendar')} />
 
-            <div className="grid grid-cols-1 gap-4">
-                {/* Two rows on mobile (navigation and title, then filters and actions); one on desktop. */}
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
+            <div className="grid grid-cols-1 gap-5">
+                <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 md:mb-1">
+                    <h1 className="text-2xl font-semibold md:text-[1.75rem]">
+                        {t('Calendar')}
+                    </h1>
+                    <p
+                        className="flex items-baseline gap-2 tabular-nums"
+                        data-test="week-total"
+                    >
+                        <span className="text-xs font-medium text-muted">
+                            {view === 'day' ? t('Day total') : t('Week total')}
+                        </span>
+                        <span className="text-sm font-semibold">
+                            {formatDuration(
+                                view === 'day' ? dayTotal : weekTotal,
+                            )}
+                        </span>
+                    </p>
+                </header>
+
+                {/* Two rows on mobile (period, then filters and actions); one on desktop. */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
                     <div className="flex shrink-0 items-center gap-1">
                         <Button
                             isIconOnly
@@ -203,25 +223,15 @@ export default function TimeIndex({
                             <ChevronRight className="size-4" />
                         </Button>
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col md:flex-none md:flex-row md:items-baseline md:gap-2">
-                        <h1
-                            className={`truncate text-base font-semibold md:text-lg ${view === 'day' ? 'first-letter:uppercase' : ''}`}
-                        >
-                            {title}
-                        </h1>
-                        <span
-                            className="text-xs text-muted tabular-nums md:text-sm"
-                            data-test="week-total"
-                        >
-                            {view === 'day'
-                                ? t('Day total :hours', {
-                                      hours: formatDuration(dayTotal),
-                                  })
-                                : t('Week total :hours', {
-                                      hours: formatDuration(weekTotal),
-                                  })}
-                        </span>
-                    </div>
+                    <div
+                        aria-hidden="true"
+                        className="h-5.5 w-px shrink-0 bg-separator"
+                    />
+                    <h2
+                        className={`min-w-0 flex-1 truncate text-base font-semibold md:flex-none md:text-[1.0625rem] ${view === 'day' ? 'first-letter:uppercase' : ''}`}
+                    >
+                        {title}
+                    </h2>
 
                     <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto md:flex-wrap md:justify-end">
                         {members.length > 1 && (
@@ -262,7 +272,8 @@ export default function TimeIndex({
                                         </span>
                                     </span>
                                 )}
-                                className="min-w-0 flex-1 md:w-44 md:flex-none"
+                                className="min-w-0 flex-1 md:w-auto md:max-w-56 md:flex-none"
+                                triggerClassName="h-9 rounded-full bg-transparent ps-4 pe-10 shadow-none [&_.select__indicator]:end-4 [&_.select__indicator]:text-foreground"
                                 data-test="member-select"
                             />
                         )}
@@ -289,7 +300,7 @@ export default function TimeIndex({
                             aria-label={t('Copy previous week')}
                             data-test="copy-week-button"
                         >
-                            <CopyPlus className="size-4" />
+                            <Copy className="size-4" />
                             <span className="hidden lg:inline">
                                 {t('Copy previous week')}
                             </span>

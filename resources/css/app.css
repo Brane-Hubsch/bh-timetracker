@@ -82,7 +82,7 @@
     --fc-classic-background-event-opacity: 15%;
     --fc-classic-background-event-foreground-opacity: 50%;
     --fc-classic-highlight: color-mix(in oklab, var(--accent) 15%, transparent);
-    --fc-classic-today: color-mix(in oklab, var(--accent) 4%, transparent);
+    --fc-classic-today: color-mix(in oklab, var(--accent) 3%, transparent);
     --fc-classic-now: var(--danger);
     --fc-classic-small-dot-width: 8px;
     --fc-classic-large-dot-width: 10px;
@@ -200,15 +200,35 @@
 
 .time-calendar .time-calendar-slot-label {
     border-color: transparent;
-    font-size: 0.75rem;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
 }
 
 .time-calendar .time-calendar-slot-label-text {
     margin-block: 0 0.5rem;
-    padding-inline: 1rem 0.75rem;
-    text-align: right;
+    font-size: 0.6875rem;
+    /* FullCalendar sizes a slot from its label: this gives 29px per half hour, as in the design. */
+    line-height: 1.25rem;
+    /* With FullCalendar's own 4px: 12px from the edge, 14px to the first day. */
+    padding-inline: 0.5rem 0.625rem;
+    text-align: left;
+}
+
+/* Required fields in the time entry form are marked with a plain "*", as in the design. */
+.time-entry-form .label--required::after,
+.time-entry-form [data-required='true'] > .label::after {
+    margin-inline-start: 0.25rem;
+    color: inherit;
+}
+
+/* Half-hour rules are solid like the hour rules, only lighter. */
+.time-calendar .time-calendar-slot-minor {
+    border-style: solid;
+    border-color: color-mix(in oklab, var(--separator) 45%, transparent);
+}
+
+.time-calendar-weekend {
+    background-color: color-mix(in oklab, var(--foreground) 1.5%, transparent);
 }
 
 /* Center on the 1px grid rule. The first label stays inside the scroll area. */
