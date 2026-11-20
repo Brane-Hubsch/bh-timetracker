@@ -97,6 +97,22 @@ export function formatDate(
     }).format(new Date(`${date}T00:00:00Z`));
 }
 
+/**
+ * Format a range of "YYYY-MM-DD" dates without repeating what they share, e.g. "16–22 nov." or
+ * "30 nov.–6 dec.".
+ */
+export function formatDateRange(
+    from: string,
+    to: string,
+    locale: string,
+    options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' },
+): string {
+    return new Intl.DateTimeFormat(locale, {
+        ...options,
+        timeZone: 'UTC',
+    }).formatRange(new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`));
+}
+
 /** ISO-8601 week number of a "YYYY-MM-DD" date. */
 export function isoWeek(date: string): number {
     const value = new Date(`${date}T00:00:00Z`);
