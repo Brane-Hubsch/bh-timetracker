@@ -80,7 +80,7 @@ Index: `time_entries(organization_id, user_id, started_at)`, `time_entries(organ
 
 - Varje tidpost **måste** ha ett projekt. Projektet måste tillhöra samma organisation och vara aktivt (ej arkiverat).
 - `ended_at > started_at`, max 24 h per post. Poster får gå över midnatt; de räknas till startdagen i rapporter.
-- Överlappande poster tillåts men UI:t varnar.
+- Överlappande poster tillåts.
 - **Timpris** löses upp i ordningen: projektmedlemmens pris → projektets pris → medlemmens pris i organisationen → organisationens standardpris. Priset **snapshotas** på tidposten när den sparas (så att ändrade priser inte skriver om historiken). Admin kan senare få en "räkna om priser"-åtgärd.
 - `is_billable` ärvs från projektet vid skapande men kan ändras per post.
 - Projekt med `visibility = public` är öppna för alla medlemmar; `private` endast för tilldelade medlemmar.
@@ -355,7 +355,7 @@ Avvikelser och förtydliganden:
 Klar. Byggt:
 
 - Tidposter (`time_entries`) med actions, policy och durationsparser ("1,5", "1:30", "90m", "1h 30m").
-- Formulär: modal på desktop, drawer på mobil. Projektväljaren visar senast använda först, starttiden föreslås smart och överlapp ger en varning.
+- Formulär: modal på desktop, drawer på mobil. Projektväljaren visar senast använda först och starttiden föreslås smart.
 - Listvy med dags- och veckosummor, och kalendervy med FullCalendar 7 (vecka/dag). I kalendern kan man dra för att skapa, flytta och ändra längd. Poster färgas efter projekt och dagssummor står i kolumnhuvudet.
 - "Kopiera förra veckan" som utkast med kryssrutor. Knappen i kalendern visas bara om den valda veckan är tom och föregående vecka har tidsposter för den valda personen. I dagsvyn bedöms fortfarande hela veckan.
 - Ägare/admin kan se och rapportera åt andra medlemmar: via personväljaren i kalendern och via medlemmens avatar längst ner till vänster i formuläret (även snabbinmatningen på startsidan). Avataren visar profilbilden eller medlemmens initialer.
@@ -372,7 +372,6 @@ Avvikelser och förtydliganden:
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
 - Tider matas in och visas i användarens tidszon och lagras i UTC.
 - En sluttid före starttiden tolkas som nästa dag. En post får vara högst 24 timmar.
-- Överlapp ger bara en varning; det blockeras inte.
 - Timpriset snapshottas när posten skapas och räknas om bara om projekt eller medlem ändras.
 - Admin kan rätta poster för inaktiverade medlemmar men inte skapa nya åt dem.
 - Projektsidans tid per medlem/vecka och belopp, samt kundsidans summerade tid, byggs med rapporterna i Fas 4.

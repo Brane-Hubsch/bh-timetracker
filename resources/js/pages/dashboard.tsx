@@ -287,7 +287,6 @@ export default function Dashboard({
                 projects={projects}
                 tags={tags}
                 recentTags={recentTags}
-                entries={recentEntries}
                 members={members}
                 recentProjects={recentProjects}
             />
