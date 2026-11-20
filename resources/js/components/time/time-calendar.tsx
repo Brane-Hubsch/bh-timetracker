@@ -38,7 +38,8 @@ type Props = {
 /**
  * Fills the viewport below the calendar's top edge, so it uses all available height whatever the
  * toolbar above it wraps to. It stops at the content area's bottom padding, which on mobile also
- * keeps it clear of the bottom navigation, so the page itself never scrolls.
+ * keeps it clear of the bottom navigation, so the page itself never scrolls. The returned height is
+ * for the calendar inside the element, so the element's own border is left out of it.
  */
 function useFillHeight(): [
     React.RefObject<HTMLDivElement | null>,
@@ -60,27 +61,41 @@ function useFillHeight(): [
             const bottomPadding = main
                 ? Number.parseFloat(getComputedStyle(main).paddingBottom)
                 : 0;
+            const { borderTopWidth, borderBottomWidth } =
+                getComputedStyle(element);
+            const borders =
+                Number.parseFloat(borderTopWidth) +
+                Number.parseFloat(borderBottomWidth);
 
             setHeight(
                 Math.max(
                     240,
-                    Math.floor(window.innerHeight - top - bottomPadding),
+                    Math.floor(
+                        window.innerHeight - top - bottomPadding - borders,
+                    ),
                 ),
             );
         };
 
         measure();
-        window.addEventListener('resize', measure);
+        const listeners = new AbortController();
+        window.addEventListener('resize', measure, {
+            signal: listeners.signal,
+        });
         // The toolbar above can change height after the first paint (fonts, wrapping).
         const observer = new ResizeObserver(measure);
         const main = ref.current?.closest('main');
 
         if (main) {
             observer.observe(main);
+            // The content area slides in on the first load, which offsets the first measurement.
+            main.addEventListener('animationend', measure, {
+                signal: listeners.signal,
+            });
         }
 
         return () => {
-            window.removeEventListener('resize', measure);
+            listeners.abort();
             observer.disconnect();
         };
     }, []);
