@@ -67,7 +67,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
                             size={40}
                             fit="cover"
                         />
-                        <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <div className="flex items-center gap-2">
                                 <span className="truncate font-medium">
                                     {organization.name}
