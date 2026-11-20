@@ -124,15 +124,16 @@ class ReportController extends Controller
     }
 
     /**
-     * All members, including deactivated ones (their history is still reported).
+     * All members, including deactivated ones (their history is still reported), with their picture
+     * for the filter.
      *
-     * @return array<int, array{value: string, label: string}>
+     * @return array<int, array{value: string, label: string, avatar: string|null, isInactive: bool}>
      */
     private function memberOptions(Organization $organization): array
     {
         return $organization->members()
             ->orderBy('name')
-            ->get(['users.id', 'users.name'])
+            ->get(['users.id', 'users.name', 'users.avatar_path', 'users.avatar_url'])
             ->map(function (User $member): array {
                 /** @var Membership $membership */
                 $membership = $member->getRelation('pivot');
@@ -142,6 +143,8 @@ class ReportController extends Controller
                     'label' => $membership->isDeactivated()
                         ? __(':name (inactive)', ['name' => $member->name])
                         : $member->name,
+                    'avatar' => $member->avatar,
+                    'isInactive' => $membership->isDeactivated(),
                 ];
             })
             ->values()
@@ -149,23 +152,24 @@ class ReportController extends Controller
     }
 
     /**
-     * @return array<int, array{value: string, label: string}>
+     * @return array<int, array{value: string, label: string, logo: string|null}>
      */
     private function clientOptions(Organization $organization, User $viewer): array
     {
         return Client::query()
             ->whereIn('id', Project::query()->accessibleBy($viewer, $organization)->whereNotNull('client_id')->select('client_id'))
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn (Client $client) => ['value' => (string) $client->id, 'label' => $client->name])
+            ->get(['id', 'name', 'logo_path'])
+            ->map(fn (Client $client) => ['value' => (string) $client->id, 'label' => $client->name, 'logo' => $client->logoUrl(64)])
             ->values()
             ->all();
     }
 
     /**
-     * Projects the viewer can access, archived ones included (they still appear in reports).
+     * Projects the viewer can access, archived ones included (they still appear in reports). The label
+     * includes the client; `name`, `client` and `color` are for the filter's list.
      *
-     * @return array<int, array{value: string, label: string}>
+     * @return array<int, array{value: string, label: string, name: string, client: string|null, color: string}>
      */
     private function projectOptions(Organization $organization, User $viewer): array
     {
@@ -177,6 +181,9 @@ class ReportController extends Controller
             ->map(fn (Project $project) => [
                 'value' => (string) $project->id,
                 'label' => $project->client ? "{$project->name} · {$project->client->name}" : $project->name,
+                'name' => $project->name,
+                'client' => $project->client?->name,
+                'color' => $project->color,
             ])
             ->values()
             ->all();

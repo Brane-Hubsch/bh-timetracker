@@ -25,6 +25,7 @@ type Props = {
     options: ReportOptions;
     abilities: ReportAbilities;
     currency: string;
+    weekStartsOn: number;
     entries: Paginated<ReportRow>;
     totals: ReportTotals;
 };
@@ -36,6 +37,7 @@ export default function ReportsDetailed({
     options,
     abilities,
     currency,
+    weekStartsOn,
     entries,
     totals,
 }: Props) {
@@ -70,7 +72,11 @@ export default function ReportsDetailed({
             filters={filters}
             actions={<ExportMenu type="detailed" filters={filters} />}
         >
-            <ReportFilterBar filters={filters} options={options} />
+            <ReportFilterBar
+                filters={filters}
+                options={options}
+                weekStartsOn={weekStartsOn}
+            />
 
             <ReportStats totals={totals} currency={currency} />
 

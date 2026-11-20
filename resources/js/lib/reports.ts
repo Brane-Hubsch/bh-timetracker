@@ -1,5 +1,5 @@
 import type { QueryParams } from '@/wayfinder';
-import { formatDate, isoWeek } from '@/lib/time';
+import { addDays, formatDate, isoWeek } from '@/lib/time';
 import type { ReportFilterValues, ReportGroupingKey } from '@/types';
 
 /**
@@ -62,4 +62,89 @@ export function formatBucket(
         default:
             return key;
     }
+}
+
+function monthStart(date: string): string {
+    return `${date.slice(0, 7)}-01`;
+}
+
+function addMonths(date: string, months: number): string {
+    const value = new Date(`${monthStart(date)}T00:00:00Z`);
+    value.setUTCMonth(value.getUTCMonth() + months);
+
+    return value.toISOString().slice(0, 10);
+}
+
+function monthEnd(date: string): string {
+    return addDays(addMonths(date, 1), -1);
+}
+
+function daysBetween(from: string, to: string): number {
+    return (
+        Math.round(
+            (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) /
+                86400000,
+        ) + 1
+    );
+}
+
+/** Whether the range covers whole calendar months (e.g. 1 Nov – 31 Dec). */
+function isWholeMonths(from: string, to: string): boolean {
+    return from === monthStart(from) && to === monthEnd(to);
+}
+
+/**
+ * The period before or after the given one, of the same length: whole months step by months (so
+ * November becomes October, not 30 days earlier), other ranges by their number of days.
+ */
+export function shiftPeriod(
+    from: string,
+    to: string,
+    direction: -1 | 1,
+): { from: string; to: string } {
+    if (isWholeMonths(from, to)) {
+        const months =
+            (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 +
+            Number(to.slice(5, 7)) -
+            Number(from.slice(5, 7)) +
+            1;
+        const nextFrom = addMonths(from, direction * months);
+
+        return {
+            from: nextFrom,
+            to: monthEnd(addMonths(nextFrom, months - 1)),
+        };
+    }
+
+    const days = daysBetween(from, to) * direction;
+
+    return { from: addDays(from, days), to: addDays(to, days) };
+}
+
+/**
+ * A short name for a custom period when it is a recognisable one: a month ("November 2026"), a week
+ * starting on the organization's first weekday ("Vecka 47") or a year ("2026"). Null otherwise.
+ */
+export function customPeriodName(
+    from: string,
+    to: string,
+    weekStartsOn: number,
+    locale: string,
+    weekLabel: (week: number) => string,
+): string | null {
+    if (isWholeMonths(from, to) && from.slice(0, 7) === to.slice(0, 7)) {
+        return formatDate(from, locale, { month: 'long', year: 'numeric' });
+    }
+
+    if (from.endsWith('-01-01') && to === `${from.slice(0, 4)}-12-31`) {
+        return from.slice(0, 4);
+    }
+
+    const weekday = new Date(`${from}T00:00:00Z`).getUTCDay() || 7;
+
+    if (daysBetween(from, to) === 7 && weekday === weekStartsOn) {
+        return weekLabel(isoWeek(from));
+    }
+
+    return null;
 }

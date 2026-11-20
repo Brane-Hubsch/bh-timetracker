@@ -25,12 +25,25 @@ export type ReportFilterValues = {
     direction: 'asc' | 'desc';
 };
 
+export type ReportMemberOption = SelectOption & {
+    avatar: string | null;
+    isInactive: boolean;
+};
+
+export type ReportClientOption = SelectOption & { logo: string | null };
+
+export type ReportProjectOption = SelectOption & {
+    name: string;
+    client: string | null;
+    color: string;
+};
+
 export type ReportOptions = {
     periods: SelectOption[];
     groupings: SelectOption[];
-    members: SelectOption[];
-    clients: SelectOption[];
-    projects: SelectOption[];
+    members: ReportMemberOption[];
+    clients: ReportClientOption[];
+    projects: ReportProjectOption[];
     tags: SelectOption[];
 };
 

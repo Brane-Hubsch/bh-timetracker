@@ -1,39 +1,85 @@
-import { Button } from '@heroui/react';
+import { Avatar, Button } from '@heroui/react';
 import { router } from '@inertiajs/react';
-import { SlidersHorizontal, X } from 'lucide-react';
-import { useState } from 'react';
-import { DatePickerField } from '@/components/form/date-picker-field';
-import { MultiSelectField } from '@/components/form/multi-select-field';
-import { SelectField } from '@/components/form/select-field';
-import { useIsDesktop } from '@/hooks/use-media-query';
+import { Banknote, X } from 'lucide-react';
+import { LogoImage } from '@/components/logo-image';
+import { ProjectDot } from '@/components/project-dot';
+import { FilterChip } from '@/components/reports/filter-chip';
+import type { FilterOption } from '@/components/reports/filter-chip';
+import { PeriodPicker } from '@/components/reports/period-picker';
+import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import { reportQuery } from '@/lib/reports';
+import { cn } from '@/lib/utils';
 import type { ReportFilterValues, ReportOptions } from '@/types';
 
 type Props = {
     filters: ReportFilterValues;
     options: ReportOptions;
+    /** ISO weekday the organization's weeks start on (1 = Monday). */
+    weekStartsOn: number;
 };
 
-/**
- * Period and filters in one row above the report. Every change updates the URL, so reports can be
- * bookmarked and shared. On mobile the filters beyond the period fold away behind a button that
- * shows how many are active.
- */
-export function ReportFilterBar({ filters, options }: Props) {
-    const { t } = useTranslation();
-    const isDesktop = useIsDesktop();
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [from, setFrom] = useState(filters.from);
-    const [to, setTo] = useState(filters.to);
-    const [shown, setShown] = useState({ from: filters.from, to: filters.to });
+function MemberAvatar({
+    name,
+    src,
+    size,
+}: {
+    name: string;
+    src: string | null;
+    size: 'sm' | 'md';
+}) {
+    const getInitials = useInitials();
 
-    // Follow the period the server resolved (e.g. after choosing "Last month").
-    if (filters.from !== shown.from || filters.to !== shown.to) {
-        setShown({ from: filters.from, to: filters.to });
-        setFrom(filters.from);
-        setTo(filters.to);
-    }
+    return (
+        <Avatar
+            size="sm"
+            variant="soft"
+            color="accent"
+            className={cn(
+                'shrink-0 rounded-full',
+                size === 'sm' ? 'size-5 ring-2 ring-surface' : 'size-7',
+            )}
+            aria-hidden="true"
+        >
+            {src && <Avatar.Image src={src} alt="" className="object-cover" />}
+            <Avatar.Fallback
+                className={
+                    size === 'sm'
+                        ? 'text-[7px] leading-none font-semibold'
+                        : 'text-[11px]'
+                }
+            >
+                {getInitials(name)}
+            </Avatar.Fallback>
+        </Avatar>
+    );
+}
+
+/** Overlapping previews (avatars, logos, colours) at the start of a filter button. */
+function Stack({
+    children,
+    className,
+}: {
+    children: React.ReactNode;
+    className?: string;
+}) {
+    return (
+        <span
+            aria-hidden="true"
+            className={cn('flex shrink-0 items-center -space-x-1.5', className)}
+        >
+            {children}
+        </span>
+    );
+}
+
+/**
+ * Period and filters as one toolbar above the report: the period with previous/next arrows, then
+ * a button per filter that shows what it narrows to (avatars, logos, colours). Every change updates
+ * the URL, so reports can be bookmarked and shared. On mobile the filter buttons scroll sideways.
+ */
+export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
+    const { t } = useTranslation();
 
     const apply = (changes: Partial<ReportFilterValues>) =>
         router.get(window.location.pathname, reportQuery(filters, changes), {
@@ -50,7 +96,6 @@ export function ReportFilterBar({ filters, options }: Props) {
             filters.tags,
         ].filter((values) => values.length > 0).length +
         (filters.billable === null ? 0 : 1);
-    const showFilters = isDesktop || isExpanded;
 
     const clearFilters = () =>
         apply({
@@ -61,147 +106,195 @@ export function ReportFilterBar({ filters, options }: Props) {
             billable: null,
         });
 
-    const applyDates = (nextFrom: string, nextTo: string) => {
-        setFrom(nextFrom);
-        setTo(nextTo);
+    const members: FilterOption[] = options.members.map((member) => ({
+        value: member.value,
+        label: member.label,
+        isMuted: member.isInactive,
+        leading: (
+            <MemberAvatar name={member.label} src={member.avatar} size="md" />
+        ),
+    }));
+    const memberAvatars = new Map(
+        options.members.map((member) => [member.value, member]),
+    );
 
-        if (nextFrom && nextTo && nextFrom <= nextTo) {
-            apply({ period: 'custom', from: nextFrom, to: nextTo });
-        }
+    const clients: FilterOption[] = options.clients.map((client) => ({
+        value: client.value,
+        label: client.label,
+        leading: <LogoImage src={client.logo} name={client.label} size={28} />,
+    }));
+    const clientLogos = new Map(
+        options.clients.map((client) => [client.value, client]),
+    );
+
+    const projects: FilterOption[] = options.projects.map((project) => ({
+        value: project.value,
+        label: project.name,
+        detail: project.client ?? undefined,
+        leading: <ProjectDot color={project.color} />,
+    }));
+    const projectColors = new Map(
+        options.projects.map((project) => [project.value, project.color]),
+    );
+
+    const billableLabels: Record<string, string> = {
+        all: t('All entries'),
+        '1': t('Billable'),
+        '0': t('Non-billable'),
     };
 
     return (
         <div
-            className="grid grid-cols-1 gap-3 rounded-2xl bg-surface p-4 shadow-surface"
+            className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-2"
             data-test="report-filters"
         >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]">
-                <SelectField
-                    name="period"
-                    label={t('Period')}
-                    options={options.periods}
-                    value={filters.period}
-                    onChange={(period) =>
-                        period === 'custom'
-                            ? applyDates(filters.from, filters.to)
-                            : apply({ period })
-                    }
-                    data-test="report-period"
-                />
+            <PeriodPicker
+                period={filters.period}
+                from={filters.from}
+                to={filters.to}
+                periods={options.periods}
+                weekStartsOn={weekStartsOn}
+                onChange={(changes) => apply(changes)}
+            />
 
-                <div className="grid grid-cols-2 gap-2 sm:col-span-2">
-                    <DatePickerField
-                        label={t('From')}
-                        value={from}
-                        onChange={(value) => applyDates(value, to)}
-                        className="min-w-0"
-                        data-test="report-from"
-                    />
-                    <DatePickerField
-                        label={t('To')}
-                        value={to}
-                        onChange={(value) => applyDates(from, value)}
-                        className="min-w-0"
-                        data-test="report-to"
-                    />
-                </div>
+            <div
+                aria-hidden="true"
+                className="mx-1 hidden h-5.5 w-px bg-separator md:block"
+            />
 
-                {showFilters && options.members.length > 0 && (
-                    <MultiSelectField
+            {/* Scrolls sideways on mobile instead of stacking the filters. */}
+            <div className="-mx-4 flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 py-0.5 md:contents">
+                {members.length > 0 && (
+                    <FilterChip
                         label={t('Members')}
-                        placeholder={t('All members')}
-                        options={options.members}
+                        options={members}
                         value={filters.members}
-                        onChange={(members) => apply({ members })}
+                        onChange={(value) => apply({ members: value })}
+                        renderPreview={(shown) => (
+                            <Stack>
+                                {shown.slice(0, 3).map((option) => (
+                                    <MemberAvatar
+                                        key={option.value}
+                                        name={option.label}
+                                        src={
+                                            memberAvatars.get(option.value)
+                                                ?.avatar ?? null
+                                        }
+                                        size="sm"
+                                    />
+                                ))}
+                            </Stack>
+                        )}
                         data-test="report-members"
                     />
                 )}
 
-                {showFilters && options.clients.length > 0 && (
-                    <MultiSelectField
+                {clients.length > 0 && (
+                    <FilterChip
                         label={t('Clients')}
-                        placeholder={t('All clients')}
-                        options={options.clients}
+                        options={clients}
                         value={filters.clients}
-                        onChange={(clients) => apply({ clients })}
+                        onChange={(value) => apply({ clients: value })}
+                        renderPreview={(shown) => (
+                            <Stack className="-space-x-1">
+                                {shown.slice(0, 3).map((option) => (
+                                    <LogoImage
+                                        key={option.value}
+                                        src={
+                                            clientLogos.get(option.value)
+                                                ?.logo ?? null
+                                        }
+                                        name={option.label}
+                                        size={20}
+                                        className="rounded-md text-[10px] font-semibold ring-2 ring-surface"
+                                    />
+                                ))}
+                            </Stack>
+                        )}
                         data-test="report-clients"
                     />
                 )}
 
-                {showFilters && (
-                    <MultiSelectField
+                {projects.length > 0 && (
+                    <FilterChip
                         label={t('Projects')}
-                        placeholder={t('All projects')}
-                        options={options.projects}
+                        options={projects}
                         value={filters.projects}
-                        onChange={(projects) => apply({ projects })}
+                        onChange={(value) => apply({ projects: value })}
+                        activeLabel={
+                            filters.projects.length > 2
+                                ? t(':count projects', {
+                                      count: filters.projects.length,
+                                  })
+                                : undefined
+                        }
+                        renderPreview={(shown) => (
+                            <Stack className="-space-x-0.5">
+                                {shown.slice(0, 3).map((option) => (
+                                    <span
+                                        key={option.value}
+                                        className="size-2.5 rounded-full ring-2 ring-surface"
+                                        style={{
+                                            backgroundColor: projectColors.get(
+                                                option.value,
+                                            ),
+                                        }}
+                                    />
+                                ))}
+                            </Stack>
+                        )}
                         data-test="report-projects"
                     />
                 )}
 
-                {showFilters && options.tags.length > 0 && (
-                    <MultiSelectField
+                {options.tags.length > 0 && (
+                    <FilterChip
                         label={t('Tags')}
-                        placeholder={t('All tags')}
                         options={options.tags}
                         value={filters.tags}
-                        onChange={(tags) => apply({ tags })}
+                        onChange={(value) => apply({ tags: value })}
                         data-test="report-tags"
                     />
                 )}
 
-                {showFilters && (
-                    <SelectField
-                        name="billable"
-                        label={t('Billable')}
-                        options={[
-                            { value: 'all', label: t('All entries') },
-                            { value: '1', label: t('Billable only') },
-                            { value: '0', label: t('Non-billable only') },
-                        ]}
-                        value={filters.billable ?? 'all'}
-                        onChange={(billable) =>
-                            apply({
-                                billable: billable === 'all' ? null : billable,
-                            })
-                        }
-                        data-test="report-billable"
-                    />
+                <FilterChip
+                    label={t('Billing')}
+                    options={Object.entries(billableLabels).map(
+                        ([value, label]) => ({ value, label }),
+                    )}
+                    value={[filters.billable ?? 'all']}
+                    onChange={([value]) =>
+                        apply({
+                            billable:
+                                value === undefined || value === 'all'
+                                    ? null
+                                    : value,
+                        })
+                    }
+                    selectionMode="single"
+                    isActive={filters.billable !== null}
+                    activeLabel={billableLabels[filters.billable ?? 'all']}
+                    icon={
+                        <Banknote
+                            aria-hidden="true"
+                            className="size-4 shrink-0"
+                        />
+                    }
+                    data-test="report-billable"
+                />
+
+                {activeFilters > 0 && (
+                    <Button
+                        variant="ghost"
+                        className="h-9 shrink-0 rounded-full"
+                        onPress={clearFilters}
+                        data-test="report-filters-clear"
+                    >
+                        <X className="size-4" />
+                        {t('Clear filters')}
+                    </Button>
                 )}
             </div>
-
-            {(!isDesktop || activeFilters > 0) && (
-                <div className="flex flex-wrap items-center justify-between gap-2 md:justify-end">
-                    {!isDesktop && (
-                        <Button
-                            variant="tertiary"
-                            size="sm"
-                            onPress={() => setIsExpanded(!isExpanded)}
-                            aria-expanded={isExpanded}
-                            data-test="report-filters-toggle"
-                        >
-                            <SlidersHorizontal className="size-4" />
-                            {isExpanded ? t('Hide filters') : t('Filters')}
-                            {activeFilters > 0 && (
-                                <span className="flex size-5 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground tabular-nums">
-                                    {activeFilters}
-                                </span>
-                            )}
-                        </Button>
-                    )}
-                    {activeFilters > 0 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onPress={clearFilters}
-                            data-test="report-filters-clear"
-                        >
-                            <X className="size-4" />
-                            {t('Clear filters')}
-                        </Button>
-                    )}
-                </div>
-            )}
         </div>
     );
 }
