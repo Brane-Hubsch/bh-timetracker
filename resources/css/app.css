@@ -81,7 +81,8 @@
     --fc-classic-background-event: var(--success);
     --fc-classic-background-event-opacity: 15%;
     --fc-classic-background-event-foreground-opacity: 50%;
-    --fc-classic-highlight: color-mix(in oklab, var(--accent) 15%, transparent);
+    /* The selection mirror already paints the preview within the event gutters. */
+    --fc-classic-highlight: transparent;
     --fc-classic-today: color-mix(in oklab, var(--accent) 3%, transparent);
     --fc-classic-now: var(--danger);
     --fc-classic-small-dot-width: 8px;
