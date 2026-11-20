@@ -217,7 +217,11 @@ export function TimeCalendar({
                     end: `${entry.end}:00Z`,
                     color: entry.project.color,
                 }))}
-                eventClass="time-calendar-event"
+                eventClass={({ isMirror }) =>
+                    isMirror
+                        ? 'time-calendar-event time-calendar-event-mirror'
+                        : 'time-calendar-event'
+                }
                 eventBeforeClass={(info) =>
                     info.isStartResizable &&
                     !info.isSelected &&
@@ -234,6 +238,12 @@ export function TimeCalendar({
                 dayLaneClass={(info) =>
                     (info.dow === 0 || info.dow === 6) &&
                     'time-calendar-weekend'
+                }
+                dayLaneInnerClass={({ isStack, isNarrow }) =>
+                    !isStack &&
+                    (isNarrow
+                        ? 'time-calendar-event-lane time-calendar-event-lane-narrow'
+                        : 'time-calendar-event-lane')
                 }
                 slotHeaderClass="time-calendar-slot-label"
                 slotHeaderInnerClass={({ isFirst }) =>
