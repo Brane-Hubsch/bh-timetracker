@@ -187,7 +187,7 @@ export function ProjectPicker({
                                 href={createProjectUrl}
                                 textValue={createOptionText}
                                 aria-label={t('Create a project')}
-                                className="link min-h-0 rounded-sm p-0 underline hover:bg-transparent"
+                                className="link min-h-0 rounded-sm p-0 text-accent underline decoration-current hover:bg-transparent"
                             >
                                 {createLabel}
                             </ListBox.Item>
