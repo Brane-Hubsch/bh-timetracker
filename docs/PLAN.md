@@ -381,7 +381,7 @@ Avvikelser och förtydliganden:
 Klar. Byggt:
 
 - `ReportBuilder` (`app/Services/Reports`) med filter (period, medlemmar, kunder, projekt, debiterbar) och gruppering i två nivåer: kund, projekt, medlem, dag, vecka eller månad. Samma builder ska användas av MCP-verktyget `get_report` i Fas 5.
-- **Sammanfattning** visar summakort (timmar, debiterbara timmar, belopp), stapeldiagram per dag eller vecka, fördelning per projekt och en grupperad tabell.
+- **Sammanfattning** visar summakort (timmar, debiterbara timmar, belopp), stapeldiagram per dag eller vecka och en grupperad tabell med andelsstaplar. Vid gruppering per projekt visas varje projekts andel av tiden i projektets färg.
 - **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
 - **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.

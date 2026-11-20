@@ -3,7 +3,6 @@ import { SelectField } from '@/components/form/select-field';
 import { ExportMenu } from '@/components/reports/export-menu';
 import { GroupTable } from '@/components/reports/group-table';
 import { MemberProjectTable } from '@/components/reports/member-project-table';
-import { ProjectDistribution } from '@/components/reports/project-distribution';
 import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
 import { ReportStats } from '@/components/reports/report-stats';
@@ -64,11 +63,6 @@ export default function ReportsSummary({
             />
 
             <ReportStats totals={summary.totals} currency={currency} />
-
-            <ProjectDistribution
-                projects={summary.projects}
-                totalSeconds={summary.totals.seconds}
-            />
 
             <section className="grid grid-cols-1 gap-3">
                 <div className="flex flex-wrap items-end justify-between gap-3">
