@@ -24,7 +24,7 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
 
     return (
         <section
-            className="grid h-full content-start gap-4 rounded-2xl bg-surface p-4 shadow-surface"
+            className="grid h-full grid-cols-1 content-start gap-4 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="project-distribution"
         >
             <h2 className="text-sm font-semibold">{t('Time per project')}</h2>
@@ -34,9 +34,12 @@ export function ProjectDistribution({ projects, totalSeconds }: Props) {
                     {t('No time in this period.')}
                 </p>
             ) : (
-                <ul className="grid gap-3.5">
+                <ul className="grid grid-cols-1 gap-3.5">
                     {projects.map((project) => (
-                        <li key={project.id ?? 'other'} className="grid gap-1">
+                        <li
+                            key={project.id ?? 'other'}
+                            className="grid grid-cols-1 gap-1"
+                        >
                             <div className="flex items-baseline justify-between gap-3 text-sm">
                                 <span className="flex min-w-0 items-center gap-2">
                                     {project.color && (
