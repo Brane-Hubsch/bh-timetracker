@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import CreateOrganizationModal from '@/components/create-organization-modal';
 import Heading from '@/components/heading';
+import { LogoImage } from '@/components/logo-image';
 import { useTranslation } from '@/lib/i18n';
 import { edit, index, leave } from '@/routes/organizations';
 import type { Organization } from '@/types';
@@ -60,7 +61,13 @@ export default function OrganizationsIndex({ organizations }: Props) {
                         data-test="organization-row"
                         className="flex items-center justify-between gap-4 p-4"
                     >
-                        <div className="min-w-0 space-y-1">
+                        <LogoImage
+                            src={organization.logo}
+                            name={organization.name}
+                            size={40}
+                            fit="cover"
+                        />
+                        <div className="min-w-0 flex-1 space-y-1">
                             <div className="flex items-center gap-2">
                                 <span className="truncate font-medium">
                                     {organization.name}
