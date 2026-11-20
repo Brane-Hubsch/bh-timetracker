@@ -11,7 +11,7 @@ import {
     TextField,
     Tooltip,
 } from '@heroui/react';
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
 import {
     Banknote,
@@ -496,29 +496,13 @@ export function TimeEntryForm({
                         </p>
                     )}
 
-                    {projects.length === 0 && (
+                    {projects.length === 0 && !can?.canManageProjects && (
                         <Alert status="warning" data-test="no-projects">
                             <Alert.Indicator />
                             <Alert.Content>
                                 <Alert.Description>
-                                    {can?.canManageProjects ? (
-                                        <>
-                                            {t(
-                                                'There are no projects to report time on yet.',
-                                            )}{' '}
-                                            <Link
-                                                href={projectsIndex(undefined, {
-                                                    query: { new: 1 },
-                                                })}
-                                                className="font-medium underline"
-                                            >
-                                                {t('Create a project')}
-                                            </Link>
-                                        </>
-                                    ) : (
-                                        t(
-                                            'There are no projects to report time on yet. Ask an administrator to add one.',
-                                        )
+                                    {t(
+                                        'There are no projects to report time on yet. Ask an administrator to add one.',
                                     )}
                                 </Alert.Description>
                             </Alert.Content>
@@ -527,6 +511,13 @@ export function TimeEntryForm({
 
                     <ProjectPicker
                         projects={projects}
+                        createProjectUrl={
+                            can?.canManageProjects
+                                ? projectsIndex.url(undefined, {
+                                      query: { new: 1 },
+                                  })
+                                : undefined
+                        }
                         recentIds={
                             canChangeMember
                                 ? (recentProjects?.[memberId] ?? [])
