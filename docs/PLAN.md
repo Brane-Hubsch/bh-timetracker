@@ -357,7 +357,7 @@ Klar. Byggt:
 - Tidposter (`time_entries`) med actions, policy och durationsparser ("1,5", "1:30", "90m", "1h 30m").
 - Formulär: modal på desktop, drawer på mobil. Projektväljaren visar senast använda först, starttiden föreslås smart och överlapp ger en varning.
 - Listvy med dags- och veckosummor, och kalendervy med FullCalendar 7 (vecka/dag). I kalendern kan man dra för att skapa, flytta och ändra längd. Poster färgas efter projekt och dagssummor står i kolumnhuvudet.
-- "Kopiera förra veckan" som utkast med kryssrutor.
+- "Kopiera förra veckan" som utkast med kryssrutor. Knappen i kalendern visas bara om den valda veckan är tom och föregående vecka har tidsposter för den valda personen. I dagsvyn bedöms fortfarande hela veckan.
 - Ägare/admin kan se och rapportera åt andra medlemmar: via personväljaren i kalendern och via medlemmens avatar i formulärets rubrikrad (även snabbinmatningen på startsidan). Avataren visar profilbilden eller medlemmens initialer.
 - Duplicera post, och ta bort med ångra i toasten.
 - Startsida: min tid idag och denna vecka, senaste poster och snabbinmatning. För ägare/admin även teamets vecka och projekt som närmar sig estimatet (≥ 80 %).
