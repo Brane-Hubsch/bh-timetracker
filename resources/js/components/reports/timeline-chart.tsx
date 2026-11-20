@@ -75,8 +75,11 @@ function ProjectLabels({
 /** Hours per day or week, stacked by project in reports and by billable status on project pages. */
 export function TimelineChart({ unit, buckets, title, projects }: Props) {
     const { t, intlLocale } = useTranslation();
+    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
-    const selected = buckets.find((bucket) => bucket.key === selectedKey);
+    const selected = buckets.find(
+        (bucket) => bucket.key === (hoveredKey ?? selectedKey),
+    );
     const chartTitle =
         title ?? (unit === 'week' ? t('Hours per week') : t('Hours per day'));
     const projectsById = new Map(
@@ -198,11 +201,45 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                                         ),
                                     ].join('. ')}
                                     className="group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                                    onMouseEnter={() =>
-                                        setSelectedKey(bucket.key)
+                                    onMouseEnter={
+                                        projects
+                                            ? undefined
+                                            : () => setSelectedKey(bucket.key)
                                     }
-                                    onFocus={() => setSelectedKey(bucket.key)}
-                                    onClick={() => setSelectedKey(bucket.key)}
+                                    onFocus={(event) => {
+                                        if (
+                                            !projects ||
+                                            event.currentTarget.matches(
+                                                ':focus-visible',
+                                            )
+                                        ) {
+                                            setSelectedKey(bucket.key);
+                                        }
+                                    }}
+                                    onBlur={
+                                        projects
+                                            ? () => setSelectedKey(null)
+                                            : undefined
+                                    }
+                                    onClick={(event) => {
+                                        if (!projects || event.detail === 0) {
+                                            setSelectedKey(bucket.key);
+                                        }
+                                    }}
+                                    onPointerUp={
+                                        projects
+                                            ? (event) => {
+                                                  if (
+                                                      event.pointerType !==
+                                                      'mouse'
+                                                  ) {
+                                                      setSelectedKey(
+                                                          bucket.key,
+                                                      );
+                                                  }
+                                              }
+                                            : undefined
+                                    }
                                 >
                                     {/* The segments shrink to fit instead of overflowing, so every bar ends exactly on the baseline. */}
                                     <span
@@ -211,6 +248,25 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                                             height: `${(bucket.seconds / 3600 / max) * 100}%`,
                                             animationDelay: `${Math.min(index * 12, 360)}ms`,
                                         }}
+                                        onPointerEnter={
+                                            projects
+                                                ? (event) => {
+                                                      if (
+                                                          event.pointerType ===
+                                                          'mouse'
+                                                      ) {
+                                                          setHoveredKey(
+                                                              bucket.key,
+                                                          );
+                                                      }
+                                                  }
+                                                : undefined
+                                        }
+                                        onPointerLeave={
+                                            projects
+                                                ? () => setHoveredKey(null)
+                                                : undefined
+                                        }
                                     >
                                         {projects ? (
                                             segments.map(
