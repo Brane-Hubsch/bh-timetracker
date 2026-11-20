@@ -15,6 +15,7 @@ import {
     fromCalendarDate,
     timeOf,
 } from '@/lib/time';
+import { cn } from '@/lib/utils';
 import type { TimeEntry } from '@/types';
 
 type Props = {
@@ -120,6 +121,7 @@ export function TimeCalendar({
     const { t, locale, intlLocale } = useTranslation();
     const [containerRef, height] = useFillHeight();
     const calendarRef = useRef<CalendarRef>(null);
+    const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
 
     useLayoutEffect(() => {
@@ -217,10 +219,14 @@ export function TimeCalendar({
                     end: `${entry.end}:00Z`,
                     color: entry.project.color,
                 }))}
-                eventClass={({ isMirror }) =>
-                    isMirror
-                        ? 'time-calendar-event time-calendar-event-mirror'
-                        : 'time-calendar-event'
+                eventClass={({ isMirror, isResizing }) =>
+                    cn(
+                        'time-calendar-event',
+                        isMirror && 'time-calendar-event-mirror',
+                        isMirror &&
+                            isResizing &&
+                            'time-calendar-resize-preview',
+                    )
                 }
                 eventBeforeClass={(info) =>
                     info.isStartResizable &&
@@ -390,6 +396,32 @@ export function TimeCalendar({
                             info.revert,
                         );
                     }
+                }}
+                eventResizeStart={({ el }) => {
+                    const wrapper = el.parentElement;
+                    const lane = el.closest<HTMLElement>('[data-date]');
+
+                    if (wrapper && lane) {
+                        // The preview can first appear after the pointer has already crossed a slot.
+                        lane.style.setProperty(
+                            '--resize-origin-top',
+                            wrapper.style.top,
+                        );
+                        lane.style.setProperty(
+                            '--resize-origin-height',
+                            wrapper.style.height,
+                        );
+                        resizeLane.current = lane;
+                    }
+                }}
+                eventResizeStop={() => {
+                    resizeLane.current?.style.removeProperty(
+                        '--resize-origin-top',
+                    );
+                    resizeLane.current?.style.removeProperty(
+                        '--resize-origin-height',
+                    );
+                    resizeLane.current = null;
                 }}
                 eventResize={(info) => {
                     const entry = byId.get(info.event.id);
