@@ -22,6 +22,7 @@ type Props = {
     options: ReportOptions;
     abilities: ReportAbilities;
     currency: string;
+    weekStartsOn: number;
     summary: ReportSummary;
 };
 
@@ -29,6 +30,7 @@ export default function ReportsSummary({
     filters,
     options,
     currency,
+    weekStartsOn,
     summary,
 }: Props) {
     const { t } = useTranslation();
@@ -46,7 +48,11 @@ export default function ReportsSummary({
             filters={filters}
             actions={<ExportMenu type="summary" filters={filters} />}
         >
-            <ReportFilterBar filters={filters} options={options} />
+            <ReportFilterBar
+                filters={filters}
+                options={options}
+                weekStartsOn={weekStartsOn}
+            />
 
             <ReportStats totals={summary.totals} currency={currency} />
 
