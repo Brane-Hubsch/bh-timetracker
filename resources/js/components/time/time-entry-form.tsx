@@ -325,6 +325,76 @@ export function TimeEntryForm({
         />
     );
 
+    const memberPicker =
+        current &&
+        (canChangeMember ? (
+            <Dropdown onOpenChange={setIsMemberPickerOpen}>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    isIconOnly
+                    className="size-9 min-w-0 shrink-0 rounded-full p-0"
+                    aria-label={
+                        memberName
+                            ? t('Change member (:name)', {
+                                  name: memberName,
+                              })
+                            : t('Change member')
+                    }
+                    aria-describedby={
+                        errors.user_id ? MEMBER_ERROR_ID : undefined
+                    }
+                    data-test="time-entry-member"
+                >
+                    {avatar}
+                </Button>
+                <Dropdown.Popover
+                    placement="top start"
+                    offset={8}
+                    className="min-w-48"
+                >
+                    <Dropdown.Menu
+                        aria-label={t('Choose a member')}
+                        selectionMode="single"
+                        disallowEmptySelection
+                        selectedKeys={[memberId]}
+                        onSelectionChange={(keys) => {
+                            if (keys !== 'all') {
+                                const [userId] = keys;
+                                if (userId !== undefined) {
+                                    set({ userId: Number(userId) });
+                                }
+                            }
+                        }}
+                    >
+                        {members.map(({ value, label, avatar }) => (
+                            <Dropdown.Item
+                                key={value}
+                                id={value}
+                                textValue={label}
+                            >
+                                <MemberAvatar
+                                    name={label}
+                                    src={avatar}
+                                    className="size-9"
+                                />
+                                <Label>{label}</Label>
+                                <Dropdown.ItemIndicator />
+                            </Dropdown.Item>
+                        ))}
+                    </Dropdown.Menu>
+                </Dropdown.Popover>
+            </Dropdown>
+        ) : (
+            <span
+                className="flex size-9 items-center justify-center"
+                role="img"
+                aria-label={memberLabel}
+            >
+                {avatar}
+            </span>
+        ));
+
     return (
         <ResponsiveDialog
             isOpen={draft !== null}
@@ -335,74 +405,7 @@ export function TimeEntryForm({
                     : undefined
             }
             title={isEditing ? t('Edit time') : t('Report time')}
-            headerActions={
-                current &&
-                (canChangeMember ? (
-                    <Dropdown onOpenChange={setIsMemberPickerOpen}>
-                        <Button
-                            variant="ghost"
-                            isIconOnly
-                            className="size-9 min-w-0 shrink-0 rounded-full p-0"
-                            aria-label={
-                                memberName
-                                    ? t('Change member (:name)', {
-                                          name: memberName,
-                                      })
-                                    : t('Change member')
-                            }
-                            aria-describedby={
-                                errors.user_id ? MEMBER_ERROR_ID : undefined
-                            }
-                            data-test="time-entry-member"
-                        >
-                            {avatar}
-                        </Button>
-                        <Dropdown.Popover
-                            placement="bottom end"
-                            className="min-w-48"
-                        >
-                            <Dropdown.Menu
-                                aria-label={t('Choose a member')}
-                                selectionMode="single"
-                                disallowEmptySelection
-                                selectedKeys={[memberId]}
-                                onSelectionChange={(keys) => {
-                                    if (keys !== 'all') {
-                                        const [userId] = keys;
-                                        if (userId !== undefined) {
-                                            set({ userId: Number(userId) });
-                                        }
-                                    }
-                                }}
-                            >
-                                {members.map(({ value, label, avatar }) => (
-                                    <Dropdown.Item
-                                        key={value}
-                                        id={value}
-                                        textValue={label}
-                                    >
-                                        <MemberAvatar
-                                            name={label}
-                                            src={avatar}
-                                            className="size-9"
-                                        />
-                                        <Label>{label}</Label>
-                                        <Dropdown.ItemIndicator />
-                                    </Dropdown.Item>
-                                ))}
-                            </Dropdown.Menu>
-                        </Dropdown.Popover>
-                    </Dropdown>
-                ) : (
-                    <span
-                        className="flex size-9 items-center justify-center"
-                        role="img"
-                        aria-label={memberLabel}
-                    >
-                        {avatar}
-                    </span>
-                ))
-            }
+            closeInHeader
             desktopClassName="sm:max-w-[40rem]"
             containerClassName={
                 isEditing
@@ -411,6 +414,7 @@ export function TimeEntryForm({
             }
             footer={
                 <div className="flex w-full items-center gap-2">
+                    {memberPicker}
                     {isEditing && (
                         <Dropdown onOpenChange={setIsActionsMenuOpen}>
                             <Button

@@ -7,7 +7,7 @@ type Props = {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     title: ReactNode;
-    headerActions?: ReactNode;
+    closeInHeader?: boolean;
     children: ReactNode;
     footer?: ReactNode;
     dismissOnEscape?: boolean;
@@ -27,7 +27,7 @@ export function ResponsiveDialog({
     isOpen,
     onOpenChange,
     title,
-    headerActions,
+    closeInHeader,
     children,
     footer,
     dismissOnEscape,
@@ -36,9 +36,10 @@ export function ResponsiveDialog({
 }: Props) {
     const isDesktop = useIsDesktop();
     const { t } = useTranslation();
-    const headerClassName = headerActions
-        ? 'flex-row items-center justify-between gap-2'
+    const headerClassName = closeInHeader
+        ? 'min-h-9 flex-row items-center justify-between gap-2'
         : undefined;
+    const headerCloseClassName = `static shrink-0 ${closeClassName}`;
 
     const onKeyDownCapture = (event: KeyboardEvent<HTMLElement>) => {
         // Catch Escape before an open field popover handles it.
@@ -69,21 +70,18 @@ export function ResponsiveDialog({
                         className={desktopClassName}
                         render={renderDialog}
                     >
-                        {!headerActions && (
+                        {!closeInHeader && (
                             <Modal.CloseTrigger className={closeClassName} />
                         )}
                         <Modal.Header className={headerClassName}>
                             <Modal.Heading className={headingClassName}>
                                 {title}
                             </Modal.Heading>
-                            {headerActions && (
-                                <div className="flex shrink-0 items-center gap-2">
-                                    {headerActions}
-                                    <Modal.CloseTrigger
-                                        className={`static ${closeClassName}`}
-                                        aria-label={t('Close')}
-                                    />
-                                </div>
+                            {closeInHeader && (
+                                <Modal.CloseTrigger
+                                    className={headerCloseClassName}
+                                    aria-label={t('Close')}
+                                />
                             )}
                         </Modal.Header>
                         <Modal.Body>{children}</Modal.Body>
@@ -107,14 +105,11 @@ export function ResponsiveDialog({
                         <Drawer.Heading className={headingClassName}>
                             {title}
                         </Drawer.Heading>
-                        {headerActions && (
-                            <div className="flex shrink-0 items-center gap-2">
-                                {headerActions}
-                                <Drawer.CloseTrigger
-                                    className={`static ${closeClassName}`}
-                                    aria-label={t('Close')}
-                                />
-                            </div>
+                        {closeInHeader && (
+                            <Drawer.CloseTrigger
+                                className={headerCloseClassName}
+                                aria-label={t('Close')}
+                            />
                         )}
                     </Drawer.Header>
                     <Drawer.Body className="overflow-y-auto">
