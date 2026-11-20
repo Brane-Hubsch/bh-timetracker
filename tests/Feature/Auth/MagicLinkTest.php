@@ -84,7 +84,7 @@ it('sends users with a passkey straight to their organization', function () {
     $token = issueLink($user);
 
     $this->post(route('magic-link.consume', $token))
-        ->assertRedirect(route('dashboard', ['current_organization' => $user->currentOrganization->slug]));
+        ->assertRedirect(route('time.index', ['current_organization' => $user->currentOrganization->slug]));
 });
 
 it('continues to a safe relative redirect', function () {

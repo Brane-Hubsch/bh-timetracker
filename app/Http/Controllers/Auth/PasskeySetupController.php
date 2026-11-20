@@ -21,7 +21,7 @@ class PasskeySetupController extends Controller
         $intended = $request->session()->pull('url.intended');
 
         return Inertia::render('auth/passkey-setup', [
-            'continueTo' => is_string($intended) ? $intended : $this->redirectPathForCurrentOrganization($request, '/dashboard'),
+            'continueTo' => is_string($intended) ? $intended : $this->redirectPathForCurrentOrganization($request, config()->string('fortify.home')),
         ]);
     }
 }
