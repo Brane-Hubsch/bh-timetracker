@@ -127,6 +127,23 @@
     padding: 0 4px !important;
 }
 
+/* FullCalendar positions the resize preview on the wrapper around the event. */
+.time-calendar div:has(> .time-calendar-resize-preview) {
+    transition-property: none;
+
+    @media (prefers-reduced-motion: no-preference) {
+        transition:
+            top 80ms var(--ease-out-soft),
+            height 80ms var(--ease-out-soft);
+
+        @starting-style {
+            /* Start at the original edge before FullCalendar's inline position takes over. */
+            top: var(--resize-origin-top) !important;
+            height: var(--resize-origin-height) !important;
+        }
+    }
+}
+
 /* Paint the grips on FullCalendar's pointer targets. Each edge gets at most half the card. */
 .time-calendar-event > .time-calendar-resizer {
     height: min(10px, calc(50% + 4px));
