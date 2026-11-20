@@ -619,8 +619,9 @@ export function TimeEntryForm({
                                         onAdjust={adjustEnd}
                                     />
                                 </legend>
+                                {/* Same height as the date and duration fields (see .date-input-group). */}
                                 <div
-                                    className="grid h-9 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field"
+                                    className="grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field sm:h-[2.375rem]"
                                     data-invalid={Boolean(
                                         errors.start ||
                                         errors.end ||
