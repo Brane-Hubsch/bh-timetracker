@@ -71,6 +71,14 @@ export type TimelineBucket = {
     key: string;
     seconds: number;
     billableSeconds: number;
+    projectSeconds?: Record<number, number>;
+};
+
+export type TimelineProject = {
+    id: number;
+    name: string;
+    clientName: string | null;
+    color: string;
 };
 
 export type ProjectShare = {
@@ -84,7 +92,11 @@ export type ProjectShare = {
 export type ReportSummary = {
     totals: ReportTotals;
     groups: ReportGroup[];
-    timeline: { unit: 'day' | 'week'; buckets: TimelineBucket[] };
+    timeline: {
+        unit: 'day' | 'week';
+        buckets: TimelineBucket[];
+        projects?: TimelineProject[];
+    };
     projects: ProjectShare[];
 };
 

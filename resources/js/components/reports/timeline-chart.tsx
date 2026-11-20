@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { ProjectDot } from '@/components/project-dot';
 import { formatDecimalHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatBucket } from '@/lib/reports';
 import { formatDate, isoWeek } from '@/lib/time';
-import type { TimelineBucket } from '@/types';
+import type { TimelineBucket, TimelineProject } from '@/types';
 
 type Props = {
     unit: 'day' | 'week';
     buckets: TimelineBucket[];
     title?: string;
+    projects?: TimelineProject[];
 };
+
+type ProjectHours = TimelineProject & { seconds: number };
 
 const STEPS = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 250, 500];
 
@@ -21,14 +25,52 @@ function axis(maxSeconds: number): { max: number; step: number } {
     return { max: Math.ceil(maxHours / step) * step, step };
 }
 
-/**
- * Hours per day or week as bars, split into billable (solid) and non-billable (light) time with a
- * legend when both occur. The selected bar (hover, focus or tap) is read out above the plot, and
- * every bar has an accessible label.
- */
-export function TimelineChart({ unit, buckets, title }: Props) {
+function ProjectLabels({
+    items,
+    locale,
+}: {
+    items: (TimelineProject & { seconds?: number })[];
+    locale: string;
+}) {
+    return (
+        <ul className="flex min-w-0 flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
+            {items.map(({ id, color, name, clientName, seconds }) => (
+                <li key={id} className="flex min-w-0 items-start gap-1.5">
+                    <span className="mt-0.5 inline-flex">
+                        <ProjectDot color={color} />
+                    </span>
+                    <span className="wrap-anywhere">
+                        {name}
+                        {clientName && ` · ${clientName}`}
+                    </span>
+                    {seconds !== undefined && (
+                        <span className="font-medium whitespace-nowrap text-foreground tabular-nums">
+                            {formatDecimalHours(seconds, locale)}
+                        </span>
+                    )}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+/** Hours per day or week, stacked by project in reports and by billable status on project pages. */
+export function TimelineChart({ unit, buckets, title, projects }: Props) {
     const { t, intlLocale } = useTranslation();
-    const [selected, setSelected] = useState<TimelineBucket | null>(null);
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    const selected = buckets.find((bucket) => bucket.key === selectedKey);
+    const chartTitle =
+        title ?? (unit === 'week' ? t('Hours per week') : t('Hours per day'));
+    const projectsById = new Map(
+        projects?.map((project) => [project.id, project]),
+    );
+    const projectHours = (bucket: TimelineBucket): ProjectHours[] =>
+        Object.entries(bucket.projectSeconds ?? {}).flatMap(([id, seconds]) => {
+            const project = projectsById.get(Number(id));
+
+            return project ? [{ ...project, seconds }] : [];
+        });
+    const selectedProjects = selected ? projectHours(selected) : [];
     const { max, step } = axis(
         Math.max(0, ...buckets.map((bucket) => bucket.seconds)),
     );
@@ -60,13 +102,8 @@ export function TimelineChart({ unit, buckets, title }: Props) {
         >
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <h2 className="text-sm font-semibold">
-                        {title ??
-                            (unit === 'week'
-                                ? t('Hours per week')
-                                : t('Hours per day'))}
-                    </h2>
-                    {hasBillable && hasNonBillable && (
+                    <h2 className="text-sm font-semibold">{chartTitle}</h2>
+                    {!projects && hasBillable && hasNonBillable && (
                         <ul
                             className="flex items-center gap-3 text-xs text-muted"
                             data-test="timeline-legend"
@@ -87,12 +124,21 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                     aria-live="polite"
                 >
                     {selected
-                        ? `${describe(selected)} · ${t(':hours billable', { hours: formatDecimalHours(selected.billableSeconds, intlLocale) })}`
+                        ? describe(selected)
                         : t('Select a bar for details.')}
+                    {selected &&
+                        !projects &&
+                        ` · ${t(':hours billable', { hours: formatDecimalHours(selected.billableSeconds, intlLocale) })}`}
                 </p>
             </div>
 
-            <div className="relative h-48 pl-10">
+            {projects && projects.length > 0 && (
+                <div data-test="timeline-legend">
+                    <ProjectLabels items={projects} locale={intlLocale} />
+                </div>
+            )}
+
+            <div className={`relative pl-10 ${projects ? 'h-60' : 'h-48'}`}>
                 {gridlines.map((hours) => (
                     <div
                         key={hours}
@@ -109,46 +155,76 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                 <div
                     className="relative flex h-full items-end gap-0.5"
                     role="list"
-                    aria-label={title ?? t('Hours per day')}
+                    aria-label={chartTitle}
                 >
-                    {buckets.map((bucket, index) => (
-                        <div
-                            key={bucket.key}
-                            role="listitem"
-                            className="flex h-full min-w-0 flex-1"
-                        >
-                            <button
-                                type="button"
-                                aria-label={describe(bucket)}
-                                className="group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                                onMouseEnter={() => setSelected(bucket)}
-                                onFocus={() => setSelected(bucket)}
-                                onClick={() => setSelected(bucket)}
+                    {buckets.map((bucket, index) => {
+                        const segments = projectHours(bucket);
+
+                        return (
+                            <div
+                                key={bucket.key}
+                                role="listitem"
+                                className="flex h-full min-w-0 flex-1"
                             >
-                                {/* The segments shrink to fit instead of overflowing, so every bar ends exactly on the baseline. */}
-                                <span
-                                    className={`flex w-full max-w-6 origin-bottom animate-grow-y flex-col justify-end gap-0.5 transition-[height,opacity] duration-300 ${selected === null || selected.key === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`}
-                                    style={{
-                                        height: `${(bucket.seconds / 3600 / max) * 100}%`,
-                                        animationDelay: `${Math.min(index * 12, 360)}ms`,
-                                    }}
+                                <button
+                                    type="button"
+                                    aria-label={[
+                                        describe(bucket),
+                                        ...segments.map(
+                                            ({ name, clientName, seconds }) =>
+                                                `${name}${clientName ? ` · ${clientName}` : ''}: ${formatDecimalHours(seconds, intlLocale)}`,
+                                        ),
+                                    ].join('. ')}
+                                    className="group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                                    onMouseEnter={() =>
+                                        setSelectedKey(bucket.key)
+                                    }
+                                    onFocus={() => setSelectedKey(bucket.key)}
+                                    onClick={() => setSelectedKey(bucket.key)}
                                 >
-                                    {bucket.seconds >
-                                        bucket.billableSeconds && (
-                                        <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
-                                    )}
-                                    {bucket.billableSeconds > 0 && (
-                                        <span
-                                            className="min-h-px bg-accent first:rounded-t-[4px]"
-                                            style={{
-                                                height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
-                                            }}
-                                        />
-                                    )}
-                                </span>
-                            </button>
-                        </div>
-                    ))}
+                                    {/* The segments shrink to fit instead of overflowing, so every bar ends exactly on the baseline. */}
+                                    <span
+                                        className={`flex w-full max-w-6 origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${projects ? 'flex-col-reverse' : 'flex-col justify-end gap-0.5'} ${!selected || selected.key === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`}
+                                        style={{
+                                            height: `${(bucket.seconds / 3600 / max) * 100}%`,
+                                            animationDelay: `${Math.min(index * 12, 360)}ms`,
+                                        }}
+                                    >
+                                        {projects ? (
+                                            segments.map(
+                                                ({ id, color, seconds }) => (
+                                                    <span
+                                                        key={id}
+                                                        className="min-h-0 basis-0 shadow-[inset_0_-1px_var(--surface)] first:shadow-none last:rounded-t-[4px]"
+                                                        style={{
+                                                            flexGrow: seconds,
+                                                            backgroundColor:
+                                                                color,
+                                                        }}
+                                                    />
+                                                ),
+                                            )
+                                        ) : (
+                                            <>
+                                                {bucket.seconds >
+                                                    bucket.billableSeconds && (
+                                                    <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
+                                                )}
+                                                {bucket.billableSeconds > 0 && (
+                                                    <span
+                                                        className="min-h-px bg-accent first:rounded-t-[4px]"
+                                                        style={{
+                                                            height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
+                                                        }}
+                                                    />
+                                                )}
+                                            </>
+                                        )}
+                                    </span>
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -162,6 +238,18 @@ export function TimelineChart({ unit, buckets, title }: Props) {
                     </span>
                 ))}
             </div>
+
+            {selectedProjects.length > 0 && (
+                <div
+                    className="border-t border-separator pt-3"
+                    data-test="timeline-project-hours"
+                >
+                    <ProjectLabels
+                        items={selectedProjects}
+                        locale={intlLocale}
+                    />
+                </div>
+            )}
         </section>
     );
 }

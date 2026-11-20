@@ -25,7 +25,9 @@ use Illuminate\Support\Facades\DB;
  * @phpstan-type ReportTotals array{seconds: int, billableSeconds: int, amount: int|null}
  * @phpstan-type ReportSubGroup array{key: string, label: string, color: string|null, seconds: int, billableSeconds: int, amount: int|null, children: array<int, mixed>}
  * @phpstan-type ReportGroup array{key: string, label: string, color: string|null, seconds: int, billableSeconds: int, amount: int|null, children: array<int, ReportSubGroup>}
- * @phpstan-type TimelineBucket array{key: string, seconds: int, billableSeconds: int}
+ * @phpstan-type TimelineBucket array{key: string, seconds: int, billableSeconds: int, projectSeconds?: array<int, int>}
+ * @phpstan-type TimelineProject array{id: int, name: string, clientName: string|null, color: string}
+ * @phpstan-type Timeline array{unit: string, buckets: array<int, TimelineBucket>, projects?: list<TimelineProject>}
  * @phpstan-type ProjectShare array{id: int|null, name: string, color: string|null, clientName: string|null, seconds: int}
  */
 class ReportBuilder
@@ -72,10 +74,14 @@ class ReportBuilder
      * Totals, up to two levels of groups, a timeline (per day, or per week for long periods) and the
      * distribution per project.
      *
-     * @return array{totals: ReportTotals, groups: array<int, ReportGroup>, timeline: array{unit: string, buckets: array<int, TimelineBucket>}, projects: array<int, ProjectShare>}
+     * @return array{totals: ReportTotals, groups: array<int, ReportGroup>, timeline: Timeline, projects: array<int, ProjectShare>}
      */
-    public function summary(ReportFilters $filters, ReportGrouping $grouping, ?ReportGrouping $subGrouping = null): array
-    {
+    public function summary(
+        ReportFilters $filters,
+        ReportGrouping $grouping,
+        ?ReportGrouping $subGrouping = null,
+        bool $includeTimelineProjects = false,
+    ): array {
         $usesTags = in_array(ReportGrouping::Tag, [$grouping, $subGrouping], true);
         $entries = $this->query($filters)
             ->with(['project:id,name,color,client_id', 'project.client:id,name', 'user:id,name', ...($usesTags ? ['tags:id,name'] : [])])
@@ -84,7 +90,7 @@ class ReportBuilder
         return [
             'totals' => $this->totals($entries, $filters),
             'groups' => $this->group($entries, $filters, $grouping, $subGrouping === $grouping ? null : $subGrouping),
-            'timeline' => $this->timeline($entries, $filters),
+            'timeline' => $this->timeline($entries, $filters, $includeTimelineProjects),
             'projects' => $this->projectShares($entries, $filters),
         ];
     }
@@ -326,9 +332,9 @@ class ReportBuilder
 
     /**
      * @param  Collection<int, TimeEntry>  $entries
-     * @return array{unit: string, buckets: array<int, TimelineBucket>}
+     * @return Timeline
      */
-    private function timeline(Collection $entries, ReportFilters $filters): array
+    private function timeline(Collection $entries, ReportFilters $filters, bool $includeProjects): array
     {
         $timezone = $filters->timezone();
         $dates = $entries->map(fn (TimeEntry $entry) => $entry->started_at->setTimezone($timezone)->startOfDay());
@@ -336,12 +342,13 @@ class ReportBuilder
         $to = $filters->to ?? $dates->max();
 
         if (! $from instanceof CarbonImmutable || ! $to instanceof CarbonImmutable) {
-            return ['unit' => 'day', 'buckets' => []];
+            return ['unit' => 'day', 'buckets' => [], ...($includeProjects ? ['projects' => []] : [])];
         }
 
         $unit = $from->diffInDays($to) + 1 > self::MAX_DAILY_BUCKETS ? ReportGrouping::Week : ReportGrouping::Day;
         $cursor = $unit === ReportGrouping::Week ? $this->weekStart($from, $filters) : $from->startOfDay();
         $buckets = [];
+        $projects = [];
 
         while ($cursor->lessThanOrEqualTo($to)) {
             $buckets[$cursor->toDateString()] = ['key' => $cursor->toDateString(), 'seconds' => 0, 'billableSeconds' => 0];
@@ -357,9 +364,26 @@ class ReportBuilder
 
             $buckets[$key]['seconds'] += $entry->duration_seconds;
             $buckets[$key]['billableSeconds'] += $entry->is_billable ? $entry->duration_seconds : 0;
+
+            if ($includeProjects && $entry->duration_seconds > 0) {
+                $project = $entry->project;
+                $projects[$project->id] ??= [
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'clientName' => $project->client?->name,
+                    'color' => $project->color,
+                ];
+                $buckets[$key]['projectSeconds'][$project->id] = ($buckets[$key]['projectSeconds'][$project->id] ?? 0) + $entry->duration_seconds;
+            }
         }
 
-        return ['unit' => $unit->value, 'buckets' => array_values($buckets)];
+        ksort($projects);
+
+        return [
+            'unit' => $unit->value,
+            'buckets' => array_values($buckets),
+            ...($includeProjects ? ['projects' => array_values($projects)] : []),
+        ];
     }
 
     /**
