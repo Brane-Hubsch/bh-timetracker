@@ -473,7 +473,7 @@ Klar. Byggt:
   - `.env.production.example` (Postgres med SSL, databaskö, krypterade och säkra sessionscookies, SMTP, Passport-nycklar).
   - Driftchecklista i README.
 
-Hosting är beslutad: Docker Compose (se "Tillägg efter Fas 6: drift med Docker"). Backup är byggd (se nedan). Kvar att besluta: CI/CD-deploy.
+Hosting är beslutad: Docker Compose, i Coolify (se "Tillägg efter Fas 6: drift med Docker" och "Tillägg efter Fas 6: Coolify"). Backup är byggd (se nedan). Kvar att besluta: CI/CD-deploy.
 
 ### Tillägg efter Fas 6: kommandomeny (⌘K) (2026-11-19)
 
@@ -634,10 +634,10 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
   - Bas `serversideup/php:8.5-frankenphp-trixie`, med tilläggen `gd` och `exif` (bilder), `intl` (formatering i exporter) och `postgresql-client` (`pg_dump` 17 för backup).
   - Composer-beroenden utan dev-paket.
   - Frontendbygget kör Node och PHP i samma steg, eftersom Wayfinders Vite-plugin kör `php artisan`. `VITE_APP_NAME` är byggargument.
-  - Inga hemligheter i imagen; allt kommer från `.env` vid körning.
+  - Inga hemligheter i imagen; allt kommer från miljövariabler vid körning.
   - FrankenPHP körs i workerläge via Laravel Octane, se "Tillägg efter Fas 6: workerläge med Octane".
 - **Tjänster** (`compose.yaml`), alla från samma image:
-  - `web`: Octane på FrankenPHP på 80/443 med automatisk HTTPS (Let's Encrypt för värden i `APP_URL`). Port 80 omdirigerar. Vid start körs `storage:link`, migreringar och `optimize` (serversideups automationer, bara i den här tjänsten). Hälsokontrollen går mot `/up`, så den startar Laravel.
+  - `web`: Octane på FrankenPHP. På egen server på 80/443 med automatisk HTTPS (Let's Encrypt för värden i `APP_URL`), och port 80 omdirigerar. I Coolify HTTP på 8080 bakom Coolifys proxy (se "Tillägg efter Fas 6: Coolify"). Vid start körs `storage:link`, migreringar och `optimize` (serversideups automationer, bara i den här tjänsten). Hälsokontrollen går mot `/up`, så den startar Laravel.
   - `queue`: `queue:work --tries=3`.
   - `scheduler`: `schedule:work`, inklusive nattlig backup. Startar först när `web` är frisk, alltså efter migreringarna.
   - `postgres`: PostgreSQL 17, bara nåbar inne i stacken.
@@ -646,7 +646,7 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
   - `storage` (uppladdade bilder, Passport-nycklar, dompdf-typsnitt)
   - `caddy_data`/`caddy_config` (certifikat, så att Let's Encrypts gränser inte nås vid omstarter)
 - **Loggar** går till containrarnas utdata (`LOG_CHANNEL=stderr`).
-- **Klientens IP:** Caddy räknar ut den och skickar den till Laravel, även bakom Cloudflare (`TRUSTED_PROXY=cloudflare`, standard). `TRUSTED_PROXIES` lämnas tomt.
+- **Klientens IP:** besökaren ansluter direkt till FrankenPHP, så `TRUSTED_PROXIES` är tomt på egen server. Bakom Cloudflare ser Laravel Cloudflares adress, om inte Cloudflares adressintervall läggs i `TRUSTED_PROXIES` (se "Tillägg efter Fas 6: Coolify").
 - **Deploy:** `git pull && docker compose up -d --build`. Ger några sekunders avbrott, eftersom FrankenPHP själv binder portarna. Nollavbrott skulle kräva en proxy framför; det ingår inte nu.
 - **Dokumentation:** README (Production) och `.env.production.example`.
 - **Verifierat lokalt:**
@@ -656,6 +656,23 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
   - omstart med kvarvarande data
   - återställning enligt README
 - **Rättat:** paketet för backup validerade larmadresserna vid uppstart, så tomma `BACKUP_NOTIFICATION_EMAIL`/`MAIL_FROM_ADDRESS` stoppade alla artisan-kommandon. Nu används en giltig reservadress.
+
+### Tillägg efter Fas 6: Coolify (2026-11-20)
+
+Beställt i efterhand: produktionsstacken ska fungera i [Coolify](https://coolify.io) som en applikation med byggpaketet Docker Compose. Samma `compose.yaml` används i Coolify och på egen server.
+
+- **Ingen TLS och inga publicerade portar i `compose.yaml`:** Coolifys proxy routar domänen till `web` på port 8080 och sköter certifikatet. Webbtjänsten kör därför HTTP (`SSL_MODE=off`). Domänen sätts på tjänsten `web` i Coolify, t.ex. `https://tid.example.se:8080`.
+- **Miljövariabler:** Coolify skickar bara variabler som står under en tjänsts `environment:`. Därför listas alla inställningar i `x-app-environment` som `${VAR:-standard}`, och `env_file` används inte längre. Coolify visar dem under Environment Variables. `APP_KEY`, `APP_URL`, `DB_PASSWORD` och `MAIL_FROM_ADDRESS` är obligatoriska (`${VAR:?}`), så en deploy stoppas om de saknas. En ny inställning måste läggas till i listan.
+- **HTTPS bakom proxyn:** `OCTANE_HTTPS=true` gör att varje anrop räknas som HTTPS. Det behövs för korrekta länkar och säkra cookies när TLS avslutas framför containern.
+- **Klientens IP:** FrankenPHP skickar proxyns adress till Laravel, inte besökarens. Därför litar Laravel på `X-Forwarded-For` från privata nät, där Coolifys proxy finns (`TRUSTED_PROXIES` är som standard `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16`). Annars skulle alla besökare dela proxyns IP i spärrarna, t.ex. för inloggningslänkar. Med Cloudflare framför läggs Cloudflares adressintervall till. `compose.standalone.yaml` lämnar listan tom, eftersom besökarna där ansluter direkt.
+- **Bygge:** `web`, `queue` och `scheduler` bygger samma image. Därför beror ingen tjänst på att en annan byggt den först, och byggena efter det första kommer från cachen. `APP_NAME` blir byggargumentet `VITE_APP_NAME`.
+- **Egen server utan Coolify:** `compose.standalone.yaml` lägger till FrankenPHP:s TLS med Let's Encrypt på port 80/443 och volymerna för certifikat. `.env.production.example` sätter `COMPOSE_FILE=compose.yaml:compose.standalone.yaml`, så vanliga `docker compose` fungerar som förut.
+- **Dokumentation:** README (Production: Coolify och egen server) och `.env.production.example`.
+- **Verifierat lokalt:**
+  - Hela stacken byggd med `docker compose build`, som Coolify gör, och startad bakom en TLS-proxy som ersatte Coolifys: `/up`, omdirigering till `/login`, HTTPS-länkar till tillgångar, statiska filer, kön (inloggningsmejl) och hälsokontrollerna.
+  - Klientens IP i sessionerna är besökarens, och en förfalskad `X-Forwarded-For` från besökaren ignoreras.
+  - Kommandona för Coolifys terminal (`passport:keys`, `app:create-owner`).
+  - Samma volymer med `compose.standalone.yaml`: HTTP omdirigeras till HTTPS och data finns kvar.
 
 ### Tillägg efter Fas 6: workerläge med Octane (2026-11-19)
 

@@ -36,22 +36,63 @@ php artisan app:create-owner you@example.com "Your Name" "Organization"
 
 ## Production
 
-Production runs with Docker Compose on a single server: [`compose.yaml`](compose.yaml) and the
-[`Dockerfile`](Dockerfile), built on [serversideup/php](https://serversideup.net/open-source/docker-php/docs/image-variations/frankenphp)
-with FrankenPHP (PHP 8.5, Caddy). The same image runs four services:
+Production runs with Docker Compose: [`compose.yaml`](compose.yaml) and the [`Dockerfile`](Dockerfile),
+built on [serversideup/php](https://serversideup.net/open-source/docker-php/docs/image-variations/frankenphp)
+with FrankenPHP (PHP 8.5, Caddy). It deploys in [Coolify](https://coolify.io) as is, or on a server of
+your own with [`compose.standalone.yaml`](compose.standalone.yaml). The same image runs four services:
 
-| Service     | What it does                                                                                                                                                                                                          |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `web`       | Laravel Octane on FrankenPHP (worker mode) on ports 80/443 with automatic HTTPS (Let's Encrypt for `APP_URL`'s host). On start it links storage, runs migrations and caches config/routes/views. Health check: `/up`. |
-| `queue`     | `php artisan queue:work` (emails such as sign-in links and invitations).                                                                                                                                              |
-| `scheduler` | `php artisan schedule:work`: pruning and the nightly backups (see below).                                                                                                                                             |
-| `postgres`  | PostgreSQL 17, reachable only inside the stack.                                                                                                                                                                       |
+| Service     | What it does                                                                                                                                                   |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web`       | Laravel Octane on FrankenPHP (worker mode), HTTP on port 8080. On start it links storage, runs migrations and caches config/routes/views. Health check: `/up`. |
+| `queue`     | `php artisan queue:work` (emails such as sign-in links and invitations).                                                                                       |
+| `scheduler` | `php artisan schedule:work`: pruning and the nightly backups (see below).                                                                                      |
+| `postgres`  | PostgreSQL 17, reachable only inside the stack.                                                                                                                |
 
-Data lives in named volumes: `postgres` (database), `storage` (uploaded images, Passport keys) and
-`caddy_data`/`caddy_config` (certificates). Logs go to the containers' output.
+Data lives in named volumes: `postgres` (database) and `storage` (uploaded images, Passport keys). Logs go
+to the containers' output.
+
+Settings are environment variables, all listed under `x-app-environment` in `compose.yaml` with their
+defaults; only those reach the containers, so a new setting is added there as well. The required ones
+(`APP_KEY`, `APP_URL`, `DB_PASSWORD`, `MAIL_FROM_ADDRESS`) stop the deploy when empty. See
+[`.env.production.example`](.env.production.example) for what each one does. Generate `APP_KEY` with
+`php artisan key:generate --show` (anywhere, e.g. locally).
+
+Octane keeps the booted app in memory, so code and setting changes take effect when the containers
+are recreated (a redeploy). Tuning: `OCTANE_WORKERS` (default `auto`), `OCTANE_MAX_REQUESTS` (a worker
+is replaced after this many requests, default 500) and `OCTANE_MAX_EXECUTION_TIME` (seconds per
+request, default 120).
+
+### Coolify
+
+1. New resource → your Git repository (the GitHub app or a deploy key) → build pack **Docker Compose**,
+   branch `main`, Docker Compose location `/compose.yaml`.
+2. **Domains:** set the `web` service's domain with the container port, e.g. `https://tid.example.se:8080`.
+   Coolify's proxy routes it to the container and handles the certificate. The other services get no
+   domain. Behind Cloudflare, use SSL/TLS mode "Full (strict)" and add
+   [Cloudflare's IP ranges](https://www.cloudflare.com/ips/) to `TRUSTED_PROXIES` (keep the private
+   ranges of the default, which cover Coolify's proxy).
+3. **Environment Variables:** Coolify lists the variables from `compose.yaml`. Fill in the required
+   ones, with `APP_URL` matching the domain, plus mail, `GOOGLE_*` and the backup settings. Multi-line
+   values such as `PASSPORT_PRIVATE_KEY` are fine. Keep "Available during build" on for `APP_NAME` (it
+   is baked into the frontend).
+4. Deploy. Then, in the `web` container's terminal in Coolify:
+
+    ```bash
+    php artisan passport:keys   # unless PASSPORT_*_KEY are set
+    php artisan app:create-owner you@example.com "Your Name" "Organization"
+    ```
+
+Redeploys (e.g. automatic on push to `main`) build the image again; `web` runs the migrations before it
+reports healthy, and `queue` and `scheduler` start after it. The commands below with
+`docker compose exec <service>` run in that service's terminal in Coolify instead.
+
+### Your own server
 
 Requirements: a Linux server with Docker Engine and the Compose plugin, a DNS record for the app's host
-pointing at it, and ports 80 and 443 open.
+pointing at it, and ports 80 and 443 open. `compose.standalone.yaml` lets FrankenPHP terminate TLS with
+a Let's Encrypt certificate for `APP_URL`'s host on ports 80/443 (certificates in the
+`caddy_data`/`caddy_config` volumes). `.env.production.example` sets `COMPOSE_FILE` so plain
+`docker compose` uses both files.
 
 First deploy:
 
@@ -63,9 +104,6 @@ docker compose exec web php artisan passport:keys   # unless PASSPORT_*_KEY are 
 docker compose exec web php artisan app:create-owner you@example.com "Your Name" "Organization"
 ```
 
-Generate `APP_KEY` with `docker compose run --rm --no-deps -e AUTORUN_ENABLED=false web php artisan key:generate --show` after the
-first build, or with `php artisan key:generate --show` anywhere.
-
 Deploy a new version:
 
 ```bash
@@ -74,13 +112,8 @@ docker compose up -d --build
 ```
 
 `web` restarts on the new image (a few seconds of downtime, since FrankenPHP binds the ports itself) and
-runs the migrations before it reports healthy; `queue` and `scheduler` restart after it.
-
-Octane keeps the booted app in memory, so code, config and `.env` changes only take effect when the
-containers are recreated (`docker compose up -d`, as above) or the workers reload
-(`docker compose exec web php artisan octane:reload`). Tuning in `.env`: `OCTANE_WORKERS` (default
-`auto`), `OCTANE_MAX_REQUESTS` (a worker is replaced after this many requests, default 500) and
-`OCTANE_MAX_EXECUTION_TIME` (seconds per request, default 120).
+runs the migrations before it reports healthy; `queue` and `scheduler` restart after it. To reload
+the Octane workers without recreating the containers: `docker compose exec web php artisan octane:reload`.
 
 Useful commands:
 
@@ -91,8 +124,9 @@ docker compose exec web php artisan tinker       # artisan in the running app
 docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"'
 ```
 
-Behind Cloudflare: keep the DNS record proxied with SSL/TLS mode "Full (strict)". Caddy trusts
-Cloudflare's addresses by default (`TRUSTED_PROXY=cloudflare`), so Laravel sees the visitor's IP.
+Behind Cloudflare: keep the DNS record proxied with SSL/TLS mode "Full (strict)", and set
+`TRUSTED_PROXIES` to [Cloudflare's IP ranges](https://www.cloudflare.com/ips/) so Laravel sees the
+visitor's IP instead of Cloudflare's.
 
 ### Backups
 
