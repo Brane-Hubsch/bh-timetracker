@@ -305,6 +305,24 @@
     border-top-width: 2px !important;
 }
 
+.time-calendar[data-view='week'] :has(> .time-calendar-day) {
+    overflow: clip;
+}
+
+/* Let today's indicator paint across the other columns, including over their entries. */
+.time-calendar[data-view='week'] .time-calendar-day:has(.time-calendar-now) {
+    z-index: 2;
+}
+
+.time-calendar[data-view='week'] .time-calendar-now::before {
+    position: absolute;
+    inset-block-start: -1.5px;
+    inset-inline: -100vw;
+    height: 1px;
+    background: color-mix(in oklab, var(--danger) 36%, transparent);
+    content: '';
+}
+
 /*
  * Date and time fields get the same height and text size as text inputs (HeroUI gives the segmented
  * group a fixed h-9 and small text), so fields line up in a row and stay readable on mobile.

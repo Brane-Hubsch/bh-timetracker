@@ -8,6 +8,7 @@ import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { Banknote } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { Temporal } from 'temporal-polyfill';
 import { useTranslation } from '@/lib/i18n';
 import {
     formatDate,
@@ -22,7 +23,7 @@ type Props = {
     view: 'week' | 'day';
     date: string;
     weekStartsOn: number;
-    now: string;
+    timezone: string;
     entries: TimeEntry[];
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
@@ -112,7 +113,7 @@ export function TimeCalendar({
     view,
     date,
     weekStartsOn,
-    now,
+    timezone,
     entries,
     onSelect,
     onEdit,
@@ -173,7 +174,9 @@ export function TimeCalendar({
                 initialView={view === 'week' ? 'timeGridWeek' : 'timeGridDay'}
                 initialDate={date}
                 timeZone="UTC"
-                now={`${now}:00Z`}
+                now={() =>
+                    `${Temporal.Now.plainDateTimeISO(timezone).toString({ smallestUnit: 'second' })}Z`
+                }
                 locales={[svLocale]}
                 locale={locale === 'sv' ? 'sv' : 'en-gb'}
                 firstDay={weekStartsOn % 7}
@@ -241,9 +244,10 @@ export function TimeCalendar({
                 slotLaneClass={(info) =>
                     info.isMinor && 'time-calendar-slot-minor'
                 }
-                dayLaneClass={(info) =>
-                    (info.dow === 0 || info.dow === 6) &&
-                    'time-calendar-weekend'
+                dayLaneClass={({ dow }) =>
+                    dow === 0 || dow === 6
+                        ? 'time-calendar-day time-calendar-weekend'
+                        : 'time-calendar-day'
                 }
                 dayLaneInnerClass={({ isStack, isNarrow }) =>
                     !isStack &&
