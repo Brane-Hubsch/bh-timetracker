@@ -37,7 +37,10 @@ function MemberAvatar({
             color="accent"
             className={cn(
                 'shrink-0 rounded-full',
-                size === 'sm' ? 'size-5 ring-2 ring-surface' : 'size-7',
+                // The soft colour is translucent: an opaque base keeps overlapping avatars apart.
+                size === 'sm'
+                    ? 'size-5 bg-background ring-2 ring-background'
+                    : 'size-7',
             )}
             aria-hidden="true"
         >
@@ -45,11 +48,14 @@ function MemberAvatar({
             <Avatar.Fallback
                 className={
                     size === 'sm'
-                        ? 'text-[7px] leading-none font-semibold'
+                        ? 'text-[9px] leading-none font-semibold'
                         : 'text-[11px]'
                 }
             >
-                {getInitials(name)}
+                {/* The small, overlapping avatars only have room for one letter. */}
+                {size === 'sm'
+                    ? getInitials(name).slice(0, 1)
+                    : getInitials(name)}
             </Avatar.Fallback>
         </Avatar>
     );
@@ -171,7 +177,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                         value={filters.members}
                         onChange={(value) => apply({ members: value })}
                         renderPreview={(shown) => (
-                            <Stack>
+                            <Stack className="-space-x-1">
                                 {shown.slice(0, 3).map((option) => (
                                     <MemberAvatar
                                         key={option.value}
@@ -206,7 +212,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                                         }
                                         name={option.label}
                                         size={20}
-                                        className="rounded-md text-[10px] font-semibold ring-2 ring-surface"
+                                        className="rounded-md text-[10px] font-semibold ring-2 ring-background"
                                     />
                                 ))}
                             </Stack>
@@ -233,7 +239,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                                 {shown.slice(0, 3).map((option) => (
                                     <span
                                         key={option.value}
-                                        className="size-2.5 rounded-full ring-2 ring-surface"
+                                        className="size-2.5 rounded-full ring-2 ring-background"
                                         style={{
                                             backgroundColor: projectColors.get(
                                                 option.value,
