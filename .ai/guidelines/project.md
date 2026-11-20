@@ -167,6 +167,11 @@ describes; propose additions instead of building them.
   `app.tsx` and `.page-transition`), not filter/paging updates or form posts. Use the `animate-enter`,
   `animate-fade-in`, `animate-grow-x/y` tokens from `app.css` and `transition-colors` on interactive
   rows; everything respects `prefers-reduced-motion`.
+- When an open overlay's content changes its height, animate growth and shrinkage over 240 ms with
+  `--ease-out-soft`. `observeOverlayHeights` handles HeroUI overlay surfaces globally, including
+  portalled overlays. Toasts use HeroUI's built-in height transition. Follow the motion annotations
+  in the [TimeReport dialog](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport?node-id=20-383)
+  and [report filters](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport?node-id=85-1538).
 - New pages and frequent actions get a command in the ⌘K palette (`components/command-palette.tsx`,
   respecting permissions). Pages open dialogs from the palette through `useOpenFromQuery` (`?new=1`).
 - Time entries open in `ResponsiveDialog` (modal on desktop, bottom sheet on mobile). Create/edit forms
