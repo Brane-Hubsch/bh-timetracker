@@ -280,9 +280,10 @@ export default function ClientShow({
     );
 }
 
-ClientShow.layout = {
+// A function, so the link gets the page's organization (a static object is built before it is known).
+ClientShow.layout = (props: { currentOrganization: { slug: string } }) => ({
     breadcrumbs: [
-        { title: 'Clients', href: index() },
+        { title: 'Clients', href: index(props.currentOrganization.slug) },
         { title: 'Client', href: '#' },
     ],
-};
+});
