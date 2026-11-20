@@ -57,13 +57,13 @@ export default function ReportsSummary({
                 weekStartsOn={weekStartsOn}
             />
 
-            <ReportStats totals={summary.totals} currency={currency} />
-
             <TimelineChart
                 unit={summary.timeline.unit}
                 buckets={summary.timeline.buckets}
                 projects={summary.timeline.projects}
             />
+
+            <ReportStats totals={summary.totals} currency={currency} />
 
             <ProjectDistribution
                 projects={summary.projects}
