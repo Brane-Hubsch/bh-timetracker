@@ -53,6 +53,21 @@ it('shows owners the whole team with amounts', function () {
             ->where('abilities', ['canViewTeam' => true, 'canViewAmounts' => true]));
 });
 
+it('gives the filters member pictures, inactive members and client logos', function () {
+    $this->owner->update(['avatar_url' => 'https://lh3.googleusercontent.com/olivia.jpg']);
+    $this->organization->members()->updateExistingPivot($this->member->id, ['deactivated_at' => now()]);
+    $this->client->update(['logo_path' => 'images/logos/acme']);
+
+    $this->actingAs($this->owner)
+        ->get(reportRoute('reports.summary'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('options.members.0.label', 'Mia Member (inaktiv)')
+            ->where('options.members.0.isInactive', true)
+            ->where('options.members.1.avatar', 'https://lh3.googleusercontent.com/olivia.jpg')
+            ->where('options.members.1.isInactive', false)
+            ->where('options.clients.0.logo', fn (string $url) => str_ends_with($url, 'images/logos/acme/64.webp')));
+});
+
 it('shows members only their own time and no amounts', function () {
     $this->actingAs($this->member)
         ->get(reportRoute('reports.summary', ['members' => [$this->owner->id]]))
@@ -227,7 +242,13 @@ it('does not show another organization in reports or exports', function () {
         ->get(reportRoute('reports.summary', ['projects' => [$foreign->id, $this->project->id], 'members' => [$otherOwner->id, $this->member->id]]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('summary.totals.seconds', 5400)
-            ->where('options.projects', [['value' => (string) $this->project->id, 'label' => 'Webb · Acme']]));
+            ->where('options.projects', [[
+                'value' => (string) $this->project->id,
+                'label' => 'Webb · Acme',
+                'name' => 'Webb',
+                'client' => 'Acme',
+                'color' => $this->project->color,
+            ]]));
 
     $response = $this->actingAs($this->owner)->get(reportRoute('reports.export', ['type' => 'detailed', 'format' => 'csv']));
     $csv = file_get_contents($response->baseResponse->getFile()->getPathname());
