@@ -263,6 +263,7 @@ export function TimeCalendar({
                         : 'time-calendar-slot-label-text time-calendar-slot-label-text-aligned'
                 }
                 dayHeaderClass="time-calendar-day-header"
+                nowIndicatorHeaderClass="time-calendar-now-arrow"
                 nowIndicatorLineClass="time-calendar-now"
                 dayHeaderContent={(info) => {
                     const day = fromCalendarDate(info.date).slice(0, 10);
