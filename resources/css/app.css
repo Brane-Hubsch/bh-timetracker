@@ -124,7 +124,8 @@
     background: transparent !important;
     box-shadow: none !important;
     margin-bottom: 0 !important;
-    padding: 0 4px !important;
+    padding-block: 0 !important;
+    padding-inline: var(--time-calendar-entry-padding, 4px) !important;
 }
 
 /* FullCalendar positions the resize preview on the wrapper around the event. */
@@ -164,6 +165,18 @@
     margin-inline: calc(-1 * var(--time-calendar-entry-shift))
         var(--time-calendar-entry-shift);
     padding-inline: 0 8px !important;
+}
+
+/* Keep the source card's horizontal geometry while FullCalendar snaps the preview to slots. */
+.time-calendar-event-lane > div:has(> .time-calendar-move-preview) {
+    left: var(--move-origin-left, 0px) !important;
+    right: auto !important;
+    width: var(--move-origin-width, auto);
+}
+
+.time-calendar-event-lane > div > .time-calendar-move-preview {
+    margin-inline: 0;
+    padding-inline: var(--move-origin-padding, 0 8px) !important;
 }
 
 /* Paint the grips on FullCalendar's pointer targets. Each edge gets at most half the card. */

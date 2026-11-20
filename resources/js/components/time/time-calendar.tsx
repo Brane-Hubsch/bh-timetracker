@@ -222,10 +222,11 @@ export function TimeCalendar({
                     end: `${entry.end}:00Z`,
                     color: entry.project.color,
                 }))}
-                eventClass={({ isMirror, isResizing }) =>
+                eventClass={({ isMirror, isDragging, isResizing }) =>
                     cn(
                         'time-calendar-event',
                         isMirror && 'time-calendar-event-mirror',
+                        isMirror && isDragging && 'time-calendar-move-preview',
                         isMirror &&
                             isResizing &&
                             'time-calendar-resize-preview',
@@ -412,6 +413,41 @@ export function TimeCalendar({
                     if (entry) {
                         onEdit(entry);
                     }
+                }}
+                eventDragStart={({ el }) => {
+                    const lane = el.closest('.time-calendar-event-lane');
+                    const calendar = containerRef.current;
+
+                    if (lane && calendar) {
+                        const { left, width } = el.getBoundingClientRect();
+                        const { paddingInline } = getComputedStyle(el);
+                        const offset = left - lane.getBoundingClientRect().left;
+
+                        calendar.style.setProperty(
+                            '--move-origin-left',
+                            `${offset}px`,
+                        );
+                        calendar.style.setProperty(
+                            '--move-origin-width',
+                            `${width}px`,
+                        );
+                        calendar.style.setProperty(
+                            '--move-origin-padding',
+                            paddingInline,
+                        );
+                        // FullCalendar clones this element when dragging outside the grid.
+                        el.style.setProperty(
+                            '--time-calendar-entry-padding',
+                            paddingInline,
+                        );
+                    }
+                }}
+                eventDragStop={({ el }) => {
+                    const style = containerRef.current?.style;
+                    style?.removeProperty('--move-origin-left');
+                    style?.removeProperty('--move-origin-width');
+                    style?.removeProperty('--move-origin-padding');
+                    el.style.removeProperty('--time-calendar-entry-padding');
                 }}
                 eventDrop={(info) => {
                     const entry = byId.get(info.event.id);
