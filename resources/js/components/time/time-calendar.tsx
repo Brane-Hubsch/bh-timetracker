@@ -146,7 +146,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            className="time-calendar overflow-hidden rounded-2xl bg-surface shadow-surface"
+            className="time-calendar overflow-hidden rounded-2xl border border-separator bg-surface"
             data-view={view}
         >
             <FullCalendar
@@ -213,6 +213,13 @@ export function TimeCalendar({
                     !info.isSelected &&
                     'time-calendar-resizer time-calendar-resizer-end'
                 }
+                slotLaneClass={(info) =>
+                    info.isMinor && 'time-calendar-slot-minor'
+                }
+                dayLaneClass={(info) =>
+                    (info.dow === 0 || info.dow === 6) &&
+                    'time-calendar-weekend'
+                }
                 slotHeaderClass="time-calendar-slot-label"
                 slotHeaderInnerClass={({ isFirst }) =>
                     isFirst
@@ -225,8 +232,8 @@ export function TimeCalendar({
                     const day = fromCalendarDate(info.date).slice(0, 10);
 
                     return (
-                        <span className="flex flex-col items-center gap-0.5 py-2">
-                            <span className="text-xs text-muted first-letter:uppercase">
+                        <span className="flex flex-col items-center gap-1 py-1.5">
+                            <span className="text-xs font-medium text-muted first-letter:uppercase">
                                 {formatDate(day, intlLocale, {
                                     weekday: 'short',
                                 })}
@@ -238,7 +245,7 @@ export function TimeCalendar({
                                     day: 'numeric',
                                 })}
                             </span>
-                            <span className="text-xs text-muted tabular-nums">
+                            <span className="text-[11px] font-medium text-muted tabular-nums">
                                 {formatDuration(dayTotal(day))}
                             </span>
                         </span>
@@ -275,7 +282,7 @@ export function TimeCalendar({
                             className="time-calendar-entry relative size-full overflow-hidden border-l-3 text-xs leading-tight text-foreground"
                             style={{
                                 borderLeftColor: color,
-                                backgroundColor: `color-mix(in oklab, ${color} 18%, var(--surface))`,
+                                backgroundColor: `color-mix(in oklab, ${color} 14%, var(--surface))`,
                             }}
                             title={[title, range, duration]
                                 .filter(Boolean)
