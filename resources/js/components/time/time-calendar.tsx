@@ -364,7 +364,7 @@ export function TimeCalendar({
                                         </div>
                                     )}
                                     {!!entry?.tags.length && (
-                                        <div className="time-calendar-entry-detail flex shrink-0 flex-wrap gap-1">
+                                        <div className="time-calendar-entry-detail mt-0.5 flex shrink-0 flex-wrap gap-1">
                                             {entry.tags.map((tag) => (
                                                 <span
                                                     key={tag}
