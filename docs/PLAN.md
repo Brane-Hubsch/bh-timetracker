@@ -122,7 +122,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 ### 4.2 Organisationer och medlemmar
 
 - Använd startkitets **teams-stöd** som grund och döp om till *Organization* i både kod och UI tidigt (fas 0), innan något byggs ovanpå.
-- Skapa organisation, byta aktiv organisation (växlare i sidomenyn), inställningar (namn, valuta, standardpris, veckostart, tidszon).
+- Organisationsväljaren används för att skapa en organisation, byta aktiv organisation och öppna den aktiva organisationens inställningar (namn, valuta, standardpris, veckostart, tidszon).
 - Bjuda in via e-post med roll; acceptera inbjudan som ny eller befintlig användare.
 - Ändra roll, sätta medlemmens timpris, inaktivera medlem (behåll historik).
 
@@ -562,7 +562,7 @@ Beställt i efterhand. Verktygen utökar tabellen i 6.3. De återanvänder befin
 
 ### Tillägg efter Fas 6: import från Clockify (2026-11-19)
 
-Beställt i efterhand (import från Clockify stod under "Senare"). Ägare och admin, dvs. den som får hantera kunder, projekt och teamets tid, kan importera en CSV-export från Clockify till organisationen. Det görs under Inställningar → Organisation → Import, eller via ⌘K.
+Beställt i efterhand (import från Clockify stod under "Senare"). Ägare och admin, dvs. den som får hantera kunder, projekt och teamets tid, kan importera en CSV-export från Clockify till organisationen. Det görs under Organisationsinställningar → Import, eller via ⌘K.
 
 1. **Ladda upp** CSV-filen (högst 5 MB och 20 000 rader). Filen sparas i cachen i två timmar och kan bara läsas av den som laddade upp den, i samma organisation.
 2. **Förhandsvisning:** inget sparas förrän man importerar.
@@ -589,7 +589,7 @@ Beställt i efterhand (import från Clockify stod under "Senare"). Ägare och ad
 Beställt i efterhand. Designen finns i Figma-filen TimeReport på sidan "Bilder · Profil, organisation och kund", med komponenterna `TimeReport / Bilduppladdning` och `TimeReport / Logga`.
 
 - **Profilbild:** laddas upp under Inställningar → Profil. Visas i appen för kollegor, t.ex. i användarmenyn och medlemslistor. Utan uppladdad bild visas Google-bilden, annars initialer. Bilden tas bort med kontot.
-- **Organisationslogga:** laddas upp under Inställningar → Organisation av den som får ändra organisationen (ägare/admin). Visas i organisationsväljaren, i ⌘K och i PDF-rapporternas huvud.
+- **Organisationslogga:** laddas upp under Organisationsinställningar av den som får ändra organisationen (ägare/admin). Visas i organisationsväljaren, i ⌘K och i PDF-rapporternas huvud.
 - **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. I PDF-huvudet visas den när rapporten gäller en enda kund.
 - **Bildbehandling** med `intervention/image` (godkänt beroende, GD-drivrutin):
   - Varje uppladdning sparas som WebP i 64, 128, 256 och 512 px.
