@@ -28,13 +28,20 @@ function axis(maxSeconds: number): { max: number; step: number } {
 function ProjectLabels({
     items,
     locale,
+    maxHours,
+    selected,
 }: {
-    items: (TimelineProject & { seconds?: number })[];
+    items: TimelineProject[];
     locale: string;
+    maxHours: number;
+    selected: TimelineBucket | undefined;
 }) {
+    // Reserve room for the hours so selecting a bar cannot rewrap the legend and move the plot.
+    const widthSample = formatDecimalHours((maxHours + 0.99) * 3600, locale);
+
     return (
         <ul className="flex min-w-0 flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
-            {items.map(({ id, color, name, clientName, seconds }) => (
+            {items.map(({ id, color, name, clientName }) => (
                 <li key={id} className="flex min-w-0 items-start gap-1.5">
                     <span className="mt-0.5 inline-flex">
                         <ProjectDot color={color} />
@@ -43,11 +50,22 @@ function ProjectLabels({
                         {name}
                         {clientName && ` · ${clientName}`}
                     </span>
-                    {seconds !== undefined && (
-                        <span className="font-medium whitespace-nowrap text-foreground tabular-nums">
-                            {formatDecimalHours(seconds, locale)}
+                    <span className="grid shrink-0 font-medium whitespace-nowrap text-foreground tabular-nums">
+                        <span
+                            className="invisible col-start-1 row-start-1"
+                            aria-hidden="true"
+                        >
+                            {widthSample}
                         </span>
-                    )}
+                        {selected && (
+                            <span className="col-start-1 row-start-1">
+                                {formatDecimalHours(
+                                    selected.projectSeconds?.[id] ?? 0,
+                                    locale,
+                                )}
+                            </span>
+                        )}
+                    </span>
                 </li>
             ))}
         </ul>
@@ -70,7 +88,6 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
 
             return project ? [{ ...project, seconds }] : [];
         });
-    const selectedProjects = selected ? projectHours(selected) : [];
     const { max, step } = axis(
         Math.max(0, ...buckets.map((bucket) => bucket.seconds)),
     );
@@ -134,7 +151,12 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
 
             {projects && projects.length > 0 && (
                 <div data-test="timeline-legend">
-                    <ProjectLabels items={projects} locale={intlLocale} />
+                    <ProjectLabels
+                        items={projects}
+                        locale={intlLocale}
+                        maxHours={max}
+                        selected={selected}
+                    />
                 </div>
             )}
 
@@ -238,18 +260,6 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                     </span>
                 ))}
             </div>
-
-            {selectedProjects.length > 0 && (
-                <div
-                    className="border-t border-separator pt-3"
-                    data-test="timeline-project-hours"
-                >
-                    <ProjectLabels
-                        items={selectedProjects}
-                        locale={intlLocale}
-                    />
-                </div>
-            )}
         </section>
     );
 }
