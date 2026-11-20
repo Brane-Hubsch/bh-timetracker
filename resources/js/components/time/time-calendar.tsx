@@ -326,9 +326,6 @@ export function TimeCalendar({
                                 borderLeftColor: color,
                                 backgroundColor: `color-mix(in oklab, ${color} 14%, var(--surface))`,
                             }}
-                            title={[title, range, duration]
-                                .filter(Boolean)
-                                .join(' · ')}
                         >
                             <div className="time-calendar-entry-layout flex size-full flex-col p-2">
                                 <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
