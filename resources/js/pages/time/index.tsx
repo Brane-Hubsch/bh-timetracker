@@ -1,5 +1,5 @@
 import { Avatar, Button } from '@heroui/react';
-import { Head, router, setLayoutProps, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
@@ -28,6 +28,7 @@ import {
     timeToMinutes,
     weekDates,
 } from '@/lib/time';
+import { cn } from '@/lib/utils';
 import { index, update } from '@/routes/time';
 import type {
     ProjectOption,
@@ -78,8 +79,6 @@ export default function TimeIndex({
     const requestedView = params.get('view') as View | null;
     const view: View = requestedView ?? (isDesktop ? 'week' : 'list');
 
-    // The calendar uses the full width of wide screens; the list reads better in a narrower column.
-    setLayoutProps({ width: view === 'list' ? 'default' : 'wide' });
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
 
@@ -330,7 +329,10 @@ export default function TimeIndex({
                 {/* Fades in when the week, day or view changes (not after saving an entry). */}
                 <div
                     key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
-                    className="animate-fade-in"
+                    className={cn(
+                        'animate-fade-in',
+                        view === 'list' && 'mx-auto w-full max-w-[76rem]',
+                    )}
                 >
                     {view === 'list' ? (
                         <TimeEntryList
@@ -424,3 +426,5 @@ export default function TimeIndex({
         </>
     );
 }
+
+TimeIndex.layout = { width: 'wide' };
