@@ -283,6 +283,7 @@ export default function OrganizationEdit({
                         <ImageUploadField
                             label={t('Logo')}
                             shape="square"
+                            fit="cover"
                             src={organization.logo}
                             name={organization.name}
                             canRemove={organization.logo !== null}

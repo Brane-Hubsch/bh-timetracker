@@ -36,9 +36,9 @@ return [
     | Sizes
     |--------------------------------------------------------------------------
     |
-    | Every upload is stored as WebP in these sizes (the longest side for logos,
-    | both sides for square profile pictures). Pick the size closest to twice
-    | the displayed size for sharp images on high-density screens.
+    | Every upload is stored as WebP in these sizes (up to the longest side for
+    | client logos, both sides for profile pictures and workspace icons). Pick
+    | the size closest to twice the display size for high-density screens.
     |
     */
 
