@@ -9,6 +9,8 @@ import {
     ToggleButtonGroup,
 } from '@heroui/react';
 import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useFilter } from 'react-aria-components';
 import { ProjectDot } from '@/components/project-dot';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
@@ -21,6 +23,7 @@ type Props = {
     error?: string;
     autoFocus?: boolean;
     labelAction?: ReactNode;
+    createProjectUrl?: string;
     /** Recently used project ids, newest first; overrides `isRecent` (e.g. for another member). */
     recentIds?: string[];
 };
@@ -53,10 +56,22 @@ export function ProjectPicker({
     error,
     autoFocus,
     labelAction,
+    createProjectUrl,
     recentIds,
 }: Props) {
     const { t } = useTranslation();
     const isDesktop = useIsDesktop();
+    const { contains } = useFilter({ sensitivity: 'base' });
+    const [query, setQuery] = useState('');
+    const createLabel = t('Create project');
+    const showCreate =
+        Boolean(createProjectUrl) &&
+        !projects.some((project) => contains(project.label, query));
+    // The filter receives text only. Give the action its own value, even if a project has the same name.
+    let createOptionText = createLabel;
+    while (projects.some((project) => project.label === createOptionText)) {
+        createOptionText += ' ';
+    }
     const recent = recentIds
         ? recentIds.flatMap(
               (id) => projects.find((project) => project.value === id) ?? [],
@@ -82,6 +97,17 @@ export function ProjectPicker({
                 validationBehavior="aria"
                 className="w-full"
                 menuTrigger="focus"
+                allowsEmptyCollection
+                onInputChange={setQuery}
+                onOpenChange={(isOpen, trigger) => {
+                    if (isOpen && trigger !== 'input') {
+                        setQuery('');
+                    }
+                }}
+                defaultFilter={(text, input) =>
+                    (showCreate && text === createOptionText) ||
+                    contains(text, input)
+                }
                 data-test="project-picker"
             >
                 <div className="flex items-center justify-between gap-2">
@@ -97,7 +123,13 @@ export function ProjectPicker({
                 </ComboBox.InputGroup>
                 <FieldError>{error}</FieldError>
                 <ComboBox.Popover>
-                    <ListBox>
+                    <ListBox
+                        renderEmptyState={() => (
+                            <div className="px-3 py-1.5 text-sm text-muted">
+                                {t('No projects match your search.')}
+                            </div>
+                        )}
+                    >
                         {recent.length > 0 && (
                             <ListBox.Section>
                                 <Header>{t('Recently used')}</Header>
@@ -109,17 +141,29 @@ export function ProjectPicker({
                                 ))}
                             </ListBox.Section>
                         )}
-                        <ListBox.Section>
-                            {recent.length > 0 && (
-                                <Header>{t('All projects')}</Header>
-                            )}
-                            {others.map((project) => (
-                                <ProjectItem
-                                    key={project.value}
-                                    project={project}
-                                />
-                            ))}
-                        </ListBox.Section>
+                        {others.length > 0 && (
+                            <ListBox.Section>
+                                {recent.length > 0 && (
+                                    <Header>{t('All projects')}</Header>
+                                )}
+                                {others.map((project) => (
+                                    <ProjectItem
+                                        key={project.value}
+                                        project={project}
+                                    />
+                                ))}
+                            </ListBox.Section>
+                        )}
+                        {showCreate && (
+                            <ListBox.Item
+                                id="create-project"
+                                href={createProjectUrl}
+                                textValue={createOptionText}
+                                className="px-3"
+                            >
+                                <Label>{createLabel}</Label>
+                            </ListBox.Item>
+                        )}
                     </ListBox>
                 </ComboBox.Popover>
             </ComboBox>
