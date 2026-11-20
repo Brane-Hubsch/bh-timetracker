@@ -293,10 +293,16 @@ export function TimeCalendar({
                     const color = entry?.project.color ?? 'var(--accent)';
                     const localStart = start && fromCalendarDate(start);
                     const localEnd = end && fromCalendarDate(end);
+                    const startTime = localStart ? timeOf(localStart) : '';
+                    const endTime = localEnd ? timeOf(localEnd) : '';
                     const range =
-                        localStart && localEnd
-                            ? `${timeOf(localStart)} – ${timeOf(localEnd)}`
-                            : '';
+                        startTime && endTime ? `${startTime} – ${endTime}` : '';
+                    const resizingEntry =
+                        info.isMirror && info.isResizing ? entry : undefined;
+                    const startChanged =
+                        resizingEntry && resizingEntry.start !== localStart;
+                    const endChanged =
+                        resizingEntry && resizingEntry.end !== localEnd;
                     // Use the saved duration, including across DST changes. While resizing,
                     // FullCalendar's preview has updated wall-clock times.
                     const durationSeconds =
@@ -335,7 +341,25 @@ export function TimeCalendar({
                                     )}
                                     {title && range && (
                                         <div className="time-calendar-entry-range shrink-0 truncate text-[11px]/3.5 font-medium text-muted tabular-nums">
-                                            {range}
+                                            <span
+                                                className={
+                                                    startChanged
+                                                        ? 'font-semibold'
+                                                        : undefined
+                                                }
+                                            >
+                                                {startTime}
+                                            </span>
+                                            {' – '}
+                                            <span
+                                                className={
+                                                    endChanged
+                                                        ? 'font-semibold'
+                                                        : undefined
+                                                }
+                                            >
+                                                {endTime}
+                                            </span>
                                         </div>
                                     )}
                                     {!!entry?.tags.length && (
