@@ -281,6 +281,13 @@
     view-transition-name: settings-navigation;
 }
 
+/* Preserve native scroll containers and keep any overlay arrow visible. */
+[data-overlay-resizing]:not(
+    :has([data-slot='popover-overlay-arrow'], [data-slot='tooltip-arrow'])
+) {
+    overflow: clip;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation-duration: 160ms;

@@ -1,9 +1,10 @@
 import { Toast } from '@heroui/react';
 import { router } from '@inertiajs/react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { I18nProvider, RouterProvider } from 'react-aria-components';
 import { useFlashToast } from '@/hooks/use-flash-toast';
 import { intlLocale } from '@/lib/i18n';
+import { observeOverlayHeights } from '@/lib/overlay-height';
 
 type AppProvidersProps = {
     /** The locale from the initial page load. Changing locale requires a full page reload. */
@@ -19,6 +20,7 @@ type AppProvidersProps = {
  */
 export function AppProviders({ locale, children }: AppProvidersProps) {
     useFlashToast();
+    useEffect(observeOverlayHeights, []);
 
     return (
         <RouterProvider
