@@ -214,6 +214,13 @@
     text-align: left;
 }
 
+/* Required fields in the time entry form are marked with a plain "*", as in the design. */
+.time-entry-form .label--required::after,
+.time-entry-form [data-required='true'] > .label::after {
+    margin-inline-start: 0.25rem;
+    color: inherit;
+}
+
 /* Half-hour rules are solid like the hour rules, only lighter. */
 .time-calendar .time-calendar-slot-minor {
     border-style: solid;

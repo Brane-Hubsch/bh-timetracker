@@ -483,7 +483,7 @@ export function TimeEntryForm({
                     id={FORM_ID}
                     onSubmit={submit}
                     onChange={() => setHasTyped(true)}
-                    className="grid gap-5"
+                    className="time-entry-form grid gap-5"
                     data-test="time-entry-form"
                 >
                     {errors.user_id && (
@@ -709,19 +709,6 @@ export function TimeEntryForm({
                         </Alert>
                     )}
 
-                    <TagInput
-                        value={current.tags}
-                        onChange={(tags) => set({ tags })}
-                        suggestions={tags}
-                        recentTags={recentTags}
-                        error={
-                            errors.tags ??
-                            Object.entries(errors).find(([key]) =>
-                                key.startsWith('tags.'),
-                            )?.[1]
-                        }
-                    />
-
                     <TextField
                         value={current.description}
                         onChange={(description) => set({ description })}
@@ -739,6 +726,19 @@ export function TimeEntryForm({
                             </Description>
                         )}
                     </TextField>
+
+                    <TagInput
+                        value={current.tags}
+                        onChange={(tags) => set({ tags })}
+                        suggestions={tags}
+                        recentTags={recentTags}
+                        error={
+                            errors.tags ??
+                            Object.entries(errors).find(([key]) =>
+                                key.startsWith('tags.'),
+                            )?.[1]
+                        }
+                    />
 
                     {errors.user_id && members.length <= 1 && (
                         <p className="text-sm text-danger">{errors.user_id}</p>

@@ -85,7 +85,7 @@ export function ProjectPicker({
                 data-test="project-picker"
             >
                 <div className="flex items-center justify-between gap-2">
-                    <Label>{t('Project')}</Label>
+                    <Label isRequired>{t('Project')}</Label>
                     {labelAction}
                 </div>
                 <ComboBox.InputGroup>
@@ -146,7 +146,7 @@ export function ProjectPicker({
                         <ToggleButton
                             key={project.value}
                             id={project.value}
-                            className="max-w-full gap-1.5 rounded-full border border-separator bg-transparent px-3 text-foreground transition-colors data-[selected=true]:border-accent data-[selected=true]:bg-accent/10"
+                            className="h-8 max-w-full gap-1.5 rounded-full border border-separator bg-transparent px-3 text-xs font-medium text-foreground transition-colors data-[selected=true]:border-accent data-[selected=true]:bg-accent/10"
                         >
                             <ProjectDot color={project.color} />
                             <span className="max-w-40 truncate">
