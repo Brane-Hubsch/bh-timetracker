@@ -729,6 +729,11 @@ Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (peri
 - **Data:** filteralternativen innehåller nu medlemmarnas bild och om de är inaktiva, kundernas logga samt projektens namn, kund och färg.
 - **URL:** filtren ligger kvar i URL:en som förut, så rapporter går att bokmärka.
 
+### Tillägg efter Fas 6: besöksstatistik med Umami (2026-11-21)
+
+- **Produktion:** Time Tracker ligger under teamet Bräne Hübsch i den egna Umami-instansen på `analytics.bh.studio`. Spåraren laddas på `timetrack.bh.studio` och mäter sidvisningar vid sidladdning och navigering i Inertia, inklusive bakåt och framåt.
+- **Insamling:** Umami sammanställer sin vanliga besöksstatistik. Sidadresser skickas utan frågeparametrar och fragment. Inloggnings- och inbjudningstoken tas bort från sökvägarna. Externa hänvisningar begränsas till ursprunget och sidtitlar utelämnas eftersom de kan innehålla kund- och projektnamn.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.
