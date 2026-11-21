@@ -41,4 +41,10 @@ return [
         'redirect' => '/auth/google/callback',
     ],
 
+    'umami' => [
+        'script_url' => 'https://analytics.bh.studio/script.js',
+        'website_id' => 'f1fea136-618f-48b1-b768-d0f3753fde64',
+        'domain' => 'timetrack.bh.studio',
+    ],
+
 ];

@@ -39,6 +39,10 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/site.webmanifest">
 
+        @if (app()->isProduction() && request()->getHost() === config('services.umami.domain'))
+            @include('analytics.umami')
+        @endif
+
         @fonts
 
         @viteReactRefresh
