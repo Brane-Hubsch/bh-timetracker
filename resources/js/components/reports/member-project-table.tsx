@@ -1,8 +1,9 @@
-import { Avatar, Button, Table } from '@heroui/react';
+import { Avatar, Button, Table, Tooltip } from '@heroui/react';
 import { usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import { useId, useState } from 'react';
 import { ProjectDot } from '@/components/project-dot';
+import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
 import { useInitials } from '@/hooks/use-initials';
 import { formatDecimalHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -28,6 +29,10 @@ export function MemberProjectTable({
     const [expandedMembers, setExpandedMembers] = useState<Set<string>>(
         () => new Set(),
     );
+    const [activeTooltip, setActiveTooltip] = useState<{
+        key: string;
+        source: 'hover' | 'focus';
+    } | null>(null);
     const avatars = new Map(
         members.map((member) => [member.value, member.avatar]),
     );
@@ -85,7 +90,7 @@ export function MemberProjectTable({
                     >
                         {groups.flatMap((member) => {
                             const projects = member.children;
-                            const canExpand = projects.length > 1;
+                            const canExpand = projects.length > 0;
                             const expanded =
                                 canExpand && expandedMembers.has(member.key);
                             const detailsId = `${tableId}-projects-${member.key}`;
@@ -96,7 +101,37 @@ export function MemberProjectTable({
                                     : null);
 
                             const row = (
-                                <Table.Row key={member.key} id={member.key}>
+                                <Table.Row
+                                    key={member.key}
+                                    id={member.key}
+                                    className="[&>.table__cell]:py-2!"
+                                    onPointerEnter={(event) => {
+                                        if (
+                                            canExpand &&
+                                            event.pointerType === 'mouse'
+                                        ) {
+                                            setActiveTooltip((current) =>
+                                                current?.key === member.key &&
+                                                current.source === 'focus'
+                                                    ? current
+                                                    : {
+                                                          key: member.key,
+                                                          source: 'hover',
+                                                      },
+                                            );
+                                        }
+                                    }}
+                                    onPointerLeave={(event) => {
+                                        if (event.pointerType === 'mouse') {
+                                            setActiveTooltip((current) =>
+                                                current?.key === member.key &&
+                                                current.source === 'hover'
+                                                    ? null
+                                                    : current,
+                                            );
+                                        }
+                                    }}
+                                >
                                     <Table.Cell>
                                         <span className="flex items-center gap-2 font-medium">
                                             <Avatar
@@ -125,10 +160,28 @@ export function MemberProjectTable({
                                     <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
                                         {hours(member.seconds)}
                                     </Table.Cell>
-                                    <Table.Cell>
+                                    <Table.Cell className="relative">
                                         <ProjectPreview
+                                            name={member.label}
                                             projects={projects}
                                             maxSeconds={maxSeconds}
+                                            isOpen={
+                                                activeTooltip?.key ===
+                                                member.key
+                                            }
+                                            onOpenChange={(isOpen) =>
+                                                setActiveTooltip((current) =>
+                                                    isOpen
+                                                        ? {
+                                                              key: member.key,
+                                                              source: 'focus',
+                                                          }
+                                                        : current?.key ===
+                                                            member.key
+                                                          ? null
+                                                          : current,
+                                                )
+                                            }
                                         />
                                     </Table.Cell>
                                     <Table.Cell className="text-right whitespace-nowrap tabular-nums">
@@ -210,48 +263,71 @@ export function MemberProjectTable({
 }
 
 function ProjectPreview({
+    name,
     projects,
     maxSeconds,
+    isOpen,
+    onOpenChange,
 }: {
+    name: string;
     projects: ReportGroup[];
     maxSeconds: number;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }) {
-    const { tc } = useTranslation();
-    const visibleProjects = 2;
-    const remaining = projects.length - visibleProjects;
+    const { t } = useTranslation();
+    const remaining =
+        maxSeconds -
+        projects.reduce((total, project) => total + project.seconds, 0);
+
+    if (projects.length === 0) {
+        return (
+            <div aria-hidden="true" className="h-2 rounded-full bg-default" />
+        );
+    }
+
+    const items = projects.map((project) => ({
+        ...project,
+        color: project.color ?? 'var(--muted)',
+    }));
 
     return (
-        <div className="grid gap-1">
-            <div
-                className="flex h-2 overflow-hidden rounded-full bg-default"
-                aria-hidden="true"
+        <Tooltip
+            trigger="focus"
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            closeDelay={0}
+        >
+            <Tooltip.Trigger
+                role="group"
+                tabIndex={0}
+                aria-label={t('Project breakdown')}
+                className="absolute inset-x-4 inset-y-0 grid content-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
-                {projects.map((project) => (
-                    <span
-                        key={project.key}
-                        className="shrink-0"
-                        style={{
-                            width: `${(project.seconds / maxSeconds) * 100}%`,
-                            backgroundColor: project.color ?? 'var(--muted)',
-                        }}
-                    />
-                ))}
-            </div>
-            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-                {projects.slice(0, visibleProjects).map((project) => (
-                    <li
-                        key={project.key}
-                        className="flex min-w-0 items-center gap-1.5"
-                    >
-                        <ProjectDot color={project.color ?? 'var(--muted)'} />
-                        <span className="wrap-break-word">{project.label}</span>
-                    </li>
-                ))}
-                {remaining > 0 && (
-                    <li>{tc('+:count project|+:count projects', remaining)}</li>
-                )}
-            </ul>
-        </div>
+                <div
+                    className="flex h-2 gap-px overflow-hidden rounded-full"
+                    aria-hidden="true"
+                >
+                    {items.map(({ key, color, seconds }) => (
+                        <span
+                            key={key}
+                            className="min-w-0 basis-0"
+                            style={{
+                                flexGrow: seconds,
+                                backgroundColor: color,
+                            }}
+                        />
+                    ))}
+                    {remaining > 0 && (
+                        <span
+                            className="min-w-0 basis-0 bg-default"
+                            style={{ flexGrow: remaining }}
+                        />
+                    )}
+                </div>
+            </Tooltip.Trigger>
+            <BreakdownTooltip title={name} items={items} placement="bottom" />
+        </Tooltip>
     );
 }
 
