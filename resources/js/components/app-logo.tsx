@@ -6,9 +6,7 @@ export default function AppLogo() {
 
     return (
         <span className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                <AppLogoIcon className="size-5" />
-            </span>
+            <AppLogoIcon size={32} />
             <span className="truncate text-sm font-semibold">{name}</span>
         </span>
     );
