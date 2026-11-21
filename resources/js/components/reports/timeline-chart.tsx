@@ -75,7 +75,8 @@ function ProjectTimelineBar({
     const anchorRef = useRef<HTMLSpanElement>(null);
     const items = segments.map((project) => ({
         key: project.id,
-        label: projectLabel(project),
+        label: project.name,
+        clientName: project.clientName,
         color: project.color,
         seconds: project.seconds,
     }));
