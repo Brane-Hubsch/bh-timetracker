@@ -104,23 +104,33 @@ export function MemberProjectTable({
                                 <Table.Row
                                     key={member.key}
                                     id={member.key}
-                                    className="[&>.table__cell]:py-2"
-                                    onHoverStart={() => {
-                                        if (canExpand) {
-                                            setActiveTooltip({
-                                                key: member.key,
-                                                source: 'hover',
-                                            });
+                                    className="[&>.table__cell]:py-2!"
+                                    onPointerEnter={(event) => {
+                                        if (
+                                            canExpand &&
+                                            event.pointerType === 'mouse'
+                                        ) {
+                                            setActiveTooltip((current) =>
+                                                current?.key === member.key &&
+                                                current.source === 'focus'
+                                                    ? current
+                                                    : {
+                                                          key: member.key,
+                                                          source: 'hover',
+                                                      },
+                                            );
                                         }
                                     }}
-                                    onHoverEnd={() =>
-                                        setActiveTooltip((current) =>
-                                            current?.key === member.key &&
-                                            current.source === 'hover'
-                                                ? null
-                                                : current,
-                                        )
-                                    }
+                                    onPointerLeave={(event) => {
+                                        if (event.pointerType === 'mouse') {
+                                            setActiveTooltip((current) =>
+                                                current?.key === member.key &&
+                                                current.source === 'hover'
+                                                    ? null
+                                                    : current,
+                                            );
+                                        }
+                                    }}
                                 >
                                     <Table.Cell>
                                         <span className="flex items-center gap-2 font-medium">
@@ -150,7 +160,7 @@ export function MemberProjectTable({
                                     <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
                                         {hours(member.seconds)}
                                     </Table.Cell>
-                                    <Table.Cell>
+                                    <Table.Cell className="relative">
                                         <ProjectPreview
                                             name={member.label}
                                             projects={projects}
@@ -237,6 +247,7 @@ export function MemberProjectTable({
                                               className="bg-surface-secondary"
                                           >
                                               <ProjectHours
+                                                  id={detailsId}
                                                   projects={projects}
                                               />
                                           </Table.Cell>
@@ -291,7 +302,7 @@ function ProjectPreview({
                 role="group"
                 tabIndex={0}
                 aria-label={t('Project breakdown')}
-                className="w-full rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                className="absolute inset-x-4 inset-y-0 grid content-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
                 <div
                     className="flex h-2 gap-px overflow-hidden rounded-full"
@@ -320,11 +331,17 @@ function ProjectPreview({
     );
 }
 
-function ProjectHours({ projects }: { projects: ReportGroup[] }) {
+function ProjectHours({
+    id,
+    projects,
+}: {
+    id: string;
+    projects: ReportGroup[];
+}) {
     const { intlLocale } = useTranslation();
 
     return (
-        <ul className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
+        <ul id={id} className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
             {projects.map((project) => (
                 <li key={project.key} className="flex items-baseline gap-2">
                     <ProjectDot color={project.color ?? 'var(--muted)'} />

@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { Pressable, Tooltip } from '@heroui/react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { ProjectDot } from '@/components/project-dot';
+import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
 import { formatDecimalHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatBucket } from '@/lib/reports';
@@ -14,6 +17,7 @@ type Props = {
 };
 
 type ProjectHours = TimelineProject & { seconds: number };
+type TooltipSource = 'hover' | 'focus' | 'touch';
 
 const STEPS = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 250, 500];
 
@@ -25,46 +29,23 @@ function axis(maxSeconds: number): { max: number; step: number } {
     return { max: Math.ceil(maxHours / step) * step, step };
 }
 
-function ProjectLabels({
-    items,
-    locale,
-    maxHours,
-    selected,
-}: {
-    items: TimelineProject[];
-    locale: string;
-    maxHours: number;
-    selected: TimelineBucket | undefined;
-}) {
-    // Reserve room for the hours so selecting a bar cannot rewrap the legend and move the plot.
-    const widthSample = formatDecimalHours((maxHours + 0.99) * 3600, locale);
+function projectLabel({ name, clientName }: TimelineProject) {
+    return clientName ? `${name} · ${clientName}` : name;
+}
 
+function ProjectLabels({ items }: { items: TimelineProject[] }) {
     return (
         <ul className="flex min-w-0 flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
-            {items.map(({ id, color, name, clientName }) => (
-                <li key={id} className="flex min-w-0 items-start gap-1.5">
+            {items.map((project) => (
+                <li
+                    key={project.id}
+                    className="flex min-w-0 items-start gap-1.5"
+                >
                     <span className="mt-0.5 inline-flex">
-                        <ProjectDot color={color} />
+                        <ProjectDot color={project.color} />
                     </span>
                     <span className="wrap-anywhere">
-                        {name}
-                        {clientName && ` · ${clientName}`}
-                    </span>
-                    <span className="grid shrink-0 font-medium whitespace-nowrap text-foreground tabular-nums">
-                        <span
-                            className="invisible col-start-1 row-start-1"
-                            aria-hidden="true"
-                        >
-                            {widthSample}
-                        </span>
-                        {selected && (
-                            <span className="col-start-1 row-start-1">
-                                {formatDecimalHours(
-                                    selected.projectSeconds?.[id] ?? 0,
-                                    locale,
-                                )}
-                            </span>
-                        )}
+                        {projectLabel(project)}
                     </span>
                 </li>
             ))}
@@ -72,14 +53,130 @@ function ProjectLabels({
     );
 }
 
+const buttonClassName =
+    'group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus';
+
+function ProjectTimelineBar({
+    title,
+    segments,
+    className,
+    style,
+    source,
+    onChange,
+}: {
+    title: string;
+    segments: ProjectHours[];
+    className: string;
+    style: CSSProperties;
+    source: TooltipSource | null;
+    onChange: (source: TooltipSource | null) => void;
+}) {
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const anchorRef = useRef<HTMLSpanElement>(null);
+    const items = segments.map((project) => ({
+        key: project.id,
+        label: projectLabel(project),
+        color: project.color,
+        seconds: project.seconds,
+    }));
+
+    useEffect(() => {
+        if (source !== 'touch') return;
+
+        function dismiss(event: PointerEvent) {
+            if (
+                event.target instanceof Node &&
+                !buttonRef.current?.contains(event.target)
+            ) {
+                onChange(null);
+            }
+        }
+
+        document.addEventListener('pointerdown', dismiss, true);
+        return () => document.removeEventListener('pointerdown', dismiss, true);
+    }, [source, onChange]);
+
+    return (
+        <Tooltip
+            trigger="focus"
+            isOpen={source !== null}
+            onOpenChange={(isOpen) => onChange(isOpen ? 'focus' : null)}
+            shouldCloseOnPress={false}
+            closeDelay={0}
+        >
+            <Pressable
+                onPress={({ pointerType }) => {
+                    if (pointerType === 'touch' || pointerType === 'pen') {
+                        onChange(source === 'touch' ? null : 'touch');
+                    } else if (
+                        pointerType === 'keyboard' ||
+                        pointerType === 'virtual'
+                    ) {
+                        onChange('focus');
+                    }
+                }}
+            >
+                <button
+                    ref={buttonRef}
+                    type="button"
+                    aria-label={title}
+                    className={buttonClassName}
+                >
+                    <span
+                        ref={anchorRef}
+                        aria-hidden="true"
+                        className={`${className} flex-col-reverse`}
+                        style={style}
+                        onPointerEnter={(event) => {
+                            if (
+                                event.pointerType === 'mouse' &&
+                                source !== 'focus'
+                            ) {
+                                onChange('hover');
+                            }
+                        }}
+                        onPointerLeave={(event) => {
+                            if (
+                                event.pointerType === 'mouse' &&
+                                source === 'hover'
+                            ) {
+                                onChange(null);
+                            }
+                        }}
+                    >
+                        {segments.map(({ id, color, seconds }) => (
+                            <span
+                                key={id}
+                                className="min-h-0 basis-0 shadow-[inset_0_-1px_var(--surface)] first:shadow-none last:rounded-t-[4px]"
+                                style={{
+                                    flexGrow: seconds,
+                                    backgroundColor: color,
+                                }}
+                            />
+                        ))}
+                    </span>
+                </button>
+            </Pressable>
+            <BreakdownTooltip
+                title={title}
+                items={items}
+                placement="top"
+                triggerRef={anchorRef}
+            />
+        </Tooltip>
+    );
+}
+
 /** Hours per day or week, stacked by project in reports and by billable status on project pages. */
 export function TimelineChart({ unit, buckets, title, projects }: Props) {
     const { t, intlLocale } = useTranslation();
-    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
-    const selected = buckets.find(
-        (bucket) => bucket.key === (hoveredKey ?? selectedKey),
-    );
+    const [activeProjectBar, setActiveProjectBar] = useState<{
+        key: string;
+        source: TooltipSource;
+    } | null>(null);
+    const selected = buckets.find((bucket) => bucket.key === selectedKey);
+    const activeKey = projects ? activeProjectBar?.key : selected?.key;
     const chartTitle =
         title ?? (unit === 'week' ? t('Hours per week') : t('Hours per day'));
     const projectsById = new Map(
@@ -104,8 +201,13 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
         (bucket) => bucket.seconds > bucket.billableSeconds,
     );
 
+    const period = (bucket: TimelineBucket) =>
+        formatBucket(bucket.key, unit, intlLocale, (week) =>
+            t('Week :number', { number: week }),
+        );
+    const hours = (seconds: number) => formatDecimalHours(seconds, intlLocale);
     const describe = (bucket: TimelineBucket) =>
-        `${formatBucket(bucket.key, unit, intlLocale, (week) => t('Week :number', { number: week }))}: ${formatDecimalHours(bucket.seconds, intlLocale)}`;
+        `${period(bucket)}: ${hours(bucket.seconds)}`;
 
     const tick = (bucket: TimelineBucket) =>
         unit === 'week'
@@ -139,27 +241,23 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                         </ul>
                     )}
                 </div>
-                <p
-                    className="min-h-5 text-sm text-muted tabular-nums"
-                    aria-live="polite"
-                >
-                    {selected
-                        ? describe(selected)
-                        : t('Select a bar for details.')}
-                    {selected &&
-                        !projects &&
-                        ` · ${t(':hours billable', { hours: formatDecimalHours(selected.billableSeconds, intlLocale) })}`}
-                </p>
+                {!projects && (
+                    <p
+                        className="min-h-5 text-sm text-muted tabular-nums"
+                        aria-live="polite"
+                    >
+                        {selected
+                            ? describe(selected)
+                            : t('Select a bar for details.')}
+                        {selected &&
+                            ` · ${t(':hours billable', { hours: hours(selected.billableSeconds) })}`}
+                    </p>
+                )}
             </div>
 
             {projects && projects.length > 0 && (
                 <div data-test="timeline-legend">
-                    <ProjectLabels
-                        items={projects}
-                        locale={intlLocale}
-                        maxHours={max}
-                        selected={selected}
-                    />
+                    <ProjectLabels items={projects} />
                 </div>
             )}
 
@@ -183,7 +281,11 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                     aria-label={chartTitle}
                 >
                     {buckets.map((bucket, index) => {
-                        const segments = projectHours(bucket);
+                        const barStyle = {
+                            height: `${(bucket.seconds / 3600 / max) * 100}%`,
+                            animationDelay: `${Math.min(index * 12, 360)}ms`,
+                        };
+                        const barClassName = `flex w-full max-w-6 origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
 
                         return (
                             <div
@@ -191,115 +293,65 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                                 role="listitem"
                                 className="flex h-full min-w-0 flex-1"
                             >
-                                <button
-                                    type="button"
-                                    aria-label={[
-                                        describe(bucket),
-                                        ...segments.map(
-                                            ({ name, clientName, seconds }) =>
-                                                `${name}${clientName ? ` · ${clientName}` : ''}: ${formatDecimalHours(seconds, intlLocale)}`,
-                                        ),
-                                    ].join('. ')}
-                                    className="group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                                    onMouseEnter={
-                                        projects
-                                            ? undefined
-                                            : () => setSelectedKey(bucket.key)
-                                    }
-                                    onFocus={(event) => {
-                                        if (
-                                            !projects ||
-                                            event.currentTarget.matches(
-                                                ':focus-visible',
-                                            )
-                                        ) {
-                                            setSelectedKey(bucket.key);
+                                {projects ? (
+                                    <ProjectTimelineBar
+                                        title={`${period(bucket)} · ${hours(bucket.seconds)}`}
+                                        segments={projectHours(bucket)}
+                                        className={barClassName}
+                                        style={barStyle}
+                                        source={
+                                            activeProjectBar?.key === bucket.key
+                                                ? activeProjectBar.source
+                                                : null
                                         }
-                                    }}
-                                    onBlur={
-                                        projects
-                                            ? () => setSelectedKey(null)
-                                            : undefined
-                                    }
-                                    onClick={(event) => {
-                                        if (!projects || event.detail === 0) {
-                                            setSelectedKey(bucket.key);
-                                        }
-                                    }}
-                                    onPointerUp={
-                                        projects
-                                            ? (event) => {
-                                                  if (
-                                                      event.pointerType !==
-                                                      'mouse'
-                                                  ) {
-                                                      setSelectedKey(
-                                                          bucket.key,
-                                                      );
-                                                  }
-                                              }
-                                            : undefined
-                                    }
-                                >
-                                    {/* The segments shrink to fit instead of overflowing, so every bar ends exactly on the baseline. */}
-                                    <span
-                                        className={`flex w-full max-w-6 origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${projects ? 'flex-col-reverse' : 'flex-col justify-end gap-0.5'} ${!selected || selected.key === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`}
-                                        style={{
-                                            height: `${(bucket.seconds / 3600 / max) * 100}%`,
-                                            animationDelay: `${Math.min(index * 12, 360)}ms`,
-                                        }}
-                                        onPointerEnter={
-                                            projects
-                                                ? (event) => {
-                                                      if (
-                                                          event.pointerType ===
-                                                          'mouse'
-                                                      ) {
-                                                          setHoveredKey(
-                                                              bucket.key,
-                                                          );
+                                        onChange={(source) =>
+                                            setActiveProjectBar((current) =>
+                                                source
+                                                    ? {
+                                                          key: bucket.key,
+                                                          source,
                                                       }
-                                                  }
-                                                : undefined
+                                                    : current?.key ===
+                                                        bucket.key
+                                                      ? null
+                                                      : current,
+                                            )
                                         }
-                                        onPointerLeave={
-                                            projects
-                                                ? () => setHoveredKey(null)
-                                                : undefined
+                                    />
+                                ) : (
+                                    <button
+                                        type="button"
+                                        aria-label={describe(bucket)}
+                                        className={buttonClassName}
+                                        onMouseEnter={() =>
+                                            setSelectedKey(bucket.key)
+                                        }
+                                        onFocus={() =>
+                                            setSelectedKey(bucket.key)
+                                        }
+                                        onClick={() =>
+                                            setSelectedKey(bucket.key)
                                         }
                                     >
-                                        {projects ? (
-                                            segments.map(
-                                                ({ id, color, seconds }) => (
-                                                    <span
-                                                        key={id}
-                                                        className="min-h-0 basis-0 shadow-[inset_0_-1px_var(--surface)] first:shadow-none last:rounded-t-[4px]"
-                                                        style={{
-                                                            flexGrow: seconds,
-                                                            backgroundColor:
-                                                                color,
-                                                        }}
-                                                    />
-                                                ),
-                                            )
-                                        ) : (
-                                            <>
-                                                {bucket.seconds >
-                                                    bucket.billableSeconds && (
-                                                    <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
-                                                )}
-                                                {bucket.billableSeconds > 0 && (
-                                                    <span
-                                                        className="min-h-px bg-accent first:rounded-t-[4px]"
-                                                        style={{
-                                                            height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
-                                                        }}
-                                                    />
-                                                )}
-                                            </>
-                                        )}
-                                    </span>
-                                </button>
+                                        <span
+                                            className={`${barClassName} flex-col justify-end gap-0.5`}
+                                            style={barStyle}
+                                        >
+                                            {bucket.seconds >
+                                                bucket.billableSeconds && (
+                                                <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
+                                            )}
+                                            {bucket.billableSeconds > 0 && (
+                                                <span
+                                                    className="min-h-px bg-accent first:rounded-t-[4px]"
+                                                    style={{
+                                                        height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
+                                                    }}
+                                                />
+                                            )}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
