@@ -444,7 +444,7 @@ Avvikelser och förtydliganden:
 Klar. Byggt:
 
 - **PWA:**
-  - Egen ikon (lila klocka) som favicon, SVG, apple-touch-icon och PNG 192/512/maskable.
+  - Egen ikon (vitt T med klockvisare på lila botten) som SVG, ICO (16, 32, 48 px), Apple Touch (120, 152, 167, 180 px) och PWA-ikoner (192 och 512 px, även maskbara).
   - `site.webmanifest` på svenska, `theme-color` och fristående läge.
   - Ingen offline-funktion, enligt planen.
 - **Felhantering:**
