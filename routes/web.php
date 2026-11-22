@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Clients\ClientController;
+use App\Http\Controllers\Clients\ClientWebsiteLogoController;
 use App\Http\Controllers\CommandPaletteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -38,6 +39,7 @@ Route::prefix('{current_organization}')
 
         Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
         Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::post('clients/website-logo', ClientWebsiteLogoController::class)->middleware('throttle:10,1')->name('clients.website-logo');
         Route::get('clients/{client}', [ClientController::class, 'show'])->name('clients.show');
         Route::patch('clients/{client}', [ClientController::class, 'update'])->name('clients.update');
         Route::post('clients/{client}/archive', [ClientController::class, 'archive'])->name('clients.archive');

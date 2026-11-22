@@ -58,8 +58,24 @@ it('lets admins create, update, archive and restore clients', function () {
 
 it('validates client input', function () {
     $this->actingAs($this->owner)
-        ->post(route('clients.store', ['current_organization' => $this->slug]), ['name' => '', 'email' => 'nope'])
-        ->assertSessionHasErrors(['name', 'email']);
+        ->post(route('clients.store', ['current_organization' => $this->slug]), ['name' => '', 'email' => 'nope', 'website' => 'ftp://example.com'])
+        ->assertSessionHasErrors(['name', 'email', 'website']);
+});
+
+it('normalizes, presents and clears the optional website', function () {
+    $this->actingAs($this->owner)
+        ->post(route('clients.store', ['current_organization' => $this->slug]), ['name' => 'Acme', 'website' => ' acme.example/about '])
+        ->assertRedirect();
+
+    $client = Client::forOrganization($this->organization)->sole();
+    $parameters = ['current_organization' => $this->slug, 'client' => $client->id];
+
+    $this->patch(route('clients.update', $parameters), ['name' => 'Acme AB']);
+    $this->get(route('clients.show', $parameters))
+        ->assertInertia(fn (Assert $page) => $page->where('client.website', 'https://acme.example/about'));
+
+    $this->patch(route('clients.update', $parameters), ['name' => 'Acme AB', 'website' => '']);
+    expect($client->fresh()->website)->toBeNull();
 });
 
 it('keeps members out of client management', function () {

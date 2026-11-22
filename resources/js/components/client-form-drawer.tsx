@@ -1,6 +1,7 @@
 import { Button, Description, Label, TextArea, TextField } from '@heroui/react';
-import { Form } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { Form, useHttp } from '@inertiajs/react';
+import { Link2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { ImageUploadField } from '@/components/form/image-upload-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
@@ -10,7 +11,8 @@ import {
     sideDrawerFormClass,
 } from '@/components/side-drawer';
 import { useTranslation } from '@/lib/i18n';
-import { store, update } from '@/routes/clients';
+import { prepareWebsiteLogo, type WebsiteLogo } from '@/lib/website-logo';
+import { store, update, websiteLogo } from '@/routes/clients';
 import type { ClientDetails } from '@/types';
 
 type Props = {
@@ -28,13 +30,32 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
     const [logo, setLogo] = useState<File | null>(null);
     const [removeLogo, setRemoveLogo] = useState(false);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const savedWebsite = client?.website ?? '';
+    const [website, setWebsite] = useState(savedWebsite);
+    const [findingLogo, setFindingLogo] = useState(false);
+    const [websiteError, setWebsiteError] = useState<string>();
+    const [lookupError, setLookupError] = useState<string>();
+    const activeLookup = useRef<symbol | null>(null);
+    const lookup = useHttp<{ website: string }, { logo: WebsiteLogo | null }>({
+        website: '',
+    });
+    const { cancel: cancelLookup } = lookup;
 
     useEffect(() => {
         if (isOpen) {
             setLogo(null);
             setRemoveLogo(false);
+            setWebsite(savedWebsite);
+            setFindingLogo(false);
+            setWebsiteError(undefined);
+            setLookupError(undefined);
         }
-    }, [isOpen]);
+
+        return () => {
+            activeLookup.current = null;
+            cancelLookup();
+        };
+    }, [cancelLookup, isOpen, savedWebsite]);
 
     useEffect(() => {
         if (!logo) {
@@ -50,6 +71,63 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
     }, [logo]);
 
     const currentLogo = removeLogo ? null : (client?.logo ?? null);
+
+    function clearLogoLookup() {
+        activeLookup.current = null;
+        cancelLookup();
+        setFindingLogo(false);
+        setLookupError(undefined);
+    }
+
+    async function findLogo() {
+        const lookupId = Symbol();
+        activeLookup.current = lookupId;
+        setFindingLogo(true);
+        setWebsiteError(undefined);
+        setLookupError(undefined);
+        lookup.transform(() => ({ website }));
+
+        try {
+            const result = await lookup.submit(websiteLogo(), {
+                onError: (errors) => {
+                    if (activeLookup.current === lookupId) {
+                        setWebsiteError(
+                            String(
+                                errors.website ??
+                                    t('Enter a valid website address.'),
+                            ),
+                        );
+                    }
+                },
+            });
+            if (!result || activeLookup.current !== lookupId) {
+                return;
+            }
+            if (!result.logo) {
+                setLookupError(t('No suitable logo found on this website.'));
+                return;
+            }
+
+            const file = await prepareWebsiteLogo(result.logo);
+            if (activeLookup.current === lookupId) {
+                setLogo(file);
+                setRemoveLogo(false);
+            }
+        } catch {
+            if (activeLookup.current === lookupId) {
+                setLookupError(
+                    t(
+                        'Could not fetch the logo. Try again or upload an image.',
+                    ),
+                );
+            }
+        } finally {
+            if (activeLookup.current === lookupId) {
+                activeLookup.current = null;
+                setFindingLogo(false);
+            }
+        }
+    }
 
     return (
         <SideDrawer
@@ -81,6 +159,21 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                                     autoFocus={!client}
                                     data-test="client-name"
                                 />
+                                <TextInputField
+                                    name="website"
+                                    label={t('Website')}
+                                    value={website}
+                                    onChange={(value) => {
+                                        clearLogoLookup();
+                                        setWebsiteError(undefined);
+                                        setWebsite(value);
+                                    }}
+                                    error={websiteError ?? errors.website}
+                                    inputMode="url"
+                                    autoComplete="url"
+                                    placeholder={t('example.com')}
+                                    data-test="client-website"
+                                />
                                 <ImageUploadField
                                     label={t('Logo')}
                                     shape="square"
@@ -88,14 +181,32 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                                     name={client?.name ?? '?'}
                                     canRemove={Boolean(logo ?? currentLogo)}
                                     onSelect={(file) => {
+                                        clearLogoLookup();
                                         setLogo(file);
                                         setRemoveLogo(false);
                                     }}
                                     onRemove={() => {
+                                        clearLogoLookup();
                                         setLogo(null);
                                         setRemoveLogo(true);
                                     }}
-                                    error={errors.logo}
+                                    additionalAction={
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            isDisabled={
+                                                !website.trim() || processing
+                                            }
+                                            isPending={findingLogo}
+                                            onPress={findLogo}
+                                            data-test="client-fetch-logo"
+                                        >
+                                            <Link2 className="size-4" />
+                                            {t('Fetch logo')}
+                                        </Button>
+                                    }
+                                    error={lookupError ?? errors.logo}
                                     data-test="client-logo"
                                 />
                                 <div className="grid gap-4 sm:grid-cols-2">
@@ -138,6 +249,7 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                             <Button
                                 type="submit"
                                 isPending={processing}
+                                isDisabled={findingLogo}
                                 data-test="client-save"
                             >
                                 {t('Save')}

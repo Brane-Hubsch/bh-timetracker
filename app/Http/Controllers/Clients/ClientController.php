@@ -86,6 +86,7 @@ class ClientController extends Controller
                 'organizationNumber' => $client->organization_number,
                 'email' => $client->email,
                 'notes' => $client->notes,
+                'website' => $client->website,
                 'logo' => $client->logoUrl(256),
                 'isArchived' => $client->isArchived(),
             ],
