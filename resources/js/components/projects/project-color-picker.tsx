@@ -5,7 +5,7 @@ import {
     ColorSwatch,
     ColorSwatchPicker,
     FieldError,
-    Input,
+    InputGroup,
     Label,
     TextField,
     parseColor,
@@ -122,7 +122,7 @@ function CustomColorPanel({
     return (
         <div
             id={id}
-            className="grid grid-cols-[minmax(0,10rem)_minmax(6rem,8rem)] items-start gap-3"
+            className="grid w-full max-w-[20.5rem] grid-cols-[minmax(0,1.25fr)_minmax(7.25rem,1fr)] items-center gap-3 rounded-2xl border border-separator bg-surface-secondary p-3"
         >
             <div className="grid grid-cols-[minmax(0,1fr)_1.25rem] gap-3">
                 <ColorArea
@@ -166,20 +166,25 @@ function CustomColorPanel({
                 isRequired
             >
                 <Label>{t('Hex code')}</Label>
-                <Input
-                    autoCapitalize="none"
-                    autoComplete="off"
-                    spellCheck={false}
-                />
+                <InputGroup fullWidth>
+                    <InputGroup.Input
+                        autoCapitalize="none"
+                        autoComplete="off"
+                        className="min-w-0"
+                        spellCheck={false}
+                    />
+                    <InputGroup.Suffix className="border-s-0 px-2">
+                        <ColorSwatch
+                            aria-hidden="true"
+                            color={color}
+                            shape="square"
+                            size="xs"
+                        />
+                    </InputGroup.Suffix>
+                </InputGroup>
                 <FieldError>
                     {t('Enter a valid hex colour, e.g. #3478cc.')}
                 </FieldError>
-                <ColorSwatch
-                    aria-hidden="true"
-                    color={color}
-                    shape="square"
-                    size="sm"
-                />
             </TextField>
         </div>
     );
