@@ -186,7 +186,7 @@ export function ProjectFormDrawer({
                                 </Switch.Control>
                                 <div className="flex flex-col gap-0.5">
                                     <Label>{t('Billable')}</Label>
-                                    <Description>
+                                    <Description className="font-normal">
                                         {t(
                                             'New time entries on the project are billable by default.',
                                         )}
@@ -218,7 +218,7 @@ export function ProjectFormDrawer({
                             <NumberField.Group>
                                 <NumberField.Input />
                             </NumberField.Group>
-                            <Description className="font-medium">
+                            <Description>
                                 {t(
                                     'Leave empty to use the member or organization rate.',
                                 )}
