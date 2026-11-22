@@ -52,11 +52,7 @@ export function SideDrawerBody({ children }: { children: ReactNode }) {
     );
 }
 
-/** Actions, pinned to the bottom of the panel. */
+/** Actions, pinned to the bottom of the panel; the body fades out above them instead of a divider. */
 export function SideDrawerFooter({ children }: { children: ReactNode }) {
-    return (
-        <Drawer.Footer className="-mx-6 -mb-6 border-t border-separator px-6 py-4">
-            {children}
-        </Drawer.Footer>
-    );
+    return <Drawer.Footer className="mt-3">{children}</Drawer.Footer>;
 }
