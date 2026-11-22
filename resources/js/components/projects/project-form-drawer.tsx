@@ -5,19 +5,17 @@ import {
     FieldError,
     Label,
     NumberField,
-    Radio,
-    RadioGroup,
     Switch,
     TextField,
     TextArea,
     parseColor,
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
-import { Check, LockKeyhole, UsersRound } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
+import { SegmentedControl } from '@/components/segmented-control';
 import {
     SideDrawer,
     SideDrawerBody,
@@ -41,20 +39,10 @@ type Props = {
 
 const NO_CLIENT = 'none';
 
-const visibilityOptions = [
-    {
-        value: 'public',
-        label: 'Public',
-        description: 'All members can report time',
-        icon: UsersRound,
-    },
-    {
-        value: 'private',
-        label: 'Private',
-        description: 'Only assigned members can report time',
-        icon: LockKeyhole,
-    },
-] as const;
+const visibilityDescriptions = {
+    public: 'All members can report time',
+    private: 'Only assigned members can report time',
+};
 
 function initialValues(
     project: ProjectFormValues | null,
@@ -96,6 +84,8 @@ export function ProjectFormDrawer({
 }: Props) {
     const { t } = useTranslation();
     const form = useForm(initialValues(project, defaultClientId, colors));
+    const visibilityLabel = t('Visibility');
+    const visibilityDescriptionId = useId();
 
     useEffect(() => {
         if (isOpen) {
@@ -308,51 +298,38 @@ export function ProjectFormDrawer({
                             />
                         </div>
 
-                        <RadioGroup
-                            className="gap-2"
-                            value={form.data.visibility}
-                            onChange={(value) =>
-                                form.setData(
-                                    'visibility',
-                                    value as 'public' | 'private',
-                                )
-                            }
-                        >
-                            <Label>{t('Visibility')}</Label>
-                            {visibilityOptions.map(
-                                ({ value, label, description, icon: Icon }) => (
-                                    <Radio
-                                        key={value}
-                                        value={value}
-                                        className="mt-0"
-                                    >
-                                        <Radio.Content className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-separator bg-surface px-3 py-2.5 transition-colors data-focus-visible:outline-2 data-focus-visible:outline-offset-2 data-focus-visible:outline-accent data-focus-visible:outline-solid data-hovered:bg-surface-secondary data-selected:border-accent data-selected:bg-accent-soft data-selected:data-hovered:bg-accent-soft-hover motion-reduce:transition-none">
-                                            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-secondary transition-colors group-data-selected:bg-surface motion-reduce:transition-none">
-                                                <Icon
-                                                    aria-hidden="true"
-                                                    className="size-4"
-                                                />
-                                            </span>
-                                            <span className="grid min-w-0 flex-1 gap-1">
-                                                <span>{t(label)}</span>
-                                                <span className="text-xs leading-5 font-normal text-muted">
-                                                    {t(description)}
-                                                </span>
-                                            </span>
-                                            <span
-                                                aria-hidden="true"
-                                                className="invisible grid size-5 shrink-0 place-items-center rounded-full bg-accent text-accent-foreground group-data-selected:visible"
-                                            >
-                                                <Check
-                                                    className="size-3"
-                                                    strokeWidth={3}
-                                                />
-                                            </span>
-                                        </Radio.Content>
-                                    </Radio>
-                                ),
-                            )}
-                        </RadioGroup>
+                        <div className="@container grid gap-2">
+                            <span className="text-sm font-medium">
+                                {visibilityLabel}
+                            </span>
+                            <div className="flex flex-col items-start gap-x-3 gap-y-1 @xs:flex-row @xs:items-center">
+                                <SegmentedControl
+                                    aria-label={visibilityLabel}
+                                    aria-describedby={visibilityDescriptionId}
+                                    className="shrink-0"
+                                    data-test="project-visibility"
+                                    value={form.data.visibility}
+                                    onChange={(value) =>
+                                        form.setData('visibility', value)
+                                    }
+                                    options={[
+                                        { id: 'public', label: t('Public') },
+                                        { id: 'private', label: t('Private') },
+                                    ]}
+                                />
+                                <p
+                                    id={visibilityDescriptionId}
+                                    aria-live="polite"
+                                    className="text-xs leading-5 text-muted"
+                                >
+                                    {t(
+                                        visibilityDescriptions[
+                                            form.data.visibility
+                                        ],
+                                    )}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid gap-4 border-t border-separator pt-6">
