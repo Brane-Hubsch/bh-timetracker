@@ -2,6 +2,7 @@ import {
     Button,
     ColorArea,
     ColorSlider,
+    ColorSwatch,
     ColorSwatchPicker,
     FieldError,
     Input,
@@ -9,7 +10,6 @@ import {
     TextField,
     parseColor,
 } from '@heroui/react';
-import { Check, Plus } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 
@@ -26,14 +26,10 @@ type Props = {
 export function ProjectColorPicker({ colors, value, onChange, error }: Props) {
     const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
+    const [hasChosenCustom, setHasChosenCustom] = useState(false);
     const panelId = useId();
-    const isCustom = !colors.includes(value.toLowerCase());
-    const rgb = parseColor(value);
-    const isLight =
-        rgb.getChannelValue('red') * 0.2126 +
-            rgb.getChannelValue('green') * 0.7152 +
-            rgb.getChannelValue('blue') * 0.0722 >
-        127.5;
+    const isCustomSelected =
+        hasChosenCustom || !colors.includes(value.toLowerCase());
 
     return (
         <div className="grid gap-2">
@@ -46,9 +42,11 @@ export function ProjectColorPicker({ colors, value, onChange, error }: Props) {
                 <ColorSwatchPicker
                     aria-label={t('Colour')}
                     className="pointer-events-none absolute inset-0 content-start"
-                    value={rgb}
+                    // A transparent value leaves the opaque presets unselected in custom mode.
+                    value={isCustomSelected ? '#00000000' : value}
                     onChange={(color) => {
                         onChange(color.toString('hex').toLowerCase());
+                        setHasChosenCustom(false);
                         setIsExpanded(false);
                     }}
                 >
@@ -57,7 +55,6 @@ export function ProjectColorPicker({ colors, value, onChange, error }: Props) {
                             key={color}
                             color={color}
                             className="pointer-events-auto"
-                            onPress={() => setIsExpanded(false)}
                         >
                             <ColorSwatchPicker.Swatch />
                             <ColorSwatchPicker.Indicator />
@@ -68,38 +65,21 @@ export function ProjectColorPicker({ colors, value, onChange, error }: Props) {
                     type="button"
                     variant="ghost"
                     isIconOnly
-                    aria-label={
-                        isCustom
-                            ? t('Custom colour (:hex)', { hex: value })
-                            : t('Custom colour')
-                    }
+                    aria-label={t('Custom colour')}
+                    aria-description={isCustomSelected ? value : undefined}
+                    aria-pressed={isCustomSelected}
                     aria-expanded={isExpanded}
                     aria-controls={isExpanded ? panelId : undefined}
-                    className="relative size-8 min-w-0 shrink-0 rounded-full border-2 border-transparent p-0"
-                    style={isCustom ? { borderColor: value } : undefined}
-                    onPress={() => setIsExpanded(!isExpanded)}
+                    className="group relative size-8 min-w-0 shrink-0 rounded-full border-2 border-transparent p-0 aria-pressed:border-accent"
+                    onPress={() => {
+                        setHasChosenCustom(true);
+                        setIsExpanded(!isExpanded);
+                    }}
                 >
-                    {isCustom ? (
-                        <span
-                            aria-hidden="true"
-                            className="grid size-[22px] place-items-center rounded-full"
-                            style={{
-                                backgroundColor: value,
-                                color: isLight ? 'black' : 'white',
-                            }}
-                        >
-                            <Check className="size-3" />
-                        </span>
-                    ) : (
-                        <span
-                            aria-hidden="true"
-                            className="grid size-7 place-items-center rounded-full bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]"
-                        >
-                            <span className="grid size-4 place-items-center rounded-full bg-white text-zinc-950">
-                                <Plus className="size-3" />
-                            </span>
-                        </span>
-                    )}
+                    <span
+                        aria-hidden="true"
+                        className="size-7 rounded-full bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)] group-aria-pressed:scale-[0.77]"
+                    />
                 </Button>
             </div>
 
@@ -140,29 +120,34 @@ function CustomColorPanel({
     };
 
     return (
-        <div id={id} className="grid w-full max-w-56 gap-3">
-            <ColorArea
-                aria-label={t('Colour area')}
-                className="h-32"
-                colorSpace="hsb"
-                xChannel="saturation"
-                yChannel="brightness"
-                value={color}
-                onChange={changeColor}
-            >
-                <ColorArea.Thumb />
-            </ColorArea>
-            <ColorSlider
-                aria-label={t('Hue')}
-                channel="hue"
-                colorSpace="hsb"
-                value={color}
-                onChange={changeColor}
-            >
-                <ColorSlider.Track>
-                    <ColorSlider.Thumb />
-                </ColorSlider.Track>
-            </ColorSlider>
+        <div
+            id={id}
+            className="grid grid-cols-[minmax(0,10rem)_minmax(6rem,8rem)] items-start gap-3"
+        >
+            <div className="grid grid-cols-[minmax(0,1fr)_1.25rem] gap-3">
+                <ColorArea
+                    aria-label={t('Colour area')}
+                    colorSpace="hsb"
+                    xChannel="saturation"
+                    yChannel="brightness"
+                    value={color}
+                    onChange={changeColor}
+                >
+                    <ColorArea.Thumb />
+                </ColorArea>
+                <ColorSlider
+                    aria-label={t('Hue')}
+                    channel="hue"
+                    colorSpace="hsb"
+                    orientation="vertical"
+                    value={color}
+                    onChange={changeColor}
+                >
+                    <ColorSlider.Track>
+                        <ColorSlider.Thumb />
+                    </ColorSlider.Track>
+                </ColorSlider>
+            </div>
             <TextField
                 value={hex}
                 onChange={(next) => {
@@ -189,6 +174,12 @@ function CustomColorPanel({
                 <FieldError>
                     {t('Enter a valid hex colour, e.g. #3478cc.')}
                 </FieldError>
+                <ColorSwatch
+                    aria-hidden="true"
+                    color={color}
+                    shape="square"
+                    size="sm"
+                />
             </TextField>
         </div>
     );
