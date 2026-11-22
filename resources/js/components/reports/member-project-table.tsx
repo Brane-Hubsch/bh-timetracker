@@ -62,9 +62,6 @@ export function MemberProjectTable({
                         <Table.Column isRowHeader className="w-40 lg:w-[18%]">
                             {t('Member')}
                         </Table.Column>
-                        <Table.Column className="w-24 text-right">
-                            {t('Total')}
-                        </Table.Column>
                         <Table.Column>{t('Project breakdown')}</Table.Column>
                         <Table.Column className="w-28 text-right">
                             {t('Billable')}
@@ -74,6 +71,9 @@ export function MemberProjectTable({
                                 {t('Amount')}
                             </Table.Column>
                         ) : null}
+                        <Table.Column className="w-24 text-right">
+                            {t('Total')}
+                        </Table.Column>
                         <Table.Column
                             className="w-12"
                             aria-label={t('Projects')}
@@ -157,9 +157,6 @@ export function MemberProjectTable({
                                             </span>
                                         </span>
                                     </Table.Cell>
-                                    <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
-                                        {hours(member.seconds)}
-                                    </Table.Cell>
                                     <Table.Cell className="relative">
                                         <ProjectPreview
                                             name={member.label}
@@ -197,6 +194,9 @@ export function MemberProjectTable({
                                                 )}
                                         </Table.Cell>
                                     ) : null}
+                                    <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
+                                        {hours(member.seconds)}
+                                    </Table.Cell>
                                     <Table.Cell className="px-2 py-0 text-center">
                                         {canExpand && (
                                             <Button
@@ -238,12 +238,9 @@ export function MemberProjectTable({
                                 ? [
                                       row,
                                       <Table.Row key={detailsId} id={detailsId}>
+                                          <Table.Cell className="bg-surface-secondary" />
                                           <Table.Cell
-                                              colSpan={2}
-                                              className="bg-surface-secondary"
-                                          />
-                                          <Table.Cell
-                                              colSpan={showAmounts ? 4 : 3}
+                                              colSpan={showAmounts ? 5 : 4}
                                               className="bg-surface-secondary"
                                           >
                                               <ProjectHours
