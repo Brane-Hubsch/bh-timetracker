@@ -13,7 +13,7 @@ import {
     parseColor,
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
-import { CircleCheck, LockKeyhole, UsersRound } from 'lucide-react';
+import { Check, LockKeyhole, UsersRound } from 'lucide-react';
 import { useEffect } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
@@ -339,10 +339,15 @@ export function ProjectFormDrawer({
                                                     {t(description)}
                                                 </span>
                                             </span>
-                                            <CircleCheck
+                                            <span
                                                 aria-hidden="true"
-                                                className="invisible size-4 shrink-0 group-data-selected:visible"
-                                            />
+                                                className="invisible grid size-5 shrink-0 place-items-center rounded-full bg-accent text-accent-foreground group-data-selected:visible"
+                                            >
+                                                <Check
+                                                    className="size-3"
+                                                    strokeWidth={3}
+                                                />
+                                            </span>
                                         </Radio.Content>
                                     </Radio>
                                 ),
