@@ -1,6 +1,5 @@
 import {
     Button,
-    ColorSwatchPicker,
     Description,
     FieldError,
     Label,
@@ -10,13 +9,13 @@ import {
     Switch,
     TextField,
     TextArea,
-    parseColor,
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
+import { ProjectColorPicker } from '@/components/projects/project-color-picker';
 import {
     SideDrawer,
     SideDrawerBody,
@@ -160,29 +159,12 @@ export function ProjectFormDrawer({
                             />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label>{t('Colour')}</Label>
-                            <ColorSwatchPicker
-                                aria-label={t('Colour')}
-                                value={parseColor(form.data.color)}
-                                onChange={(color) =>
-                                    form.setData(
-                                        'color',
-                                        color.toString('hex').toLowerCase(),
-                                    )
-                                }
-                            >
-                                {colors.map((color) => (
-                                    <ColorSwatchPicker.Item
-                                        key={color}
-                                        color={color}
-                                    >
-                                        <ColorSwatchPicker.Swatch />
-                                        <ColorSwatchPicker.Indicator />
-                                    </ColorSwatchPicker.Item>
-                                ))}
-                            </ColorSwatchPicker>
-                        </div>
+                        <ProjectColorPicker
+                            colors={colors}
+                            value={form.data.color}
+                            onChange={(color) => form.setData('color', color)}
+                            error={form.errors.color}
+                        />
                     </div>
 
                     <div className="grid gap-4 border-t border-separator pt-6">
