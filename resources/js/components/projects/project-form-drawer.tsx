@@ -218,7 +218,7 @@ export function ProjectFormDrawer({
                             <NumberField.Group>
                                 <NumberField.Input />
                             </NumberField.Group>
-                            <Description>
+                            <Description className="font-medium">
                                 {t(
                                     'Leave empty to use the member or organization rate.',
                                 )}
