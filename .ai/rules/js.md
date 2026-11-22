@@ -16,3 +16,6 @@ Create/edit forms for clients and projects use `SideDrawer` (`@/components/side-
 
 ## Dates and times use HeroUI fields
 Use `DatePickerField` and `TimeInputField` (`@/components/form/...`, HeroUI DatePicker/TimeField) with `YYYY-MM-DD` / `HH:mm` strings instead of native `<input type="date|time">`: they follow the app locale (24-hour times and Monday-first calendars in Swedish) and match the height of other fields. Dialog actions go in the dialog footer (`footer` prop, submit button with `form=`), so they stay reachable on mobile.
+
+## Scroll regions fade towards fixed bars
+Dialog and drawer bodies (HeroUI `Modal.Body`/`Drawer.Body`) fade their content out towards the header and footer and span the full dialog width so the scrollbar sits at the outer edge (see `app.css`). Other scrollable lists below or above a fixed bar (a search field, a footer) get the `scroll-fade-y` class instead of a hard clip.
