@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -18,13 +19,28 @@ export function LogoImage({
     fit = 'contain',
     className,
 }: Props) {
-    const inset = src && fit === 'contain';
+    const [insetSource, setInsetSource] = useState<string | null>(null);
+    const inset = src && fit === 'contain' && insetSource === src;
+    const updateInset = useCallback(
+        (image: HTMLImageElement | null) => {
+            if (image?.naturalWidth) {
+                // Website logos are already composed on a square canvas.
+                setInsetSource(
+                    image.naturalWidth !== image.naturalHeight
+                        ? (src ?? null)
+                        : null,
+                );
+            }
+        },
+        [src],
+    );
 
     return (
         <span
             className={cn(
                 'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-lg',
-                src ? 'bg-surface' : 'bg-default text-muted',
+                src && (inset || fit === 'cover') ? 'bg-surface' : 'bg-default',
+                !src && 'text-muted',
                 inset && 'border border-separator',
                 className,
             )}
@@ -38,6 +54,8 @@ export function LogoImage({
         >
             {src ? (
                 <img
+                    key={src}
+                    ref={fit === 'contain' ? updateInset : undefined}
                     src={src}
                     alt=""
                     className={cn(
@@ -45,6 +63,11 @@ export function LogoImage({
                         fit === 'cover' ? 'object-cover' : 'object-contain',
                     )}
                     loading="lazy"
+                    onLoad={
+                        fit === 'contain'
+                            ? (event) => updateInset(event.currentTarget)
+                            : undefined
+                    }
                 />
             ) : (
                 <span
