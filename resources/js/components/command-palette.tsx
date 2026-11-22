@@ -215,7 +215,7 @@ function CommandPalette({
                             aria-label={t('Commands')}
                             selectionMode="none"
                             onAction={(key) => run(String(key))}
-                            className="max-h-[60vh] overflow-y-auto p-2"
+                            className="scroll-fade-y max-h-[60vh] overflow-y-auto p-2"
                             renderEmptyState={() => (
                                 <EmptyState className="p-6 text-center text-sm text-muted">
                                     {t('No matching commands.')}

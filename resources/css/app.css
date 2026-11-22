@@ -431,6 +431,73 @@
     }
 }
 
+/*
+ * Scrollable regions between fixed bars (dialog/drawer header and footer, a search field above a list)
+ * fade their content out towards the bars instead of clipping it. The fade size follows the scroll
+ * position (scroll-driven animation), so an edge only fades while there is content beyond it and a
+ * region without overflow is untouched. Browsers without scroll timelines keep the plain clip.
+ */
+@property --scroll-fade-top {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --scroll-fade-bottom {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+}
+
+@keyframes scroll-fade-top {
+    from {
+        --scroll-fade-top: 0px;
+    }
+    to {
+        --scroll-fade-top: var(--scroll-fade-size);
+    }
+}
+
+@keyframes scroll-fade-bottom {
+    from {
+        --scroll-fade-bottom: var(--scroll-fade-size);
+    }
+    to {
+        --scroll-fade-bottom: 0px;
+    }
+}
+
+@layer components {
+    .scroll-fade-y,
+    .drawer__body,
+    .modal__body--scroll-inside {
+        --scroll-fade-size: 1.5rem;
+
+        @supports (animation-timeline: scroll(self)) {
+            mask-image: linear-gradient(
+                to bottom,
+                transparent,
+                #000 var(--scroll-fade-top),
+                #000 calc(100% - var(--scroll-fade-bottom)),
+                transparent
+            );
+            animation:
+                scroll-fade-top linear both,
+                scroll-fade-bottom linear both;
+            animation-timeline: scroll(self block), scroll(self block);
+            animation-range:
+                0 var(--scroll-fade-size),
+                calc(100% - var(--scroll-fade-size)) 100%;
+        }
+    }
+
+    /* Bodies span the dialog's full width so the scrollbar sits at its outer edge, not inside the padding. */
+    .drawer__body,
+    .modal__body--scroll-inside {
+        @apply -mx-6 px-6;
+    }
+}
+
 @layer base {
     body {
         @apply bg-background text-foreground;

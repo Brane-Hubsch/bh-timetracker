@@ -146,7 +146,7 @@ export function FilterChip({
                         // Escape closes the list; it must not silently clear the filter.
                         escapeKeyBehavior="none"
                         onSelectionChange={select}
-                        className="max-h-72 overflow-y-auto"
+                        className="scroll-fade-y -mx-2 max-h-72 overflow-y-auto px-2"
                         renderEmptyState={() => (
                             <p className="px-3 py-2 text-sm text-muted">
                                 {t('No matches')}
