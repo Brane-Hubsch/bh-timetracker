@@ -230,34 +230,35 @@ export function ProjectFormDrawer({
                                     {form.errors.hourly_rate}
                                 </FieldError>
                             </NumberField>
-                            <NumberField
-                                value={
-                                    form.data.estimate_hours === ''
-                                        ? Number.NaN
-                                        : Number(form.data.estimate_hours)
-                                }
-                                onChange={(value) =>
-                                    form.setData(
-                                        'estimate_hours',
-                                        Number.isNaN(value)
-                                            ? ''
-                                            : String(value),
-                                    )
-                                }
-                                minValue={0}
-                                formatOptions={{ maximumFractionDigits: 2 }}
-                                isInvalid={Boolean(form.errors.estimate_hours)}
-                                className="w-full"
-                            >
-                                <Label>{t('Estimate (hours)')}</Label>
-                                <NumberField.Group>
-                                    <NumberField.Input />
-                                </NumberField.Group>
-                                <FieldError>
-                                    {form.errors.estimate_hours}
-                                </FieldError>
-                            </NumberField>
                         </div>
+                    </div>
+
+                    <div className="border-t border-separator pt-6">
+                        <NumberField
+                            value={
+                                form.data.estimate_hours === ''
+                                    ? Number.NaN
+                                    : Number(form.data.estimate_hours)
+                            }
+                            onChange={(value) =>
+                                form.setData(
+                                    'estimate_hours',
+                                    Number.isNaN(value) ? '' : String(value),
+                                )
+                            }
+                            minValue={0}
+                            formatOptions={{ maximumFractionDigits: 2 }}
+                            isInvalid={Boolean(form.errors.estimate_hours)}
+                            className="w-full"
+                        >
+                            <Label>{t('Estimate (hours)')}</Label>
+                            <NumberField.Group>
+                                <NumberField.Input />
+                            </NumberField.Group>
+                            <FieldError>
+                                {form.errors.estimate_hours}
+                            </FieldError>
+                        </NumberField>
                     </div>
 
                     <div className="grid gap-4 border-t border-separator pt-6">
