@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $organization_id
  * @property string $name
+ * @property string|null $website
  * @property string|null $organization_number
  * @property string|null $email
  * @property string|null $notes
@@ -29,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property-read Organization $organization
  * @property-read Collection<int, Project> $projects
  */
-#[Fillable(['organization_id', 'name', 'organization_number', 'email', 'notes', 'archived_at', 'logo_path'])]
+#[Fillable(['organization_id', 'name', 'website', 'organization_number', 'email', 'notes', 'archived_at', 'logo_path'])]
 class Client extends Model
 {
     /** @use HasFactory<ClientFactory> */

@@ -8,7 +8,7 @@ use App\Models\Organization;
 class CreateClient
 {
     /**
-     * @param  array{name: string, organization_number?: string|null, email?: string|null, notes?: string|null}  $attributes
+     * @param  array{name: string, website?: string|null, organization_number?: string|null, email?: string|null, notes?: string|null}  $attributes
      */
     public function handle(Organization $organization, array $attributes): Client
     {

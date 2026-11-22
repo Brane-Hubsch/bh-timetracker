@@ -1,5 +1,6 @@
 import { Avatar, Button } from '@heroui/react';
 import { Upload } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { FileTrigger } from 'react-aria-components';
 import { LogoImage } from '@/components/logo-image';
 import { useInitials } from '@/hooks/use-initials';
@@ -19,6 +20,7 @@ type Props = {
     onSelect: (file: File) => void;
     onRemove: () => void;
     isPending?: boolean;
+    additionalAction?: ReactNode;
     error?: string;
     'data-test'?: string;
 };
@@ -40,6 +42,7 @@ export function ImageUploadField({
     onSelect,
     onRemove,
     isPending = false,
+    additionalAction,
     error,
     'data-test': dataTest,
 }: Props) {
@@ -88,6 +91,7 @@ export function ImageUploadField({
                                     : t('Upload image')}
                             </Button>
                         </FileTrigger>
+                        {additionalAction}
                         {canRemove && (
                             <Button
                                 variant="ghost"
