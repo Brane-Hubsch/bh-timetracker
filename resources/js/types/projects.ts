@@ -14,6 +14,7 @@ export type ClientDetails = {
     name: string;
     organizationNumber: string | null;
     email: string | null;
+    website: string | null;
     notes: string | null;
     /** Logo URL (256 px), or null without a logo. */
     logo: string | null;

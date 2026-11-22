@@ -4,18 +4,17 @@ import {
     FieldError,
     Label,
     NumberField,
-    Radio,
-    RadioGroup,
     Switch,
     TextField,
     TextArea,
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import { ProjectColorPicker } from '@/components/projects/project-color-picker';
+import { SegmentedControl } from '@/components/segmented-control';
 import {
     SideDrawer,
     SideDrawerBody,
@@ -38,6 +37,11 @@ type Props = {
 };
 
 const NO_CLIENT = 'none';
+
+const visibilityDescriptions = {
+    public: 'All members can report time',
+    private: 'Only assigned members can report time',
+};
 
 function initialValues(
     project: ProjectFormValues | null,
@@ -79,6 +83,8 @@ export function ProjectFormDrawer({
 }: Props) {
     const { t } = useTranslation();
     const form = useForm(initialValues(project, defaultClientId, colors));
+    const visibilityLabel = t('Visibility');
+    const visibilityDescriptionId = useId();
 
     useEffect(() => {
         if (isOpen) {
@@ -274,33 +280,38 @@ export function ProjectFormDrawer({
                             />
                         </div>
 
-                        <RadioGroup
-                            value={form.data.visibility}
-                            onChange={(value) =>
-                                form.setData(
-                                    'visibility',
-                                    value as 'public' | 'private',
-                                )
-                            }
-                        >
-                            <Label>{t('Visibility')}</Label>
-                            <Radio value="public">
-                                <Radio.Content>
-                                    <Radio.Control>
-                                        <Radio.Indicator />
-                                    </Radio.Control>
-                                    {t('Public: every member can report time')}
-                                </Radio.Content>
-                            </Radio>
-                            <Radio value="private">
-                                <Radio.Content>
-                                    <Radio.Control>
-                                        <Radio.Indicator />
-                                    </Radio.Control>
-                                    {t('Private: only assigned members')}
-                                </Radio.Content>
-                            </Radio>
-                        </RadioGroup>
+                        <div className="@container grid gap-2">
+                            <span className="text-sm font-medium">
+                                {visibilityLabel}
+                            </span>
+                            <div className="flex flex-col items-start gap-x-3 gap-y-1 @xs:flex-row @xs:items-center">
+                                <SegmentedControl
+                                    aria-label={visibilityLabel}
+                                    aria-describedby={visibilityDescriptionId}
+                                    className="shrink-0"
+                                    data-test="project-visibility"
+                                    value={form.data.visibility}
+                                    onChange={(value) =>
+                                        form.setData('visibility', value)
+                                    }
+                                    options={[
+                                        { id: 'public', label: t('Public') },
+                                        { id: 'private', label: t('Private') },
+                                    ]}
+                                />
+                                <p
+                                    id={visibilityDescriptionId}
+                                    aria-live="polite"
+                                    className="text-xs leading-5 text-muted"
+                                >
+                                    {t(
+                                        visibilityDescriptions[
+                                            form.data.visibility
+                                        ],
+                                    )}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid gap-4 border-t border-separator pt-6">

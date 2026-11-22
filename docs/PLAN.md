@@ -66,7 +66,7 @@ User ──< OrganizationMember >── Organization
 
 **organization_invitations** – `id, organization_id, email, role, code (unik, 64 tecken), invited_by, expires_at, accepted_at, timestamps` (från startkitet; inbjudan gäller 3 dagar och kan aldrig ge ägarroll)
 
-**clients** – `id, organization_id, name, organization_number (nullable), email (nullable), notes (nullable), archived_at, timestamps`
+**clients** – `id, organization_id, name, website (nullable), organization_number (nullable), email (nullable), notes (nullable), archived_at, timestamps`
 
 **projects** – `id, organization_id, client_id (nullable), name, code (nullable), color, is_billable (default true), hourly_rate (nullable), estimate_seconds (nullable), visibility (public|private), starts_on/ends_on (nullable), archived_at, timestamps`
 
@@ -128,7 +128,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.3 Kunder
 
-- Lista med sök, skapa/redigera/arkivera. Fält: namn, org.nr, e-post, anteckning.
+- Lista med sök, skapa/redigera/arkivera. Fält: namn, hemsida, org.nr, e-post, anteckning. Hemsidan är valfri och kan användas för att hämta en logga till formuläret.
 - Kundsida: kundens projekt + summerad tid (period).
 
 ### 4.4 Projekt
@@ -589,7 +589,8 @@ Beställt i efterhand. Designen finns i Figma-filen TimeReport på sidan "Bilder
 
 - **Profilbild:** laddas upp under Inställningar → Profil. Visas i appen för kollegor, t.ex. i användarmenyn och medlemslistor. Utan uppladdad bild visas Google-bilden, annars initialer. Bilden tas bort med kontot.
 - **Organisationslogga:** laddas upp under Organisationsinställningar av den som får ändra organisationen (ägare/admin). Visas i organisationslistan, i organisationsväljaren, i ⌘K och i PDF-rapporternas huvud. Organisationslistan visar en initial när logga saknas.
-- **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. I PDF-huvudet visas den när rapporten gäller en enda kund.
+- **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. Kvadratiska loggor fyller den rundade rutan och rektangulära loggor visas med marginal. I PDF-huvudet visas loggan när rapporten gäller en enda kund.
+- **Hämta logga:** söker efter Apple Touch-ikoner och favicons på kundens hemsida. En stor Apple Touch-ikon fyller ytan, en stor favicon får marginal och en liten ikon centreras på en neutral kvadrat. Den hämtade bilden förhandsvisas och sparas via samma flöde som en uppladdad bild.
 - **Bildbehandling** med `intervention/image` (godkänt beroende, GD-drivrutin):
   - Varje uppladdning sparas som WebP i 64, 128, 256 och 512 px.
   - Profilbilder och organisationsloggor beskärs kvadratiskt runt mitten så att de fyller bildytan. Kundloggor skalas för att passa utan beskärning eller förstoring. Transparens bevaras.
