@@ -195,42 +195,36 @@ export function ProjectFormDrawer({
                             </Switch.Content>
                         </Switch>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <NumberField
-                                value={
-                                    form.data.hourly_rate === ''
-                                        ? Number.NaN
-                                        : Number(form.data.hourly_rate)
-                                }
-                                onChange={(value) =>
-                                    form.setData(
-                                        'hourly_rate',
-                                        Number.isNaN(value)
-                                            ? ''
-                                            : String(value),
-                                    )
-                                }
-                                minValue={0}
-                                formatOptions={{ maximumFractionDigits: 2 }}
-                                isInvalid={Boolean(form.errors.hourly_rate)}
-                                className="w-full"
-                            >
-                                <Label>
-                                    {t('Hourly rate')} ({currency}/h)
-                                </Label>
-                                <NumberField.Group>
-                                    <NumberField.Input />
-                                </NumberField.Group>
-                                <Description>
-                                    {t(
-                                        'Leave empty to use the member or organization rate.',
-                                    )}
-                                </Description>
-                                <FieldError>
-                                    {form.errors.hourly_rate}
-                                </FieldError>
-                            </NumberField>
-                        </div>
+                        <NumberField
+                            value={
+                                form.data.hourly_rate === ''
+                                    ? Number.NaN
+                                    : Number(form.data.hourly_rate)
+                            }
+                            onChange={(value) =>
+                                form.setData(
+                                    'hourly_rate',
+                                    Number.isNaN(value) ? '' : String(value),
+                                )
+                            }
+                            minValue={0}
+                            formatOptions={{ maximumFractionDigits: 2 }}
+                            isInvalid={Boolean(form.errors.hourly_rate)}
+                            className="w-full"
+                        >
+                            <Label>
+                                {t('Hourly rate')} ({currency}/h)
+                            </Label>
+                            <NumberField.Group>
+                                <NumberField.Input />
+                            </NumberField.Group>
+                            <Description className="font-medium">
+                                {t(
+                                    'Leave empty to use the member or organization rate.',
+                                )}
+                            </Description>
+                            <FieldError>{form.errors.hourly_rate}</FieldError>
+                        </NumberField>
                     </div>
 
                     <div className="border-t border-separator pt-6">
