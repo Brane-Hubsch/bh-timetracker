@@ -8,13 +8,13 @@ type Props<T extends string> = {
     value: T;
     onChange: (value: T) => void;
     'aria-label': string;
+    'aria-describedby'?: string;
     className?: string;
     'data-test'?: string;
 };
 
 /**
- * Pick one of a few views or filters (e.g. list/week/day, active/archived). A toggle button group,
- * not tabs: it switches what the page shows rather than revealing a tab panel.
+ * Pick one option from a small set, such as a view, filter, or form setting.
  */
 export function SegmentedControl<T extends string>({
     options,
@@ -22,11 +22,13 @@ export function SegmentedControl<T extends string>({
     onChange,
     className,
     'aria-label': ariaLabel,
+    'aria-describedby': ariaDescribedBy,
     'data-test': dataTest,
 }: Props<T>) {
     return (
         <ToggleButtonGroup
             aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy}
             selectionMode="single"
             disallowEmptySelection
             selectedKeys={new Set<Key>([value])}
