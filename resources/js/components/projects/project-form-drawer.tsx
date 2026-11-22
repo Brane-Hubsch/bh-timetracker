@@ -13,6 +13,7 @@ import {
     parseColor,
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
+import { CircleCheck, LockKeyhole, UsersRound } from 'lucide-react';
 import { useEffect } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
@@ -39,6 +40,21 @@ type Props = {
 };
 
 const NO_CLIENT = 'none';
+
+const visibilityOptions = [
+    {
+        value: 'public',
+        label: 'Public',
+        description: 'All members can report time',
+        icon: UsersRound,
+    },
+    {
+        value: 'private',
+        label: 'Private',
+        description: 'Only assigned members can report time',
+        icon: LockKeyhole,
+    },
+] as const;
 
 function initialValues(
     project: ProjectFormValues | null,
@@ -293,6 +309,7 @@ export function ProjectFormDrawer({
                         </div>
 
                         <RadioGroup
+                            className="gap-2"
                             value={form.data.visibility}
                             onChange={(value) =>
                                 form.setData(
@@ -302,22 +319,30 @@ export function ProjectFormDrawer({
                             }
                         >
                             <Label>{t('Visibility')}</Label>
-                            <Radio value="public">
-                                <Radio.Content>
-                                    <Radio.Control>
-                                        <Radio.Indicator />
-                                    </Radio.Control>
-                                    {t('Public: every member can report time')}
-                                </Radio.Content>
-                            </Radio>
-                            <Radio value="private">
-                                <Radio.Content>
-                                    <Radio.Control>
-                                        <Radio.Indicator />
-                                    </Radio.Control>
-                                    {t('Private: only assigned members')}
-                                </Radio.Content>
-                            </Radio>
+                            {visibilityOptions.map(
+                                ({ value, label, description, icon: Icon }) => (
+                                    <Radio key={value} value={value}>
+                                        <Radio.Content className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-separator bg-surface px-3 py-2.5 transition-colors data-focus-visible:outline-2 data-focus-visible:outline-offset-2 data-focus-visible:outline-accent data-hovered:bg-surface-secondary data-selected:border-accent data-selected:bg-accent-soft data-selected:data-hovered:bg-accent-soft-hover motion-reduce:transition-none">
+                                            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-secondary transition-colors group-data-selected:bg-surface motion-reduce:transition-none">
+                                                <Icon
+                                                    aria-hidden="true"
+                                                    className="size-4"
+                                                />
+                                            </span>
+                                            <span className="grid min-w-0 flex-1 gap-1">
+                                                <span>{t(label)}</span>
+                                                <span className="text-xs leading-5 font-normal text-muted">
+                                                    {t(description)}
+                                                </span>
+                                            </span>
+                                            <CircleCheck
+                                                aria-hidden="true"
+                                                className="invisible size-4 shrink-0 group-data-selected:visible"
+                                            />
+                                        </Radio.Content>
+                                    </Radio>
+                                ),
+                            )}
                         </RadioGroup>
                     </div>
 
