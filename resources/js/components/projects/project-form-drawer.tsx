@@ -321,8 +321,12 @@ export function ProjectFormDrawer({
                             <Label>{t('Visibility')}</Label>
                             {visibilityOptions.map(
                                 ({ value, label, description, icon: Icon }) => (
-                                    <Radio key={value} value={value}>
-                                        <Radio.Content className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-separator bg-surface px-3 py-2.5 transition-colors data-focus-visible:outline-2 data-focus-visible:outline-offset-2 data-focus-visible:outline-accent data-hovered:bg-surface-secondary data-selected:border-accent data-selected:bg-accent-soft data-selected:data-hovered:bg-accent-soft-hover motion-reduce:transition-none">
+                                    <Radio
+                                        key={value}
+                                        value={value}
+                                        className="mt-0"
+                                    >
+                                        <Radio.Content className="group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-separator bg-surface px-3 py-2.5 transition-colors data-focus-visible:outline-2 data-focus-visible:outline-offset-2 data-focus-visible:outline-accent data-focus-visible:outline-solid data-hovered:bg-surface-secondary data-selected:border-accent data-selected:bg-accent-soft data-selected:data-hovered:bg-accent-soft-hover motion-reduce:transition-none">
                                             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-secondary transition-colors group-data-selected:bg-surface motion-reduce:transition-none">
                                                 <Icon
                                                     aria-hidden="true"
