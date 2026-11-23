@@ -6,6 +6,7 @@ export type ClientListItem = {
     /** Logo URL (128 px), or null without a logo. */
     logo: string | null;
     activeProjectsCount: number;
+    archivedProjectsCount: number;
     isArchived: boolean;
 };
 

@@ -4,6 +4,7 @@
     ":clients new clients and :projects new projects.": ":clients nya kunder och :projects nya projekt.",
     ":consumed of :estimate": ":consumed av :estimate",
     ":count active project|:count active projects": ":count aktivt projekt|:count aktiva projekt",
+    ":count archived": ":count arkiverat|:count arkiverade",
     ":count day|:count days": ":count dag|:count dagar",
     ":count entry copied.|:count entries copied.": ":count post kopierad.|:count poster kopierade.",
     ":count entry is longer than 24 hours and is split at midnight into one entry per day, with the times from Clockify.|:count entries are longer than 24 hours and are split at midnight into one entry per day, with the times from Clockify.": ":count post är längre än 24 timmar och delas vid midnatt upp i en post per dag, med tiderna från Clockify.|:count poster är längre än 24 timmar och delas vid midnatt upp i en post per dag, med tiderna från Clockify.",

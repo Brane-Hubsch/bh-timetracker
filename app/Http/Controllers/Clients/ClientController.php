@@ -37,7 +37,10 @@ class ClientController extends Controller
         $clients = Client::query()
             ->when($status === 'archived', fn ($query) => $query->archived(), fn ($query) => $query->active())
             ->search($search)
-            ->withCount(['projects' => fn ($query) => $query->active()])
+            ->withCount([
+                'projects' => fn ($query) => $query->active(),
+                'projects as archived_projects_count' => fn ($query) => $query->archived(),
+            ])
             ->orderBy('name')
             ->get()
             ->map(fn (Client $client) => [
@@ -47,6 +50,7 @@ class ClientController extends Controller
                 'email' => $client->email,
                 'logo' => $client->logoUrl(),
                 'activeProjectsCount' => $client->projects_count,
+                'archivedProjectsCount' => $client->getAttribute('archived_projects_count'),
                 'isArchived' => $client->isArchived(),
             ]);
 
