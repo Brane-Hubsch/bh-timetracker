@@ -84,7 +84,7 @@ export default function ClientShow({
                             />
                             {client.name}
                             {client.isArchived && (
-                                <Chip size="sm" variant="soft">
+                                <Chip size="md" variant="soft">
                                     {t('Archived')}
                                 </Chip>
                             )}
