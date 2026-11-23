@@ -385,7 +385,7 @@ Klar. Byggt:
 - **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
 - **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
-- **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet och rapporterad tid eller estimat, med en sammanfattning överst. Den filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade; filtren ligger i URL:en.
+- **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet och rapporterad tid eller estimat, med en sammanfattning överst. Den filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade; filtren ligger i URL:en. MCP-verktyget `list_projects` tar samma filter (`billable`).
 - **Projektsidan** visar debiterbara timmar och belopp, tid per medlem och timmar per vecka för de senaste 12 veckorna. **Kundsidan** visar tid och belopp per projekt för en vald period. Båda har en länk till rapporten.
 - "Rapporter" finns i sidomenyn och i mobilens bottennavigering (Idag / Kalender / Rapporter / Mer).
 
@@ -670,6 +670,7 @@ Beställt i efterhand. Under förloppet "Rapporterad tid" på projektsidan visas
 - **Behövs per arbetsdag:** återstående timmar delat med antal arbetsdagar, avrundat uppåt till hel sekund.
 - Utan slutdatum visas bara timmarna som återstår, med "Ange ett slutdatum". Efter perioden, eller när estimatet är nått, visas inget dagsbehov.
 - Uträkningen görs i `App\Support\EstimatePace` och skickas som `estimatePace` till alla som ser projektet, precis som estimatet och den rapporterade tiden.
+- MCP: `get_project_status` ger samma sak (`working_days_left`, `hours_per_working_day`) tillsammans med projektets start- och slutdatum.
 
 ### Tillägg efter Fas 6: helgdagar per organisation (2026-11-23)
 
@@ -690,7 +691,8 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 - **Arbetsdagens längd** är en organisationsinställning (`organizations.workday_seconds`, standard 8 h, "Arbetsdagens längd (timmar)" i organisationsinställningarna). En hel frånvarodag räknas som så många timmar.
 - **Behörighet** (`AbsencePolicy`): medlemmar hanterar sin egen frånvaro; ägare och admin (`ManageTeamTime`) hanterar allas. Andra organisationers frånvaro ger 404.
 - **Kalendern:** en heldagsrad "Frånvaro" i vecko- och dagvyn. Den visade personens frånvaro syns med typ (och timmar per dag) och öppnar dialogen vid klick; drar man över dagar i raden registreras ny frånvaro. Kollegors frånvaro syns som "Ledig · namn", utan typ eller notering. Listvyn visar samma sak per dag. Knappen "Frånvaro" och ⌘K-kommandot "Registrera frånvaro" öppnar dialogen (`ResponsiveDialog`), som räknar arbetsdagar och timmar medan man fyller i.
-- **Rapporter:** sammanfattningen får ett avsnitt Frånvaro med dagar per person och typ i perioden (frånvarotimmar delat med arbetsdagens längd). Bara periodens och medlemsfiltrets urval gäller, med samma synlighet som för tid: medlemmar ser bara sin egen rad (`ReportBuilder::absences`). Frånvaron ingår inte i export eller MCP.
+- **Rapporter:** sammanfattningen får ett avsnitt Frånvaro med dagar per person och typ i perioden (frånvarotimmar delat med arbetsdagens längd). Bara periodens och medlemsfiltrets urval gäller, med samma synlighet som för tid: medlemmar ser bara sin egen rad (`ReportBuilder::absences`). Frånvaron ingår inte i exporten.
+- **MCP:** `list_absences` (egen frånvaro som standard; `all` ger alla, där medlemmar bara ser kollegor som lediga utan typ eller notering), `create_absence`, `update_absence` (bara angivna fält; `hours_per_day: null` ger hela dagar) och `delete_absence` (destruktiv). `get_report` får `absence` med dagar per medlem och typ, och `get_context` arbetsdagens längd och frånvarotyperna. Serverns instruktioner säger att frånvaro aldrig ska rapporteras som tid på ett projekt.
 - **Inget saldo** (semesterdagar kvar) och inget attestflöde i den här versionen.
 - **Kod:** `App\Actions\Absences` (`CreateAbsence`, `UpdateAbsence`, `DeleteAbsence`, gemensamma regler i `ValidatesAbsences`), `App\Support\AbsenceTime`, `AbsencePresenter` och `AbsenceController`.
 

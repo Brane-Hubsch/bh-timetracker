@@ -144,6 +144,14 @@ describe('projects', function () {
             ->assertStructuredContentFragment(['name' => 'Webbshop', 'hourly_rate' => 1100]);
     });
 
+    it('filters projects by billable', function () {
+        TimetrackerServer::actingAs($this->owner)
+            ->tool(ListProjectsTool::class, ['billable' => false])
+            ->assertOk()
+            ->assertStructuredContentCount(1, 'projects')
+            ->assertStructuredContentFragment(['name' => 'Intern tid', 'billable' => false]);
+    });
+
     it('lets owners create projects for a client by name', function () {
         TimetrackerServer::actingAs($this->owner)
             ->tool(CreateProjectTool::class, ['name' => 'Kampanj', 'client' => 'Acme', 'hourly_rate' => 1250, 'estimate_hours' => 40])
@@ -409,5 +417,20 @@ describe('reports', function () {
                 'remaining_hours' => 8,
                 'percent_used' => 20,
             ]]);
+    });
+
+    it('gives the working days left and the hours needed per working day', function () {
+        $this->webbshop->update(['starts_on' => '2026-11-01', 'ends_on' => '2026-11-27']);
+
+        // Wednesday 18 – Friday 27 November: 8 working days for the 8 hours left.
+        TimetrackerServer::actingAs($this->member)
+            ->tool(GetProjectStatusTool::class, ['project' => 'Webbshop'])
+            ->assertOk()
+            ->assertStructuredContentPaths([
+                'projects.0.starts_on' => '2026-11-01',
+                'projects.0.ends_on' => '2026-11-27',
+                'projects.0.working_days_left' => 8,
+                'projects.0.hours_per_working_day' => 1,
+            ]);
     });
 });

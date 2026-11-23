@@ -31,6 +31,7 @@ class ListProjectsTool extends TimetrackerTool
         return [
             'search' => $schema->string()->description('Part of the project name, code or client name.'),
             'client' => $schema->string()->description('Only projects of this client (id or name).'),
+            'billable' => $schema->boolean()->description('Only billable (true) or non-billable (false) projects.'),
             'include_archived' => $schema->boolean()->description('Include archived projects. Default false.'),
             'organization' => $this->organizationArgument($schema),
         ];
@@ -41,18 +42,21 @@ class ListProjectsTool extends TimetrackerTool
         $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'client' => ['nullable'],
+            'billable' => ['nullable', 'boolean'],
             'include_archived' => ['nullable', 'boolean'],
         ]);
         $context = McpContext::from($request);
         $clientReference = $this->stringArgument($request, 'client');
         $client = $clientReference !== null ? $this->lookup->client($context, $clientReference) : null;
         $search = $this->stringArgument($request, 'search');
+        $billable = $this->boolArgument($request, 'billable');
         $showRates = $context->can(OrganizationPermission::ViewRates);
 
         $projects = Project::query()
             ->accessibleBy($context->user, $context->organization)
             ->with('client')
             ->when($client, fn (Builder $query) => $query->where('client_id', $client?->id))
+            ->when($billable !== null, fn (Builder $query) => $query->where('is_billable', $billable))
             ->when(! $request->get('include_archived'), fn (Builder $query) => $query->active())
             ->when($search !== null, fn (Builder $query) => $query->search($search))
             ->withSum('timeEntries as consumed_seconds', 'duration_seconds')

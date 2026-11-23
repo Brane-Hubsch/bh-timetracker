@@ -76,6 +76,7 @@ class GetReportTool extends TimetrackerTool
         );
 
         $summary = $this->reports->summary($filters, $grouping, $subGrouping);
+        $absence = $this->reports->absences($filters);
 
         return Response::structured([
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
@@ -92,7 +93,22 @@ class GetReportTool extends TimetrackerTool
                     ], $group['children']),
                 ] : []),
             ], $summary['groups']),
+            // Only the period and member filters apply to absence.
+            'absence' => $absence['members'] === [] ? null : array_map(fn (array $member) => [
+                'member' => $member['name'],
+                'days' => $this->days($member['seconds'], $absence['workdaySeconds']),
+                'hours' => $this->hours($member['seconds']),
+                'days_by_type' => array_map(fn (int $seconds) => $this->days($seconds, $absence['workdaySeconds']), $member['types']),
+            ], $absence['members']),
         ]);
+    }
+
+    /**
+     * Absence time as working days of the organization's length.
+     */
+    private function days(int $seconds, int $workdaySeconds): float
+    {
+        return round($seconds / max(1, $workdaySeconds), 2);
     }
 
     /**
