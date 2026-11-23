@@ -191,9 +191,7 @@ export default function ProjectsIndex({
                             {canViewRates && <span>{t('Hourly rate')}</span>}
                             <span>{t('Visibility')}</span>
                             <span>{t('Budget')}</span>
-                            <span className="text-right">
-                                {t('Reported time')}
-                            </span>
+                            <span className="text-right">{t('Reported')}</span>
                         </div>
                     )}
                     <ul className="divide-y divide-separator">
@@ -339,7 +337,7 @@ export default function ProjectsIndex({
                                         </div>
                                         <div className="text-right">
                                             <span className="mb-0.5 block font-medium text-muted xl:sr-only">
-                                                {t('Reported time')}
+                                                {t('Reported')}
                                             </span>
                                             <span className="tabular-nums xl:text-sm xl:font-medium">
                                                 {formatHours(
