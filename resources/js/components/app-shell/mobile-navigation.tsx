@@ -17,6 +17,7 @@ import { UserMenu, logoutAndFlush } from '@/components/user-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
+import type { MainNavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -70,10 +71,8 @@ export function MobileBottomNav({ className }: { className?: string }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const [isMoreOpen, setMoreOpen] = useState(false);
 
-    const moreLinks = [
-        ...navigation
-            .filter((item) => !item.mobile)
-            .map(({ title, href, icon }) => ({ title, href, icon })),
+    const moreLinks: Omit<MainNavItem, 'mobile'>[] = [
+        ...navigation.filter((item) => !item.mobile),
         { title: 'Profile', href: editProfile(), icon: User },
         { title: 'Security', href: editSecurity(), icon: Shield },
         { title: 'Organizations', href: organizations(), icon: Building2 },
@@ -93,7 +92,8 @@ export function MobileBottomNav({ className }: { className?: string }) {
                 )}
             >
                 {items.map((item) => {
-                    const isActive = isCurrentOrParentUrl(item.href);
+                    const isActive =
+                        item.isActive ?? isCurrentOrParentUrl(item.href);
 
                     return (
                         <Link
@@ -113,7 +113,13 @@ export function MobileBottomNav({ className }: { className?: string }) {
                 <button
                     type="button"
                     onClick={() => setMoreOpen(true)}
-                    className={cn(itemClass, 'text-muted')}
+                    aria-expanded={isMoreOpen}
+                    className={cn(
+                        itemClass,
+                        moreLinks.some((link) => link.isActive)
+                            ? 'text-accent'
+                            : 'text-muted',
+                    )}
                     data-test="mobile-more-button"
                 >
                     <Menu className="size-5" />
@@ -134,7 +140,13 @@ export function MobileBottomNav({ className }: { className?: string }) {
                                     key={link.title}
                                     href={link.href}
                                     onClick={() => setMoreOpen(false)}
-                                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-default"
+                                    aria-current={
+                                        link.isActive ? 'page' : undefined
+                                    }
+                                    className={cn(
+                                        'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-default',
+                                        link.isActive && 'bg-default',
+                                    )}
                                 >
                                     <link.icon className="size-5 text-muted" />
                                     {t(link.title)}

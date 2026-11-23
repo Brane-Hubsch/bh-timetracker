@@ -123,6 +123,7 @@ describe('clients', function () {
             ->assertHasErrors();
 
         expect(Client::query()->pluck('name')->sort()->values()->all())->toBe(['Acme Retail AB', 'Nordic Health AB']);
+        expect(Client::query()->where('name', 'Nordic Health AB')->sole()->slug)->toBe('nordic-health-ab');
     });
 });
 
@@ -161,6 +162,7 @@ describe('projects', function () {
         $project = Project::query()->where('name', 'Kampanj')->sole();
 
         expect($project->client_id)->toBe($this->acme->id)
+            ->and($project->slug)->toBe('kampanj')
             ->and($project->hourly_rate)->toBe(125000)
             ->and($project->estimate_seconds)->toBe(40 * 3600);
 

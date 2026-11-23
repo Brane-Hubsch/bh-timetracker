@@ -32,6 +32,7 @@ class CommandPaletteController extends Controller
             ->get()
             ->map(fn (Project $project) => [
                 'id' => $project->id,
+                'slug' => $project->slug,
                 'name' => $project->name,
                 'code' => $project->code,
                 'color' => $project->color,
@@ -39,8 +40,8 @@ class CommandPaletteController extends Controller
             ]);
 
         $clients = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageClients)
-            ? Client::query()->whereNull('archived_at')->orderBy('name')->get(['id', 'name'])
-                ->map(fn (Client $client) => ['id' => $client->id, 'name' => $client->name])
+            ? Client::query()->active()->orderBy('name')->get(['id', 'name', 'slug'])
+                ->map(fn (Client $client) => ['id' => $client->id, 'name' => $client->name, 'slug' => $client->slug])
             : [];
 
         $members = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)

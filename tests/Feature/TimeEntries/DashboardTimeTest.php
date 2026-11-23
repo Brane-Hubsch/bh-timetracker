@@ -67,6 +67,6 @@ it('shows owners and admins the team week and projects near their estimate', fun
 
 it('shows consumed time on the project page', function () {
     $this->actingAs($this->owner)
-        ->get(route('projects.show', ['current_organization' => $this->organization->slug, 'project' => $this->project->id]))
+        ->get(route('projects.show', ['current_organization' => $this->organization->slug, 'project' => $this->project]))
         ->assertInertia(fn (Assert $page) => $page->where('project.consumedSeconds', 9 * 3600));
 });

@@ -1,5 +1,6 @@
 export type ClientNameOption = {
     id: number;
+    slug: string;
     name: string;
     isArchived: boolean;
 };
@@ -15,6 +16,7 @@ export type ClientListItem = ClientNameOption & {
 
 export type ClientDetails = {
     id: number;
+    slug: string;
     name: string;
     organizationNumber: string | null;
     email: string | null;
@@ -27,10 +29,16 @@ export type ClientDetails = {
 
 export type ProjectListItem = {
     id: number;
+    slug: string;
     name: string;
     code: string | null;
     color: string;
-    client: { id: number; name: string; logo: string | null } | null;
+    client: {
+        id: number;
+        slug: string;
+        name: string;
+        logo: string | null;
+    } | null;
     isBillable: boolean;
     estimateSeconds: number | null;
     isPrivate: boolean;
@@ -50,7 +58,7 @@ export type ProjectDetails = ProjectListItem & {
 };
 
 export type ProjectFormValues = {
-    id: number;
+    slug: string;
     name: string;
     clientId: number | null;
     code: string | null;

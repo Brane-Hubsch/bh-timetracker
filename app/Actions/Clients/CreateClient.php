@@ -4,6 +4,7 @@ namespace App\Actions\Clients;
 
 use App\Models\Client;
 use App\Models\Organization;
+use App\Support\ResourceSlug;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -30,10 +31,12 @@ class CreateClient
                 ]);
             }
 
-            return Client::create([
+            $client = new Client([
                 ...$attributes,
                 'organization_id' => $organization->id,
             ]);
+
+            return ResourceSlug::create($client, $organization->id, $attributes['name'], 'client');
         }, attempts: 3);
     }
 }

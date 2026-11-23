@@ -40,7 +40,9 @@ export default function ReportsProjects({ projects }: Props) {
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <Link
-                                    href={showProject({ project: project.id })}
+                                    href={showProject({
+                                        project: project.slug,
+                                    })}
                                     className="min-w-0 flex-1"
                                 >
                                     <span className="flex items-center gap-2 font-medium">

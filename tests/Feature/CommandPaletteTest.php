@@ -28,7 +28,9 @@ it('gives owners projects, clients and members', function () {
         ->assertOk()
         ->assertJsonPath('projects.*.name', ['Hemligt', 'Webbshop'])
         ->assertJsonPath('projects.1.clientName', 'Acme')
+        ->assertJsonPath('projects.1.slug', 'webbshop')
         ->assertJsonPath('clients.*.name', ['Acme'])
+        ->assertJsonPath('clients.0.slug', 'acme')
         ->assertJsonPath('members.*.name', ['Mia Member', 'Olivia Owner']);
 });
 

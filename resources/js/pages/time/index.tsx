@@ -1,20 +1,14 @@
 import { Avatar, Button } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import {
-    CalendarOff,
-    ChevronLeft,
-    ChevronRight,
-    Copy,
-    Plus,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
-import { SegmentedControl } from '@/components/segmented-control';
 import {
     AbsenceDialog,
     draftFromAbsence,
 } from '@/components/time/absence-dialog';
+import { CalendarPicker } from '@/components/time/calendar-picker';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import { newDraft } from '@/components/time/drafts';
@@ -24,15 +18,11 @@ import {
 } from '@/components/time/time-entry-form';
 import { TimeEntryList } from '@/components/time/time-entry-list';
 import { useInitials } from '@/hooks/use-initials';
-import { useIsDesktop } from '@/hooks/use-media-query';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import {
     addDays,
-    formatDate,
-    formatDateRange,
     formatDuration,
-    isoWeek,
     minutesToTime,
     secondsBetween,
     timeOf,
@@ -102,13 +92,16 @@ export default function TimeIndex({
     canCopyPreviousWeek,
     previousWeek,
 }: Props) {
-    const { t, intlLocale } = useTranslation();
+    const { t } = useTranslation();
     const getInitials = useInitials();
-    const isDesktop = useIsDesktop();
     const { url } = usePage();
     const params = new URLSearchParams(url.split('?')[1] ?? '');
-    const requestedView = params.get('view') as View | null;
-    const view: View = requestedView ?? (isDesktop ? 'week' : 'list');
+    const requestedView = params.get('view');
+    const view: View =
+        requestedView === 'day' || requestedView === 'list'
+            ? requestedView
+            : 'week';
+    const pageTitle = t(view === 'list' ? 'List' : 'Calendar');
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
@@ -167,7 +160,7 @@ export default function TimeIndex({
             index.url(),
             {
                 date: changes.date ?? date,
-                view: changes.view ?? requestedView ?? undefined,
+                view: changes.view ?? view,
                 user:
                     (changes.user ?? member.id) === undefined
                         ? undefined
@@ -202,23 +195,14 @@ export default function TimeIndex({
             },
         );
 
-    const title =
-        view === 'day'
-            ? formatDate(date, intlLocale, {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-              })
-            : `${t('Week :number', { number: isoWeek(weekStart) })} · ${formatDateRange(dates[0], dates[6], intlLocale)}`;
-
     return (
         <>
-            <Head title={t('Calendar')} />
+            <Head title={pageTitle} />
 
             <div className="grid grid-cols-1 gap-5 md:gap-4">
                 <Heading
                     className="items-center gap-y-1"
-                    title={t('Calendar')}
+                    title={pageTitle}
                     actions={
                         <p
                             className="flex items-baseline gap-2 tabular-nums"
@@ -245,40 +229,39 @@ export default function TimeIndex({
                             isIconOnly
                             variant="ghost"
                             size="sm"
-                            aria-label={t('Previous')}
+                            aria-label={t(
+                                view === 'day'
+                                    ? 'Previous day'
+                                    : 'Previous week',
+                            )}
                             onPress={() =>
                                 visit({ date: addDays(date, -step) })
                             }
                         >
                             <ChevronLeft className="size-4" />
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onPress={() => visit({ date: today })}
-                        >
-                            {t('Today')}
-                        </Button>
+                        <CalendarPicker
+                            view={view}
+                            date={date}
+                            weekStart={weekStart}
+                            weekStartsOn={weekStartsOn}
+                            today={today}
+                            timezone={timezone}
+                            onChange={(date) => visit({ date })}
+                            onViewChange={(view) => visit({ view })}
+                        />
                         <Button
                             isIconOnly
                             variant="ghost"
                             size="sm"
-                            aria-label={t('Next')}
+                            aria-label={t(
+                                view === 'day' ? 'Next day' : 'Next week',
+                            )}
                             onPress={() => visit({ date: addDays(date, step) })}
                         >
                             <ChevronRight className="size-4" />
                         </Button>
                     </div>
-                    <div
-                        aria-hidden="true"
-                        className="h-5.5 w-px shrink-0 bg-separator"
-                    />
-                    <h2
-                        className={`min-w-0 flex-1 truncate text-base font-semibold md:flex-none md:text-[1.0625rem] ${view === 'day' ? 'first-letter:uppercase' : ''}`}
-                    >
-                        {title}
-                    </h2>
-
                     <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
                         {members.length > 1 && (
                             <SelectField
@@ -324,18 +307,6 @@ export default function TimeIndex({
                                 data-test="member-select"
                             />
                         )}
-                        <SegmentedControl
-                            aria-label={t('View')}
-                            value={view}
-                            onChange={(next) => visit({ view: next })}
-                            className="flex-1 md:flex-none [&>*]:flex-1 md:[&>*]:flex-none"
-                            options={[
-                                { id: 'list', label: t('List') },
-                                { id: 'week', label: t('Week') },
-                                { id: 'day', label: t('Day') },
-                            ]}
-                            data-test="time-view"
-                        />
                         {canCopyPreviousWeek && (
                             <Button
                                 variant="tertiary"
@@ -350,24 +321,6 @@ export default function TimeIndex({
                                 </span>
                             </Button>
                         )}
-                        <Button
-                            variant="tertiary"
-                            className="shrink-0"
-                            onPress={() =>
-                                newAbsence(
-                                    view === 'day' || !dates.includes(today)
-                                        ? date
-                                        : today,
-                                )
-                            }
-                            aria-label={t('Register absence')}
-                            data-test="new-absence-button"
-                        >
-                            <CalendarOff className="size-4" />
-                            <span className="hidden lg:inline">
-                                {t('Absence')}
-                            </span>
-                        </Button>
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"

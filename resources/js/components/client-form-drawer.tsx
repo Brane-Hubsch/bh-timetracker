@@ -82,7 +82,7 @@ function ClientNameField({
                     {(option: ClientNameOption) => (
                         <ListBox.Item
                             id={option.id}
-                            href={show.url({ client: option.id })}
+                            href={show.url({ client: option.slug })}
                             textValue={option.name}
                             className="min-h-10 justify-between gap-2 rounded-[1.25rem]"
                         >
@@ -114,7 +114,7 @@ export function ClientFormDrawer({
     onOpenChange,
 }: Props) {
     const { t } = useTranslation();
-    const form = client ? update.form({ client: client.id }) : store.form();
+    const form = client ? update.form({ client: client.slug }) : store.form();
     const [name, setName] = useState('');
     const normalizedName = name.trim().toLowerCase();
     const duplicate =

@@ -70,6 +70,8 @@ it('creates projects with status, visibility, note, estimate and members', funct
 
     $po = Project::query()->forOrganization($this->organization)->where('name', 'PO104248')->with('members')->sole();
     expect($po->isArchived())->toBeTrue()
+        ->and($po->slug)->toBe('po104248')
+        ->and($po->client()->sole()->slug)->toBe('ferroamp')
         ->and($po->visibility)->toBe(ProjectVisibility::Private)
         ->and($po->notes)->toBe('May-Aug 2024')
         ->and($po->members->pluck('name')->sort()->values()->all())->toBe(['Anna Andersson', 'Olivia Owner']);

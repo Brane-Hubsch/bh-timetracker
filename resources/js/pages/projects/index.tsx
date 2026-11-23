@@ -198,7 +198,7 @@ export default function ProjectsIndex({
                         {projects.map((project) => (
                             <li key={project.id} data-test="project-row">
                                 <Link
-                                    href={show({ project: project.id })}
+                                    href={show({ project: project.slug })}
                                     className={`grid gap-2.5 p-4 transition-colors hover:bg-surface-secondary xl:items-center xl:gap-4 xl:px-5 xl:py-3 ${columns}`}
                                 >
                                     {/* Project: on mobile also the client and code. */}

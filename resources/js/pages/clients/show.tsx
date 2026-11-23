@@ -27,6 +27,7 @@ type Props = {
     client: ClientDetails;
     projects: {
         id: number;
+        slug: string;
         name: string;
         code: string | null;
         color: string;
@@ -64,8 +65,8 @@ export default function ClientShow({
     const toggleArchived = () =>
         router.visit(
             client.isArchived
-                ? restore({ client: client.id })
-                : archive({ client: client.id }),
+                ? restore({ client: client.slug })
+                : archive({ client: client.slug }),
             { preserveScroll: true },
         );
 
@@ -84,7 +85,7 @@ export default function ClientShow({
                             />
                             {client.name}
                             {client.isArchived && (
-                                <Chip size="sm" variant="soft">
+                                <Chip size="md" variant="soft">
                                     {t('Archived')}
                                 </Chip>
                             )}
@@ -231,7 +232,9 @@ export default function ClientShow({
                         {projects.map((project) => (
                             <li key={project.id}>
                                 <Link
-                                    href={showProject({ project: project.id })}
+                                    href={showProject({
+                                        project: project.slug,
+                                    })}
                                     className="flex items-center gap-3 p-4 transition-colors hover:bg-surface-secondary"
                                 >
                                     <ProjectDot color={project.color} />

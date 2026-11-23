@@ -141,10 +141,11 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Snabbinmatning (formulär)** – datum, start–slut *eller* start + varaktighet ("1,5", "1:30", "90m" ska alla fungera), projekt (sökbar väljare med senast använda först), beskrivning, debiterbar. Smarta förval: start = slut på dagens senaste post.
 
-**Listvy** (standard på mobil) – poster grupperade per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
+**Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 
-**Kalendervy** (standard på desktop)
-- Veckovy och dagvy (dagvy är standard på mobil). Veckan börjar enligt organisationens inställning.
+**Kalendervy** (veckovy är standard)
+- Periodknappen visar namnet på dagen eller veckan med datum på raden under. Pilarna vid knappen stegar en dag eller vecka enligt vald vy.
+- Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare utan lägesbyte.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
 - Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.
@@ -698,7 +699,7 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 - **Period:** första och sista dag (högst 366 dagar), antingen hela arbetsdagar eller ett antal timmar per dag (t.ex. 4 h VAB). Lördag, söndag och organisationens helgdagar räknas inte. En period utan arbetsdagar och överlappande frånvaro för samma person avvisas. Valfri notering.
 - **Arbetsdagens längd** är en organisationsinställning (`organizations.workday_seconds`, standard 8 h, "Arbetsdagens längd (timmar)" i organisationsinställningarna). En hel frånvarodag räknas som så många timmar.
 - **Behörighet** (`AbsencePolicy`): medlemmar hanterar sin egen frånvaro; ägare och admin (`ManageTeamTime`) hanterar allas. Andra organisationers frånvaro ger 404.
-- **Kalendern:** heldagsraden visas i vecko- och dagvyn när den visade perioden innehåller frånvaro för den valda personen eller en kollega. Radens kalenderikon visar "Frånvaro" vid hovring och tangentbordsfokus. Den visade personens frånvaro syns med typ (och timmar per dag) och öppnar dialogen vid klick; drar man över dagar i raden registreras ny frånvaro. Kollegors frånvaro syns som "Ledig · namn", utan typ eller notering. Listvyn visar samma sak per dag. Knappen "Frånvaro" och ⌘K-kommandot "Registrera frånvaro" öppnar dialogen (`ResponsiveDialog`), som räknar arbetsdagar och timmar medan man fyller i.
+- **Kalendern:** heldagsraden visas i vecko- och dagvyn när den visade perioden innehåller frånvaro för den valda personen eller en kollega. Radens kalenderikon visar "Frånvaro" vid hovring och tangentbordsfokus. Den visade personens frånvaro syns med typ (och timmar per dag) och öppnar dialogen vid klick; drar man över dagar i raden registreras ny frånvaro. Kollegors frånvaro syns som "Ledig · namn", utan typ eller notering. Listvyn visar samma sak per dag. Frånvaro kan registreras via plusknappen genom att växla läge i dialogrubriken, eller direkt med ⌘K-kommandot "Registrera frånvaro". Formuläret räknar arbetsdagar och timmar medan man fyller i.
 - **Rapporter:** sammanfattningen får ett avsnitt Frånvaro med dagar per person och typ i perioden (frånvarotimmar delat med arbetsdagens längd). Bara periodens och medlemsfiltrets urval gäller, med samma synlighet som för tid: medlemmar ser bara sin egen rad (`ReportBuilder::absences`). Frånvaron ingår inte i exporten.
 - **Rapportera tid eller frånvaro:** för en ny post växlar det lila understrukna ordet i dialogrubriken mellan ”Rapportera tid” och ”Rapportera frånvaro” och visar motsvarande formulär.
 - **MCP:** `list_absences` (egen frånvaro som standard; `all` ger alla, där medlemmar bara ser kollegor som lediga utan typ eller notering), `create_absence`, `update_absence` (bara angivna fält; `hours_per_day: null` ger hela dagar) och `delete_absence` (destruktiv). `get_report` får `absence` med dagar per medlem och typ, och `get_context` arbetsdagens längd och frånvarotyperna. Serverns instruktioner säger att frånvaro aldrig ska rapporteras som tid på ett projekt.
@@ -782,6 +783,12 @@ Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (peri
 
 - **Produktion:** Time Tracker ligger under teamet Bräne Hübsch i den egna Umami-instansen på `analytics.bh.studio`. Spåraren laddas på `timetrack.bh.studio` och mäter sidvisningar vid sidladdning och navigering i Inertia, inklusive bakåt och framåt.
 - **Insamling:** Umami sammanställer sin vanliga besöksstatistik. Sidadresser skickas utan frågeparametrar och fragment. Inloggnings- och inbjudningstoken tas bort från sökvägarna. Externa hänvisningar begränsas till ursprunget och sidtitlar utelämnas eftersom de kan innehålla kund- och projektnamn.
+
+### Tillägg efter Fas 6: läsbara kund- och projektadresser
+
+- Kund- och projektsidor använder en slug som skapas från namnet. Slugen är unik per organisation och resurstyp och ligger kvar vid namnbyte, arkivering och byte av kund på ett projekt.
+- Befintliga kunder och projekt får en slug vid migrering. Äldre sidlänkar med ID skickas vidare till slugadressen efter behörighetskontroll, med frågeparametrarna kvar. Skrivåtgärder accepterar fortfarande ID och sparade rapportfilter behåller sina parametrar.
+- Umami maskerar kund- och projektsegmentet i sökvägar och interna hänvisningar.
 
 ## 8. Senare (medvetet bortvalt i v1)
 

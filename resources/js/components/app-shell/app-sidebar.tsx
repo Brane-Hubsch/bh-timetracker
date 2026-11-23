@@ -48,7 +48,8 @@ export function AppSidebar({ className }: { className?: string }) {
 
             <nav aria-label={t('Main')} className="grid gap-1">
                 {items.map((item) => {
-                    const isActive = isCurrentOrParentUrl(item.href);
+                    const isActive =
+                        item.isActive ?? isCurrentOrParentUrl(item.href);
 
                     return (
                         <Link
