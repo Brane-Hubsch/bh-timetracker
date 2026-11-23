@@ -105,7 +105,7 @@ it('shows the member\'s absence in the calendar, and colleagues only as off', fu
             ->where('colleaguesOff.0.name', 'Olivia'));
 });
 
-it('suggests up to five distinct types from the signed-in member’s own organization history', function () {
+it('suggests distinct types from the signed-in member’s own organization history', function () {
     $own = Absence::factory()->by($this->owner, $this->organization);
 
     foreach (AbsenceType::cases() as $offset => $type) {
@@ -122,5 +122,5 @@ it('suggests up to five distinct types from the signed-in member’s own organiz
         ->get(route('time.index', [$this->slug, 'date' => '2026-12-07', 'user' => $this->member->id]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('absences', [])
-            ->where('recentAbsenceTypes', ['sick', 'other', 'leave_of_absence', 'parental_leave', 'child_care']));
+            ->where('recentAbsenceTypes', ['sick', 'other', 'leave_of_absence', 'parental_leave', 'child_care', 'vacation']));
 });

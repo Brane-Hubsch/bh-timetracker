@@ -20,7 +20,7 @@ final class AbsencePresenter
             ->where('user_id', $viewer->id)
             ->groupBy('type')
             ->orderByRaw('max(updated_at) desc, max(id) desc')
-            ->limit(5)
+            ->limit(10)
             ->get(['type'])
             ->map(fn (Absence $absence) => $absence->type->value)
             ->all();

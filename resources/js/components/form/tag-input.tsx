@@ -7,10 +7,11 @@ import {
     ListBox,
 } from '@heroui/react';
 import type { KeyboardEvent, Key } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Group, Input } from 'react-aria-components';
 import addTagIcon from '@/assets/tag-add.svg';
 import removeTagIcon from '@/assets/tag-remove.svg';
+import { ShortcutRow } from '@/components/form/shortcut-row';
 import { useTranslation } from '@/lib/i18n';
 
 type Props = {
@@ -48,67 +49,22 @@ function RecentTagShortcuts({
     onAdd: (name: string) => void;
 }) {
     const { t } = useTranslation();
-    const viewport = useRef<HTMLDivElement>(null);
-    const [fadeLeft, setFadeLeft] = useState(false);
-    const [fadeRight, setFadeRight] = useState(false);
-
-    useEffect(() => {
-        const element = viewport.current;
-        const row = element?.firstElementChild;
-
-        if (!element || !row) {
-            return;
-        }
-
-        const updateFades = () => {
-            const { scrollLeft, scrollWidth, clientWidth } = element;
-            setFadeLeft(scrollLeft > 1);
-            setFadeRight(scrollWidth - clientWidth - scrollLeft > 1);
-        };
-
-        const observer = new ResizeObserver(updateFades);
-        observer.observe(element);
-        observer.observe(row);
-        element.addEventListener('scroll', updateFades, { passive: true });
-
-        return () => {
-            observer.disconnect();
-            element.removeEventListener('scroll', updateFades);
-        };
-    }, []);
-
-    const leftFadeWidth = fadeLeft ? '1.5rem' : '0px';
-    const rightFadeWidth = fadeRight ? '1.5rem' : '0px';
-
     return (
-        <div
-            ref={viewport}
-            role="group"
-            aria-label={t('Recently used tags')}
-            className="min-w-0 scroll-px-6 [scrollbar-width:none] overflow-x-auto"
-            style={{
-                maskImage:
-                    fadeLeft || fadeRight
-                        ? `linear-gradient(to right, transparent, black ${leftFadeWidth}, black calc(100% - ${rightFadeWidth}), transparent)`
-                        : undefined,
-            }}
-        >
-            <div className="flex w-max gap-1.5 p-px">
-                {names.map((name) => (
-                    <Button
-                        key={name}
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 min-w-8 gap-1.5 rounded-full pr-2 pl-[9px] text-xs font-normal whitespace-nowrap text-foreground inset-ring-1 inset-ring-separator data-[focus-visible=true]:ring-0 data-[focus-visible=true]:inset-ring-2 data-[focus-visible=true]:inset-ring-focus data-[focus-visible=true]:ring-offset-0"
-                        onPress={() => onAdd(name)}
-                    >
-                        {name}
-                        <TagIcon src={addTagIcon} />
-                    </Button>
-                ))}
-            </div>
-        </div>
+        <ShortcutRow label={t('Recently used tags')}>
+            {names.map((name) => (
+                <Button
+                    key={name}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 min-w-8 gap-1.5 rounded-full pr-2 pl-[9px] text-xs font-normal whitespace-nowrap text-foreground inset-ring-1 inset-ring-separator data-[focus-visible=true]:ring-0 data-[focus-visible=true]:inset-ring-2 data-[focus-visible=true]:inset-ring-focus data-[focus-visible=true]:ring-offset-0"
+                    onPress={() => onAdd(name)}
+                >
+                    {name}
+                    <TagIcon src={addTagIcon} />
+                </Button>
+            ))}
+        </ShortcutRow>
     );
 }
 

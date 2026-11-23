@@ -1,7 +1,7 @@
 import {
     Button,
     Description,
-    Input,
+    InputGroup,
     Label,
     TextArea,
     TextField,
@@ -13,6 +13,7 @@ import { useId, useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
 import { SelectField } from '@/components/form/select-field';
+import { ShortcutRow } from '@/components/form/shortcut-row';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ScrubLabel, TimeScrubLabel } from '@/components/time/time-scrub-label';
@@ -195,7 +196,7 @@ export function AbsenceForm({
             ...absenceTypes.map(({ value }) => value),
         ]),
     ]
-        .slice(0, 5)
+        .slice(0, 10)
         .map((value) => absenceTypes.find((option) => option.value === value))
         .filter((option) => option !== undefined);
     const changeStart = (startsOn: string) =>
@@ -275,10 +276,8 @@ export function AbsenceForm({
                     isRequired
                     data-test="absence-type"
                 />
-                <div
-                    role="group"
-                    aria-label={t('Absence type suggestions')}
-                    className="flex flex-wrap gap-1.5"
+                <ShortcutRow
+                    label={t('Absence type suggestions')}
                     data-test="absence-type-suggestions"
                 >
                     {typeSuggestions.map(({ value, label }) => (
@@ -292,12 +291,12 @@ export function AbsenceForm({
                         >
                             <span
                                 aria-hidden="true"
-                                className="size-3 shrink-0 rounded-full border-[1.5px] border-muted"
+                                className="size-2 shrink-0 rounded-full border border-muted"
                             />
                             {label}
                         </Button>
                     ))}
-                </div>
+                </ShortcutRow>
             </div>
 
             <div className="grid gap-2">
@@ -315,7 +314,7 @@ export function AbsenceForm({
                 />
             </div>
 
-            <div className="grid gap-2 min-[370px]:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-3">
+            <div className="grid gap-2 min-[390px]:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-3">
                 <div
                     className={isPartial ? 'min-w-0' : 'col-span-full min-w-0'}
                 >
@@ -415,12 +414,12 @@ export function AbsenceForm({
                         onChange={(hoursPerDay) => set({ hoursPerDay })}
                         isInvalid={Boolean(errors.hours_per_day)}
                         validationBehavior="aria"
-                        className="w-full min-[370px]:w-24 sm:w-32"
+                        className="w-full min-[390px]:w-[7.5rem] sm:w-40"
                     >
                         <Label className="sr-only">{t('Hours per day')}</Label>
                         <span className="label text-xs leading-5 whitespace-nowrap sm:text-sm">
                             <TimeScrubLabel
-                                label={t('Hours per day')}
+                                label={t('Hours')}
                                 value={values.hoursPerDay}
                                 minutes={
                                     secondsPerDay === null
@@ -434,11 +433,23 @@ export function AbsenceForm({
                                 onAdjust={adjustHours}
                             />
                         </span>
-                        <Input
-                            inputMode="decimal"
-                            placeholder="4:00"
-                            data-test="absence-hours"
-                        />
+                        <InputGroup
+                            fullWidth
+                            className="max-sm:min-h-[2.625rem]"
+                        >
+                            <InputGroup.Input
+                                className="min-w-0 max-sm:ps-2 max-sm:text-sm"
+                                inputMode="decimal"
+                                placeholder="4:00"
+                                data-test="absence-hours"
+                            />
+                            <InputGroup.Suffix
+                                aria-hidden="true"
+                                className="shrink-0 border-s-0 text-sm font-normal whitespace-nowrap text-muted max-sm:ps-0 max-sm:pe-2"
+                            >
+                                {t('per day')}
+                            </InputGroup.Suffix>
+                        </InputGroup>
                         {errors.hours_per_day && (
                             <Description className="text-danger">
                                 {errors.hours_per_day}

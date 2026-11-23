@@ -72,7 +72,7 @@ export function DatePickerField({
                 <DateField.Input
                     className={
                         isEmbedded
-                            ? 'min-w-0 ps-1.5 pe-0 text-sm sm:ps-3'
+                            ? 'min-w-0 ps-1 pe-0 text-[0.8125rem] max-sm:gap-0 sm:ps-3 sm:text-sm'
                             : relativeLabel
                               ? 'opacity-0 group-focus-within/date-picker:opacity-100 group-data-[open]/date-picker:opacity-100'
                               : undefined
@@ -96,7 +96,11 @@ export function DatePickerField({
                 <DateField.Suffix
                     className={isEmbedded ? 'me-0.5 sm:me-2' : undefined}
                 >
-                    <DatePicker.Trigger>
+                    <DatePicker.Trigger
+                        className={
+                            isEmbedded ? 'max-sm:px-0.5 max-sm:py-2' : undefined
+                        }
+                    >
                         <DatePicker.TriggerIndicator />
                     </DatePicker.Trigger>
                 </DateField.Suffix>

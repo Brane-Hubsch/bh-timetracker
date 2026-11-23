@@ -13,6 +13,7 @@ import {
 import { Banknote } from 'lucide-react';
 import { use, useId, useState } from 'react';
 import { ComboBoxStateContext, useFilter } from 'react-aria-components';
+import { ShortcutRow } from '@/components/form/shortcut-row';
 import { ProjectDot } from '@/components/project-dot';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
@@ -351,36 +352,37 @@ export function ProjectPicker({
             {selectedProject && billableSwitch}
 
             {!selectedProject && recent.length > 0 && (
-                <ToggleButtonGroup
-                    aria-label={t('Recently used')}
-                    selectionMode="single"
-                    disallowEmptySelection
-                    selectedKeys={new Set()}
-                    onSelectionChange={(keys) => {
-                        const [key] = [...keys];
+                <ShortcutRow data-test="recent-projects">
+                    <ToggleButtonGroup
+                        aria-label={t('Recently used')}
+                        selectionMode="single"
+                        disallowEmptySelection
+                        selectedKeys={new Set()}
+                        onSelectionChange={(keys) => {
+                            const [key] = [...keys];
 
-                        if (key !== undefined) {
-                            onChange(String(key));
-                        }
-                    }}
-                    isDetached
-                    size="sm"
-                    className="flex flex-wrap justify-start gap-1.5"
-                    data-test="recent-projects"
-                >
-                    {recent.map((project) => (
-                        <ToggleButton
-                            key={project.value}
-                            id={project.value}
-                            className="h-8 max-w-full gap-1.5 rounded-full border border-separator bg-transparent px-3 text-xs font-medium text-foreground transition-colors"
-                        >
-                            <ProjectDot color={project.color} />
-                            <span className="max-w-40 truncate">
-                                {project.label}
-                            </span>
-                        </ToggleButton>
-                    ))}
-                </ToggleButtonGroup>
+                            if (key !== undefined) {
+                                onChange(String(key));
+                            }
+                        }}
+                        isDetached
+                        size="sm"
+                        className="flex justify-start gap-1.5"
+                    >
+                        {recent.map((project) => (
+                            <ToggleButton
+                                key={project.value}
+                                id={project.value}
+                                className="h-8 max-w-full gap-1.5 rounded-full border border-separator bg-transparent px-3 text-xs font-medium text-foreground transition-colors"
+                            >
+                                <ProjectDot color={project.color} size="sm" />
+                                <span className="max-w-40 truncate">
+                                    {project.label}
+                                </span>
+                            </ToggleButton>
+                        ))}
+                    </ToggleButtonGroup>
+                </ShortcutRow>
             )}
         </div>
     );
