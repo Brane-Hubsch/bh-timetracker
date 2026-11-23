@@ -106,6 +106,23 @@ it('stacks daily and weekly report hours by reported project', function () {
             ->where('summary.timeline.buckets.7.projectSeconds', [$internal->id => 1800]));
 });
 
+it('orders the stacked projects largest first, whatever their ids', function () {
+    // Created after the small one, so the large project has the higher id.
+    $large = Project::factory()->for($this->organization)->create(['name' => 'Stort']);
+    TimeEntry::factory()->by($this->member, $this->project)
+        ->between(CarbonImmutable::parse('2026-11-16 08:00', 'UTC'), CarbonImmutable::parse('2026-11-16 08:30', 'UTC'))
+        ->create();
+    TimeEntry::factory()->by($this->member, $large)
+        ->between(CarbonImmutable::parse('2026-11-16 09:00', 'UTC'), CarbonImmutable::parse('2026-11-16 12:00', 'UTC'))
+        ->create();
+
+    $this->actingAs($this->member)
+        ->get(reportRoute('reports.summary'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('summary.timeline.projects.0.id', $large->id)
+            ->where('summary.timeline.projects.1.id', $this->project->id));
+});
+
 it('gives the filters member pictures, inactive members and client logos', function () {
     $this->owner->update(['avatar_url' => 'https://lh3.googleusercontent.com/olivia.jpg']);
     $this->organization->members()->updateExistingPivot($this->member->id, ['deactivated_at' => now()]);

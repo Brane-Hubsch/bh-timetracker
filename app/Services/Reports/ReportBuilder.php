@@ -377,7 +377,16 @@ class ReportBuilder
             }
         }
 
-        ksort($projects);
+        // Largest first: the bars stack in this order from the bottom, so small projects sit on top.
+        $totals = [];
+
+        foreach ($buckets as $bucket) {
+            foreach ($bucket['projectSeconds'] ?? [] as $projectId => $seconds) {
+                $totals[$projectId] = ($totals[$projectId] ?? 0) + $seconds;
+            }
+        }
+
+        uasort($projects, fn (array $a, array $b) => [$totals[$b['id']] ?? 0, mb_strtolower($a['name'])] <=> [$totals[$a['id']] ?? 0, mb_strtolower($b['name'])]);
 
         return [
             'unit' => $unit->value,
