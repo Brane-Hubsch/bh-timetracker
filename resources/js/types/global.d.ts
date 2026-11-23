@@ -26,6 +26,7 @@ declare module '@inertiajs/core' {
         flashDataType: {
             toast?: import('@/types/ui').FlashToast;
             importResult?: import('@/types/imports').ImportResult;
+            projectImportResult?: import('@/types/imports').ProjectImportResult;
         };
         layoutProps: {
             width: import('@/types/ui').ContentWidth;

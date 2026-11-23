@@ -18,6 +18,10 @@ export type ImportPreview = {
     importableSeconds: number;
     /** Rows longer than 24 hours, split at midnight into one entry per day. */
     splitRows: number;
+    /** Rows without a project, skipped unless a project is chosen for them. */
+    rowsWithoutProject: number;
+    /** The project id chosen for rows without a project, or null to skip them. */
+    projectForRowsWithoutProject: number | null;
     members: {
         email: string;
         name: string;
@@ -72,4 +76,35 @@ export type ImportResult = {
     to: string | null;
     skipped: SkippedImportRow[];
     skippedCount: number;
+};
+
+/** Preview of Clockify's project export: projects created, and how existing ones change. */
+export type ProjectImportPreview = {
+    token: string;
+    projects: {
+        key: string;
+        name: string;
+        client: string | null;
+        isNew: boolean;
+        archived: boolean;
+        private: boolean;
+        estimateSeconds: number | null;
+        note: string | null;
+        billable: boolean;
+        /** Clockify's members that match active members. */
+        members: string[];
+        /** For existing projects: what the import changes. */
+        changes: ('archive' | 'private' | 'note' | 'estimate' | 'members')[];
+    }[];
+    newCount: number;
+    changedCount: number;
+    newClients: string[];
+    /** Member names in the file that match no active member. */
+    unknownMembers: string[];
+};
+
+export type ProjectImportResult = {
+    created: number;
+    updated: number;
+    clientsCreated: number;
 };

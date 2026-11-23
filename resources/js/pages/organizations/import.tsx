@@ -15,6 +15,7 @@ import { DropZone, FileTrigger } from 'react-aria-components';
 import { SelectField } from '@/components/form/select-field';
 import type { SelectOption } from '@/components/form/select-field';
 import Heading from '@/components/heading';
+import { ClockifyProjectPreview } from '@/components/organizations/clockify-project-preview';
 import { useInitials } from '@/hooks/use-initials';
 import { formatDecimalHours, toMinorUnits } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -25,13 +26,18 @@ import type {
     ImportPreview,
     ImportRate,
     ImportResult,
+    ProjectImportPreview,
     SkippedImportRow,
 } from '@/types';
 
 type Props = {
     organization: { name: string; slug: string };
     preview: ImportPreview | null;
+    /** Set instead of `preview` when the file is Clockify's project export. */
+    projectPreview?: ProjectImportPreview | null;
     memberOptions?: SelectOption[];
+    /** Projects that rows without a project can go to. */
+    projectOptions?: SelectOption[];
 };
 
 const SKIP = 'skip';
@@ -43,7 +49,9 @@ const SKIP = 'skip';
 export default function OrganizationImport({
     organization,
     preview,
+    projectPreview,
     memberOptions = [],
+    projectOptions = [],
 }: Props) {
     const { t } = useTranslation();
     const { flash } = usePage();
@@ -68,12 +76,44 @@ export default function OrganizationImport({
                 />
             )}
 
-            {preview ? (
+            {flash.projectImportResult && (
+                <Alert status="success" data-test="import-project-result">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                        <Alert.Title>
+                            {t(
+                                ':created new projects and :updated updated, :clients new clients.',
+                                {
+                                    created: flash.projectImportResult.created,
+                                    updated: flash.projectImportResult.updated,
+                                    clients:
+                                        flash.projectImportResult
+                                            .clientsCreated,
+                                },
+                            )}
+                        </Alert.Title>
+                        <Alert.Description>
+                            {t(
+                                'Now upload the time exports, one year at a time, oldest first.',
+                            )}
+                        </Alert.Description>
+                    </Alert.Content>
+                </Alert>
+            )}
+
+            {projectPreview ? (
+                <ClockifyProjectPreview
+                    key={projectPreview.token}
+                    slug={organization.slug}
+                    preview={projectPreview}
+                />
+            ) : preview ? (
                 <PreviewStep
                     key={preview.token}
                     slug={organization.slug}
                     preview={preview}
                     memberOptions={memberOptions}
+                    projectOptions={projectOptions}
                 />
             ) : (
                 <UploadStep slug={organization.slug} />
@@ -116,6 +156,11 @@ function UploadStep({ slug }: { slug: string }) {
                     )}
                 </li>
                 <li>{t('Upload the file here.')}</li>
+                <li>
+                    {t(
+                        'Importing older history? Upload the project export first (Projects → Export → CSV, active and archived), so the projects get their status, visibility, notes and members. Then upload the time one year at a time.',
+                    )}
+                </li>
                 <li>
                     {t(
                         'Check who the time goes to and what is created, then import. Nothing is saved before that.',
@@ -169,10 +214,12 @@ function PreviewStep({
     slug,
     preview,
     memberOptions,
+    projectOptions,
 }: {
     slug: string;
     preview: ImportPreview;
     memberOptions: SelectOption[];
+    projectOptions: SelectOption[];
 }) {
     const { t, tc, intlLocale } = useTranslation();
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
@@ -192,6 +239,14 @@ function PreviewStep({
     // Rates the importer edited, by "project key|member id" (minor units, null = rate order).
     const [rates, setRates] = useState<Record<string, number | null>>({});
     const [updateExisting, setUpdateExisting] = useState(false);
+    const [projectForRowsWithoutProject, setProjectForRowsWithoutProject] =
+        useState(
+            preview.projectForRowsWithoutProject === null
+                ? SKIP
+                : String(preview.projectForRowsWithoutProject),
+        );
+    const noProjectChoice = (value: string) =>
+        value === SKIP ? null : Number(value);
     const [isImporting, setImporting] = useState(false);
     const hours = (seconds: number) => formatDecimalHours(seconds, intlLocale);
     const params = { organization: slug, import: preview.token };
@@ -239,13 +294,14 @@ function PreviewStep({
     const memberChoices = (next: Record<string, string>) =>
         Object.entries(next).map(([email, member]) => ({ email, member }));
 
-    // Re-plan on the server, so the counts follow the chosen members.
-    const chooseMember = (email: string, member: string) => {
-        const next = { ...members, [email]: member };
-        setMembers(next);
+    // Re-plan on the server, so the counts follow the chosen members and project.
+    const replan = (nextMembers: Record<string, string>, noProject: string) =>
         router.get(
             show.url(params),
-            { members: memberChoices(next) },
+            {
+                members: memberChoices(nextMembers),
+                project_for_rows_without_project: noProjectChoice(noProject),
+            },
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -255,6 +311,16 @@ function PreviewStep({
                 queryStringArrayFormat: 'indices',
             },
         );
+
+    const chooseMember = (email: string, member: string) => {
+        const next = { ...members, [email]: member };
+        setMembers(next);
+        replan(next, projectForRowsWithoutProject);
+    };
+
+    const chooseProjectForRowsWithoutProject = (value: string) => {
+        setProjectForRowsWithoutProject(value);
+        replan(members, value);
     };
 
     const runImport = () =>
@@ -278,6 +344,9 @@ function PreviewStep({
                         })),
                     ),
                 update_existing: updateExisting,
+                project_for_rows_without_project: noProjectChoice(
+                    projectForRowsWithoutProject,
+                ),
             },
             {
                 onStart: () => setImporting(true),
@@ -558,6 +627,35 @@ function PreviewStep({
                     );
                 })}
             </section>
+
+            {preview.rowsWithoutProject > 0 && (
+                <section
+                    className="grid gap-3"
+                    data-test="import-rows-without-project"
+                >
+                    <Heading
+                        variant="small"
+                        title={t('Rows without a project')}
+                        description={tc(
+                            ':count row in the file has no project. Choose a project to put it on, or skip it.|:count rows in the file have no project. Choose a project to put them on, or skip them.',
+                            preview.rowsWithoutProject,
+                            { count: preview.rowsWithoutProject },
+                        )}
+                    />
+                    <SelectField
+                        name="project_for_rows_without_project"
+                        label={t('Put them on')}
+                        options={[
+                            { value: SKIP, label: t('Skip') },
+                            ...projectOptions,
+                        ]}
+                        value={projectForRowsWithoutProject}
+                        onChange={chooseProjectForRowsWithoutProject}
+                        className="min-w-0 sm:max-w-sm"
+                        data-test="import-rows-without-project-select"
+                    />
+                </section>
+            )}
 
             {showsRates && (
                 <p className="-mt-5 text-sm text-muted">
