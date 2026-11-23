@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "brane-hubsch/bh-timetracker",
     "type": "project",
-    "description": "BH Timetracker – time tracking for Brane Hubsch.",
+    "description": "BH Timetracker – time tracking for teams, with reports and an MCP server for AI assistants.",
     "keywords": [
         "laravel",
         "framework"
