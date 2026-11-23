@@ -64,7 +64,7 @@ export default function TeamIndex({
                                 data-test="team-invite"
                             >
                                 <UserPlus className="size-4" />
-                                {t('Invite member')}
+                                {t('Invite')}
                             </Button>
                         )
                     }
