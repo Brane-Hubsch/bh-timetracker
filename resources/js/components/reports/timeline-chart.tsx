@@ -269,7 +269,7 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                         className={`pointer-events-none absolute right-0 left-10 border-t border-separator ${hours === 0 ? 'z-10' : ''}`}
                         style={{ bottom: `${(hours / max) * 100}%` }}
                     >
-                        <span className="absolute -top-2 -left-10 w-8 text-right text-xs text-muted tabular-nums">
+                        <span className="absolute -top-2 -left-10 w-9 text-right text-xs whitespace-nowrap text-muted tabular-nums">
                             {hours} h
                         </span>
                     </div>
