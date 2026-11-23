@@ -214,6 +214,24 @@ function PreviewStep({
     const showsRates = preview.projects.some(
         (project) => billable[project.key] && (project.rates?.length ?? 0) > 0,
     );
+    // Projects grouped by client, in the order they appear in the file.
+    const clientGroups: {
+        client: string | null;
+        projects: ImportPreview['projects'];
+    }[] = [];
+
+    for (const project of preview.projects) {
+        const group = clientGroups.find(
+            (candidate) => candidate.client === project.client,
+        );
+
+        if (group) {
+            group.projects.push(project);
+        } else {
+            clientGroups.push({ client: project.client, projects: [project] });
+        }
+    }
+
     const canRun =
         preview.importable > 0 ||
         (updateExisting && preview.alreadyImported > 0);
@@ -373,112 +391,172 @@ function PreviewStep({
                         "Projects are matched on client and name. New projects are created as public; choose whether their time is billable and each person's hourly rate.",
                     )}
                 />
-                {preview.newClients.length > 0 && (
-                    <p className="text-sm" data-test="import-new-clients">
-                        <span className="font-medium">{t('New clients')}:</span>{' '}
-                        {preview.newClients.join(', ')}
-                    </p>
-                )}
-                <ul className="divide-y divide-separator rounded-2xl bg-surface shadow-surface">
-                    {preview.projects.map((project) => (
-                        <li key={project.key} data-test="import-project">
-                            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-                                <div className="min-w-0">
-                                    <p className="flex flex-wrap items-center gap-2">
-                                        <span className="truncate font-medium">
-                                            {project.name}
-                                        </span>
-                                        {project.isNew ? (
-                                            <Chip
-                                                size="sm"
-                                                color="accent"
-                                                variant="soft"
-                                            >
-                                                {t('New')}
-                                            </Chip>
-                                        ) : project.isArchived ? (
-                                            <Chip
-                                                size="sm"
-                                                color="warning"
-                                                variant="soft"
-                                            >
-                                                {t('Archived')}
-                                            </Chip>
-                                        ) : (
-                                            <Chip size="sm" variant="soft">
-                                                {t('Exists')}
-                                            </Chip>
-                                        )}
-                                    </p>
-                                    <p className="truncate text-sm text-muted">
-                                        {project.client ?? t('No client')} ·{' '}
-                                        {tc(
-                                            ':count entry|:count entries',
-                                            project.entries,
-                                            { count: project.entries },
-                                        )}{' '}
-                                        · {hours(project.seconds)}
-                                    </p>
-                                </div>
-                                <Switch
-                                    isSelected={billable[project.key] ?? false}
-                                    isDisabled={!project.isNew}
-                                    onChange={(value) =>
-                                        setBillable({
-                                            ...billable,
-                                            [project.key]: value,
-                                        })
-                                    }
-                                    data-test="import-project-billable"
-                                >
-                                    <Switch.Content>
-                                        <Switch.Control>
-                                            <Switch.Thumb />
-                                        </Switch.Control>
-                                        <Label className="text-sm">
-                                            {t('Billable')}
-                                        </Label>
-                                    </Switch.Content>
-                                </Switch>
+                {clientGroups.map((group) => {
+                    const seconds = group.projects.reduce(
+                        (sum, project) => sum + project.seconds,
+                        0,
+                    );
+
+                    return (
+                        <section
+                            key={group.client ?? ''}
+                            className="grid gap-2"
+                            data-test="import-client"
+                        >
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1">
+                                <h3 className="font-semibold">
+                                    {group.client ?? t('No client')}
+                                </h3>
+                                {group.client !== null &&
+                                    preview.newClients.includes(
+                                        group.client,
+                                    ) && (
+                                        <Chip
+                                            size="sm"
+                                            color="accent"
+                                            variant="soft"
+                                        >
+                                            {t('New client')}
+                                        </Chip>
+                                    )}
+                                <span className="text-sm text-muted">
+                                    {tc(
+                                        ':count project|:count projects',
+                                        group.projects.length,
+                                        { count: group.projects.length },
+                                    )}{' '}
+                                    · {hours(seconds)}
+                                </span>
                             </div>
-                            {billable[project.key] &&
-                                project.rates &&
-                                project.rates.length > 0 && (
-                                    <div
-                                        className="border-t border-separator px-4 pt-2 pb-1"
-                                        data-test="import-rates"
+                            <ul className="grid gap-2">
+                                {group.projects.map((project) => (
+                                    <li
+                                        key={project.key}
+                                        className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface"
+                                        data-test="import-project"
                                     >
-                                        <p className="flex justify-between text-xs font-medium text-muted">
-                                            <span>{t('Person')}</span>
-                                            <span>{t('Hourly rate')}</span>
-                                        </p>
-                                        <ul className="divide-y divide-separator">
-                                            {project.rates.map((rate) => (
-                                                <ImportRateRow
-                                                    key={rate.memberId}
-                                                    rate={rate}
-                                                    value={rateOf(
-                                                        project.key,
-                                                        rate,
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="flex flex-wrap items-center gap-2">
+                                                    <span className="truncate font-medium">
+                                                        {project.name}
+                                                    </span>
+                                                    {project.isNew ? (
+                                                        <Chip
+                                                            size="sm"
+                                                            color="accent"
+                                                            variant="soft"
+                                                        >
+                                                            {t('New')}
+                                                        </Chip>
+                                                    ) : project.isArchived ? (
+                                                        <Chip
+                                                            size="sm"
+                                                            color="warning"
+                                                            variant="soft"
+                                                        >
+                                                            {t('Archived')}
+                                                        </Chip>
+                                                    ) : (
+                                                        <Chip
+                                                            size="sm"
+                                                            variant="soft"
+                                                        >
+                                                            {t('Exists')}
+                                                        </Chip>
                                                     )}
-                                                    unit={rateUnit}
-                                                    onChange={(value) =>
-                                                        setRates({
-                                                            ...rates,
-                                                            [rateKey(
-                                                                project.key,
-                                                                rate.memberId,
-                                                            )]: value,
-                                                        })
-                                                    }
-                                                />
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                        </li>
-                    ))}
-                </ul>
+                                                </p>
+                                                <p className="truncate text-sm text-muted">
+                                                    {tc(
+                                                        ':count entry|:count entries',
+                                                        project.entries,
+                                                        {
+                                                            count: project.entries,
+                                                        },
+                                                    )}{' '}
+                                                    · {hours(project.seconds)}
+                                                </p>
+                                            </div>
+                                            <Switch
+                                                isSelected={
+                                                    billable[project.key] ??
+                                                    false
+                                                }
+                                                isDisabled={!project.isNew}
+                                                onChange={(value) =>
+                                                    setBillable({
+                                                        ...billable,
+                                                        [project.key]: value,
+                                                    })
+                                                }
+                                                data-test="import-project-billable"
+                                            >
+                                                <Switch.Content>
+                                                    <Switch.Control>
+                                                        <Switch.Thumb />
+                                                    </Switch.Control>
+                                                    <Label className="text-sm">
+                                                        {t('Billable')}
+                                                    </Label>
+                                                </Switch.Content>
+                                            </Switch>
+                                        </div>
+                                        {billable[project.key] &&
+                                            project.rates &&
+                                            project.rates.length > 0 && (
+                                                <div
+                                                    className="rounded-xl bg-surface-secondary px-3 pt-2 pb-1"
+                                                    data-test="import-rates"
+                                                >
+                                                    <p className="flex justify-between text-xs font-medium text-muted">
+                                                        <span>
+                                                            {t('Person')}
+                                                        </span>
+                                                        <span>
+                                                            {t('Hourly rate')}
+                                                        </span>
+                                                    </p>
+                                                    <ul className="divide-y divide-separator">
+                                                        {project.rates.map(
+                                                            (rate) => (
+                                                                <ImportRateRow
+                                                                    key={
+                                                                        rate.memberId
+                                                                    }
+                                                                    rate={rate}
+                                                                    value={rateOf(
+                                                                        project.key,
+                                                                        rate,
+                                                                    )}
+                                                                    unit={
+                                                                        rateUnit
+                                                                    }
+                                                                    onChange={(
+                                                                        value,
+                                                                    ) =>
+                                                                        setRates(
+                                                                            {
+                                                                                ...rates,
+                                                                                [rateKey(
+                                                                                    project.key,
+                                                                                    rate.memberId,
+                                                                                )]:
+                                                                                    value,
+                                                                            },
+                                                                        )
+                                                                    }
+                                                                />
+                                                            ),
+                                                        )}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    );
+                })}
             </section>
 
             {showsRates && (

@@ -73,6 +73,21 @@ it('shows the time reported on each project in the list', function () {
             ->where('projects.1.estimateSeconds', 36000));
 });
 
+it('shows project rates in the list only to those who may see rates', function () {
+    Project::factory()->for($this->organization)->create(['name' => 'Webbshop', 'hourly_rate' => 125000]);
+
+    $this->actingAs($this->owner)->get(route('projects.index', $this->slug))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canViewRates', true)
+            ->where('currency', 'SEK')
+            ->where('projects.0.hourlyRate', 125000));
+
+    $this->actingAs($this->member)->get(route('projects.index', $this->slug))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canViewRates', false)
+            ->where('projects.0.hourlyRate', null));
+});
+
 it('filters by search, client and status', function () {
     $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
     Project::factory()->for($this->organization)->create(['name' => 'Webbshop', 'client_id' => $client->id]);
