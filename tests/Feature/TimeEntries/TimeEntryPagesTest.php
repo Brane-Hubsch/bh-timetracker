@@ -130,22 +130,22 @@ it('does not show members of another organization', function () {
 });
 
 it('sends each member\'s recently used projects to owners and admins', function () {
-    $projects = Project::factory()->for($this->organization)->count(7)->create();
+    $projects = Project::factory()->for($this->organization)->count(12)->create();
     $use = fn (User $user, Project $project, string $start) => TimeEntry::factory()->by($user, $project)
         ->between(CarbonImmutable::parse($start), CarbonImmutable::parse($start)->addHour())
         ->create();
 
-    // The member: six projects, newest first; only five are kept. One is older than 60 days.
-    foreach ($projects->take(6)->values() as $index => $project) {
+    // Only the ten newest projects within the last 60 days are kept.
+    foreach ($projects->take(11)->values() as $index => $project) {
         $use($this->member, $project, '2026-11-'.(10 + $index).' 08:00');
     }
-    $use($this->member, $projects[6], '2026-08-01 08:00');
+    $use($this->member, $projects[11], '2026-08-01 08:00');
     // The colleague used one project; another organization's entries never count.
     $use($this->colleague, $this->project, '2026-11-17 08:00');
     $foreign = Project::factory()->create();
     TimeEntry::factory()->by($this->member, $foreign)->between(CarbonImmutable::parse('2026-11-17 09:00'), CarbonImmutable::parse('2026-11-17 10:00'))->create();
 
-    $expected = $projects->take(6)->reverse()->take(5)->map(fn (Project $project) => (string) $project->id)->values()->all();
+    $expected = $projects->take(11)->reverse()->take(10)->map(fn (Project $project) => (string) $project->id)->values()->all();
 
     $this->actingAs($this->admin)
         ->get(timeRoute('time.index'))

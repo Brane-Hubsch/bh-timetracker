@@ -1,28 +1,38 @@
 import {
     Button,
     Description,
-    Input,
+    InputGroup,
     Label,
     TextArea,
     TextField,
 } from '@heroui/react';
 import { router } from '@inertiajs/react';
+import { parseDate } from '@internationalized/date';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
+import { FieldPair } from '@/components/form/field-pair';
 import { SelectField } from '@/components/form/select-field';
+import { ShortcutRow } from '@/components/form/shortcut-row';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { SegmentedControl } from '@/components/segmented-control';
+import { ScrubLabel, TimeScrubLabel } from '@/components/time/time-scrub-label';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { parseDuration, workingDays } from '@/lib/time';
+import { formatDuration, parseDuration, workingDays } from '@/lib/time';
 import { destroy, store, update } from '@/routes/absences';
-import type { Absence, AbsenceDraft, AbsenceTypeOption } from '@/types';
+import type {
+    Absence,
+    AbsenceDraft,
+    AbsenceType,
+    AbsenceTypeOption,
+} from '@/types';
 
 type Props = {
     draft: AbsenceDraft | null;
     onClose: () => void;
     absenceTypes: AbsenceTypeOption[];
+    recentAbsenceTypes: AbsenceType[];
     /** The organization's holidays around the shown week ("YYYY-MM-DD"). */
     holidays: string[];
     workdaySeconds: number;
@@ -30,12 +40,52 @@ type Props = {
 
 export const ABSENCE_FORM_ID = 'absence-form';
 const FORM_ID = ABSENCE_FORM_ID;
+const MAX_MINUTES_PER_DAY = 24 * 60;
 
 /** What the absence form needs from the page. */
 export type AbsenceOptions = Pick<
     Props,
-    'absenceTypes' | 'holidays' | 'workdaySeconds'
+    'absenceTypes' | 'recentAbsenceTypes' | 'holidays' | 'workdaySeconds'
 >;
+
+function formatHoursPerDay(seconds: number): string {
+    // Keep the stored value when decimal input or an import has sub-minute precision.
+    return seconds % 60 === 0
+        ? formatDuration(seconds)
+        : (seconds / 3600).toFixed(6).replace('.', ',');
+}
+
+function offsetDate(value: string, fallback: string, offset: number): string {
+    return offset === 0
+        ? value
+        : parseDate(value || fallback)
+              .add({ days: offset })
+              .toString();
+}
+
+function DateScrubLabel({
+    label,
+    value,
+    onAdjust,
+}: {
+    label: string;
+    value: string;
+    onAdjust: (days: number) => void;
+}) {
+    const { t } = useTranslation();
+
+    return (
+        <ScrubLabel
+            label={label}
+            value={value}
+            valueNow={value ? Date.parse(value) / 86_400_000 : undefined}
+            step={1}
+            help={t('Drag or use the arrow keys to adjust by one day.')}
+            isRequired
+            onAdjust={onAdjust}
+        />
+    );
+}
 
 export function draftFromAbsence(absence: Absence): AbsenceDraft {
     return {
@@ -47,7 +97,7 @@ export function draftFromAbsence(absence: Absence): AbsenceDraft {
         hoursPerDay:
             absence.secondsPerDay === null
                 ? ''
-                : String(absence.secondsPerDay / 3600).replace('.', ','),
+                : formatHoursPerDay(absence.secondsPerDay),
         note: absence.note ?? '',
     };
 }
@@ -64,6 +114,8 @@ export function AbsenceDialog(props: Props) {
             isOpen={props.draft !== null}
             onOpenChange={(isOpen) => !isOpen && props.onClose()}
             title={props.draft?.id ? t('Edit absence') : t('Register absence')}
+            closeInHeader
+            desktopClassName="sm:max-w-[40rem]"
             footer={<AbsenceDialogFooter {...props} />}
         >
             {props.draft && <AbsenceForm {...props} draft={props.draft} />}
@@ -121,6 +173,7 @@ export function AbsenceForm({
     draft,
     onClose,
     absenceTypes,
+    recentAbsenceTypes,
     holidays,
     workdaySeconds,
     userId,
@@ -130,11 +183,28 @@ export function AbsenceForm({
     userId?: number;
 }) {
     const { t, tc, intlLocale } = useTranslation();
+    const errorId = useId();
     const [values, setValues] = useState(draft);
     const [isPartial, setPartial] = useState(draft.hoursPerDay !== '');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const set = (changes: Partial<AbsenceDraft>) =>
         setValues((current) => ({ ...current, ...changes }));
+    const changeType = (type: AbsenceDraft['type']) => set({ type });
+    const typeSuggestions = [
+        ...new Set([
+            ...recentAbsenceTypes,
+            ...absenceTypes.map(({ value }) => value),
+        ]),
+    ]
+        .slice(0, 10)
+        .map((value) => absenceTypes.find((option) => option.value === value))
+        .filter((option) => option !== undefined);
+    const changeStart = (startsOn: string) =>
+        set({
+            startsOn,
+            // Advance the end if the new start would leave it behind.
+            endsOn: startsOn > values.endsOn ? startsOn : values.endsOn,
+        });
 
     const days =
         values.startsOn && values.endsOn && values.startsOn <= values.endsOn
@@ -143,6 +213,23 @@ export function AbsenceForm({
     const secondsPerDay = isPartial
         ? parseDuration(values.hoursPerDay)
         : workdaySeconds;
+    const adjustHours = (offset: number) => {
+        const seconds = (secondsPerDay ?? 0) + offset * 60;
+        set({
+            hoursPerDay:
+                offset === 0 || (!values.hoursPerDay && seconds <= 0)
+                    ? values.hoursPerDay
+                    : formatHoursPerDay(
+                          Math.min(
+                              MAX_MINUTES_PER_DAY * 60,
+                              Math.max(
+                                  Math.min(secondsPerDay || 60, 60),
+                                  seconds,
+                              ),
+                          ),
+                      ),
+        });
+    };
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -176,43 +263,40 @@ export function AbsenceForm({
             className="grid gap-5"
             data-test="absence-form"
         >
-            <SelectField
-                name="type"
-                label={t('Type')}
-                value={values.type}
-                onChange={(type) => set({ type: type as AbsenceDraft['type'] })}
-                options={absenceTypes}
-                error={errors.type}
-                isRequired
-                data-test="absence-type"
-            />
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <DatePickerField
-                    label={t('From')}
-                    value={values.startsOn}
-                    onChange={(startsOn) =>
-                        set({
-                            startsOn,
-                            // Keep the period valid when moving its start past the end.
-                            endsOn:
-                                startsOn && startsOn > values.endsOn
-                                    ? startsOn
-                                    : values.endsOn,
-                        })
+            <div className="grid gap-2">
+                <SelectField
+                    name="type"
+                    label={t('Type')}
+                    value={values.type}
+                    onChange={(type) =>
+                        changeType(type as AbsenceDraft['type'])
                     }
-                    error={errors.starts_on}
+                    options={absenceTypes}
+                    error={errors.type}
                     isRequired
-                    data-test="absence-starts-on"
+                    data-test="absence-type"
                 />
-                <DatePickerField
-                    label={t('To')}
-                    value={values.endsOn}
-                    onChange={(endsOn) => set({ endsOn })}
-                    error={errors.ends_on}
-                    isRequired
-                    data-test="absence-ends-on"
-                />
+                <ShortcutRow
+                    label={t('Absence type suggestions')}
+                    data-test="absence-type-suggestions"
+                >
+                    {typeSuggestions.map(({ value, label }) => (
+                        <Button
+                            key={value}
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 gap-1.5 rounded-full border border-separator px-3 text-xs font-medium text-foreground"
+                            onPress={() => changeType(value)}
+                        >
+                            <span
+                                aria-hidden="true"
+                                className="size-2 shrink-0 rounded-full border border-muted"
+                            />
+                            {label}
+                        </Button>
+                    ))}
+                </ShortcutRow>
             </div>
 
             <div className="grid gap-2">
@@ -228,20 +312,144 @@ export function AbsenceForm({
                     ]}
                     data-test="absence-extent"
                 />
+            </div>
+
+            <div className="grid gap-2 min-[390px]:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-3">
+                <div
+                    className={isPartial ? 'min-w-0' : 'col-span-full min-w-0'}
+                >
+                    <FieldPair
+                        label={t('Absence period')}
+                        isInvalid={Boolean(errors.starts_on || errors.ends_on)}
+                        firstLabel={
+                            <DateScrubLabel
+                                label={t('From')}
+                                value={values.startsOn}
+                                onAdjust={(offset) =>
+                                    changeStart(
+                                        offsetDate(
+                                            values.startsOn,
+                                            draft.startsOn,
+                                            offset,
+                                        ),
+                                    )
+                                }
+                            />
+                        }
+                        secondLabel={
+                            <DateScrubLabel
+                                label={t('To')}
+                                value={values.endsOn}
+                                onAdjust={(offset) => {
+                                    const endsOn = offsetDate(
+                                        values.endsOn,
+                                        draft.endsOn,
+                                        offset,
+                                    );
+                                    set({
+                                        endsOn:
+                                            offset !== 0 &&
+                                            endsOn < values.startsOn
+                                                ? values.startsOn
+                                                : endsOn,
+                                    });
+                                }}
+                            />
+                        }
+                        firstField={
+                            <DatePickerField
+                                label={t('From')}
+                                value={values.startsOn}
+                                onChange={changeStart}
+                                error={errors.starts_on}
+                                errorId={
+                                    errors.starts_on
+                                        ? `${errorId}-start`
+                                        : undefined
+                                }
+                                className="min-w-0 self-stretch"
+                                isRequired
+                                isEmbedded
+                                data-test="absence-starts-on"
+                            />
+                        }
+                        secondField={
+                            <DatePickerField
+                                label={t('To')}
+                                value={values.endsOn}
+                                onChange={(endsOn) => set({ endsOn })}
+                                error={errors.ends_on}
+                                errorId={
+                                    errors.ends_on
+                                        ? `${errorId}-end`
+                                        : undefined
+                                }
+                                className="min-w-0 self-stretch"
+                                isRequired
+                                isEmbedded
+                                data-test="absence-ends-on"
+                            />
+                        }
+                    />
+                    {errors.starts_on && (
+                        <p
+                            id={`${errorId}-start`}
+                            className="mt-1 text-sm text-danger"
+                        >
+                            {errors.starts_on}
+                        </p>
+                    )}
+                    {errors.ends_on && (
+                        <p
+                            id={`${errorId}-end`}
+                            className="mt-1 text-sm text-danger"
+                        >
+                            {errors.ends_on}
+                        </p>
+                    )}
+                </div>
                 {isPartial && (
                     <TextField
                         value={values.hoursPerDay}
                         onChange={(hoursPerDay) => set({ hoursPerDay })}
                         isInvalid={Boolean(errors.hours_per_day)}
-                        aria-label={t('Hours per day')}
-                        className="w-full sm:w-40"
+                        validationBehavior="aria"
+                        className="w-full min-[390px]:w-[7.5rem] sm:w-40"
                     >
-                        <Input
-                            inputMode="decimal"
-                            placeholder="4"
-                            autoFocus
-                            data-test="absence-hours"
-                        />
+                        <Label className="sr-only">{t('Hours per day')}</Label>
+                        <span className="label text-xs leading-5 whitespace-nowrap sm:text-sm">
+                            <TimeScrubLabel
+                                label={t('Hours')}
+                                value={values.hoursPerDay}
+                                minutes={
+                                    secondsPerDay === null
+                                        ? undefined
+                                        : Math.min(
+                                              MAX_MINUTES_PER_DAY,
+                                              Math.round(secondsPerDay / 60),
+                                          )
+                                }
+                                maxMinutes={MAX_MINUTES_PER_DAY}
+                                onAdjust={adjustHours}
+                            />
+                        </span>
+                        <InputGroup
+                            fullWidth
+                            className="max-sm:min-h-[2.625rem]"
+                        >
+                            <InputGroup.Input
+                                className="min-w-0 max-sm:ps-2 max-sm:text-sm"
+                                inputMode="decimal"
+                                placeholder="4:00"
+                                data-test="absence-hours"
+                            />
+                            <InputGroup.Suffix
+                                aria-hidden="true"
+                                className="shrink-0 border-s-0 text-sm font-normal whitespace-nowrap text-muted max-sm:ps-0 max-sm:pe-2"
+                            >
+                                {t('per day')}
+                            </InputGroup.Suffix>
+                        </InputGroup>
                         {errors.hours_per_day && (
                             <Description className="text-danger">
                                 {errors.hours_per_day}
@@ -257,8 +465,8 @@ export function AbsenceForm({
                 isInvalid={Boolean(errors.note)}
                 className="w-full"
             >
-                <Label>{t('Note')}</Label>
-                <TextArea rows={2} placeholder={t('Optional')} />
+                <Label>{t('Description')}</Label>
+                <TextArea rows={3} placeholder={t('Optional')} />
                 {errors.note && (
                     <Description className="text-danger">
                         {errors.note}

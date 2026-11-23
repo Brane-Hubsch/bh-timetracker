@@ -112,7 +112,7 @@ class TimeEntryPresenter
 
     /**
      * The projects each member reported time on most recently (last 60 days, newest first, at most
-     * five), keyed by member id. One query for all members, so the time entry form can follow the
+     * ten), keyed by member id. One query for all members, so the time entry form can follow the
      * member it reports for.
      *
      * @param  array<int, int>  $userIds
@@ -132,7 +132,7 @@ class TimeEntryPresenter
             // MAX() comes back as a 'Y-m-d H:i:s' string on SQLite and Postgres, which sorts as text.
             ->sortByDesc(fn (TimeEntry $usage) => is_string($lastUsedAt = $usage->getAttribute('last_used_at')) ? $lastUsedAt : '')
             ->each(function (TimeEntry $usage) use (&$recent): void {
-                if (count($recent[$usage->user_id] ?? []) < 5) {
+                if (count($recent[$usage->user_id] ?? []) < 10) {
                     $recent[$usage->user_id][] = $usage->project_id;
                 }
             });

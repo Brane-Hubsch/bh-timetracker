@@ -3,6 +3,7 @@
 use App\Enums\AbsenceType;
 use App\Enums\OrganizationRole;
 use App\Models\Absence;
+use App\Models\Organization;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -102,4 +103,24 @@ it('shows the member\'s absence in the calendar, and colleagues only as off', fu
         ->assertInertia(fn (Assert $page) => $page
             ->where('absences.0.type', 'sick')
             ->where('colleaguesOff.0.name', 'Olivia'));
+});
+
+it('suggests distinct types from the signed-in member’s own organization history', function () {
+    $own = Absence::factory()->by($this->owner, $this->organization);
+
+    foreach (AbsenceType::cases() as $offset => $type) {
+        $own->create(['type' => $type, 'updated_at' => now()->addMinutes($offset)]);
+    }
+
+    $own->create(['type' => AbsenceType::Sick, 'updated_at' => now()->addHour()]);
+    Absence::factory()->by($this->member, $this->organization)
+        ->create(['type' => AbsenceType::Vacation, 'updated_at' => now()->addDay()]);
+    Absence::factory()->by($this->owner, Organization::factory()->create())
+        ->create(['type' => AbsenceType::ChildCare, 'updated_at' => now()->addDay()]);
+
+    $this->actingAs($this->owner)
+        ->get(route('time.index', [$this->slug, 'date' => '2026-12-07', 'user' => $this->member->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('absences', [])
+            ->where('recentAbsenceTypes', ['sick', 'other', 'leave_of_absence', 'parental_leave', 'child_care', 'vacation']));
 });
