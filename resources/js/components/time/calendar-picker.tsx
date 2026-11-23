@@ -317,8 +317,8 @@ export function CalendarPicker({
               { label: 'Tomorrow', offset: 1 },
           ]
         : [
-              { label: 'This week', offset: 0 },
               { label: 'Last week', offset: -7 },
+              { label: 'This week', offset: 0 },
               { label: 'Next week', offset: 7 },
           ];
     const presets = offsets.map(({ label, offset }) => ({
