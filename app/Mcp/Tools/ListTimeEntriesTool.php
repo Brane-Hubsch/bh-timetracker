@@ -76,7 +76,7 @@ class ListTimeEntriesTool extends TimetrackerTool
         $totals = $this->reports->totalsFor($filters);
 
         return Response::structured(array_filter([
-            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'period' => ['from' => $from?->toDateString(), 'to' => $to?->toDateString()],
             'entries' => $entries->take($limit)->map(fn (TimeEntry $entry) => $this->entry($entry, $context))->values()->all(),
             'truncated' => $entries->count() > $limit ? "Only the first {$limit} entries are listed; narrow the period or raise the limit." : null,
             'totals' => array_filter([

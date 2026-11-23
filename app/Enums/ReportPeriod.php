@@ -18,6 +18,7 @@ enum ReportPeriod: string
     case LastMonth = 'last_month';
     case ThisYear = 'this_year';
     case LastYear = 'last_year';
+    case AllTime = 'all_time';
     case Custom = 'custom';
 
     public function label(): string
@@ -32,13 +33,14 @@ enum ReportPeriod: string
             self::LastMonth => __('Last month'),
             self::ThisYear => __('This year'),
             self::LastYear => __('Last year'),
+            self::AllTime => __('All time'),
             self::Custom => __('Custom'),
         };
     }
 
     /**
      * @param  int  $weekStartsOn  ISO weekday (1 = Monday, 7 = Sunday)
-     * @return array{0: CarbonImmutable, 1: CarbonImmutable} first and last day (inclusive)
+     * @return array{CarbonImmutable, CarbonImmutable}|array{null, null} inclusive dates, or an unbounded range
      */
     public function range(CarbonImmutable $today, int $weekStartsOn, ?CarbonImmutable $from = null, ?CarbonImmutable $to = null): array
     {
@@ -57,6 +59,7 @@ enum ReportPeriod: string
             self::LastMonth => [$today->subMonthNoOverflow()->startOfMonth(), $today->subMonthNoOverflow()->endOfMonth()->startOfDay()],
             self::ThisYear => [$yearStart, $today->endOfYear()->startOfDay()],
             self::LastYear => [$yearStart->subYear(), $yearStart->subDay()],
+            self::AllTime => [null, null],
             self::Custom => [($from ?? $today)->startOfDay(), ($to ?? $from ?? $today)->startOfDay()],
         };
     }

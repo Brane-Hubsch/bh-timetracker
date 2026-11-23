@@ -64,15 +64,20 @@ function PeriodPanel({
 }: PanelProps) {
     const { t, intlLocale } = useTranslation();
     const months = isDesktop ? [0, 1] : [0];
-    const range = {
-        start: toZoned(parseDate(from), timezone),
-        end: toZoned(parseDate(to), timezone),
-    };
-    const appliedRange = formatDateRange(from, to, intlLocale, {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
+    const range =
+        from && to
+            ? {
+                  start: toZoned(parseDate(from), timezone),
+                  end: toZoned(parseDate(to), timezone),
+              }
+            : null;
+    const appliedRange = range
+        ? formatDateRange(from, to, intlLocale, {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+          })
+        : preset?.label;
     const monthLabel = (date: CalendarDate) =>
         formatDate(date.toString(), intlLocale, {
             month: 'long',
@@ -155,6 +160,7 @@ function PeriodPanel({
                 weeksInMonth={6}
                 pageBehavior="single"
                 selectionAlignment="start"
+                defaultFocusedValue={range ? undefined : today(timezone)}
                 value={range}
                 onChange={(value) =>
                     onApply({
@@ -323,21 +329,26 @@ export function PeriodPicker({
     const [isOpen, setIsOpen] = useState(false);
     const presets = periods.filter((option) => option.value !== 'custom');
     const preset = presets.find((option) => option.value === period);
+    const hasRange = from !== '' && to !== '';
     const year = String(today(timezone).year);
     const inCurrentYear = from.startsWith(year) && to.startsWith(year);
-    const range = formatDateRange(
-        from,
-        to,
-        intlLocale,
-        inCurrentYear
-            ? { day: 'numeric', month: 'short' }
-            : { day: 'numeric', month: 'short', year: 'numeric' },
-    );
+    const range = hasRange
+        ? formatDateRange(
+              from,
+              to,
+              intlLocale,
+              inCurrentYear
+                  ? { day: 'numeric', month: 'short' }
+                  : { day: 'numeric', month: 'short', year: 'numeric' },
+          )
+        : null;
     const name =
         preset?.label ??
-        customPeriodName(from, to, weekStartsOn, intlLocale, (week) =>
-            t('Week :number', { number: week }),
-        );
+        (hasRange
+            ? customPeriodName(from, to, weekStartsOn, intlLocale, (week) =>
+                  t('Week :number', { number: week }),
+              )
+            : null);
 
     const step = (direction: -1 | 1) =>
         onChange({ period: 'custom', ...shiftPeriod(from, to, direction) });
@@ -371,14 +382,16 @@ export function PeriodPicker({
                         {name}
                     </span>
                 )}
-                <span
-                    className={cn(
-                        'truncate tabular-nums',
-                        name ? 'font-normal text-muted' : 'font-medium',
-                    )}
-                >
-                    {range}
-                </span>
+                {range && (
+                    <span
+                        className={cn(
+                            'truncate tabular-nums',
+                            name ? 'font-normal text-muted' : 'font-medium',
+                        )}
+                    >
+                        {range}
+                    </span>
+                )}
             </span>
             <span
                 aria-hidden="true"
@@ -393,6 +406,7 @@ export function PeriodPicker({
                 isIconOnly
                 variant="ghost"
                 size="sm"
+                isDisabled={!hasRange}
                 aria-label={t('Previous period')}
                 onPress={() => step(-1)}
                 data-test="report-period-previous"
@@ -453,6 +467,7 @@ export function PeriodPicker({
                 isIconOnly
                 variant="ghost"
                 size="sm"
+                isDisabled={!hasRange}
                 aria-label={t('Next period')}
                 onPress={() => step(1)}
                 data-test="report-period-next"
