@@ -48,7 +48,8 @@ class TimeEntryController extends Controller
         $timezone = $user->timezone;
 
         $date = $this->parseDate($request->string('date')->value(), $timezone);
-        $weekStart = $this->presenter->weekStart($date, $organization);
+        $weekStartsOn = $organization->memberships()->where('user_id', $member->id)->first()?->week_starts_on;
+        $weekStart = $this->presenter->weekStart($date, $organization, $weekStartsOn);
         $weekEnd = $weekStart->addWeek();
 
         $entries = TimeEntry::query()
@@ -80,7 +81,7 @@ class TimeEntryController extends Controller
             'date' => $date->toDateString(),
             'today' => CarbonImmutable::now($timezone)->toDateString(),
             'weekStart' => $weekStart->toDateString(),
-            'weekStartsOn' => $organization->week_starts_on,
+            'weekStartsOn' => $weekStartsOn ?? $organization->week_starts_on,
             'timezone' => $timezone,
             'entries' => $entries->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone)),
             'absences' => $weekAbsences->where('user_id', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::absence($absence)),

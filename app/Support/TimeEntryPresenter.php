@@ -20,9 +20,9 @@ class TimeEntryPresenter
      * First day of the week containing the date, honouring the organization's week start
      * (ISO weekday, 1 = Monday, 7 = Sunday).
      */
-    public function weekStart(CarbonImmutable $date, Organization $organization): CarbonImmutable
+    public function weekStart(CarbonImmutable $date, Organization $organization, ?int $weekStartsOn = null): CarbonImmutable
     {
-        return $date->startOfWeek($organization->week_starts_on % 7)->startOfDay();
+        return $date->startOfWeek(($weekStartsOn ?? $organization->week_starts_on) % 7)->startOfDay();
     }
 
     /**

@@ -16,12 +16,20 @@ type Props = {
     /** Extra filters, e.g. a client select. Call `apply` with changed values. */
     children?: (apply: (changes: ListFilterValues) => void) => ReactNode;
     className?: string;
+    searchLabel?: string;
+    archivedLabel?: string;
 };
 
 /**
  * Search + active/archived tabs for list pages. Filters live in the URL so lists can be bookmarked.
  */
-export function ListFilters({ filters, children, className }: Props) {
+export function ListFilters({
+    filters,
+    children,
+    className,
+    searchLabel,
+    archivedLabel,
+}: Props) {
     const { t } = useTranslation();
     const [search, setSearch] = useState(filters.search ?? '');
     const isFirstRender = useRef(true);
@@ -63,14 +71,16 @@ export function ListFilters({ filters, children, className }: Props) {
             )}
         >
             <SearchField
-                aria-label={t('Search')}
+                aria-label={searchLabel ?? t('Search')}
                 value={search}
                 onChange={setSearch}
                 className="w-full sm:max-w-xs"
             >
                 <SearchField.Group>
                     <SearchField.SearchIcon />
-                    <SearchField.Input placeholder={t('Search')} />
+                    <SearchField.Input
+                        placeholder={searchLabel ?? t('Search')}
+                    />
                     <SearchField.ClearButton />
                 </SearchField.Group>
             </SearchField>
@@ -83,7 +93,10 @@ export function ListFilters({ filters, children, className }: Props) {
                 onChange={(status) => apply({ status })}
                 options={[
                     { id: 'active', label: t('Active (plural)') },
-                    { id: 'archived', label: t('Archived (plural)') },
+                    {
+                        id: 'archived',
+                        label: archivedLabel ?? t('Archived (plural)'),
+                    },
                 ]}
                 className="sm:ml-auto"
                 data-test="status-filter"

@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
+use App\Http\Controllers\Organizations\TeamController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectMemberController;
 use App\Http\Controllers\Reports\ReportController;
@@ -42,6 +43,11 @@ Route::prefix('{current_organization}')
         Route::get('reports/detailed', [ReportController::class, 'detailed'])->name('reports.detailed');
         Route::get('reports/projects', [ReportController::class, 'projects'])->name('reports.projects');
         Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+
+        Route::get('team', [TeamController::class, 'index'])->name('team.index');
+        Route::patch('team/{member}', [TeamController::class, 'update'])->whereNumber('member')->name('team.update');
+        Route::post('team/{member}/avatar', [TeamController::class, 'updateAvatar'])->whereNumber('member')->name('team.avatar.update');
+        Route::delete('team/{member}/avatar', [TeamController::class, 'removeAvatar'])->whereNumber('member')->name('team.avatar.destroy');
 
         Route::get('tags', [TagController::class, 'index'])->name('tags.index');
         Route::post('tags', [TagController::class, 'store'])->name('tags.store');
