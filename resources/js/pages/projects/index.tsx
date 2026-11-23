@@ -26,6 +26,8 @@ type Props = {
         search: string;
         status: 'active' | 'archived';
         client: number | null;
+        /** '1' billable, '0' non-billable, null both. */
+        billable: '1' | '0' | null;
     };
     /** Null when the viewer may not create projects. */
     projectForm: ProjectFormOptions | null;
@@ -84,36 +86,66 @@ export default function ProjectsIndex({
                 />
 
                 <ListFilters filters={filters}>
-                    {(apply) =>
-                        clients.length > 0 && (
+                    {(apply) => (
+                        <>
+                            {clients.length > 0 && (
+                                <SelectField
+                                    name="client"
+                                    label={
+                                        <span className="sr-only">
+                                            {t('Client')}
+                                        </span>
+                                    }
+                                    value={
+                                        filters.client
+                                            ? String(filters.client)
+                                            : ALL
+                                    }
+                                    onChange={(value) =>
+                                        apply({
+                                            client:
+                                                value === ALL ? null : value,
+                                        })
+                                    }
+                                    options={[
+                                        { value: ALL, label: t('All clients') },
+                                        ...clients.map((client) => ({
+                                            value: String(client.id),
+                                            label: client.name,
+                                        })),
+                                    ]}
+                                    className="w-full sm:w-56"
+                                />
+                            )}
                             <SelectField
-                                name="client"
+                                name="billable"
                                 label={
                                     <span className="sr-only">
-                                        {t('Client')}
+                                        {t('Billing')}
                                     </span>
                                 }
-                                value={
-                                    filters.client
-                                        ? String(filters.client)
-                                        : ALL
-                                }
+                                value={filters.billable ?? ALL}
                                 onChange={(value) =>
                                     apply({
-                                        client: value === ALL ? null : value,
+                                        billable: value === ALL ? null : value,
                                     })
                                 }
                                 options={[
-                                    { value: ALL, label: t('All clients') },
-                                    ...clients.map((client) => ({
-                                        value: String(client.id),
-                                        label: client.name,
-                                    })),
+                                    { value: ALL, label: t('All projects') },
+                                    {
+                                        value: '1',
+                                        label: t('Billable projects'),
+                                    },
+                                    {
+                                        value: '0',
+                                        label: t('Non-billable projects'),
+                                    },
                                 ]}
                                 className="w-full sm:w-56"
+                                data-test="project-billable-filter"
                             />
-                        )
-                    }
+                        </>
+                    )}
                 </ListFilters>
 
                 {projects.length > 0 && (

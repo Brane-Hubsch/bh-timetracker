@@ -385,6 +385,7 @@ Klar. Byggt:
 - **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
 - **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
+- **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet och rapporterad tid eller estimat, med en sammanfattning överst. Den filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade; filtren ligger i URL:en.
 - **Projektsidan** visar debiterbara timmar och belopp, tid per medlem och timmar per vecka för de senaste 12 veckorna. **Kundsidan** visar tid och belopp per projekt för en vald period. Båda har en länk till rapporten.
 - "Rapporter" finns i sidomenyn och i mobilens bottennavigering (Idag / Kalender / Rapporter / Mer).
 
