@@ -320,10 +320,6 @@ export default function ProjectsIndex({
                                                     project.consumedSeconds,
                                                     intlLocale,
                                                 )}
-                                                <span className="font-normal text-muted lg:hidden">
-                                                    {' '}
-                                                    {t('reported')}
-                                                </span>
                                             </p>
                                         )}
                                     </div>
