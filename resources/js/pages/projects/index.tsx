@@ -35,12 +35,12 @@ type Props = {
 
 const ALL = 'all';
 
-/** Columns from lg up: project, client, billing, (rate,) visibility, reported time. */
+/** Desktop columns: project, client, billing, (rate,) visibility, reported time, budget. */
 const COLUMNS = {
     withRate:
-        'lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_7rem_6rem_minmax(11rem,1.5fr)]',
+        'xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_7rem_6rem_6.5rem_8rem]',
     withoutRate:
-        'lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_6rem_minmax(11rem,1.5fr)]',
+        'xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_6rem_6.5rem_8rem]',
 };
 
 export default function ProjectsIndex({
@@ -85,7 +85,10 @@ export default function ProjectsIndex({
                     }
                 />
 
-                <ListFilters filters={filters}>
+                <ListFilters
+                    filters={filters}
+                    className="sm:flex-wrap xl:flex-nowrap"
+                >
                     {(apply) => (
                         <>
                             {clients.length > 0 && (
@@ -180,7 +183,7 @@ export default function ProjectsIndex({
                     {projects.length > 0 && (
                         <div
                             aria-hidden="true"
-                            className={`hidden gap-4 border-b border-separator px-5 py-2.5 text-xs font-medium text-muted lg:grid ${columns}`}
+                            className={`hidden gap-4 border-b border-separator px-5 py-2.5 text-xs font-medium text-muted xl:grid ${columns}`}
                         >
                             <span>{t('Project')}</span>
                             <span>{t('Client')}</span>
@@ -190,6 +193,7 @@ export default function ProjectsIndex({
                             <span className="text-right">
                                 {t('Reported time')}
                             </span>
+                            <span>{t('Budget')}</span>
                         </div>
                     )}
                     <ul className="divide-y divide-separator">
@@ -197,7 +201,7 @@ export default function ProjectsIndex({
                             <li key={project.id} data-test="project-row">
                                 <Link
                                     href={show({ project: project.id })}
-                                    className={`grid gap-2.5 p-4 transition-colors hover:bg-surface-secondary lg:items-center lg:gap-4 lg:px-5 lg:py-3 ${columns}`}
+                                    className={`grid gap-2.5 p-4 transition-colors hover:bg-surface-secondary xl:items-center xl:gap-4 xl:px-5 xl:py-3 ${columns}`}
                                 >
                                     {/* Project: on mobile also the client and code. */}
                                     <div className="flex min-w-0 items-center gap-3">
@@ -220,7 +224,7 @@ export default function ProjectsIndex({
                                                 )}
                                             </p>
                                             <p className="truncate text-xs text-muted">
-                                                <span className="lg:hidden">
+                                                <span className="xl:hidden">
                                                     {[
                                                         project.client?.name ??
                                                             t('No client'),
@@ -230,7 +234,7 @@ export default function ProjectsIndex({
                                                         .join(' · ')}
                                                 </span>
                                                 <span
-                                                    className="hidden lg:inline"
+                                                    className="hidden xl:inline"
                                                     data-test="project-code"
                                                 >
                                                     {project.code}
@@ -239,7 +243,7 @@ export default function ProjectsIndex({
                                         </div>
                                     </div>
 
-                                    <div className="hidden min-w-0 items-center gap-2 text-sm lg:flex">
+                                    <div className="hidden min-w-0 items-center gap-2 text-sm xl:flex">
                                         {project.client ? (
                                             <>
                                                 <LogoImage
@@ -259,8 +263,8 @@ export default function ProjectsIndex({
                                         )}
                                     </div>
 
-                                    {/* Billing, rate and visibility: chips on mobile, columns from lg. */}
-                                    <div className="flex flex-wrap items-center gap-1.5 pl-[22px] lg:contents">
+                                    {/* Billing, rate and visibility: chips on mobile, columns on desktop. */}
+                                    <div className="flex flex-wrap items-center gap-1.5 pl-[22px] xl:contents">
                                         <span>
                                             <Chip
                                                 size="sm"
@@ -279,7 +283,7 @@ export default function ProjectsIndex({
                                         </span>
                                         {canViewRates && (
                                             <span
-                                                className={`text-xs tabular-nums lg:text-sm ${project.hourlyRate === null ? 'hidden text-muted lg:inline' : 'rounded-full bg-surface-secondary px-2 py-0.5 lg:bg-transparent lg:p-0'}`}
+                                                className={`text-xs tabular-nums xl:text-sm ${project.hourlyRate === null ? 'hidden text-muted xl:inline' : 'rounded-full bg-surface-secondary px-2 py-0.5 xl:bg-transparent xl:p-0'}`}
                                                 data-test="project-rate"
                                             >
                                                 {project.hourlyRate !== null
@@ -290,7 +294,7 @@ export default function ProjectsIndex({
                                             </span>
                                         )}
                                         <span
-                                            className={`items-center gap-1 text-xs text-muted lg:text-sm ${project.isPrivate ? 'flex rounded-full bg-surface-secondary px-2 py-0.5 lg:bg-transparent lg:p-0' : 'hidden lg:flex'}`}
+                                            className={`items-center gap-1 text-xs text-muted xl:text-sm ${project.isPrivate ? 'flex rounded-full bg-surface-secondary px-2 py-0.5 xl:bg-transparent xl:p-0' : 'hidden xl:flex'}`}
                                         >
                                             {project.isPrivate && (
                                                 <Lock
@@ -304,28 +308,46 @@ export default function ProjectsIndex({
                                         </span>
                                     </div>
 
-                                    <div className="pl-[22px] lg:pl-0">
-                                        {project.estimateSeconds ? (
-                                            <EstimateProgress
-                                                consumedSeconds={
-                                                    project.consumedSeconds
-                                                }
-                                                estimateSeconds={
-                                                    project.estimateSeconds
-                                                }
-                                            />
-                                        ) : (
-                                            <p className="text-xs tabular-nums lg:text-right lg:text-sm lg:font-medium">
+                                    <div className="grid grid-cols-2 gap-4 pl-[22px] text-xs xl:contents">
+                                        <div className="xl:text-right">
+                                            <span className="mb-0.5 block font-medium text-muted xl:sr-only">
+                                                {t('Reported time')}
+                                            </span>
+                                            <span className="tabular-nums xl:text-sm xl:font-medium">
                                                 {formatHours(
                                                     project.consumedSeconds,
                                                     intlLocale,
                                                 )}
-                                                <span className="font-normal text-muted lg:hidden">
-                                                    {' '}
-                                                    {t('reported')}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span
+                                                aria-hidden="true"
+                                                className="mb-0.5 block font-medium text-muted xl:hidden"
+                                            >
+                                                {t('Budget')}
+                                            </span>
+                                            {project.estimateSeconds ? (
+                                                <EstimateProgress
+                                                    consumedSeconds={
+                                                        project.consumedSeconds
+                                                    }
+                                                    estimateSeconds={
+                                                        project.estimateSeconds
+                                                    }
+                                                    display="budget"
+                                                />
+                                            ) : (
+                                                <span className="text-xs text-muted">
+                                                    <span aria-hidden="true">
+                                                        –
+                                                    </span>
+                                                    <span className="sr-only">
+                                                        {t('No budget')}
+                                                    </span>
                                                 </span>
-                                            </p>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
                                 </Link>
                             </li>
