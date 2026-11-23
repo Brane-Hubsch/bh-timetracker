@@ -7,11 +7,13 @@ import {
     ChartColumn,
     FolderKanban,
     Tags,
+    UsersRound,
 } from 'lucide-react';
 import { index as clients } from '@/routes/clients';
 import { index as projects } from '@/routes/projects';
 import { summary as reports } from '@/routes/reports';
 import { index as tags } from '@/routes/tags';
+import { index as team } from '@/routes/team';
 import { index as time } from '@/routes/time';
 
 export type MainNavItem = {
@@ -71,6 +73,16 @@ export function useMainNavigation(): MainNavItem[] {
                       title: 'Tags',
                       href: tags(slug),
                       icon: Tags,
+                      mobile: false,
+                  },
+              ]
+            : []),
+        ...(currentOrganization.hasTeam
+            ? [
+                  {
+                      title: 'Team',
+                      href: team(slug),
+                      icon: UsersRound,
                       mobile: false,
                   },
               ]

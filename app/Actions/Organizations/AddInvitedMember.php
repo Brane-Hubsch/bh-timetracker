@@ -42,6 +42,10 @@ class AddInvitedMember
                 ['role' => $invitation->role],
             );
 
+            if (! $organization->team_enabled) {
+                $organization->update(['team_enabled' => true]);
+            }
+
             if ($user->current_organization_id === null) {
                 $user->update(['current_organization_id' => $organization->id]);
             }

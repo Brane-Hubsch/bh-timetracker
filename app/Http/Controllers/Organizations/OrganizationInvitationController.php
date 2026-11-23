@@ -34,7 +34,9 @@ class OrganizationInvitationController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Invitation sent.')]);
 
-        return to_route('organizations.edit', ['organization' => $organization->slug]);
+        return $request->boolean('from_team')
+            ? to_route('team.index', ['current_organization' => $organization->slug])
+            : to_route('organizations.edit', ['organization' => $organization->slug]);
     }
 
     /**

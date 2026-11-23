@@ -10,6 +10,7 @@ type Props = {
     organization: Organization;
     availableRoles: RoleOption[];
     isOpen: boolean;
+    fromTeam?: boolean;
     onOpenChange: (isOpen: boolean) => void;
 };
 
@@ -17,6 +18,7 @@ export default function InviteMemberModal({
     organization,
     availableRoles,
     isOpen,
+    fromTeam = false,
     onOpenChange,
 }: Props) {
     const { t } = useTranslation();
@@ -38,6 +40,13 @@ export default function InviteMemberModal({
                                     </Modal.Heading>
                                 </Modal.Header>
                                 <Modal.Body className="grid gap-4">
+                                    {fromTeam && (
+                                        <input
+                                            type="hidden"
+                                            name="from_team"
+                                            value="1"
+                                        />
+                                    )}
                                     <TextInputField
                                         name="email"
                                         type="email"

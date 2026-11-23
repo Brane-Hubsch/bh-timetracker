@@ -23,6 +23,7 @@ class CreateOrganizationInvitationRequest extends FormRequest
         abort_if(! $organization instanceof Organization, 404);
 
         return [
+            'from_team' => ['sometimes', 'boolean'],
             'email' => ['required', 'string', 'email', 'max:255', new UniqueOrganizationInvitation($organization)],
             // Ownership can never be granted through an invitation.
             'role' => ['required', 'string', Rule::enum(OrganizationRole::class)->except([OrganizationRole::Owner])],
