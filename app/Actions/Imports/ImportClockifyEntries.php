@@ -3,6 +3,7 @@
 namespace App\Actions\Imports;
 
 use App\Actions\Clients\CreateClient;
+use App\Actions\Organizations\AddInvitedMember;
 use App\Actions\Projects\AssignProjectMember;
 use App\Actions\Projects\SaveProject;
 use App\Actions\TimeEntries\CreateTimeEntry;
@@ -28,6 +29,7 @@ class ImportClockifyEntries
         private readonly CreateTimeEntry $createTimeEntry,
         private readonly AssignProjectMember $assignProjectMember,
         private readonly RepriceTimeEntry $repriceTimeEntry,
+        private readonly AddInvitedMember $addInvitedMember,
     ) {
         //
     }
@@ -37,10 +39,11 @@ class ImportClockifyEntries
      * the hourly rates chosen in the preview as the members' rates on those projects, then create
      * every importable entry through CreateTimeEntry (same rules as the web app, source "import"), so
      * the entries get the chosen rates from the rate order. With $updateExisting, rows an earlier
-     * import already created get the current rate and billable setting instead.
+     * import already created get the current rate and billable setting instead. People with a pending
+     * invitation who get time are added as members first (AddInvitedMember).
      * Rows the plan skips, or that fail validation, are reported instead of stopping the import.
      *
-     * @param  array<string, int|null>  $memberMap  email => member id, null skips the user
+     * @param  array<string, int|null>  $memberMap  email => member id (or ClockifyImportPlan::invitationMemberId()), null skips the user
      * @param  array<string, bool>  $billableByProject  project key => billable, for new projects
      * @param  array<string, int|null>  $rates  ClockifyImportPlan::rateKey() => hourly rate in minor units
      * @return array{created: int, updated: int, seconds: int, clientsCreated: int, projectsCreated: int, from: string|null, to: string|null, skipped: array<int, array{line: int, date: string|null, user: string|null, project: string|null, reason: string}>}
@@ -55,7 +58,8 @@ class ImportClockifyEntries
             throw ValidationException::withMessages(['import' => __('There is nothing to import.')]);
         }
 
-        return DB::transaction(function () use ($organization, $plan, $updateExisting) {
+        return DB::transaction(function () use ($organization, $importer, $csv, $memberMap, $billableByProject, $rates, $plan, $updateExisting) {
+            $plan = $this->addInvitedMembers($organization, $importer, $csv, $memberMap, $billableByProject, $rates, $plan);
             $projectIds = $this->projects($organization, $plan);
             $this->saveRates($organization, $plan, $projectIds);
             $updated = $updateExisting ? $this->updateExisting($organization, $plan) : 0;
@@ -106,6 +110,38 @@ class ImportClockifyEntries
                 'skipped' => $skipped,
             ];
         });
+    }
+
+    /**
+     * Add the invited people who get time as members, then plan again with their user ids in place of
+     * the stand-in ids (their emails now match them as members).
+     *
+     * @param  array<string, int|null>  $memberMap
+     * @param  array<string, bool>  $billableByProject
+     * @param  array<string, int|null>  $rates
+     */
+    private function addInvitedMembers(Organization $organization, User $importer, ClockifyCsv $csv, array $memberMap, array $billableByProject, array $rates, ClockifyImportPlan $plan): ClockifyImportPlan
+    {
+        $userIds = [];
+
+        foreach ($plan->invitationsWithTime() as $memberId => $item) {
+            $userIds[$memberId] = $this->addInvitedMember->handle($item['invitation'], $item['name'])->id;
+        }
+
+        if ($userIds === []) {
+            return $plan;
+        }
+
+        $memberMap = array_map(fn (?int $memberId) => $memberId === null ? null : ($userIds[$memberId] ?? $memberId), $memberMap);
+        $remappedRates = [];
+
+        foreach ($rates as $rateKey => $rate) {
+            $separator = (int) strrpos($rateKey, '|');
+            $memberId = (int) substr($rateKey, $separator + 1);
+            $remappedRates[isset($userIds[$memberId]) ? ClockifyImportPlan::rateKey(substr($rateKey, 0, $separator), $userIds[$memberId]) : $rateKey] = $rate;
+        }
+
+        return new ClockifyImportPlan($organization, $importer, $csv, $memberMap, $billableByProject, $remappedRates);
     }
 
     /**

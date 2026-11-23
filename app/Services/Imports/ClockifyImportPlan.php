@@ -3,9 +3,12 @@
 namespace App\Services\Imports;
 
 use App\Data\ClockifyRow;
+use App\Enums\OrganizationRole;
+use App\Enums\ProjectVisibility;
 use App\Enums\TimeEntrySource;
 use App\Models\Client;
 use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -20,6 +23,8 @@ use Illuminate\Support\Collection;
  *
  * Times in the file are read in the importing user's time zone. Projects match on client and
  * project name (case-insensitive); users match active members on email unless mapped by hand.
+ * People with a pending invitation can get time too (they match on the invited email): they are
+ * planned with invitationMemberId() as a stand-in id, and the import adds them as members first.
  *
  * Every member with time on a project gets an hourly rate: the one chosen in the preview, else the
  * one the rate order gives. Rows that an earlier import already created are listed separately, so
@@ -31,6 +36,14 @@ final class ClockifyImportPlan
      * @var array<int, array{email: string, name: string, entries: int, seconds: int, memberId: int|null, matched: bool}>
      */
     public array $members = [];
+
+    /**
+     * Pending invitations of people who aren't members yet, by stand-in member id (see
+     * invitationMemberId()), with the name the account gets (from the file, else the email).
+     *
+     * @var array<int, array{invitation: OrganizationInvitation, name: string}>
+     */
+    public array $invitations = [];
 
     /**
      * @var array<int, array{key: string, name: string, client: string|null, projectId: int|null, isArchived: bool, billable: bool, entries: int, seconds: int}>
@@ -84,6 +97,27 @@ final class ClockifyImportPlan
     ) {
         $this->build($memberMap, $billableByProject);
         $this->buildRates($chosenRates);
+    }
+
+    /**
+     * The stand-in member id of a pending invitation: negative, so it never collides with a user id.
+     */
+    public static function invitationMemberId(int $invitationId): int
+    {
+        return -$invitationId;
+    }
+
+    /**
+     * Invitations whose person gets imported time, by stand-in member id: the import adds them as
+     * members before creating the entries.
+     *
+     * @return array<int, array{invitation: OrganizationInvitation, name: string}>
+     */
+    public function invitationsWithTime(): array
+    {
+        $memberIds = array_flip(array_column($this->entries, 'userId'));
+
+        return array_filter($this->invitations, fn (int $memberId) => isset($memberIds[$memberId]), ARRAY_FILTER_USE_KEY);
     }
 
     /**
@@ -150,8 +184,28 @@ final class ClockifyImportPlan
     {
         $timezone = $this->timezone();
         $activeMembers = $this->organization->members()->wherePivotNull('deactivated_at')->get();
-        $membersByEmail = $activeMembers->keyBy(fn (User $user) => mb_strtolower($user->email));
-        $membersById = $activeMembers->keyBy('id');
+        // Base collections: an Eloquent collection would merge on the models' ids.
+        $membersByEmail = $activeMembers->keyBy(fn (User $user) => mb_strtolower($user->email))->toBase();
+        $membersById = $activeMembers->keyBy('id')->toBase();
+
+        // Invited people who aren't members yet, as unsaved users with a stand-in id.
+        $invitationsByEmail = [];
+
+        foreach (OrganizationInvitation::query()->where('organization_id', $this->organization->id)->pending()->with('organization')->orderBy('id')->get() as $invitation) {
+            $email = mb_strtolower(trim($invitation->email));
+
+            if ($membersByEmail->has($email) || isset($invitationsByEmail[$email])) {
+                continue;
+            }
+
+            $standIn = new User(['name' => $email, 'email' => $email]);
+            $standIn->id = self::invitationMemberId($invitation->id);
+            $invitationsByEmail[$email] = $standIn;
+            $this->invitations[$standIn->id] = ['invitation' => $invitation, 'name' => $email];
+        }
+
+        $membersByEmail = $membersByEmail->merge($invitationsByEmail);
+        $membersById = $membersById->union(collect($invitationsByEmail)->keyBy('id'));
 
         $existingProjects = $this->existingProjects();
         $existingClients = Client::query()->forOrganization($this->organization)->get()
@@ -177,6 +231,14 @@ final class ClockifyImportPlan
                     'memberId' => $mapped !== null && $membersById->has($mapped) ? $mapped : null,
                     'matched' => $membersByEmail->has($row->email),
                 ];
+
+                // An invited person's account gets the name from the file.
+                $memberId = $members[$row->email]['memberId'];
+
+                if ($memberId !== null && isset($this->invitations[$memberId]) && $this->invitations[$memberId]['name'] === mb_strtolower(trim($this->invitations[$memberId]['invitation']->email))) {
+                    $this->invitations[$memberId]['name'] = $row->userName;
+                    $membersById->get($memberId)?->setAttribute('name', $row->userName);
+                }
             }
 
             if ($row->project === null) {
@@ -259,7 +321,7 @@ final class ClockifyImportPlan
                 $pair = $project['projectId'].'|'.$userId;
                 $existingProject = $existingProjects->get($key);
                 $user = $membersById->get($userId);
-                $accessible[$pair] ??= $existingProject !== null && $user !== null && $existingProject->isAccessibleBy($user);
+                $accessible[$pair] ??= $existingProject !== null && $user !== null && $this->canReportOn($existingProject, $user);
 
                 if (! $accessible[$pair]) {
                     $skip(__(':name is not assigned to this project.', ['name' => $user->name ?? $row->userName]));
@@ -348,8 +410,9 @@ final class ClockifyImportPlan
             ->keyBy('id');
         $users = $this->organization->members()
             ->whereIn('users.id', array_unique(array_merge(array_column($this->entries, 'userId'), array_column($this->alreadyImported, 'userId'))))
-            ->orderBy('name')
             ->get()
+            ->concat($this->invitedUsers())
+            ->sortBy('name')
             ->keyBy('id');
 
         foreach ($this->projects as $project) {
@@ -375,6 +438,39 @@ final class ClockifyImportPlan
                 ];
             }
         }
+    }
+
+    /**
+     * Whether the user may report time on the existing project. An invited person isn't a member yet,
+     * so their invitation's role decides: admins see every project, others only public ones.
+     */
+    private function canReportOn(Project $project, User $user): bool
+    {
+        $invitation = $this->invitations[$user->id]['invitation'] ?? null;
+
+        if ($invitation === null) {
+            return $project->isAccessibleBy($user);
+        }
+
+        return $invitation->role->isAtLeast(OrganizationRole::Admin) || $project->visibility === ProjectVisibility::Public;
+    }
+
+    /**
+     * Unsaved stand-in users for the invited people with time, for their rates.
+     *
+     * @return array<int, User>
+     */
+    private function invitedUsers(): array
+    {
+        $users = [];
+
+        foreach ($this->invitationsWithTime() as $memberId => $item) {
+            $user = new User(['name' => $item['name'], 'email' => mb_strtolower($item['invitation']->email)]);
+            $user->id = $memberId;
+            $users[] = $user;
+        }
+
+        return $users;
     }
 
     /**
