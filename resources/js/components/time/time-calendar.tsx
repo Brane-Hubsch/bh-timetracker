@@ -304,6 +304,7 @@ export function TimeCalendar({
                                   'time-calendar-resize-preview',
                           )
                 }
+                eventInnerClass="time-calendar-event-inner"
                 eventBeforeClass={(info) =>
                     info.isStartResizable &&
                     !info.isSelected &&
