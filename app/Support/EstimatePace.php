@@ -2,13 +2,14 @@
 
 namespace App\Support;
 
+use App\Models\Holiday;
 use App\Models\Project;
 use Carbon\CarbonImmutable;
 
 /**
  * How a project stands against its estimate: the hours left to 100 %, the working days left in the
- * project's period (from today, or from its start if that is later, to its end date) and the hours
- * needed per working day to reach the estimate.
+ * project's period (from today, or from its start if that is later, to its end date, without the
+ * organization's holidays) and the hours needed per working day to reach the estimate.
  */
 final class EstimatePace
 {
@@ -33,7 +34,14 @@ final class EstimatePace
         $startsOn = $project->starts_on ? CarbonImmutable::parse($project->starts_on->toDateString(), $today->timezone) : null;
         $from = $startsOn?->greaterThan($today) ? $startsOn : $today;
         $to = CarbonImmutable::parse($project->ends_on->toDateString(), $today->timezone);
-        $workdays = WorkingDays::between($from, $to);
+        $holidays = Holiday::query()
+            ->forOrganization($project->organization_id)
+            ->whereDate('date', '>=', $from->toDateString())
+            ->whereDate('date', '<=', $to->toDateString())
+            ->get(['date'])
+            ->map(fn (Holiday $holiday) => $holiday->date->toDateString())
+            ->all();
+        $workdays = WorkingDays::between($from, $to, $holidays);
 
         return [
             'remainingSeconds' => $remaining,

@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Organizations\DeleteOrganizationRequest;
 use App\Http\Requests\Organizations\SaveOrganizationRequest;
 use App\Http\Requests\Organizations\UpdateOrganizationRequest;
+use App\Models\Holiday;
 use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\User;
@@ -90,6 +91,15 @@ class OrganizationController extends Controller
                     'role_label' => $invitation->role->label(),
                     'created_at' => $invitation->created_at?->toISOString(),
                 ]),
+            // Holidays from this year on, for those who may change the organization.
+            'holidays' => $user->can('update', $organization)
+                ? Holiday::query()->forOrganization($organization)
+                    ->whereDate('date', '>=', now($organization->timezone)->startOfYear()->toDateString())
+                    ->orderBy('date')
+                    ->get()
+                    ->map(fn (Holiday $holiday) => ['id' => $holiday->id, 'date' => $holiday->date->toDateString(), 'name' => $holiday->name])
+                : null,
+            'holidayYears' => range((int) now($organization->timezone)->format('Y'), (int) now($organization->timezone)->format('Y') + 2),
             'permissions' => $user->toOrganizationPermissions($organization),
             'availableRoles' => OrganizationRole::assignable(),
         ]);

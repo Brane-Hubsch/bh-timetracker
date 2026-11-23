@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Holidays\AddSwedishHolidays;
 use App\Enums\OrganizationRole;
 use App\Models\Client;
 use App\Models\Project;
@@ -90,6 +91,7 @@ it('shows project rates in the list only to those who may see rates', function (
 
 it('shows the hours left to the estimate and the pace per working day', function () {
     $this->travelTo(CarbonImmutable::parse('2026-11-23 09:00', 'Europe/Stockholm'));
+    app(AddSwedishHolidays::class)->handle($this->organization, 2026);
     $project = Project::factory()->for($this->organization)->create(['estimate_seconds' => 100 * 3600, 'starts_on' => '2026-07-01', 'ends_on' => '2026-12-31']);
     TimeEntry::factory()->by($this->owner, $project)->between('2026-11-02 08:00', '2026-11-02 12:00')->create();
 
