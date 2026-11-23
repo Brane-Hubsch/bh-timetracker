@@ -11,6 +11,8 @@ type Props = {
     className?: string;
 };
 
+const minimumFillAspectRatio = 0.95;
+
 /** A square logo with rounded corners and an initial as fallback. */
 export function LogoImage({
     src,
@@ -23,12 +25,14 @@ export function LogoImage({
     const inset = src && fit === 'contain' && insetSource === src;
     const updateInset = useCallback(
         (image: HTMLImageElement | null) => {
-            if (image?.naturalWidth) {
-                // Website logos are already composed on a square canvas.
+            if (image?.naturalWidth && image.naturalHeight) {
+                const { naturalWidth, naturalHeight } = image;
+                const aspectRatio =
+                    Math.min(naturalWidth, naturalHeight) /
+                    Math.max(naturalWidth, naturalHeight);
+
                 setInsetSource(
-                    image.naturalWidth !== image.naturalHeight
-                        ? (src ?? null)
-                        : null,
+                    aspectRatio < minimumFillAspectRatio ? (src ?? null) : null,
                 );
             }
         },
@@ -60,7 +64,7 @@ export function LogoImage({
                     alt=""
                     className={cn(
                         'size-full',
-                        fit === 'cover' ? 'object-cover' : 'object-contain',
+                        inset ? 'object-contain' : 'object-cover',
                     )}
                     loading="lazy"
                     onLoad={

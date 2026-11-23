@@ -600,7 +600,7 @@ Beställt i efterhand. Designen finns i Figma-filen TimeReport på sidan "Bilder
 
 - **Profilbild:** laddas upp under Inställningar → Profil. Visas i appen för kollegor, t.ex. i användarmenyn och medlemslistor. Utan uppladdad bild visas Google-bilden, annars initialer. Bilden tas bort med kontot.
 - **Organisationslogga:** laddas upp under Organisationsinställningar av den som får ändra organisationen (ägare/admin). Visas i organisationslistan, i organisationsväljaren, i ⌘K och i PDF-rapporternas huvud. Organisationslistan visar en initial när logga saknas.
-- **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. Kvadratiska loggor fyller den rundade rutan och rektangulära loggor visas med marginal. I PDF-huvudet visas loggan när rapporten gäller en enda kund.
+- **Kundlogga:** sätts i kundens sidopanel och sparas med formuläret. Visas i kundlistan, på kundsidan och på projektsidor. När loggans korta sida är minst 95 % av den långa fyller bilden den rundade rutan med centrerad beskärning och bibehållna proportioner. Övriga loggor visas i sin helhet med marginal. I PDF-huvudet visas loggan när rapporten gäller en enda kund.
 - **Hämta logga:** söker efter Apple Touch-ikoner och favicons på kundens hemsida. En stor Apple Touch-ikon fyller ytan, en stor favicon får marginal och en liten ikon centreras på en neutral kvadrat. Den hämtade bilden förhandsvisas och sparas via samma flöde som en uppladdad bild.
 - **Bildbehandling** med `intervention/image` (godkänt beroende, GD-drivrutin):
   - Varje uppladdning sparas som WebP i 64, 128, 256 och 512 px.
