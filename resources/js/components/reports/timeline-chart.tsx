@@ -54,7 +54,7 @@ function ProjectLabels({ items }: { items: TimelineProject[] }) {
 }
 
 const buttonClassName =
-    'group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus';
+    'group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset';
 
 function ProjectTimelineBar({
     title,
@@ -265,8 +265,8 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                 {gridlines.map((hours) => (
                     <div
                         key={hours}
-                        // The baseline is drawn over the bars, so sub-pixel rounding can't make them look uneven.
-                        className={`pointer-events-none absolute right-0 left-10 border-t border-separator ${hours === 0 ? 'z-10' : ''}`}
+                        // Start each line at its tick coordinate, including the plot's bottom edge at zero.
+                        className={`pointer-events-none absolute right-0 left-10 after:absolute after:inset-x-0 after:top-0 after:h-px after:bg-separator ${hours === 0 ? 'z-10' : ''}`}
                         style={{ bottom: `${(hours / max) * 100}%` }}
                     >
                         <span className="absolute -top-2 -left-10 w-9 text-right text-xs whitespace-nowrap text-muted tabular-nums">
@@ -276,7 +276,7 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                 ))}
 
                 <div
-                    className="relative flex h-full items-end gap-0.5"
+                    className="relative flex h-full items-end gap-0.5 overflow-clip"
                     role="list"
                     aria-label={chartTitle}
                 >
