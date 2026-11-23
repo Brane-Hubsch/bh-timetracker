@@ -88,6 +88,19 @@ it('shows project rates in the list only to those who may see rates', function (
             ->where('projects.0.hourlyRate', null));
 });
 
+it('shows the hours left to the estimate and the pace per working day', function () {
+    $this->travelTo(CarbonImmutable::parse('2026-11-23 09:00', 'Europe/Stockholm'));
+    $project = Project::factory()->for($this->organization)->create(['estimate_seconds' => 100 * 3600, 'starts_on' => '2026-07-01', 'ends_on' => '2026-12-31']);
+    TimeEntry::factory()->by($this->owner, $project)->between('2026-11-02 08:00', '2026-11-02 12:00')->create();
+
+    $this->actingAs($this->member)->get(route('projects.show', [$this->slug, $project]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('estimatePace.remainingSeconds', 96 * 3600)
+            ->where('estimatePace.workdaysLeft', 26)
+            ->where('estimatePace.secondsPerWorkday', (int) ceil(96 * 3600 / 26))
+            ->where('estimatePace.to', '2026-12-31'));
+});
+
 it('filters by search, client and status', function () {
     $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
     Project::factory()->for($this->organization)->create(['name' => 'Webbshop', 'client_id' => $client->id]);

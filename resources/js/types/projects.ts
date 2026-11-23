@@ -74,3 +74,15 @@ export type ProjectMemberItem = {
     avatar: string | null;
     hourlyRate: number | null;
 };
+
+/** How a project stands against its estimate (dates are local YYYY-MM-DD). */
+export type EstimatePace = {
+    /** Seconds left to 100 % of the estimate; negative when over it. */
+    remainingSeconds: number;
+    /** Working days from today (or the start) to the end date; null without an end date. */
+    workdaysLeft: number | null;
+    /** Seconds needed per working day; null when reached or no working days are left. */
+    secondsPerWorkday: number | null;
+    from: string | null;
+    to: string | null;
+};

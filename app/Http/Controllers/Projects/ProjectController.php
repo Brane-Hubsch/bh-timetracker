@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\Reports\ReportBuilder;
 use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
+use App\Support\EstimatePace;
 use App\Support\ProjectFormOptions;
 use App\Support\TimeEntryPresenter;
 use Carbon\CarbonImmutable;
@@ -91,6 +92,7 @@ class ProjectController extends Controller
         $organization = $this->currentOrganization->getOrFail();
         $canViewRates = $user->can('viewRates', $organization);
         $canManage = $user->can('update', $project);
+        $consumedSeconds = $project->consumedSeconds();
 
         return Inertia::render('projects/show', [
             'project' => [
@@ -100,8 +102,10 @@ class ProjectController extends Controller
                 'startsOn' => $project->starts_on?->toDateString(),
                 'endsOn' => $project->ends_on?->toDateString(),
                 'notes' => $project->notes,
-                'consumedSeconds' => $project->consumedSeconds(),
+                'consumedSeconds' => $consumedSeconds,
             ],
+            // Hours left to the estimate and the pace needed per working day.
+            'estimatePace' => EstimatePace::for($project, $consumedSeconds, CarbonImmutable::now($user->timezone)),
             'members' => $project->members->map(fn (User $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
