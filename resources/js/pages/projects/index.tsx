@@ -35,12 +35,12 @@ type Props = {
 
 const ALL = 'all';
 
-/** Desktop columns: project, client, billing, (rate,) visibility, reported time, budget. */
+/** Desktop columns: project, client, billing, (rate,) visibility, budget, reported time. */
 const COLUMNS = {
     withRate:
-        'xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_7rem_6rem_6.5rem_8rem]',
+        'xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_7rem_6rem_8rem_6.5rem]',
     withoutRate:
-        'xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_6rem_6.5rem_8rem]',
+        'xl:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_6rem_8rem_6.5rem]',
 };
 
 export default function ProjectsIndex({
@@ -190,10 +190,10 @@ export default function ProjectsIndex({
                             <span>{t('Billing')}</span>
                             {canViewRates && <span>{t('Hourly rate')}</span>}
                             <span>{t('Visibility')}</span>
+                            <span>{t('Budget')}</span>
                             <span className="text-right">
                                 {t('Reported time')}
                             </span>
-                            <span>{t('Budget')}</span>
                         </div>
                     )}
                     <ul className="divide-y divide-separator">
@@ -309,17 +309,6 @@ export default function ProjectsIndex({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4 pl-[22px] text-xs xl:contents">
-                                        <div className="xl:text-right">
-                                            <span className="mb-0.5 block font-medium text-muted xl:sr-only">
-                                                {t('Reported time')}
-                                            </span>
-                                            <span className="tabular-nums xl:text-sm xl:font-medium">
-                                                {formatHours(
-                                                    project.consumedSeconds,
-                                                    intlLocale,
-                                                )}
-                                            </span>
-                                        </div>
                                         <div>
                                             <span
                                                 aria-hidden="true"
@@ -347,6 +336,17 @@ export default function ProjectsIndex({
                                                     </span>
                                                 </span>
                                             )}
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="mb-0.5 block font-medium text-muted xl:sr-only">
+                                                {t('Reported time')}
+                                            </span>
+                                            <span className="tabular-nums xl:text-sm xl:font-medium">
+                                                {formatHours(
+                                                    project.consumedSeconds,
+                                                    intlLocale,
+                                                )}
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>

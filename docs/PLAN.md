@@ -385,7 +385,7 @@ Klar. Byggt:
 - **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
 - **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
-- **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet, rapporterad tid och budget i timmar, med en sammanfattning överst. Rapporterad tid och budget har varsin kolumn. Budgeten visar även förbrukad andel och ett streck om estimat saknas. Listan filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade. Filtren ligger i URL:en. MCP-verktyget `list_projects` tar samma filter (`billable`).
+- **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet, budget i timmar och rapporterad tid, med en sammanfattning överst. Budget och rapporterad tid har varsin kolumn, med rapporterad tid längst till höger. Budgeten visar även förbrukad andel och ett streck om estimat saknas. Listan filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade. Filtren ligger i URL:en. MCP-verktyget `list_projects` tar samma filter (`billable`).
 - **Projektsidan** visar debiterbara timmar och belopp, tid per medlem och timmar per vecka för de senaste 12 veckorna. **Kundsidan** visar tid och belopp per projekt för en vald period. Båda har en länk till rapporten.
 - "Rapporter" finns i sidomenyn och i mobilens bottennavigering (Idag / Kalender / Rapporter / Mer).
 
