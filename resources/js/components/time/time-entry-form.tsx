@@ -12,12 +12,12 @@ import {
 import { router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
 import { Copy, EllipsisVertical, Trash2, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import { Button as AriaButton } from 'react-aria-components';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { TagInput } from '@/components/form/tag-input';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
-import { SegmentedControl } from '@/components/segmented-control';
 import { ABSENCE_FORM_ID, AbsenceForm } from '@/components/time/absence-dialog';
 import type { AbsenceOptions } from '@/components/time/absence-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
@@ -121,6 +121,7 @@ export function TimeEntryForm({
 }: Props) {
     const { t } = useTranslation();
     const { auth, can } = usePage().props;
+    const modeHintId = useId();
     // The last opened draft: kept while the dialog animates out.
     const [source, setSource] = useState(draft);
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
@@ -130,7 +131,7 @@ export function TimeEntryForm({
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-    const [mode, setMode] = useState<'time' | 'absence'>('time');
+    const [mode, setMode] = useState<'time' | 'absence' | null>(null);
 
     // Start from the draft each time a new one is opened.
     if (draft && draft !== source) {
@@ -141,13 +142,15 @@ export function TimeEntryForm({
         setErrors({});
         setIsMemberPickerOpen(false);
         setIsActionsMenuOpen(false);
-        setMode('time');
+        setMode(null);
     }
 
     const current = values ?? draft;
     const isEditing = Boolean(source?.id);
     const canSwitchMode = Boolean(absence) && !isEditing;
     const isAbsence = canSwitchMode && mode === 'absence';
+    const [beforeType, afterType] = t('Report :type').split(':type');
+    const nextMode = isAbsence ? 'time' : 'absence';
     const todayDate = today(auth.user.timezone).toString();
     const dateLabel =
         current?.date === todayDate
@@ -382,11 +385,32 @@ export function TimeEntryForm({
                     : undefined
             }
             title={
-                isAbsence
-                    ? t('Register absence')
-                    : isEditing
-                      ? t('Edit time')
-                      : t('Report time')
+                canSwitchMode ? (
+                    <>
+                        {beforeType}
+                        <AriaButton
+                            type="button"
+                            aria-describedby={modeHintId}
+                            className="-my-1 cursor-pointer rounded-sm py-1 underline decoration-accent decoration-2 underline-offset-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                            onPress={() => setMode(nextMode)}
+                            data-test="time-entry-mode"
+                        >
+                            {t(isAbsence ? 'absence' : 'time')}
+                        </AriaButton>
+                        {afterType}
+                        <span id={modeHintId} hidden>
+                            {t('Switch to :name', {
+                                name: t(
+                                    nextMode === 'time' ? 'Time' : 'Absence',
+                                ),
+                            })}
+                        </span>
+                    </>
+                ) : isEditing ? (
+                    t('Edit time')
+                ) : (
+                    t('Report time')
+                )
             }
             closeInHeader
             desktopClassName="sm:max-w-[40rem]"
@@ -469,19 +493,6 @@ export function TimeEntryForm({
         >
             {current && (
                 <div className="grid gap-5">
-                    {canSwitchMode && (
-                        <SegmentedControl
-                            aria-label={t('Time or absence')}
-                            value={mode}
-                            onChange={setMode}
-                            className="w-fit"
-                            options={[
-                                { id: 'time', label: t('Time') },
-                                { id: 'absence', label: t('Absence') },
-                            ]}
-                            data-test="time-entry-mode"
-                        />
-                    )}
                     {isAbsence && absence ? (
                         <AbsenceForm
                             {...absence}
@@ -553,7 +564,9 @@ export function TimeEntryForm({
                                 }
                                 error={errors.project_id}
                                 autoFocus={
-                                    !isEditing && current.projectId === ''
+                                    !isEditing &&
+                                    mode === null &&
+                                    current.projectId === ''
                                 }
                             />
 
