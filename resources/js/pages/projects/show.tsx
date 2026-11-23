@@ -7,6 +7,7 @@ import type { SelectOption } from '@/components/form/select-field';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import { EstimateProgress } from '@/components/estimate-progress';
+import { EstimatePaceStats } from '@/components/projects/estimate-pace';
 import { ProjectDot } from '@/components/project-dot';
 import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
 import { RateField } from '@/components/rate-field';
@@ -28,6 +29,7 @@ import {
     update as updateMemberRate,
 } from '@/routes/projects/members';
 import type {
+    EstimatePace,
     ProjectDetails,
     ProjectFormOptions,
     ProjectMemberItem,
@@ -37,6 +39,8 @@ import type {
 
 type Props = {
     project: ProjectDetails;
+    /** Null without an estimate. */
+    estimatePace: EstimatePace | null;
     members: ProjectMemberItem[];
     assignableMembers: SelectOption[];
     currency: string;
@@ -68,6 +72,7 @@ function Detail({
 
 export default function ProjectShow({
     project,
+    estimatePace,
     members,
     assignableMembers,
     currency,
@@ -241,10 +246,15 @@ export default function ProjectShow({
                         {t('Reported time')}
                     </h2>
                     {project.estimateSeconds !== null ? (
-                        <EstimateProgress
-                            consumedSeconds={project.consumedSeconds}
-                            estimateSeconds={project.estimateSeconds}
-                        />
+                        <>
+                            <EstimateProgress
+                                consumedSeconds={project.consumedSeconds}
+                                estimateSeconds={project.estimateSeconds}
+                            />
+                            {estimatePace && (
+                                <EstimatePaceStats pace={estimatePace} />
+                            )}
+                        </>
                     ) : (
                         <p className="text-2xl font-semibold tabular-nums">
                             {formatHours(project.consumedSeconds, intlLocale)}

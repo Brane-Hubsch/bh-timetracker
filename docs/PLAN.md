@@ -660,6 +660,16 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
   - återställning enligt README
 - **Rättat:** paketet för backup validerade larmadresserna vid uppstart, så tomma `BACKUP_NOTIFICATION_EMAIL`/`MAIL_FROM_ADDRESS` stoppade alla artisan-kommandon. Nu används en giltig reservadress.
 
+### Tillägg efter Fas 6: takt mot estimatet på projektsidan (2026-11-23)
+
+Beställt i efterhand. Under förloppet "Rapporterad tid" på projektsidan visas, för projekt med estimat:
+
+- **Kvar till estimatet:** estimat minus all rapporterad tid. Är projektet över estimatet visas "Över estimatet" i varningsfärg.
+- **Arbetsdagar kvar:** från i dag (eller projektets startdatum om det är senare) till och med slutdatumet, i användarens tidszon. Arbetsdagar är måndag–fredag utom svenska helgdagar samt midsommar-, jul- och nyårsafton (`App\Support\WorkingDays`, påsken räknas fram utan calendar-tillägget).
+- **Behövs per arbetsdag:** återstående timmar delat med antal arbetsdagar, avrundat uppåt till hel sekund.
+- Utan slutdatum visas bara timmarna som återstår, med "Ange ett slutdatum". Efter perioden, eller när estimatet är nått, visas inget dagsbehov.
+- Uträkningen görs i `App\Support\EstimatePace` och skickas som `estimatePace` till alla som ser projektet, precis som estimatet och den rapporterade tiden.
+
 ### Tillägg efter Fas 6: Coolify (2026-11-20)
 
 Beställt i efterhand: produktionsstacken ska fungera i [Coolify](https://coolify.io) som en applikation med byggpaketet Docker Compose. Samma `compose.yaml` används i Coolify och på egen server.
