@@ -678,8 +678,21 @@ Beställt i efterhand. Helgdagarna ligger i databasen per organisation (`holiday
 - **Hantera:** ägare och admin (rättigheten `UpdateOrganization`) ser avsnittet Helgdagar i organisationsinställningarna. Där listas dagarna från innevarande år, grupperade per år. Man kan lägga till egna dagar (datum och namn, t.ex. en kick-off), ta bort dagar och fylla på med svenska helgdagar för ett valt år (i år och två år framåt). Påfyllningen hoppar över datum som redan finns, även om de har ett annat namn.
 - **Svenska helgdagar** (`App\Support\SwedishHolidays`): de helgdagar som kan infalla på en vardag samt midsommar-, jul- och nyårsafton. Påsken räknas fram utan calendar-tillägget. Namnen sparas på svenska.
 - **Från start:** nya organisationer får svenska helgdagar för innevarande och nästa år (`CreateOrganization`). Migreringen gav befintliga organisationer 2026 och 2027.
-- **Används** av projektsidans arbetsdagar (`EstimatePace`). Lördag och söndag räknas aldrig som arbetsdagar.
+- **Används** av projektsidans arbetsdagar (`EstimatePace`) och av frånvaro (se nedan). Lördag och söndag räknas aldrig som arbetsdagar.
 - **Kod:** `App\Actions\Holidays` (`CreateHoliday`, `DeleteHoliday`, `AddSwedishHolidays`) och `OrganizationHolidayController`. Andra organisationers helgdagar ger 404.
+
+### Tillägg efter Fas 6: frånvaro (2026-11-23)
+
+Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna poster (`absences`), skilda från tidsposter, så att rapporterad arbetstid och belopp inte påverkas.
+
+- **Typer** (`App\Enums\AbsenceType`): semester, VAB, sjuk, föräldraledig, tjänstledig och annan frånvaro.
+- **Period:** första och sista dag (högst 366 dagar), antingen hela arbetsdagar eller ett antal timmar per dag (t.ex. 4 h VAB). Lördag, söndag och organisationens helgdagar räknas inte. En period utan arbetsdagar och överlappande frånvaro för samma person avvisas. Valfri notering.
+- **Arbetsdagens längd** är en organisationsinställning (`organizations.workday_seconds`, standard 8 h, "Arbetsdagens längd (timmar)" i organisationsinställningarna). En hel frånvarodag räknas som så många timmar.
+- **Behörighet** (`AbsencePolicy`): medlemmar hanterar sin egen frånvaro; ägare och admin (`ManageTeamTime`) hanterar allas. Andra organisationers frånvaro ger 404.
+- **Kalendern:** en heldagsrad "Frånvaro" i vecko- och dagvyn. Den visade personens frånvaro syns med typ (och timmar per dag) och öppnar dialogen vid klick; drar man över dagar i raden registreras ny frånvaro. Kollegors frånvaro syns som "Ledig · namn", utan typ eller notering. Listvyn visar samma sak per dag. Knappen "Frånvaro" och ⌘K-kommandot "Registrera frånvaro" öppnar dialogen (`ResponsiveDialog`), som räknar arbetsdagar och timmar medan man fyller i.
+- **Rapporter:** sammanfattningen får ett avsnitt Frånvaro med dagar per person och typ i perioden (frånvarotimmar delat med arbetsdagens längd). Bara periodens och medlemsfiltrets urval gäller, med samma synlighet som för tid: medlemmar ser bara sin egen rad (`ReportBuilder::absences`). Frånvaron ingår inte i export eller MCP.
+- **Inget saldo** (semesterdagar kvar) och inget attestflöde i den här versionen.
+- **Kod:** `App\Actions\Absences` (`CreateAbsence`, `UpdateAbsence`, `DeleteAbsence`, gemensamma regler i `ValidatesAbsences`), `App\Support\AbsenceTime`, `AbsencePresenter` och `AbsenceController`.
 
 ### Tillägg efter Fas 6: Coolify (2026-11-20)
 

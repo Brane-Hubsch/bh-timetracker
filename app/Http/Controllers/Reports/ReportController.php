@@ -50,6 +50,7 @@ class ReportController extends Controller
                 $request->subGrouping(),
                 includeTimelineProjects: true,
             ),
+            'absence' => $this->reports->absences($filters),
         ]);
     }
 

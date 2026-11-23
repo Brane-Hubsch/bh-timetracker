@@ -1,4 +1,5 @@
 import type { SelectOption } from '@/components/form/select-field';
+import type { AbsenceType, AbsenceTypeOption } from './time';
 
 export type ReportGroupingKey =
     | 'client'
@@ -145,4 +146,17 @@ export type FollowUpProject = {
     billableSeconds: number;
     remainingSeconds: number | null;
     percent: number | null;
+};
+
+/** Absence in the report period per member and type, in seconds. */
+export type ReportAbsence = {
+    /** Seconds a full absence day counts as. */
+    workdaySeconds: number;
+    types: AbsenceTypeOption[];
+    members: {
+        id: number;
+        name: string;
+        seconds: number;
+        types: Partial<Record<AbsenceType, number>>;
+    }[];
 };

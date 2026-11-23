@@ -36,3 +36,8 @@ export function toMinorUnits(
 export function formatDecimalHours(seconds: number, locale: string): string {
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(seconds / 3600)} h`;
 }
+
+/** Days with at most one decimal, e.g. "2,5 d". */
+export function formatDays(days: number, locale: string): string {
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(days)} d`;
+}

@@ -94,6 +94,7 @@ it('shows the member\'s absence in the calendar, and colleagues only as off', fu
             ->where('absences.0.note', 'Influensa')
             ->where('colleaguesOff', [['id' => Absence::query()->where('note', 'Privat')->value('id'), 'name' => 'Olivia', 'startsOn' => '2026-11-26', 'endsOn' => '2026-11-27']])
             ->where('workdaySeconds', 28800)
+            ->has('holidays')
             ->has('absenceTypes', 6));
 
     // Owners see a member's absence in full on the member's calendar.
