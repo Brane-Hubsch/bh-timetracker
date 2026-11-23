@@ -67,9 +67,9 @@ class ExportReportTool extends TimetrackerTool
 
         // The same query the report pages use, so the app checks access again when the link is opened.
         $query = array_filter([
-            'period' => ReportPeriod::Custom->value,
-            'from' => $from->toDateString(),
-            'to' => $to->toDateString(),
+            'period' => ($from === null ? ReportPeriod::AllTime : ReportPeriod::Custom)->value,
+            'from' => $from?->toDateString(),
+            'to' => $to?->toDateString(),
             'members' => $this->references($request, 'members', fn (mixed $reference, string $field) => $this->lookup->member($context, $reference, $field)->id),
             'clients' => $this->references($request, 'clients', fn (mixed $reference, string $field) => $this->lookup->client($context, $reference, $field)->id),
             'projects' => $this->references($request, 'projects', fn (mixed $reference, string $field) => $this->lookup->project($context, $reference, $field)->id),
@@ -88,7 +88,7 @@ class ExportReportTool extends TimetrackerTool
             'report_url' => route($type === 'summary' ? 'reports.summary' : 'reports.detailed', [...$organization, ...$query]),
             'type' => $type,
             'format' => $format,
-            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'period' => ['from' => $from?->toDateString(), 'to' => $to?->toDateString()],
         ]);
     }
 }

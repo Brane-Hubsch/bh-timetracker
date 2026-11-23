@@ -56,7 +56,7 @@ abstract class TimetrackerTool extends Tool
     }
 
     /**
-     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
+     * @return array{CarbonImmutable, CarbonImmutable}|array{null, null}
      */
     protected function period(Request $request, McpContext $context, ReportPeriod $default = ReportPeriod::ThisWeek): array
     {

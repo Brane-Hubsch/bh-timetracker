@@ -276,6 +276,13 @@ describe('list_time_entries', function () {
         TimetrackerServer::actingAs($this->member)
             ->tool(ListTimeEntriesTool::class, ['period' => 'last_week'])
             ->assertStructuredContentPath('entries.0.date', '2026-11-09');
+
+        TimetrackerServer::actingAs($this->member)
+            ->tool(ListTimeEntriesTool::class, ['period' => 'all_time'])
+            ->assertOk()
+            ->assertStructuredContentPath('period', ['from' => null, 'to' => null])
+            ->assertStructuredContentCount(2, 'entries')
+            ->assertStructuredContentPath('totals.hours', 2.5);
     });
 
     it('lets admins list a member or everyone, but not members', function () {

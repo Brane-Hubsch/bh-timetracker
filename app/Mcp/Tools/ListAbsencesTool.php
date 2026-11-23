@@ -9,6 +9,7 @@ use App\Mcp\Support\Lookup;
 use App\Mcp\Support\McpContext;
 use App\Models\Absence;
 use App\Support\HolidayDates;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
@@ -55,8 +56,8 @@ class ListAbsencesTool extends TimetrackerTool
         $canSeeAll = $context->can(OrganizationPermission::ManageTeamTime);
 
         $absences = Absence::query()
-            ->whereDate('ends_on', '>=', $from->toDateString())
-            ->whereDate('starts_on', '<=', $to->toDateString())
+            ->when($from, fn (Builder $query, CarbonImmutable $date) => $query->whereDate('ends_on', '>=', $date->toDateString()))
+            ->when($to, fn (Builder $query, CarbonImmutable $date) => $query->whereDate('starts_on', '<=', $date->toDateString()))
             ->whereIn('user_id', $context->organization->members()->wherePivotNull('deactivated_at')->select('users.id'))
             ->when($userId !== null, fn (Builder $query) => $query->where('user_id', $userId))
             // Members don't see colleagues' types, so a type filter only covers their own absence.
@@ -77,7 +78,7 @@ class ListAbsencesTool extends TimetrackerTool
         $holidays = $earliest !== null ? HolidayDates::between($context->organization->id, $earliest, $latest) : [];
 
         return Response::structured([
-            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'period' => ['from' => $from?->toDateString(), 'to' => $to?->toDateString()],
             'workday_hours' => $this->hours($context->organization->workday_seconds),
             'absences' => $absences->map(fn (Absence $absence) => $canSeeAll || $absence->user_id === $context->user->id
                 ? $this->absence($absence, $context, $holidays)
