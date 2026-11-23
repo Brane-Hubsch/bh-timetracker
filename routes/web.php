@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Absences\AbsenceController;
 use App\Http\Controllers\Clients\ClientController;
 use App\Http\Controllers\Clients\ClientWebsiteLogoController;
 use App\Http\Controllers\CommandPaletteController;
@@ -30,6 +31,10 @@ Route::prefix('{current_organization}')
         Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');
         Route::delete('time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('time.destroy');
         Route::post('time/{timeEntry}/restore', [TimeEntryController::class, 'restore'])->withTrashed()->name('time.restore');
+
+        Route::post('absences', [AbsenceController::class, 'store'])->name('absences.store');
+        Route::patch('absences/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
+        Route::delete('absences/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
 
         Route::get('command-palette', CommandPaletteController::class)->name('command-palette');
 

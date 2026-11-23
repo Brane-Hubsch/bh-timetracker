@@ -8,13 +8,16 @@ use App\Actions\TimeEntries\DeleteTimeEntry;
 use App\Actions\TimeEntries\RestoreTimeEntry;
 use App\Actions\TimeEntries\UpdateTimeEntry;
 use App\Data\TimeEntryData;
+use App\Enums\AbsenceType;
 use App\Enums\OrganizationPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntries\CopyTimeEntriesRequest;
 use App\Http\Requests\TimeEntries\TimeEntryRequest;
+use App\Models\Absence;
 use App\Models\Organization;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Support\AbsencePresenter;
 use App\Support\CurrentOrganization;
 use App\Support\TimeEntryPresenter;
 use Carbon\CarbonImmutable;
@@ -58,6 +61,16 @@ class TimeEntryController extends Controller
             ->where('user_id', $member->id)
             ->startingBetween($weekStart->subWeek(), $weekStart);
 
+        // Absences in the week: the shown member's in full, colleagues' only as "off".
+        $weekAbsences = Absence::query()
+            ->forOrganization($organization)
+            ->whereDate('starts_on', '<', $weekEnd->toDateString())
+            ->whereDate('ends_on', '>=', $weekStart->toDateString())
+            ->whereIn('user_id', $organization->members()->wherePivotNull('deactivated_at')->pluck('users.id'))
+            ->with('user')
+            ->orderBy('starts_on')
+            ->get();
+
         $members = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
             ? $this->presenter->memberOptions($organization)
             : [];
@@ -69,6 +82,10 @@ class TimeEntryController extends Controller
             'weekStartsOn' => $organization->week_starts_on,
             'timezone' => $timezone,
             'entries' => $entries->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone)),
+            'absences' => $weekAbsences->where('user_id', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::absence($absence)),
+            'colleaguesOff' => $weekAbsences->where('user_id', '!=', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::colleagueOff($absence)),
+            'absenceTypes' => AbsenceType::options(),
+            'workdaySeconds' => $organization->workday_seconds,
             'projects' => $this->presenter->projectOptions($organization, $member),
             'tags' => $this->presenter->tagOptions($organization),
             'recentTags' => $this->presenter->recentTags($organization),
