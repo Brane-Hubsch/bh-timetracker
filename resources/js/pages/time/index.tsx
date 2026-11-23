@@ -1,12 +1,6 @@
 import { Avatar, Button } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import {
-    CalendarOff,
-    ChevronLeft,
-    ChevronRight,
-    Copy,
-    Plus,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
@@ -208,6 +202,20 @@ export default function TimeIndex({
                   month: 'long',
               })
             : `${t('Week :number', { number: isoWeek(weekStart) })} · ${formatDateRange(dates[0], dates[6], intlLocale)}`;
+    const viewControl = (
+        <SegmentedControl
+            aria-label={t('View')}
+            value={view}
+            onChange={(next) => visit({ view: next })}
+            className="flex-1 shrink-0 md:flex-none [&>*]:flex-1 md:[&>*]:flex-none"
+            options={[
+                { id: 'list', label: t('List') },
+                { id: 'week', label: t('Week') },
+                { id: 'day', label: t('Day') },
+            ]}
+            data-test="time-view"
+        />
+    );
 
     return (
         <>
@@ -238,6 +246,7 @@ export default function TimeIndex({
 
                 {/* Two rows on mobile (period, then filters and actions); one on desktop. */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
+                    {isDesktop && viewControl}
                     <div className="flex shrink-0 items-center gap-1">
                         <Button
                             isIconOnly
@@ -341,18 +350,7 @@ export default function TimeIndex({
                                 data-test="member-select"
                             />
                         )}
-                        <SegmentedControl
-                            aria-label={t('View')}
-                            value={view}
-                            onChange={(next) => visit({ view: next })}
-                            className="flex-1 md:flex-none [&>*]:flex-1 md:[&>*]:flex-none"
-                            options={[
-                                { id: 'list', label: t('List') },
-                                { id: 'week', label: t('Week') },
-                                { id: 'day', label: t('Day') },
-                            ]}
-                            data-test="time-view"
-                        />
+                        {!isDesktop && viewControl}
                         {canCopyPreviousWeek && (
                             <Button
                                 variant="tertiary"
@@ -367,24 +365,6 @@ export default function TimeIndex({
                                 </span>
                             </Button>
                         )}
-                        <Button
-                            variant="tertiary"
-                            className="shrink-0"
-                            onPress={() =>
-                                newAbsence(
-                                    view === 'day' || !dates.includes(today)
-                                        ? date
-                                        : today,
-                                )
-                            }
-                            aria-label={t('Register absence')}
-                            data-test="new-absence-button"
-                        >
-                            <CalendarOff className="size-4" />
-                            <span className="hidden lg:inline">
-                                {t('Absence')}
-                            </span>
-                        </Button>
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"

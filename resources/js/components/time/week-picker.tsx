@@ -1,6 +1,6 @@
 import { Button, Drawer, Popover } from '@heroui/react';
 import { parseDate, startOfWeek } from '@internationalized/date';
-import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useState } from 'react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
@@ -16,32 +16,26 @@ type Props = {
     onChange: (date: string) => void;
 };
 
-function WeekPanel({ weekStart, weekStartsOn, today, onChange }: Props) {
+type WeekPreset = { label: string; date: string; start: string };
+
+function WeekPanel({
+    weekStart,
+    weekStartsOn,
+    today,
+    onChange,
+    presets,
+}: Props & { presets: WeekPreset[] }) {
     const { t, intlLocale } = useTranslation();
     const [month, setMonth] = useState(() =>
         parseDate(weekStart).add({ days: 3 }).set({ day: 1 }),
     );
     const firstDay = WEEKDAYS[weekStartsOn - 1];
     const todayDate = parseDate(today);
-    const currentWeek = startOfWeek(todayDate, intlLocale, firstDay);
     const firstWeek = startOfWeek(month, intlLocale, firstDay);
     const nextMonth = month.add({ months: 1 });
     const weeks = Array.from({ length: 6 }, (_, index) =>
         firstWeek.add({ weeks: index }),
     ).filter((week) => week.compare(nextMonth) < 0);
-    const presets = [
-        { label: t('This week'), date: today, start: currentWeek },
-        {
-            label: t('Last week'),
-            date: addDays(today, -7),
-            start: currentWeek.subtract({ weeks: 1 }),
-        },
-        {
-            label: t('Next week'),
-            date: addDays(today, 7),
-            start: currentWeek.add({ weeks: 1 }),
-        },
-    ];
     const longRange = (start: string, end: string) =>
         formatDateRange(start, end, intlLocale, {
             day: 'numeric',
@@ -60,7 +54,7 @@ function WeekPanel({ weekStart, weekStartsOn, today, onChange }: Props) {
                     <Button
                         key={date}
                         variant="ghost"
-                        aria-pressed={start.toString() === weekStart}
+                        aria-pressed={start === weekStart}
                         className="h-9 w-full justify-start px-3 text-foreground aria-pressed:bg-accent/15"
                         onPress={() => onChange(date)}
                     >
@@ -135,7 +129,7 @@ function WeekPanel({ weekStart, weekStartsOn, today, onChange }: Props) {
                             const start = week.toString();
                             const end = week.add({ days: 6 }).toString();
                             const isCurrentWeek =
-                                currentWeek.compare(week) === 0;
+                                start <= today && today <= end;
                             const name = t('Week :number', {
                                 number: isoWeek(start),
                             });
@@ -206,28 +200,51 @@ export function WeekPicker(props: Props) {
     const { t, intlLocale } = useTranslation();
     const isDesktop = useMediaQuery('(min-width: 640px)');
     const [isOpen, setIsOpen] = useState(false);
-    const { weekStart } = props;
-    const range = formatDateRange(weekStart, addDays(weekStart, 6), intlLocale);
+    const { weekStart, weekStartsOn, today } = props;
+    const currentWeek = startOfWeek(
+        parseDate(today),
+        intlLocale,
+        WEEKDAYS[weekStartsOn - 1],
+    ).toString();
+    const presets = [
+        { label: t('This week'), offset: 0 },
+        { label: t('Last week'), offset: -7 },
+        { label: t('Next week'), offset: 7 },
+    ].map(({ label, offset }) => ({
+        label,
+        date: addDays(today, offset),
+        start: addDays(currentWeek, offset),
+    }));
+    const name =
+        presets.find(({ start }) => start === weekStart)?.label ??
+        t('Week :number', { number: isoWeek(weekStart) });
+    const range = formatDateRange(
+        weekStart,
+        addDays(weekStart, 6),
+        intlLocale,
+        {
+            day: 'numeric',
+            month: 'long',
+        },
+    );
 
     const trigger = (
         <Button
             variant="secondary"
             size="sm"
-            className="gap-1.5 text-foreground"
+            className="h-10 min-w-[8.25rem] flex-col gap-0 text-center text-foreground"
             data-test="calendar-week-picker"
         >
-            <span className="font-semibold">
-                {t('Week :number', { number: isoWeek(weekStart) })}
-            </span>
-            <span className="text-xs font-normal whitespace-nowrap text-muted tabular-nums">
+            <span className="text-sm/4 font-semibold">{name}</span>
+            <span className="text-xs/3.5 font-normal whitespace-nowrap text-muted tabular-nums">
                 {range}
             </span>
-            <ChevronDown className="size-4 shrink-0" aria-hidden />
         </Button>
     );
     const panel = (
         <WeekPanel
             {...props}
+            presets={presets}
             onChange={(date) => {
                 setIsOpen(false);
                 props.onChange(date);
