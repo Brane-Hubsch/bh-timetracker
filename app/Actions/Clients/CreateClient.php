@@ -4,6 +4,7 @@ namespace App\Actions\Clients;
 
 use App\Models\Client;
 use App\Models\Organization;
+use App\Support\ResourceSlug;
 
 class CreateClient
 {
@@ -12,9 +13,11 @@ class CreateClient
      */
     public function handle(Organization $organization, array $attributes): Client
     {
-        return Client::create([
+        $client = new Client([
             ...$attributes,
             'organization_id' => $organization->id,
         ]);
+
+        return ResourceSlug::create($client, $organization->id, $attributes['name'], 'client');
     }
 }

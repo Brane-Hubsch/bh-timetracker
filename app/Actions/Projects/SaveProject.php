@@ -5,6 +5,7 @@ namespace App\Actions\Projects;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\Project;
+use App\Support\ResourceSlug;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -22,7 +23,9 @@ class SaveProject
         $this->ensureClientBelongsToOrganization($organization, $attributes['client_id']);
 
         if ($project === null) {
-            return Project::create([...$attributes, 'organization_id' => $organization->id]);
+            $project = new Project([...$attributes, 'organization_id' => $organization->id]);
+
+            return ResourceSlug::create($project, $organization->id, $attributes['name'], 'project');
         }
 
         $project->update($attributes);

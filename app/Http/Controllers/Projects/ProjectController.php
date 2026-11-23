@@ -18,6 +18,7 @@ use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
 use App\Support\EstimatePace;
 use App\Support\ProjectFormOptions;
+use App\Support\ResourceSlug;
 use App\Support\TimeEntryPresenter;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -87,12 +88,16 @@ class ProjectController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project created.')]);
 
-        return to_route('projects.show', ['project' => $project->id]);
+        return to_route('projects.show', ['project' => $project]);
     }
 
-    public function show(#[CurrentUser] User $user, Project $project, ReportBuilder $reports, TimeEntryPresenter $presenter, ProjectFormOptions $formOptions): Response
+    public function show(Request $request, #[CurrentUser] User $user, Project $project, ReportBuilder $reports, TimeEntryPresenter $presenter, ProjectFormOptions $formOptions): Response|RedirectResponse
     {
         Gate::authorize('view', $project);
+
+        if ($redirect = ResourceSlug::redirect($request, 'projects.show', 'project', $project->slug)) {
+            return $redirect;
+        }
 
         $project->load(['client', 'members']);
         $organization = $this->currentOrganization->getOrFail();
@@ -179,7 +184,7 @@ class ProjectController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Project updated.')]);
 
-        return to_route('projects.show', ['project' => $project->id]);
+        return to_route('projects.show', ['project' => $project]);
     }
 
     public function archive(Project $project, SetProjectArchived $setArchived): RedirectResponse
@@ -211,10 +216,16 @@ class ProjectController extends Controller
     {
         return [
             'id' => $project->id,
+            'slug' => $project->slug,
             'name' => $project->name,
             'code' => $project->code,
             'color' => $project->color,
-            'client' => $project->client ? ['id' => $project->client->id, 'name' => $project->client->name, 'logo' => $project->client->logoUrl()] : null,
+            'client' => $project->client ? [
+                'id' => $project->client->id,
+                'slug' => $project->client->slug,
+                'name' => $project->client->name,
+                'logo' => $project->client->logoUrl(),
+            ] : null,
             'isBillable' => $project->is_billable,
             'estimateSeconds' => $project->estimate_seconds,
             'isPrivate' => $project->visibility === ProjectVisibility::Private,

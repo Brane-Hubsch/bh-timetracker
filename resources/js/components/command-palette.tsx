@@ -68,12 +68,13 @@ import { index as timeIndex } from '@/routes/time';
 type PaletteData = {
     projects: {
         id: number;
+        slug: string;
         name: string;
         code: string | null;
         color: string;
         clientName: string | null;
     }[];
-    clients: { id: number; name: string }[];
+    clients: { id: number; name: string; slug: string }[];
     members: { id: number; name: string }[];
 };
 
@@ -555,7 +556,7 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                             description: description || undefined,
                             color: project.color,
                             perform: go(
-                                showProject.url({ project: project.id }),
+                                showProject.url({ project: project.slug }),
                             ),
                         },
                         {
@@ -577,7 +578,7 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     id: `client-${client.id}`,
                     label: client.name,
                     icon: Briefcase,
-                    perform: go(showClient.url({ client: client.id })),
+                    perform: go(showClient.url({ client: client.slug })),
                 })),
             },
             {

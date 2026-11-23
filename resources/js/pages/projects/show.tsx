@@ -92,7 +92,7 @@ export default function ProjectShow({
             : `${formatMoney(minor, currency, intlLocale)}/h`;
 
     const addMember = () => {
-        router.visit(assignMember({ project: project.id }), {
+        router.visit(assignMember({ project: project.slug }), {
             data: {
                 user_id: Number(newMemberId),
                 hourly_rate: Number.isNaN(newMemberRate)
@@ -109,7 +109,7 @@ export default function ProjectShow({
 
     const setRate = (member: ProjectMemberItem, rate: number | null) => {
         router.visit(
-            updateMemberRate({ project: project.id, user: member.id }),
+            updateMemberRate({ project: project.slug, user: member.id }),
             {
                 data: { hourly_rate: rate },
                 preserveScroll: true,
@@ -152,10 +152,10 @@ export default function ProjectShow({
                                         router.visit(
                                             project.isArchived
                                                 ? restore({
-                                                      project: project.id,
+                                                      project: project.slug,
                                                   })
                                                 : archive({
-                                                      project: project.id,
+                                                      project: project.slug,
                                                   }),
                                             { preserveScroll: true },
                                         )
@@ -188,7 +188,7 @@ export default function ProjectShow({
                                 {can.manage ? (
                                     <Link
                                         href={showClient({
-                                            client: project.client.id,
+                                            client: project.client.slug,
                                         })}
                                         className="truncate text-accent"
                                     >
@@ -416,7 +416,7 @@ export default function ProjectShow({
                                             onPress={() =>
                                                 router.visit(
                                                     unassignMember({
-                                                        project: project.id,
+                                                        project: project.slug,
                                                         user: member.id,
                                                     }),
                                                     { preserveScroll: true },
@@ -483,7 +483,7 @@ export default function ProjectShow({
             {projectForm && (
                 <ProjectFormDrawer
                     project={{
-                        id: project.id,
+                        slug: project.slug,
                         name: project.name,
                         clientId: project.client?.id ?? null,
                         code: project.code,

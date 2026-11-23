@@ -33,6 +33,7 @@ it('lists active clients with search, and archived clients separately', function
             ->component('clients/index')
             ->has('clients', 1)
             ->where('clients.0.name', 'Acme AB')
+            ->where('clients.0.slug', 'acme-ab')
             ->where('clients.0.activeProjectsCount', 1)
             ->where('clients.0.archivedProjectsCount', 2));
 
@@ -50,7 +51,7 @@ it('lets admins create, update, archive and restore clients', function () {
 
     $this->actingAs($admin)
         ->post(route('clients.store', ['current_organization' => $this->slug]), ['name' => 'Acme AB', 'email' => 'a@acme.example'])
-        ->assertRedirect();
+        ->assertRedirect(route('clients.show', [$this->slug, 'acme-ab']));
     $client = Client::forOrganization($this->organization)->sole();
 
     $this->actingAs($admin)
@@ -80,7 +81,7 @@ it('normalizes, presents and clears the optional website', function () {
     $parameters = ['current_organization' => $this->slug, 'client' => $client->id];
 
     $this->patch(route('clients.update', $parameters), ['name' => 'Acme AB']);
-    $this->get(route('clients.show', $parameters))
+    $this->get(route('clients.show', [...$parameters, 'client' => $client]))
         ->assertInertia(fn (Assert $page) => $page->where('client.website', 'https://acme.example/about'));
 
     $this->patch(route('clients.update', $parameters), ['name' => 'Acme AB', 'website' => '']);
@@ -103,14 +104,30 @@ it('keeps members out of client management', function () {
 
 it('shows a client with its projects', function () {
     $client = Client::factory()->for($this->organization)->create();
-    $client->projects()->create(['organization_id' => $this->organization->id, 'name' => 'Webbshop', 'color' => '#7c3aed']);
+    Project::factory()->for($this->organization)->for($client)->create(['name' => 'Webbshop']);
 
     $this->actingAs($this->owner)
-        ->get(route('clients.show', ['current_organization' => $this->slug, 'client' => $client->id]))
+        ->get(route('clients.show', [$this->slug, $client]))
         ->assertInertia(fn (Assert $page) => $page
             ->component('clients/show')
             ->where('client.id', $client->id)
             ->has('projects', 1)
+            ->where('projects.0.slug', 'webbshop')
             // For creating a project for the client in the side drawer.
             ->where('projectForm.clients.0.value', (string) $client->id));
+});
+
+it('redirects an archived client bookmark with its report period to the same client', function () {
+    $client = Client::factory()->for($this->organization)->archived()->create(['name' => 'Åkerbergs AB']);
+    $query = ['period' => 'custom', 'from' => '2026-10-01', 'to' => '2026-10-31'];
+    $legacy = route('clients.show', [$this->slug, $client->id, ...$query]);
+    $canonical = route('clients.show', [$this->slug, 'akerbergs-ab', ...$query]);
+
+    $this->actingAs($this->owner)->get($legacy)->assertRedirect($canonical);
+    $this->get($canonical)->assertInertia(fn (Assert $page) => $page
+        ->where('client.id', $client->id)
+        ->where('client.isArchived', true)
+        ->where('report.period', 'custom')
+        ->where('report.from', '2026-10-01')
+        ->where('report.to', '2026-10-31'));
 });

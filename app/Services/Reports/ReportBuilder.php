@@ -243,7 +243,7 @@ class ReportBuilder
     /**
      * Active projects the viewer can access with their estimate and all time reported on them.
      *
-     * @return array<int, array{id: int, name: string, code: string|null, color: string, clientName: string|null, estimateSeconds: int|null, consumedSeconds: int, billableSeconds: int, remainingSeconds: int|null, percent: int|null}>
+     * @return array<int, array{id: int, slug: string, name: string, code: string|null, color: string, clientName: string|null, estimateSeconds: int|null, consumedSeconds: int, billableSeconds: int, remainingSeconds: int|null, percent: int|null}>
      */
     public function projectFollowUp(Organization $organization, User $viewer): array
     {
@@ -262,6 +262,7 @@ class ReportBuilder
 
                 return [
                     'id' => $project->id,
+                    'slug' => $project->slug,
                     'name' => $project->name,
                     'code' => $project->code,
                     'color' => $project->color,

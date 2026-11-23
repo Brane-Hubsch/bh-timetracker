@@ -87,7 +87,7 @@ class DashboardController extends Controller
     /**
      * Active projects with an estimate that have used at least 80 % of it.
      *
-     * @return list<array{id: int, name: string, color: string, consumedSeconds: int, estimateSeconds: int}>
+     * @return list<array{id: int, slug: string, name: string, color: string, consumedSeconds: int, estimateSeconds: int}>
      */
     private function projectsNearEstimate(): array
     {
@@ -105,6 +105,7 @@ class DashboardController extends Controller
             if ($project->estimate_seconds !== null && $consumed >= $project->estimate_seconds * 0.8) {
                 $near[] = [
                     'id' => $project->id,
+                    'slug' => $project->slug,
                     'name' => $project->name,
                     'color' => $project->color,
                     'consumedSeconds' => $consumed,
