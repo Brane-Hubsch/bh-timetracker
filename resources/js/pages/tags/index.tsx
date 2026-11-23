@@ -1,4 +1,10 @@
-import { Button, SearchField } from '@heroui/react';
+import {
+    Button,
+    FieldError,
+    Input,
+    SearchField,
+    TextField,
+} from '@heroui/react';
 import { Form, Head, router } from '@inertiajs/react';
 import { Pencil, Tag as TagIcon, Tags, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -79,22 +85,24 @@ export default function TagsIndex({ tags }: Props) {
                     >
                         {({ errors, processing }) => (
                             <>
-                                <TextInputField
+                                <TextField
                                     name="name"
-                                    label={
-                                        <span className="sr-only">
-                                            {t('New tag')}
-                                        </span>
-                                    }
-                                    placeholder={t('New tag')}
-                                    error={errors.name}
-                                    className="w-full sm:w-60"
-                                    data-test="new-tag-name"
-                                />
+                                    aria-label={t('New tag')}
+                                    isInvalid={Boolean(errors.name)}
+                                    validationBehavior="aria"
+                                    className="w-full min-w-0 sm:w-60"
+                                >
+                                    <Input
+                                        placeholder={t('New tag')}
+                                        className="h-9 py-0"
+                                        data-test="new-tag-name"
+                                    />
+                                    <FieldError>{errors.name}</FieldError>
+                                </TextField>
                                 <Button
                                     type="submit"
                                     isPending={processing}
-                                    className="shrink-0"
+                                    className="h-9 shrink-0"
                                     data-test="add-tag-button"
                                 >
                                     {t('Add')}
