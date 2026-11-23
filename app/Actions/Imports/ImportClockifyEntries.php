@@ -46,13 +46,14 @@ class ImportClockifyEntries
      * @param  array<string, int|null>  $memberMap  email => member id (or ClockifyImportPlan::invitationMemberId()), null skips the user
      * @param  array<string, bool>  $billableByProject  project key => billable, for new projects
      * @param  array<string, int|null>  $rates  ClockifyImportPlan::rateKey() => hourly rate in minor units
+     * @param  int|null  $projectForRowsWithoutProject  an existing project for rows without a project (null skips them)
      * @return array{created: int, updated: int, seconds: int, clientsCreated: int, projectsCreated: int, from: string|null, to: string|null, skipped: array<int, array{line: int, date: string|null, user: string|null, project: string|null, reason: string}>}
      *
      * @throws ValidationException
      */
-    public function handle(Organization $organization, User $importer, ClockifyCsv $csv, array $memberMap, array $billableByProject, array $rates = [], bool $updateExisting = false): array
+    public function handle(Organization $organization, User $importer, ClockifyCsv $csv, array $memberMap, array $billableByProject, array $rates = [], bool $updateExisting = false, ?int $projectForRowsWithoutProject = null): array
     {
-        $plan = new ClockifyImportPlan($organization, $importer, $csv, $memberMap, $billableByProject, $rates);
+        $plan = new ClockifyImportPlan($organization, $importer, $csv, $memberMap, $billableByProject, $rates, $projectForRowsWithoutProject);
 
         if ($plan->entries === [] && (! $updateExisting || $plan->alreadyImported === [])) {
             throw ValidationException::withMessages(['import' => __('There is nothing to import.')]);
@@ -141,7 +142,7 @@ class ImportClockifyEntries
             $remappedRates[isset($userIds[$memberId]) ? ClockifyImportPlan::rateKey(substr($rateKey, 0, $separator), $userIds[$memberId]) : $rateKey] = $rate;
         }
 
-        return new ClockifyImportPlan($organization, $importer, $csv, $memberMap, $billableByProject, $remappedRates);
+        return new ClockifyImportPlan($organization, $importer, $csv, $memberMap, $billableByProject, $remappedRates, $plan->projectForRowsWithoutProject);
     }
 
     /**

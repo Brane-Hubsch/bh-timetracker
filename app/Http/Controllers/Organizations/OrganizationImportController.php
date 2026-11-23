@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Organizations;
 
 use App\Actions\Imports\ImportClockifyEntries;
+use App\Actions\Imports\ImportClockifyProjects;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Imports\ClockifyImportChoicesRequest;
 use App\Http\Requests\Imports\UploadClockifyImportRequest;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\User;
 use App\Services\Imports\ClockifyCsv;
 use App\Services\Imports\ClockifyImportPlan;
+use App\Services\Imports\ClockifyProjectPlan;
+use App\Services\Imports\ClockifyProjectsCsv;
 use App\Support\PendingImports;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +25,10 @@ use Inertia\Response;
  * Import from Clockify in three steps: upload the CSV export, review a preview (map users to
  * members, choose billable for new projects and the hourly rate per member and project), then
  * import. Rates are only shown to and taken from users who may see rates.
+ *
+ * Clockify's project export goes through the same steps (told apart by its columns): it creates and
+ * updates projects with their status, visibility, note, estimate and members, before old time is
+ * imported onto them.
  */
 class OrganizationImportController extends Controller
 {
@@ -48,7 +56,7 @@ class OrganizationImportController extends Controller
 
         $contents = $request->csvContents();
         // Fail early when it isn't a Clockify export.
-        ClockifyCsv::fromString($contents);
+        ClockifyProjectsCsv::matches($contents) ? ClockifyProjectsCsv::fromString($contents) : ClockifyCsv::fromString($contents);
 
         $token = $this->pendingImports->put($organization, $user, $contents);
 
@@ -65,8 +73,12 @@ class OrganizationImportController extends Controller
             return $this->expired($organization);
         }
 
+        if (ClockifyProjectsCsv::matches($contents)) {
+            return $this->projectPreview($request, $organization, $import, $contents);
+        }
+
         $canSetRates = $user->can('viewRates', $organization);
-        $plan = new ClockifyImportPlan($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject(), $canSetRates ? $request->rates() : []);
+        $plan = new ClockifyImportPlan($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject(), $canSetRates ? $request->rates() : [], $request->projectForRowsWithoutProject());
         $rates = collect($plan->rates)->groupBy('projectKey');
 
         return Inertia::render('organizations/import', [
@@ -81,6 +93,8 @@ class OrganizationImportController extends Controller
                 'importable' => count($plan->entries),
                 'importableSeconds' => $plan->importableSeconds(),
                 'splitRows' => $plan->splitRows,
+                'rowsWithoutProject' => $plan->rowsWithoutProject,
+                'projectForRowsWithoutProject' => $plan->projectForRowsWithoutProject,
                 'members' => $plan->members,
                 'projects' => array_map(fn (array $project) => [
                     'key' => $project['key'],
@@ -108,6 +122,13 @@ class OrganizationImportController extends Controller
                 'skippedCount' => count($plan->skipped),
                 'skippedReasons' => $this->reasons($plan->skipped),
             ],
+            // Projects that rows without a project can go to, archived ones last.
+            'projectOptions' => fn () => Project::query()->forOrganization($organization)->with('client')
+                ->orderByRaw('CASE WHEN archived_at IS NULL THEN 0 ELSE 1 END')->orderBy('name')->get()
+                ->map(fn (Project $project) => [
+                    'value' => (string) $project->id,
+                    'label' => $project->client ? "{$project->name} · {$project->client->name}" : $project->name,
+                ])->values(),
             'memberOptions' => $organization->members()->wherePivotNull('deactivated_at')->orderBy('name')->get()
                 ->map(fn (User $member) => ['value' => (string) $member->id, 'label' => "{$member->name} ({$member->email})"])
                 ->concat(collect($plan->invitations)->map(fn (array $item, int $memberId) => [
@@ -118,7 +139,7 @@ class OrganizationImportController extends Controller
         ]);
     }
 
-    public function import(ClockifyImportChoicesRequest $request, #[CurrentUser] User $user, Organization $organization, string $import, ImportClockifyEntries $importEntries): RedirectResponse
+    public function import(ClockifyImportChoicesRequest $request, #[CurrentUser] User $user, Organization $organization, string $import, ImportClockifyEntries $importEntries, ImportClockifyProjects $importProjects): RedirectResponse
     {
         Gate::authorize('import', $organization);
 
@@ -128,8 +149,17 @@ class OrganizationImportController extends Controller
             return $this->expired($organization);
         }
 
+        if (ClockifyProjectsCsv::matches($contents)) {
+            $result = $importProjects->handle($organization, ClockifyProjectsCsv::fromString($contents), $request->billableByProject());
+            $this->pendingImports->forget($organization, $user, $import);
+            Inertia::flash('projectImportResult', $result);
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Projects imported: :created new, :updated updated.', $result)]);
+
+            return to_route('organizations.import.create', ['organization' => $organization->slug]);
+        }
+
         $rates = $user->can('viewRates', $organization) ? $request->rates() : [];
-        $result = $importEntries->handle($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject(), $rates, $request->updateExisting());
+        $result = $importEntries->handle($organization, $user, ClockifyCsv::fromString($contents), $request->memberMap(), $request->billableByProject(), $rates, $request->updateExisting(), $request->projectForRowsWithoutProject());
         $this->pendingImports->forget($organization, $user, $import);
 
         Inertia::flash('importResult', [
@@ -151,6 +181,39 @@ class OrganizationImportController extends Controller
         $this->pendingImports->forget($organization, $user, $import);
 
         return to_route('organizations.import.create', ['organization' => $organization->slug]);
+    }
+
+    /**
+     * The preview of a project export: which projects are created, and how existing ones change.
+     */
+    private function projectPreview(ClockifyImportChoicesRequest $request, Organization $organization, string $import, string $contents): Response
+    {
+        $plan = new ClockifyProjectPlan($organization, ClockifyProjectsCsv::fromString($contents), $request->billableByProject());
+
+        return Inertia::render('organizations/import', [
+            'organization' => ['name' => $organization->name, 'slug' => $organization->slug],
+            'preview' => null,
+            'projectPreview' => [
+                'token' => $import,
+                'projects' => array_map(fn (array $project) => [
+                    'key' => $project['key'],
+                    'name' => $project['name'],
+                    'client' => $project['client'],
+                    'isNew' => $project['projectId'] === null,
+                    'archived' => $project['archived'],
+                    'private' => $project['private'],
+                    'estimateSeconds' => $project['estimateSeconds'],
+                    'note' => $project['note'],
+                    'billable' => $project['billable'],
+                    'members' => $project['members'],
+                    'changes' => $project['changes'],
+                ], $plan->projects),
+                'newCount' => count($plan->newProjects()),
+                'changedCount' => count($plan->changedProjects()),
+                'newClients' => $plan->newClients,
+                'unknownMembers' => $plan->unknownMembers,
+            ],
+        ]);
     }
 
     /**

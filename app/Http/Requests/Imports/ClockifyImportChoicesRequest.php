@@ -7,9 +7,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * The choices made in the import preview: which member each Clockify user's time goes to (or
- * "skip"), whether new projects are billable, the hourly rate per member and project, and whether
- * rows that were already imported are updated. Sent as lists, since emails and project keys contain
- * characters that don't work as input names.
+ * "skip"), whether new projects are billable, the hourly rate per member and project, whether rows
+ * that were already imported are updated and which project rows without one go to. Sent as lists,
+ * since emails and project keys contain characters that don't work as input names.
  */
 class ClockifyImportChoicesRequest extends FormRequest
 {
@@ -30,6 +30,7 @@ class ClockifyImportChoicesRequest extends FormRequest
             'rates.*.member' => ['required', 'integer'],
             'rates.*.rate' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'update_existing' => ['nullable', 'boolean'],
+            'project_for_rows_without_project' => ['nullable', 'integer'],
         ];
     }
 
@@ -92,6 +93,15 @@ class ClockifyImportChoicesRequest extends FormRequest
         }
 
         return $rates;
+    }
+
+    /**
+     * The project rows without a project go to; null skips them. ClockifyImportPlan only uses a
+     * project of the organization.
+     */
+    public function projectForRowsWithoutProject(): ?int
+    {
+        return $this->filled('project_for_rows_without_project') ? $this->integer('project_for_rows_without_project') : null;
     }
 
     /**
