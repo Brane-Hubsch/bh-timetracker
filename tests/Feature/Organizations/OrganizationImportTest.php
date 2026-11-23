@@ -199,3 +199,17 @@ it('offers pending invitations as people to put time on, matching them on email'
     // Nothing is saved before the import.
     expect(User::query()->where('email', 'dennis@example.com')->exists())->toBeFalse();
 });
+
+it('tells how many rows are longer than 24 hours and split at midnight', function () {
+    $csv = clockifyCsv([
+        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '06-22-2026', '8:30', '06-23-2026', '16:30'),
+    ]);
+    $token = importToken((string) ($this->upload)($this->owner, $csv)->headers->get('Location'));
+
+    $this->get(route('organizations.import.show', [$this->slug, $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.splitRows', 1)
+            ->where('preview.importable', 2)
+            ->where('preview.importableSeconds', 32 * 3600)
+            ->where('preview.skippedCount', 0));
+});

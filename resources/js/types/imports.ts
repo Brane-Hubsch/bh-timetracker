@@ -16,6 +16,8 @@ export type ImportPreview = {
     rows: number;
     importable: number;
     importableSeconds: number;
+    /** Rows longer than 24 hours, split at midnight into one entry per day. */
+    splitRows: number;
     members: {
         email: string;
         name: string;
