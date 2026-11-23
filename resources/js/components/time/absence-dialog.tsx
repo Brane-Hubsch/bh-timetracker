@@ -28,7 +28,14 @@ type Props = {
     workdaySeconds: number;
 };
 
-const FORM_ID = 'absence-form';
+export const ABSENCE_FORM_ID = 'absence-form';
+const FORM_ID = ABSENCE_FORM_ID;
+
+/** What the absence form needs from the page. */
+export type AbsenceOptions = Pick<
+    Props,
+    'absenceTypes' | 'holidays' | 'workdaySeconds'
+>;
 
 export function draftFromAbsence(absence: Absence): AbsenceDraft {
     return {
@@ -106,13 +113,22 @@ function AbsenceDialogFooter({
     );
 }
 
-function AbsenceForm({
+/**
+ * The absence fields, also used inside the time entry dialog when it is switched to absence.
+ * `userId` overrides the draft's member while that dialog's member picker changes it.
+ */
+export function AbsenceForm({
     draft,
     onClose,
     absenceTypes,
     holidays,
     workdaySeconds,
-}: Props & { draft: AbsenceDraft }) {
+    userId,
+}: AbsenceOptions & {
+    draft: AbsenceDraft;
+    onClose: () => void;
+    userId?: number;
+}) {
     const { t, tc, intlLocale } = useTranslation();
     const [values, setValues] = useState(draft);
     const [isPartial, setPartial] = useState(draft.hoursPerDay !== '');
@@ -132,7 +148,7 @@ function AbsenceForm({
         event.preventDefault();
 
         const data = {
-            user_id: values.userId,
+            user_id: userId ?? values.userId,
             type: values.type,
             starts_on: values.startsOn,
             ends_on: values.endsOn,
