@@ -9,14 +9,19 @@ import { ListFilters } from '@/components/list-filters';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import { show } from '@/routes/clients';
-import type { ClientListItem } from '@/types';
+import type { ClientListItem, ClientNameOption } from '@/types';
 
 type Props = {
     clients: ClientListItem[];
+    clientNameOptions: ClientNameOption[];
     filters: { search: string; status: 'active' | 'archived' };
 };
 
-export default function ClientsIndex({ clients, filters }: Props) {
+export default function ClientsIndex({
+    clients,
+    clientNameOptions,
+    filters,
+}: Props) {
     const { t, tc } = useTranslation();
     const [isCreateOpen, setCreateOpen] = useState(false);
     useOpenFromQuery('new', () => setCreateOpen(true));
@@ -101,6 +106,7 @@ export default function ClientsIndex({ clients, filters }: Props) {
 
             <ClientFormDrawer
                 client={null}
+                clientNameOptions={clientNameOptions}
                 isOpen={isCreateOpen}
                 onOpenChange={setCreateOpen}
             />

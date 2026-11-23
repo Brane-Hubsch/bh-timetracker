@@ -23,7 +23,8 @@ function asRole(OrganizationRole $role)
 it('lists active clients with search, and archived clients separately', function () {
     $acme = Client::factory()->for($this->organization)->create(['name' => 'Acme AB']);
     Client::factory()->for($this->organization)->create(['name' => 'Nordic AB']);
-    Client::factory()->for($this->organization)->archived()->create(['name' => 'Old AB']);
+    $archived = Client::factory()->for($this->organization)->archived()->create(['name' => 'Old AB']);
+    Client::factory()->archived()->create(['name' => 'Other organization AB']);
     Project::factory()->for($this->organization)->for($acme)->create();
     Project::factory()->for($this->organization)->for($acme)->archived()->count(2)->create();
 
@@ -34,7 +35,10 @@ it('lists active clients with search, and archived clients separately', function
             ->has('clients', 1)
             ->where('clients.0.name', 'Acme AB')
             ->where('clients.0.activeProjectsCount', 1)
-            ->where('clients.0.archivedProjectsCount', 2));
+            ->where('clients.0.archivedProjectsCount', 2)
+            ->has('clientNameOptions', 3)
+            ->where('clientNameOptions.0', ['id' => $acme->id, 'name' => 'Acme AB', 'isArchived' => false])
+            ->where('clientNameOptions.2', ['id' => $archived->id, 'name' => 'Old AB', 'isArchived' => true]));
 
     $this->actingAs($this->owner)
         ->get(route('clients.index', ['current_organization' => $this->slug, 'status' => 'archived']))
@@ -69,6 +73,16 @@ it('validates client input', function () {
     $this->actingAs($this->owner)
         ->post(route('clients.store', ['current_organization' => $this->slug]), ['name' => '', 'email' => 'nope', 'website' => 'ftp://example.com'])
         ->assertSessionHasErrors(['name', 'email', 'website']);
+});
+
+it('shows a name validation error when creating an archived client again', function () {
+    Client::factory()->for($this->organization)->archived()->create(['name' => 'Nordic Health AB']);
+
+    $this->actingAs($this->owner)
+        ->post(route('clients.store', ['current_organization' => $this->slug]), ['name' => ' nordic health ab '])
+        ->assertSessionHasErrors(['name' => __('A client with this name already exists.')]);
+
+    expect(Client::forOrganization($this->organization)->count())->toBe(1);
 });
 
 it('normalizes, presents and clears the optional website', function () {

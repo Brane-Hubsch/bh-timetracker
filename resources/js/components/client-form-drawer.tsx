@@ -1,7 +1,14 @@
-import { Button, Description, Label, TextArea, TextField } from '@heroui/react';
-import { Form, useHttp } from '@inertiajs/react';
+import {
+    Button,
+    Chip,
+    Description,
+    Label,
+    TextArea,
+    TextField,
+} from '@heroui/react';
+import { Form, Link, useHttp } from '@inertiajs/react';
 import { Link2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { ImageUploadField } from '@/components/form/image-upload-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
@@ -12,20 +19,86 @@ import {
 } from '@/components/side-drawer';
 import { useTranslation } from '@/lib/i18n';
 import { prepareWebsiteLogo, type WebsiteLogo } from '@/lib/website-logo';
-import { store, update, websiteLogo } from '@/routes/clients';
-import type { ClientDetails } from '@/types';
+import { show, store, update, websiteLogo } from '@/routes/clients';
+import type { ClientDetails, ClientNameOption } from '@/types';
 
 type Props = {
-    /** Edit this client, or create a new one when null. */
-    client: ClientDetails | null;
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-};
+} & (
+    | { client: ClientDetails; clientNameOptions?: never }
+    | { client: null; clientNameOptions: ClientNameOption[] }
+);
+
+function ClientNameSuggestions({ options }: { options: ClientNameOption[] }) {
+    const { t } = useTranslation();
+    const labelId = useId();
+
+    return (
+        <div
+            aria-live="polite"
+            className={options.length ? 'grid gap-2' : 'sr-only'}
+        >
+            {options.length > 0 && (
+                <>
+                    <p id={labelId} className="text-xs font-medium text-muted">
+                        {t('Existing clients')}
+                    </p>
+                    <ul aria-labelledby={labelId} className="grid gap-1">
+                        {options.map((option) => (
+                            <li key={option.id}>
+                                <Link
+                                    href={show({ client: option.id })}
+                                    className="flex min-h-10 items-center justify-between gap-2 rounded-lg bg-surface-secondary px-3 py-2 text-sm font-medium transition-colors hover:bg-surface-tertiary hover:underline focus-visible:underline"
+                                >
+                                    <span className="min-w-0 break-words">
+                                        {option.name}
+                                    </span>
+                                    {option.isArchived && (
+                                        <Chip
+                                            size="sm"
+                                            variant="soft"
+                                            className="shrink-0"
+                                        >
+                                            {t('Archived')}
+                                        </Chip>
+                                    )}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
+        </div>
+    );
+}
 
 /** Create or edit a client in a side drawer. */
-export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
+export function ClientFormDrawer({
+    client,
+    clientNameOptions = [],
+    isOpen,
+    onOpenChange,
+}: Props) {
     const { t } = useTranslation();
     const form = client ? update.form({ client: client.id }) : store.form();
+    const [name, setName] = useState('');
+    const nameQuery = name.trim().toLowerCase();
+    const matches =
+        !client && nameQuery
+            ? clientNameOptions.filter((option) =>
+                  option.name.trim().toLowerCase().includes(nameQuery),
+              )
+            : [];
+    const duplicate = matches.find(
+        (option) => option.name.trim().toLowerCase() === nameQuery,
+    );
+    const suggestions = duplicate
+        ? [
+              duplicate,
+              ...matches.filter((option) => option.id !== duplicate.id),
+          ].slice(0, 5)
+        : matches.slice(0, 5);
     // The logo is sent with the form: a newly chosen file, or a request to remove the current one.
     const [logo, setLogo] = useState<File | null>(null);
     const [removeLogo, setRemoveLogo] = useState(false);
@@ -43,6 +116,7 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
 
     useEffect(() => {
         if (isOpen) {
+            setName('');
             setLogo(null);
             setRemoveLogo(false);
             setWebsite(savedWebsite);
@@ -143,22 +217,49 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                     ...(logo ? { logo } : {}),
                     remove_logo: removeLogo ? 1 : 0,
                 })}
+                onBefore={() => !duplicate}
                 onSuccess={() => onOpenChange(false)}
                 className={sideDrawerFormClass}
             >
-                {({ errors, processing }) => (
+                {({ clearErrors, errors, processing }) => (
                     <>
                         <SideDrawerBody>
                             <div className="grid gap-4">
-                                <TextInputField
-                                    name="name"
-                                    label={t('Name')}
-                                    defaultValue={client?.name}
-                                    error={errors.name}
-                                    isRequired
-                                    autoFocus={!client}
-                                    data-test="client-name"
-                                />
+                                <div className="grid gap-2">
+                                    <TextInputField
+                                        name="name"
+                                        label={t('Name')}
+                                        defaultValue={client?.name}
+                                        value={client ? undefined : name}
+                                        onChange={
+                                            client
+                                                ? undefined
+                                                : (value) => {
+                                                      setName(value);
+                                                      if (errors.name)
+                                                          clearErrors('name');
+                                                  }
+                                        }
+                                        error={
+                                            duplicate
+                                                ? t(
+                                                      'A client with this name already exists.',
+                                                  )
+                                                : errors.name
+                                        }
+                                        isRequired
+                                        autoFocus={!client}
+                                        autoComplete={
+                                            client ? undefined : 'off'
+                                        }
+                                        data-test="client-name"
+                                    />
+                                    {!client && (
+                                        <ClientNameSuggestions
+                                            options={suggestions}
+                                        />
+                                    )}
+                                </div>
                                 <TextInputField
                                     name="website"
                                     label={t('Website')}
@@ -254,7 +355,7 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                             <Button
                                 type="submit"
                                 isPending={processing}
-                                isDisabled={findingLogo}
+                                isDisabled={findingLogo || Boolean(duplicate)}
                                 data-test="client-save"
                             >
                                 {t('Save')}

@@ -56,6 +56,14 @@ class ClientController extends Controller
 
         return Inertia::render('clients/index', [
             'clients' => $clients,
+            'clientNameOptions' => fn () => Client::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'archived_at'])
+                ->map(fn (Client $client) => [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'isArchived' => $client->isArchived(),
+                ]),
             'filters' => ['search' => $search, 'status' => $status],
         ]);
     }
