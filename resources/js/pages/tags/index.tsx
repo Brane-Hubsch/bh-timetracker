@@ -1,6 +1,12 @@
-import { Button, SearchField } from '@heroui/react';
+import { Button, Dropdown, Label, SearchField } from '@heroui/react';
 import { Form, Head, router } from '@inertiajs/react';
-import { Pencil, Tag as TagIcon, Tags, Trash2 } from 'lucide-react';
+import {
+    EllipsisVertical,
+    Pencil,
+    Tag as TagIcon,
+    Tags,
+    Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { TextInputField } from '@/components/form/text-input-field';
@@ -32,7 +38,7 @@ type Props = {
 
 /** Columns from lg up: tag, entries, reported, last used, actions. */
 const COLUMNS =
-    'lg:grid-cols-[minmax(0,1fr)_7rem_8rem_8.5rem_5.5rem] lg:items-center lg:gap-4';
+    'lg:grid-cols-[minmax(0,1fr)_7rem_8rem_8.5rem_2.5rem] lg:items-center lg:gap-4';
 
 const RENAME_FORM = 'rename-tag-form';
 
@@ -168,28 +174,46 @@ export default function TagsIndex({ tags }: Props) {
                                         : '–'}
                                 </span>
                                 <div className="flex justify-end">
-                                    <Button
-                                        isIconOnly
-                                        variant="ghost"
-                                        size="sm"
-                                        aria-label={t('Rename :name', {
-                                            name: tag.name,
-                                        })}
-                                        onPress={() => setRenaming(tag)}
-                                    >
-                                        <Pencil className="size-4" />
-                                    </Button>
-                                    <Button
-                                        isIconOnly
-                                        variant="ghost"
-                                        size="sm"
-                                        aria-label={t('Delete :name', {
-                                            name: tag.name,
-                                        })}
-                                        onPress={() => setDeleting(tag)}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
+                                    <Dropdown>
+                                        <Button
+                                            isIconOnly
+                                            variant="ghost"
+                                            size="sm"
+                                            aria-label={t('Actions for :name', {
+                                                name: tag.name,
+                                            })}
+                                        >
+                                            <EllipsisVertical className="size-4" />
+                                        </Button>
+                                        <Dropdown.Popover
+                                            placement="bottom end"
+                                            className="min-w-40 rounded-3xl"
+                                        >
+                                            <Dropdown.Menu>
+                                                <Dropdown.Item
+                                                    id="rename"
+                                                    textValue={t('Rename')}
+                                                    onAction={() =>
+                                                        setRenaming(tag)
+                                                    }
+                                                >
+                                                    <Pencil className="size-4 shrink-0" />
+                                                    <Label>{t('Rename')}</Label>
+                                                </Dropdown.Item>
+                                                <Dropdown.Item
+                                                    id="delete"
+                                                    textValue={t('Delete')}
+                                                    onAction={() =>
+                                                        setDeleting(tag)
+                                                    }
+                                                    variant="danger"
+                                                >
+                                                    <Trash2 className="size-4 shrink-0 text-danger" />
+                                                    <Label>{t('Delete')}</Label>
+                                                </Dropdown.Item>
+                                            </Dropdown.Menu>
+                                        </Dropdown.Popover>
+                                    </Dropdown>
                                 </div>
                             </li>
                         ))}

@@ -1,6 +1,6 @@
-import { Button } from '@heroui/react';
+import { Button, Dropdown, Label } from '@heroui/react';
 import { Form, router } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { EllipsisVertical, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
@@ -155,25 +155,45 @@ export function HolidayManager({ organizationSlug, holidays, years }: Props) {
                                 <span className="min-w-0 flex-1 truncate">
                                     {holiday.name}
                                 </span>
-                                <Button
-                                    isIconOnly
-                                    variant="ghost"
-                                    size="sm"
-                                    aria-label={t('Delete :name', {
-                                        name: holiday.name,
-                                    })}
-                                    onPress={() =>
-                                        router.delete(
-                                            destroy.url({
-                                                organization: organizationSlug,
-                                                holiday: holiday.id,
-                                            }),
-                                            { preserveScroll: true },
-                                        )
-                                    }
-                                >
-                                    <Trash2 className="size-4" />
-                                </Button>
+                                <Dropdown>
+                                    <Button
+                                        isIconOnly
+                                        variant="ghost"
+                                        size="sm"
+                                        aria-label={t('Actions for :name', {
+                                            name: holiday.name,
+                                        })}
+                                    >
+                                        <EllipsisVertical className="size-4" />
+                                    </Button>
+                                    <Dropdown.Popover
+                                        placement="bottom end"
+                                        className="min-w-40 rounded-3xl"
+                                    >
+                                        <Dropdown.Menu>
+                                            <Dropdown.Item
+                                                id="delete"
+                                                textValue={t('Delete')}
+                                                onAction={() =>
+                                                    router.delete(
+                                                        destroy.url({
+                                                            organization:
+                                                                organizationSlug,
+                                                            holiday: holiday.id,
+                                                        }),
+                                                        {
+                                                            preserveScroll: true,
+                                                        },
+                                                    )
+                                                }
+                                                variant="danger"
+                                            >
+                                                <Trash2 className="size-4 shrink-0 text-danger" />
+                                                <Label>{t('Delete')}</Label>
+                                            </Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown.Popover>
+                                </Dropdown>
                             </li>
                         ))}
                     </ul>
