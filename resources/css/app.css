@@ -215,6 +215,11 @@
     padding-inline: var(--time-calendar-entry-padding, 4px) !important;
 }
 
+/* The classic theme adds vertical padding to short events, shifting both edges as they resize. */
+.time-calendar-event > .time-calendar-event-inner {
+    padding-block: 0;
+}
+
 /* FullCalendar positions the resize preview on the wrapper around the event. */
 .time-calendar div:has(> .time-calendar-resize-preview) {
     transition-property: none;
