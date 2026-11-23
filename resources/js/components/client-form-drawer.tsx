@@ -13,7 +13,7 @@ import {
 import { Form, useHttp } from '@inertiajs/react';
 import { Link2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Group, useFilter } from 'react-aria-components';
+import { useFilter } from 'react-aria-components';
 import { ImageUploadField } from '@/components/form/image-upload-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
@@ -66,18 +66,14 @@ function ClientNameField({
             validationBehavior="aria"
             className="w-full"
         >
-            <Label isRequired>{t('Name')}</Label>
-            <Group className="grid gap-1">
-                <Input autoFocus autoComplete="off" data-test="client-name" />
-                <FieldError>{error}</FieldError>
-            </Group>
-            <ComboBox.Popover>
-                <p
-                    aria-hidden="true"
-                    className="px-4 pt-2 text-xs font-medium text-muted"
-                >
-                    {t('Existing clients')}
-                </p>
+            <div className="flex items-baseline justify-between gap-2">
+                <Label isRequired className="shrink-0">
+                    {t('Name')}
+                </Label>
+                <FieldError className="min-w-0 text-end">{error}</FieldError>
+            </div>
+            <Input autoFocus autoComplete="off" data-test="client-name" />
+            <ComboBox.Popover offset={4}>
                 <ListBox
                     items={options}
                     aria-label={t('Existing clients')}
