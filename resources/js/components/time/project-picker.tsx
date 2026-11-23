@@ -112,9 +112,10 @@ function ProjectInput({
                         ? 'text-transparent caret-transparent'
                         : undefined
                 }
+                // The list opens on typing, Arrow Down or a click, not when the dialog focuses the field.
                 onClick={() => {
-                    if (showProject) {
-                        state?.open(null, 'manual');
+                    if (state?.isOpen === false) {
+                        state.open(null, 'manual');
                     }
                 }}
             />
@@ -237,7 +238,7 @@ export function ProjectPicker({
                     selectedDescription ? selectedDescriptionId : undefined
                 }
                 className="w-full"
-                menuTrigger="focus"
+                menuTrigger="input"
                 allowsEmptyCollection
                 onInputChange={setQuery}
                 onOpenChange={(isOpen, trigger) => {
