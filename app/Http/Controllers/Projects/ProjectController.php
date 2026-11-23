@@ -42,6 +42,11 @@ class ProjectController extends Controller
         $status = $request->query('status') === 'archived' ? 'archived' : 'active';
         $search = $request->string('search')->value();
         $clientId = $request->integer('client') ?: null;
+        $billable = match ($request->query('billable')) {
+            '1' => true,
+            '0' => false,
+            default => null,
+        };
 
         $projects = Project::query()
             ->accessibleBy($user, $organization)
@@ -49,6 +54,7 @@ class ProjectController extends Controller
             ->withSum('timeEntries as consumed_seconds', 'duration_seconds')
             ->when($status === 'archived', fn ($query) => $query->archived(), fn ($query) => $query->active())
             ->when($clientId, fn ($query) => $query->where('client_id', $clientId))
+            ->when($billable !== null, fn ($query) => $query->where('is_billable', $billable))
             ->search($search)
             ->orderBy('name')
             ->get();
@@ -68,7 +74,7 @@ class ProjectController extends Controller
                 ->when(! $user->can('viewAny', Client::class), fn ($clients) => $clients
                     ->whereIn('id', $projects->pluck('client_id')->filter()->all())
                     ->values()),
-            'filters' => ['search' => $search, 'status' => $status, 'client' => $clientId],
+            'filters' => ['search' => $search, 'status' => $status, 'client' => $clientId, 'billable' => $billable === null ? null : ($billable ? '1' : '0')],
             'projectForm' => $user->can('create', Project::class) ? $formOptions->for($organization) : null,
         ]);
     }

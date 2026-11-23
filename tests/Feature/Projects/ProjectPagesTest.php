@@ -103,6 +103,23 @@ it('shows the hours left to the estimate and the pace per working day', function
             ->where('estimatePace.to', '2026-12-31'));
 });
 
+it('filters by billable', function () {
+    Project::factory()->for($this->organization)->create(['name' => 'Kundjobb', 'is_billable' => true]);
+    Project::factory()->for($this->organization)->create(['name' => 'Internt', 'is_billable' => false]);
+
+    $this->actingAs($this->owner)->get(route('projects.index', [$this->slug, 'billable' => '1']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.billable', '1')
+            ->has('projects', 1)
+            ->where('projects.0.name', 'Kundjobb'));
+
+    $this->get(route('projects.index', [$this->slug, 'billable' => '0']))
+        ->assertInertia(fn (Assert $page) => $page->has('projects', 1)->where('projects.0.name', 'Internt'));
+
+    $this->get(route('projects.index', [$this->slug, 'billable' => 'any']))
+        ->assertInertia(fn (Assert $page) => $page->where('filters.billable', null)->has('projects', 2));
+});
+
 it('filters by search, client and status', function () {
     $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
     Project::factory()->for($this->organization)->create(['name' => 'Webbshop', 'client_id' => $client->id]);
