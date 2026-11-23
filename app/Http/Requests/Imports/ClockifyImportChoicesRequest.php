@@ -34,7 +34,8 @@ class ClockifyImportChoicesRequest extends FormRequest
     }
 
     /**
-     * Email => member id, or null to skip that user. Users not listed match on email.
+     * Email => member id, or null to skip that user. Users not listed match on email. A negative id
+     * is a pending invitation (ClockifyImportPlan::invitationMemberId()).
      *
      * @return array<string, int|null>
      */
@@ -48,7 +49,7 @@ class ClockifyImportChoicesRequest extends FormRequest
             }
 
             $member = $choice['member'] ?? null;
-            $map[mb_strtolower($choice['email'])] = is_string($member) && ctype_digit($member) ? (int) $member : null;
+            $map[mb_strtolower($choice['email'])] = is_string($member) && preg_match('/^-?\d+$/', $member) === 1 ? (int) $member : null;
         }
 
         return $map;

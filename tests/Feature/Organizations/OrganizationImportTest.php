@@ -2,6 +2,7 @@
 
 use App\Enums\OrganizationRole;
 use App\Models\Client;
+use App\Models\OrganizationInvitation;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -180,4 +181,21 @@ it('imports with chosen rates and updates entries imported before when asked', f
 
     expect(TimeEntry::query()->where('user_id', $this->member->id)->sole()->hourly_rate)->toBe(125000)
         ->and(TimeEntry::query()->count())->toBe(2);
+});
+
+it('offers pending invitations as people to put time on, matching them on email', function () {
+    $invitation = OrganizationInvitation::factory()->for($this->organization)->create(['email' => 'dennis@example.com', 'invited_by' => $this->owner->id]);
+    OrganizationInvitation::factory()->for($this->organization)->expired()->create(['email' => 'old@example.com', 'invited_by' => $this->owner->id]);
+    $token = importToken((string) ($this->upload)($this->owner)->headers->get('Location'));
+
+    $this->get(route('organizations.import.show', [$this->slug, $token]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('preview.importable', 3)
+            ->where('preview.members.2.email', 'dennis@example.com')
+            ->where('preview.members.2.memberId', -$invitation->id)
+            ->has('memberOptions', 3)
+            ->where('memberOptions.2.value', (string) -$invitation->id));
+
+    // Nothing is saved before the import.
+    expect(User::query()->where('email', 'dennis@example.com')->exists())->toBeFalse();
 });

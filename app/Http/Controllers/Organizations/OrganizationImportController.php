@@ -109,6 +109,10 @@ class OrganizationImportController extends Controller
             ],
             'memberOptions' => $organization->members()->wherePivotNull('deactivated_at')->orderBy('name')->get()
                 ->map(fn (User $member) => ['value' => (string) $member->id, 'label' => "{$member->name} ({$member->email})"])
+                ->concat(collect($plan->invitations)->map(fn (array $item, int $memberId) => [
+                    'value' => (string) $memberId,
+                    'label' => __(':email (invited)', ['email' => $item['invitation']->email]),
+                ]))
                 ->values(),
         ]);
     }

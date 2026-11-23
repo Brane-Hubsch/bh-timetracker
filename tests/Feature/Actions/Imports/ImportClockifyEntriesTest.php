@@ -5,6 +5,7 @@ use App\Enums\OrganizationRole;
 use App\Enums\ProjectVisibility;
 use App\Enums\TimeEntrySource;
 use App\Models\Client;
+use App\Models\OrganizationInvitation;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\TimeEntry;
@@ -204,4 +205,68 @@ it('updates the rate and billable setting of entries an earlier import created, 
         ->and($reported->fresh()->hourly_rate)->toBe(500)
         ->and($reported->fresh()->is_billable)->toBeFalse()
         ->and(TimeEntry::query()->count())->toBe(2);
+});
+
+it('puts time on an invited person, adding them as a member before they accept', function () {
+    $this->organization->update(['default_hourly_rate' => 90000]);
+    $invitation = OrganizationInvitation::factory()->for($this->organization)->create(['email' => 'Dennis@example.com', 'invited_by' => $this->owner->id]);
+
+    $result = ($this->import)(clockifyCsv([
+        clockifyRow('Webbshop', 'Acme', 'dennis@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00', user: 'Dennis Dahl'),
+    ]));
+
+    $dennis = User::query()->where('email', 'dennis@example.com')->sole();
+    expect($result['created'])->toBe(1)
+        ->and($dennis->name)->toBe('Dennis Dahl')
+        ->and($dennis->hasVerifiedEmail())->toBeFalse()
+        ->and($dennis->current_organization_id)->toBe($this->organization->id)
+        ->and($dennis->organizationRole($this->organization))->toBe(OrganizationRole::Member)
+        ->and($invitation->fresh()->isPending())->toBeTrue()
+        ->and(TimeEntry::query()->sole()->user_id)->toBe($dennis->id)
+        ->and(TimeEntry::query()->sole()->hourly_rate)->toBe(90000);
+});
+
+it('puts time on an invitation chosen by hand, using the invited person\'s existing account', function () {
+    $otto = User::factory()->create(['email' => 'otto@example.com']);
+    $otherOrganization = $otto->currentOrganization;
+    $invitation = OrganizationInvitation::factory()->for($this->organization)->create(['email' => 'otto@example.com', 'invited_by' => $this->owner->id]);
+    $key = ClockifyImportPlan::projectKey('Acme', 'Webbshop');
+
+    ($this->import)(clockifyCsv([
+        clockifyRow('Webbshop', 'Acme', 'otto.private@example.net', '11-30-2026', '9:00', '11-30-2026', '10:00', user: 'Otto'),
+    ]), members: ['otto.private@example.net' => ClockifyImportPlan::invitationMemberId($invitation->id)], rates: [
+        ClockifyImportPlan::rateKey($key, ClockifyImportPlan::invitationMemberId($invitation->id)) => 110000,
+    ]);
+
+    expect(User::query()->where('email', 'otto@example.com')->count())->toBe(1)
+        ->and($otto->fresh()->current_organization_id)->toBe($otherOrganization->id)
+        ->and($otto->organizationRole($this->organization))->toBe(OrganizationRole::Member)
+        ->and(TimeEntry::query()->sole()->user_id)->toBe($otto->id)
+        // The rate chosen for the invitation is saved for the member.
+        ->and(TimeEntry::query()->sole()->hourly_rate)->toBe(110000);
+});
+
+it('never uses expired invitations, other organizations\' invitations or private projects the invited person can\'t see', function () {
+    $expired = OrganizationInvitation::factory()->for($this->organization)->expired()->create(['email' => 'eva@example.com', 'invited_by' => $this->owner->id]);
+    $foreign = OrganizationInvitation::factory()->create(['email' => 'fia@example.com']);
+    $member = OrganizationInvitation::factory()->for($this->organization)->create(['email' => 'gus@example.com', 'invited_by' => $this->owner->id]);
+    $admin = OrganizationInvitation::factory()->for($this->organization)->create(['email' => 'hal@example.com', 'role' => OrganizationRole::Admin, 'invited_by' => $this->owner->id]);
+    Project::factory()->for($this->organization)->private()->create(['name' => 'Hemligt']);
+
+    $result = ($this->import)(clockifyCsv([
+        clockifyRow('Hemligt', '', 'eva@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+        clockifyRow('Hemligt', '', 'fia@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+        clockifyRow('Hemligt', '', 'gus@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+        clockifyRow('Hemligt', '', 'hal@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
+    ]), members: [
+        'eva@example.com' => ClockifyImportPlan::invitationMemberId($expired->id),
+        'fia@example.com' => ClockifyImportPlan::invitationMemberId($foreign->id),
+    ]);
+
+    expect($result['created'])->toBe(1)
+        ->and(array_column($result['skipped'], 'line'))->toBe([2, 3, 4])
+        ->and($result['skipped'][2]['reason'])->toBe(__(':name is not assigned to this project.', ['name' => 'Anna Andersson']))
+        ->and(TimeEntry::query()->sole()->user->email)->toBe('hal@example.com')
+        ->and(User::query()->whereIn('email', ['eva@example.com', 'fia@example.com', 'gus@example.com'])->exists())->toBeFalse()
+        ->and($member->fresh()->isPending())->toBeTrue();
 });

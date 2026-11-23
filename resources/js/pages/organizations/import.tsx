@@ -343,6 +343,17 @@ function PreviewStep({
                                 className="min-w-0"
                                 data-test="import-member-select"
                             />
+                            {/* Negative ids are pending invitations. */}
+                            {Number(members[member.email]) < 0 && (
+                                <p
+                                    className="text-sm text-muted sm:col-span-2"
+                                    data-test="import-member-invited"
+                                >
+                                    {t(
+                                        'The invited person is added to the organization when importing, so the time can be put on them. They sign in with their invitation as usual.',
+                                    )}
+                                </p>
+                            )}
                         </li>
                     ))}
                 </ul>

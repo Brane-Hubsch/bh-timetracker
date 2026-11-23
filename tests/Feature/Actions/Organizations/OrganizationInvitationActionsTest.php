@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Organizations\AcceptOrganizationInvitation;
+use App\Actions\Organizations\AddInvitedMember;
 use App\Actions\Organizations\CancelOrganizationInvitation;
 use App\Actions\Organizations\CreateOrganizationInvitation;
 use App\Enums\OrganizationRole;
@@ -9,6 +10,7 @@ use App\Models\User;
 use App\Notifications\Organizations\OrganizationInvitation as OrganizationInvitationNotification;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\ValidationException;
 
 it('creates an invitation that expires in three days and emails it', function () {
     Notification::fake();
@@ -119,4 +121,30 @@ it('cancels an invitation so it can no longer be found', function () {
     app(CancelOrganizationInvitation::class)->handle($invitation);
 
     expect(OrganizationInvitation::query()->whereKey($invitation->id)->exists())->toBeFalse();
+});
+
+it('adds an invited person as a member before they accept, and accepting keeps the membership', function () {
+    $owner = User::factory()->create();
+    $organization = $owner->currentOrganization;
+    $invitation = OrganizationInvitation::factory()->for($organization)->create(['email' => 'New@example.com', 'role' => OrganizationRole::Admin, 'invited_by' => $owner->id]);
+
+    $user = app(AddInvitedMember::class)->handle($invitation, 'Nora New');
+
+    expect($user->email)->toBe('new@example.com')
+        ->and($user->name)->toBe('Nora New')
+        ->and($user->organizationRole($organization))->toBe(OrganizationRole::Admin)
+        ->and($invitation->fresh()->isPending())->toBeTrue();
+
+    app(AcceptOrganizationInvitation::class)->handle($user, $invitation->fresh());
+
+    expect($user->organizationRole($organization))->toBe(OrganizationRole::Admin)
+        ->and($organization->memberships()->where('user_id', $user->id)->count())->toBe(1)
+        ->and($invitation->fresh()->isAccepted())->toBeTrue();
+});
+
+it('does not add members from expired invitations', function () {
+    $invitation = OrganizationInvitation::factory()->expired()->create();
+
+    expect(fn () => app(AddInvitedMember::class)->handle($invitation, 'Late'))->toThrow(ValidationException::class)
+        ->and(User::query()->where('email', $invitation->email)->exists())->toBeFalse();
 });

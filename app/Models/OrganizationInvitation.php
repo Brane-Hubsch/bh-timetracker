@@ -77,6 +77,18 @@ class OrganizationInvitation extends Model
     {
         $query
             ->whereRaw('LOWER(email) = ?', [strtolower($email)])
+            ->pending();
+    }
+
+    /**
+     * Scope the query to invitations that are neither accepted nor expired.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function pending(Builder $query): void
+    {
+        $query
             ->whereNull('accepted_at')
             ->where(fn (Builder $query) => $query
                 ->whereNull('expires_at')
