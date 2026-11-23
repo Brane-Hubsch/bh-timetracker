@@ -23,6 +23,7 @@ import {
     draftFromEntry,
 } from '@/components/time/time-entry-form';
 import { TimeEntryList } from '@/components/time/time-entry-list';
+import { WeekPicker } from '@/components/time/week-picker';
 import { useInitials } from '@/hooks/use-initials';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
@@ -242,39 +243,58 @@ export default function TimeIndex({
                             isIconOnly
                             variant="ghost"
                             size="sm"
-                            aria-label={t('Previous')}
+                            aria-label={
+                                view === 'week'
+                                    ? t('Previous week')
+                                    : t('Previous')
+                            }
                             onPress={() =>
                                 visit({ date: addDays(date, -step) })
                             }
                         >
                             <ChevronLeft className="size-4" />
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onPress={() => visit({ date: today })}
-                        >
-                            {t('Today')}
-                        </Button>
+                        {view === 'week' ? (
+                            <WeekPicker
+                                weekStart={weekStart}
+                                weekStartsOn={weekStartsOn}
+                                today={today}
+                                onChange={(date) => visit({ date })}
+                            />
+                        ) : (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onPress={() => visit({ date: today })}
+                            >
+                                {t('Today')}
+                            </Button>
+                        )}
                         <Button
                             isIconOnly
                             variant="ghost"
                             size="sm"
-                            aria-label={t('Next')}
+                            aria-label={
+                                view === 'week' ? t('Next week') : t('Next')
+                            }
                             onPress={() => visit({ date: addDays(date, step) })}
                         >
                             <ChevronRight className="size-4" />
                         </Button>
                     </div>
-                    <div
-                        aria-hidden="true"
-                        className="h-5.5 w-px shrink-0 bg-separator"
-                    />
-                    <h2
-                        className={`min-w-0 flex-1 truncate text-base font-semibold md:flex-none md:text-[1.0625rem] ${view === 'day' ? 'first-letter:uppercase' : ''}`}
-                    >
-                        {title}
-                    </h2>
+                    {view !== 'week' && (
+                        <>
+                            <div
+                                aria-hidden="true"
+                                className="h-5.5 w-px shrink-0 bg-separator"
+                            />
+                            <h2
+                                className={`min-w-0 flex-1 truncate text-base font-semibold md:flex-none md:text-[1.0625rem] ${view === 'day' ? 'first-letter:uppercase' : ''}`}
+                            >
+                                {title}
+                            </h2>
+                        </>
+                    )}
 
                     <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
                         {members.length > 1 && (
