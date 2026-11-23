@@ -44,6 +44,7 @@ import { index, update } from '@/routes/time';
 import type {
     Absence,
     AbsenceDraft,
+    AbsenceType,
     AbsenceTypeOption,
     ColleagueOff,
     ProjectOption,
@@ -64,6 +65,7 @@ type Props = {
     absences: Absence[];
     colleaguesOff: ColleagueOff[];
     absenceTypes: AbsenceTypeOption[];
+    recentAbsenceTypes: AbsenceType[];
     workdaySeconds: number;
     holidays: string[];
     projects: ProjectOption[];
@@ -88,6 +90,7 @@ export default function TimeIndex({
     absences,
     colleaguesOff,
     absenceTypes,
+    recentAbsenceTypes,
     workdaySeconds,
     holidays,
     projects,
@@ -469,7 +472,12 @@ export default function TimeIndex({
                 recentTags={recentTags}
                 members={members}
                 recentProjects={recentProjects}
-                absence={{ absenceTypes, holidays, workdaySeconds }}
+                absence={{
+                    absenceTypes,
+                    recentAbsenceTypes,
+                    holidays,
+                    workdaySeconds,
+                }}
                 onDuplicate={(values) => {
                     const base = newDraft(today, entries, member.id);
                     const seconds = values.end
@@ -494,6 +502,7 @@ export default function TimeIndex({
                 draft={absenceDraft}
                 onClose={() => setAbsenceDraft(null)}
                 absenceTypes={absenceTypes}
+                recentAbsenceTypes={recentAbsenceTypes}
                 holidays={holidays}
                 workdaySeconds={workdaySeconds}
             />

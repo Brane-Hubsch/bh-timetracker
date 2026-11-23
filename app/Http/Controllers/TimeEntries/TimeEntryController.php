@@ -86,6 +86,7 @@ class TimeEntryController extends Controller
             'absences' => $weekAbsences->where('user_id', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::absence($absence)),
             'colleaguesOff' => $weekAbsences->where('user_id', '!=', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::colleagueOff($absence)),
             'absenceTypes' => AbsenceType::options(),
+            'recentAbsenceTypes' => AbsencePresenter::recentTypes($organization, $user),
             'workdaySeconds' => $organization->workday_seconds,
             // So the absence dialog can count working days in periods around the week.
             'holidays' => HolidayDates::between($organization->id, $weekStart->subYear(), $weekStart->addYear()),

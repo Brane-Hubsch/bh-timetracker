@@ -16,7 +16,10 @@ type Props = {
     relativeLabel?: string;
     /** Server-side validation message, shown below the field. */
     error?: string;
+    /** Describe the error rendered outside an embedded field. */
+    errorId?: string;
     isRequired?: boolean;
+    isEmbedded?: boolean;
     className?: string;
     'data-test'?: string;
 };
@@ -39,7 +42,9 @@ export function DatePickerField({
     onChange,
     relativeLabel,
     error,
+    errorId,
     isRequired,
+    isEmbedded,
     className,
     'data-test': dataTest,
 }: Props) {
@@ -49,20 +54,36 @@ export function DatePickerField({
             onChange={(date) => onChange(date ? date.toString() : '')}
             isInvalid={Boolean(error)}
             isRequired={isRequired}
+            aria-label={isEmbedded ? label : undefined}
+            aria-describedby={errorId}
             validationBehavior="aria"
             className={`${className ?? 'w-full'} group/date-picker`}
             data-test={dataTest}
         >
-            <Label>{label}</Label>
-            <DateField.Group fullWidth className="relative">
+            {!isEmbedded && <Label>{label}</Label>}
+            <DateField.Group
+                fullWidth
+                className={
+                    isEmbedded
+                        ? 'h-full rounded-none border-0 bg-transparent shadow-none outline-none'
+                        : 'relative'
+                }
+            >
                 <DateField.Input
                     className={
-                        relativeLabel
-                            ? 'opacity-0 group-focus-within/date-picker:opacity-100 group-data-[open]/date-picker:opacity-100'
-                            : undefined
+                        isEmbedded
+                            ? 'min-w-0 ps-1.5 pe-0 text-sm sm:ps-3'
+                            : relativeLabel
+                              ? 'opacity-0 group-focus-within/date-picker:opacity-100 group-data-[open]/date-picker:opacity-100'
+                              : undefined
                     }
                 >
-                    {(segment) => <DateField.Segment segment={segment} />}
+                    {(segment) => (
+                        <DateField.Segment
+                            segment={segment}
+                            className={isEmbedded ? 'max-sm:px-0' : undefined}
+                        />
+                    )}
                 </DateField.Input>
                 {relativeLabel && (
                     <span
@@ -72,13 +93,15 @@ export function DatePickerField({
                         {relativeLabel}
                     </span>
                 )}
-                <DateField.Suffix>
+                <DateField.Suffix
+                    className={isEmbedded ? 'me-0.5 sm:me-2' : undefined}
+                >
                     <DatePicker.Trigger>
                         <DatePicker.TriggerIndicator />
                     </DatePicker.Trigger>
                 </DateField.Suffix>
             </DateField.Group>
-            <FieldError>{error}</FieldError>
+            {!isEmbedded && <FieldError>{error}</FieldError>}
             <DatePicker.Popover>
                 <Calendar aria-label={label}>
                     <Calendar.Header>

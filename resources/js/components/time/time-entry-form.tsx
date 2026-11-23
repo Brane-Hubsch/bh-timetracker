@@ -15,6 +15,7 @@ import { Copy, EllipsisVertical, Trash2, UserRound } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { DatePickerField } from '@/components/form/date-picker-field';
+import { FieldPair } from '@/components/form/field-pair';
 import { TagInput } from '@/components/form/tag-input';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
@@ -581,11 +582,9 @@ export function TimeEntryForm({
                                         isRequired
                                         data-test="time-entry-date"
                                     />
-                                    <fieldset
-                                        aria-label={t('Start and end time')}
-                                        className="min-w-0"
-                                    >
-                                        <legend className="label mb-1 grid w-full grid-cols-2">
+                                    <FieldPair
+                                        label={t('Start and end time')}
+                                        firstLabel={
                                             <TimeScrubLabel
                                                 label={t('Start')}
                                                 value={current.start}
@@ -607,6 +606,8 @@ export function TimeEntryForm({
                                                     )
                                                 }
                                             />
+                                        }
+                                        secondLabel={
                                             <TimeScrubLabel
                                                 label={t('End')}
                                                 value={current.end}
@@ -619,16 +620,13 @@ export function TimeEntryForm({
                                                 }
                                                 onAdjust={adjustEnd}
                                             />
-                                        </legend>
-                                        {/* Same height as the date and duration fields (see .date-input-group). */}
-                                        <div
-                                            className="grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field sm:h-[2.375rem]"
-                                            data-invalid={Boolean(
-                                                errors.start ||
-                                                errors.end ||
-                                                errors.ended_at,
-                                            )}
-                                        >
+                                        }
+                                        isInvalid={Boolean(
+                                            errors.start ||
+                                            errors.end ||
+                                            errors.ended_at,
+                                        )}
+                                        firstField={
                                             <TimeInputField
                                                 label={t('Start')}
                                                 value={current.start}
@@ -640,10 +638,8 @@ export function TimeEntryForm({
                                                 isEmbedded
                                                 data-test="time-entry-start"
                                             />
-                                            <span
-                                                aria-hidden="true"
-                                                className="h-5 bg-[var(--field-border)]"
-                                            />
+                                        }
+                                        secondField={
                                             <TimeInputField
                                                 label={t('End')}
                                                 value={current.end}
@@ -655,8 +651,8 @@ export function TimeEntryForm({
                                                 isEmbedded
                                                 data-test="time-entry-end"
                                             />
-                                        </div>
-                                    </fieldset>
+                                        }
+                                    />
                                     <TextField
                                         name="duration"
                                         value={duration}
