@@ -45,7 +45,7 @@ export default function ClientsIndex({ clients, filters }: Props) {
                     {clients.map((client) => (
                         <li key={client.id} data-test="client-row">
                             <Link
-                                href={show({ client: client.id })}
+                                href={show({ client: client.slug })}
                                 className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-surface-secondary"
                             >
                                 <LogoImage

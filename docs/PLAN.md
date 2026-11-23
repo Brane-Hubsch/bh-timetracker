@@ -784,6 +784,12 @@ Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (peri
 - **Produktion:** Time Tracker ligger under teamet Bräne Hübsch i den egna Umami-instansen på `analytics.bh.studio`. Spåraren laddas på `timetrack.bh.studio` och mäter sidvisningar vid sidladdning och navigering i Inertia, inklusive bakåt och framåt.
 - **Insamling:** Umami sammanställer sin vanliga besöksstatistik. Sidadresser skickas utan frågeparametrar och fragment. Inloggnings- och inbjudningstoken tas bort från sökvägarna. Externa hänvisningar begränsas till ursprunget och sidtitlar utelämnas eftersom de kan innehålla kund- och projektnamn.
 
+### Tillägg efter Fas 6: läsbara kund- och projektadresser
+
+- Kund- och projektsidor använder en slug som skapas från namnet. Slugen är unik per organisation och resurstyp och ligger kvar vid namnbyte, arkivering och byte av kund på ett projekt.
+- Befintliga kunder och projekt får en slug vid migrering. Äldre sidlänkar med ID skickas vidare till slugadressen efter behörighetskontroll, med frågeparametrarna kvar. Skrivåtgärder accepterar fortfarande ID och sparade rapportfilter behåller sina parametrar.
+- Umami maskerar kund- och projektsegmentet i sökvägar och interna hänvisningar.
+
 ## 8. Senare (medvetet bortvalt i v1)
 
 Live-timer · uppgifter · låsta perioder och attest · veckomål/heltidsnorm · kostnadspriser och lönsamhet · fakturaunderlag/integration med ekonomisystem · sparade och delade rapporter (publika länkar) · Microsoft/Entra SSO · import från Toggl (CSV) · kalenderintegration (Google/Outlook) · aktivitetslogg/audit · native-app.

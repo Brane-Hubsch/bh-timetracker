@@ -41,6 +41,7 @@ type Props = {
     projectsNearEstimate:
         | {
               id: number;
+              slug: string;
               name: string;
               color: string;
               consumedSeconds: number;
@@ -251,7 +252,7 @@ export default function Dashboard({
                                                         <Link
                                                             href={showProject({
                                                                 project:
-                                                                    project.id,
+                                                                    project.slug,
                                                             })}
                                                             className="flex items-center gap-2 font-medium"
                                                         >

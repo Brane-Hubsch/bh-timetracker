@@ -343,7 +343,7 @@ it('does not show another organization in reports or exports', function () {
 
 it('shows time per member and week on the project page for owners only', function () {
     $this->actingAs($this->owner)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $this->project->id]))
+        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $this->project]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('breakdown.totals.amount', 250000)
             ->has('breakdown.members', 2)
@@ -352,19 +352,19 @@ it('shows time per member and week on the project page for owners only', functio
             ->where('breakdown.weeks.11', ['key' => '2026-11-16', 'seconds' => 9000, 'billableSeconds' => 9000]));
 
     $this->actingAs($this->member)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $this->project->id]))
+        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $this->project]))
         ->assertInertia(fn (Assert $page) => $page->where('breakdown', null));
 });
 
 it('shows time for a period on the client page', function () {
     $this->actingAs($this->owner)
-        ->get(route('clients.show', ['current_organization' => $this->slug, 'client' => $this->client->id, 'period' => 'this_week']))
+        ->get(route('clients.show', ['current_organization' => $this->slug, 'client' => $this->client, 'period' => 'this_week']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('report.period', 'this_week')
             ->where('report.totals.seconds', 9000)
             ->where('report.projects.0.name', 'Webb'));
 
     $this->actingAs($this->owner)
-        ->get(route('clients.show', ['current_organization' => $this->slug, 'client' => $this->client->id, 'period' => 'last_month']))
+        ->get(route('clients.show', ['current_organization' => $this->slug, 'client' => $this->client, 'period' => 'last_month']))
         ->assertInertia(fn (Assert $page) => $page->where('report.totals.seconds', 0)->where('report.projects', []));
 });

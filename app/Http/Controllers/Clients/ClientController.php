@@ -18,6 +18,7 @@ use App\Services\Reports\ReportBuilder;
 use App\Services\Reports\ReportFilters;
 use App\Support\CurrentOrganization;
 use App\Support\ProjectFormOptions;
+use App\Support\ResourceSlug;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,7 @@ class ClientController extends Controller
             ->get()
             ->map(fn (Client $client) => [
                 'id' => $client->id,
+                'slug' => $client->slug,
                 'name' => $client->name,
                 'organizationNumber' => $client->organization_number,
                 'email' => $client->email,
@@ -72,12 +74,16 @@ class ClientController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Client created.')]);
 
-        return to_route('clients.show', ['client' => $client->id]);
+        return to_route('clients.show', ['client' => $client]);
     }
 
-    public function show(ReportRequest $request, #[CurrentUser] User $user, Client $client, ReportBuilder $reports, CurrentOrganization $currentOrganization, ProjectFormOptions $formOptions): Response
+    public function show(ReportRequest $request, #[CurrentUser] User $user, Client $client, ReportBuilder $reports, CurrentOrganization $currentOrganization, ProjectFormOptions $formOptions): Response|RedirectResponse
     {
         Gate::authorize('view', $client);
+
+        if ($redirect = ResourceSlug::redirect($request, 'clients.show', 'client', $client->slug)) {
+            return $redirect;
+        }
 
         $period = $request->filters($user, $currentOrganization->getOrFail());
         $filters = new ReportFilters($period->organization, $user, $period->from, $period->to, clientIds: [$client->id]);
@@ -86,6 +92,7 @@ class ClientController extends Controller
         return Inertia::render('clients/show', [
             'client' => [
                 'id' => $client->id,
+                'slug' => $client->slug,
                 'name' => $client->name,
                 'organizationNumber' => $client->organization_number,
                 'email' => $client->email,
@@ -100,6 +107,7 @@ class ClientController extends Controller
                 ->get()
                 ->map(fn (Project $project) => [
                     'id' => $project->id,
+                    'slug' => $project->slug,
                     'name' => $project->name,
                     'code' => $project->code,
                     'color' => $project->color,

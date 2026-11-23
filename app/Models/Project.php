@@ -6,6 +6,7 @@ use App\Enums\OrganizationRole;
 use App\Enums\ProjectVisibility;
 use App\Models\Concerns\Archivable;
 use App\Models\Concerns\BelongsToOrganization;
+use App\Models\Concerns\HasResourceSlug;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -23,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property int $organization_id
  * @property int|null $client_id
  * @property string $name
+ * @property string $slug
  * @property string|null $code
  * @property string $color Hex colour, e.g. #7c3aed
  * @property bool $is_billable
@@ -46,7 +48,7 @@ use Illuminate\Support\Carbon;
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
-    use Archivable, BelongsToOrganization, HasFactory;
+    use Archivable, BelongsToOrganization, HasFactory, HasResourceSlug;
 
     /**
      * The colours offered when creating a project.

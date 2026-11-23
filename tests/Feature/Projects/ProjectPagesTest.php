@@ -70,6 +70,7 @@ it('shows the time reported on each project in the list', function () {
             ->where('projects.0.name', 'Tomt')
             ->where('projects.0.consumedSeconds', 0)
             ->where('projects.1.name', 'Webbshop')
+            ->where('projects.1.slug', 'webbshop')
             ->where('projects.1.consumedSeconds', 9000)
             ->where('projects.1.estimateSeconds', 36000));
 });
@@ -136,12 +137,40 @@ it('filters by search, client and status', function () {
 it('lets owners and admins create projects', function () {
     $this->actingAs($this->owner)
         ->post(route('projects.store', ['current_organization' => $this->slug]), projectPayload())
-        ->assertRedirect();
+        ->assertRedirect(route('projects.show', [$this->slug, 'webbshop']));
 
     $project = Project::forOrganization($this->organization)->sole();
     expect($project->color)->toBe('#7c3aed')
         ->and($project->estimate_seconds)->toBe(45000)
         ->and($project->hourly_rate)->toBe(110000);
+});
+
+it('keeps a project URL when renaming or moving it to a different client', function () {
+    $client = Client::factory()->for($this->organization)->create(['name' => 'Acme']);
+    $otherClient = Client::factory()->for($this->organization)->create(['name' => 'Nordic']);
+    $store = route('projects.store', $this->slug);
+    $url = route('projects.show', [$this->slug, 'webbshop']);
+
+    $this->actingAs($this->owner)
+        ->post($store, projectPayload(['client_id' => $client->id, 'code' => null]))
+        ->assertRedirect($url);
+    $this->post($store, projectPayload(['client_id' => $otherClient->id, 'code' => null]))
+        ->assertRedirect(route('projects.show', [$this->slug, 'webbshop-2']));
+    $this->post($store, projectPayload(['name' => '123', 'code' => null]))
+        ->assertRedirect(route('projects.show', [$this->slug, 'project-123']));
+
+    $project = Project::forOrganization($this->organization)->where('slug', 'webbshop')->sole();
+    $this->patch(route('projects.update', [$this->slug, $project]), projectPayload([
+        'name' => 'Ny webbshop', 'client_id' => $otherClient->id, 'code' => null,
+    ]))->assertRedirect($url);
+
+    $legacy = route('projects.show', [$this->slug, $project->id]);
+    $this->get($legacy)->assertRedirect($url);
+    $this->get($url)->assertInertia(fn (Assert $page) => $page
+        ->where('project.id', $project->id)
+        ->where('project.slug', 'webbshop')
+        ->where('project.name', 'Ny webbshop')
+        ->where('project.client.slug', 'nordic'));
 });
 
 it('saves project notes and shows them to everyone on the project', function () {
@@ -153,7 +182,7 @@ it('saves project notes and shows them to everyone on the project', function () 
     expect($project->notes)->toBe("Kontakt: Anna\nUnderlag i Drive");
 
     $this->actingAs($this->member)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]))
+        ->get(route('projects.show', [$this->slug, $project]))
         ->assertInertia(fn (Assert $page) => $page->where('project.notes', "Kontakt: Anna\nUnderlag i Drive"));
 
     $this->actingAs($this->owner)
@@ -214,7 +243,7 @@ it('sends project form options only to users who may manage projects', function 
     $project = Project::factory()->for($this->organization)->create();
     $pages = [
         route('projects.index', ['current_organization' => $this->slug]),
-        route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]),
+        route('projects.show', [$this->slug, $project]),
     ];
 
     foreach ($pages as $page) {
@@ -232,14 +261,16 @@ it('hides private projects from members who are not assigned', function () {
     $project = Project::factory()->for($this->organization)->private()->create();
 
     $this->actingAs($this->member)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]))
+        ->get(route('projects.show', [$this->slug, $project]))
         ->assertForbidden();
+
+    $legacy = route('projects.show', [$this->slug, $project->id]);
+    $this->get($legacy)->assertForbidden();
 
     $project->members()->attach($this->member);
 
-    $this->actingAs($this->member)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]))
-        ->assertOk();
+    $this->get($legacy)->assertRedirect(route('projects.show', [$this->slug, $project]));
+    $this->get(route('projects.show', [$this->slug, $project]))->assertOk();
 });
 
 it('hides rates from members', function () {
@@ -247,7 +278,7 @@ it('hides rates from members', function () {
     $project->members()->attach($this->member, ['hourly_rate' => 90000]);
 
     $this->actingAs($this->member)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]))
+        ->get(route('projects.show', [$this->slug, $project]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('project.hourlyRate', null)
             ->where('members.0.hourlyRate', null)
@@ -256,7 +287,7 @@ it('hides rates from members', function () {
             ->where('assignableMembers', []));
 
     $this->actingAs($this->owner)
-        ->get(route('projects.show', ['current_organization' => $this->slug, 'project' => $project->id]))
+        ->get(route('projects.show', [$this->slug, $project]))
         ->assertInertia(fn (Assert $page) => $page
             ->where('project.hourlyRate', 100000)
             ->where('members.0.hourlyRate', 90000)
@@ -265,7 +296,7 @@ it('hides rates from members', function () {
 
 it('assigns, re-rates and unassigns project members', function () {
     $project = Project::factory()->for($this->organization)->create();
-    $params = ['current_organization' => $this->slug, 'project' => $project->id];
+    $params = ['current_organization' => $this->slug, 'project' => $project];
 
     $this->actingAs($this->owner)
         ->post(route('projects.members.store', $params), ['user_id' => $this->member->id, 'hourly_rate' => 95000])

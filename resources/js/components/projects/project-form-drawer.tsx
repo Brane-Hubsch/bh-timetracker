@@ -108,7 +108,7 @@ export function ProjectFormDrawer({
         }));
 
         if (project) {
-            form.submit(update({ project: project.id }), {
+            form.submit(update({ project: project.slug }), {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => onOpenChange(false),

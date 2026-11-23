@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Archivable;
 use App\Models\Concerns\BelongsToOrganization;
+use App\Models\Concerns\HasResourceSlug;
 use App\Services\Images\ImageStorage;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $organization_id
  * @property string $name
+ * @property string $slug
  * @property string|null $website
  * @property string|null $organization_number
  * @property string|null $email
@@ -34,7 +36,7 @@ use Illuminate\Support\Carbon;
 class Client extends Model
 {
     /** @use HasFactory<ClientFactory> */
-    use Archivable, BelongsToOrganization, HasFactory;
+    use Archivable, BelongsToOrganization, HasFactory, HasResourceSlug;
 
     /**
      * @return HasMany<Project, $this>

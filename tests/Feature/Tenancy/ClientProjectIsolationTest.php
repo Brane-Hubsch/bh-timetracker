@@ -5,7 +5,7 @@ use App\Models\Project;
 use App\Models\User;
 
 /*
- * Clients and projects of another organization must never be reachable, even with known ids.
+ * Clients and projects of another organization must never be reachable, even with known ids or slugs.
  */
 
 beforeEach(function () {
@@ -32,18 +32,36 @@ it('does not list another organization\'s clients or projects', function () {
 it('returns 404 for another organization\'s records through my organization\'s URLs', function () {
     $mine = ['current_organization' => $this->mine->slug];
 
-    $this->actingAs($this->owner)->get(route('clients.show', [...$mine, 'client' => $this->foreignClient->id]))->assertNotFound();
-    $this->actingAs($this->owner)->patch(route('clients.update', [...$mine, 'client' => $this->foreignClient->id]), ['name' => 'Hijacked'])->assertNotFound();
-    $this->actingAs($this->owner)->post(route('clients.archive', [...$mine, 'client' => $this->foreignClient->id]))->assertNotFound();
-    $this->actingAs($this->owner)->get(route('projects.show', [...$mine, 'project' => $this->foreignProject->id]))->assertNotFound();
-    $this->actingAs($this->owner)->patch(route('projects.update', [...$mine, 'project' => $this->foreignProject->id]), ['name' => 'Hijacked'])->assertNotFound();
-    $this->actingAs($this->owner)->post(route('projects.archive', [...$mine, 'project' => $this->foreignProject->id]))->assertNotFound();
-    $this->actingAs($this->owner)->post(route('projects.members.store', [...$mine, 'project' => $this->foreignProject->id]), ['user_id' => $this->owner->id])->assertNotFound();
+    $this->actingAs($this->owner);
+
+    foreach (['id', 'slug'] as $key) {
+        $client = [...$mine, 'client' => $this->foreignClient->{$key}];
+        $project = [...$mine, 'project' => $this->foreignProject->{$key}];
+
+        $this->get(route('clients.show', $client))->assertNotFound();
+        $this->patch(route('clients.update', $client), ['name' => 'Hijacked'])->assertNotFound();
+        $this->post(route('clients.archive', $client))->assertNotFound();
+        $this->get(route('projects.show', $project))->assertNotFound();
+        $this->patch(route('projects.update', $project), ['name' => 'Hijacked'])->assertNotFound();
+        $this->post(route('projects.archive', $project))->assertNotFound();
+        $this->post(route('projects.members.store', $project), ['user_id' => $this->owner->id])->assertNotFound();
+    }
 
     expect($this->foreignClient->fresh()->name)->toBe('Foreign client')
         ->and($this->foreignProject->fresh()->name)->toBe('Foreign project')
         ->and($this->foreignProject->fresh()->isArchived())->toBeFalse()
         ->and($this->foreignProject->members()->count())->toBe(0);
+});
+
+it('resolves matching slugs within the organization in the URL', function () {
+    $client = Client::factory()->for($this->mine)->create(['name' => $this->foreignClient->name]);
+    $project = Project::factory()->for($this->mine)->create(['name' => $this->foreignProject->name]);
+
+    $this->actingAs($this->owner)
+        ->get(route('clients.show', [$this->mine->slug, $this->foreignClient->slug]))
+        ->assertInertia(fn ($page) => $page->where('client.id', $client->id));
+    $this->get(route('projects.show', [$this->mine->slug, $this->foreignProject->slug]))
+        ->assertInertia(fn ($page) => $page->where('project.id', $project->id));
 });
 
 it('refuses the other organization\'s URLs', function () {

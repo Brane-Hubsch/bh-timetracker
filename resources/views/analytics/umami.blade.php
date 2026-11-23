@@ -9,6 +9,7 @@
 ></script>
 <script>
     (() => {
+        let previousPath;
         let previousUrl;
         const referrerOrigin = document.referrer && new URL(document.referrer).origin;
         const externalReferrer = referrerOrigin === location.origin || referrerOrigin === 'null'
@@ -19,11 +20,15 @@
             if (!window.umami) return;
 
             // Magic links and invitations carry credentials in their paths.
-            const path = location.pathname.replace(/^\/(login\/link|invitations)\/.*$/, '/$1');
+            const pathname = location.pathname.replace(/^\/(login\/link|invitations)\/.*$/, '/$1');
+            if (pathname === previousPath) return;
+
+            // Keep client and project names out of tracked URLs and referrers.
+            const path = pathname.replace(/^(\/[^/]+\/(?:clients|projects))\/[^/]+/, '$1/:record');
             const url = location.origin + path;
-            if (url === previousUrl) return;
 
             const referrer = previousUrl ?? externalReferrer;
+            previousPath = pathname;
             previousUrl = url;
 
             // Page titles can contain client and project names.
@@ -34,6 +39,7 @@
         document.addEventListener('inertia:navigate', trackPage);
         window.addEventListener('pageshow', (event) => {
             if (event.persisted) {
+                previousPath = undefined;
                 previousUrl = undefined;
                 trackPage();
             }

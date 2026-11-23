@@ -25,7 +25,7 @@ type Props = {
 /** Create or edit a client in a side drawer. */
 export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
     const { t } = useTranslation();
-    const form = client ? update.form({ client: client.id }) : store.form();
+    const form = client ? update.form({ client: client.slug }) : store.form();
     // The logo is sent with the form: a newly chosen file, or a request to remove the current one.
     const [logo, setLogo] = useState<File | null>(null);
     const [removeLogo, setRemoveLogo] = useState(false);

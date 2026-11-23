@@ -137,6 +137,7 @@ export type Paginated<T> = {
 
 export type FollowUpProject = {
     id: number;
+    slug: string;
     name: string;
     code: string | null;
     color: string;

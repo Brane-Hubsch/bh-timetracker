@@ -4,7 +4,9 @@ namespace Database\Factories;
 
 use App\Models\Client;
 use App\Models\Organization;
+use App\Support\ResourceSlug;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @extends Factory<Client>
@@ -19,6 +21,11 @@ class ClientFactory extends Factory
         return [
             'organization_id' => Organization::factory(),
             'name' => fake()->unique()->company(),
+            'slug' => fn (array $attributes) => ResourceSlug::available(
+                DB::table('clients')->where('organization_id', $attributes['organization_id']),
+                $attributes['name'],
+                'client',
+            ),
             'organization_number' => fake()->numerify('######-####'),
             'email' => fake()->companyEmail(),
             'notes' => null,
