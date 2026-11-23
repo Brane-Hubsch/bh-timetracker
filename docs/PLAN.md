@@ -665,10 +665,20 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
 Beställt i efterhand. Under förloppet "Rapporterad tid" på projektsidan visas, för projekt med estimat:
 
 - **Kvar till estimatet:** estimat minus all rapporterad tid. Är projektet över estimatet visas "Över estimatet" i varningsfärg.
-- **Arbetsdagar kvar:** från i dag (eller projektets startdatum om det är senare) till och med slutdatumet, i användarens tidszon. Arbetsdagar är måndag–fredag utom svenska helgdagar samt midsommar-, jul- och nyårsafton (`App\Support\WorkingDays`, påsken räknas fram utan calendar-tillägget).
+- **Arbetsdagar kvar:** från i dag (eller projektets startdatum om det är senare) till och med slutdatumet, i användarens tidszon. Arbetsdagar är måndag–fredag utom organisationens helgdagar (se nedan, `App\Support\WorkingDays`).
 - **Behövs per arbetsdag:** återstående timmar delat med antal arbetsdagar, avrundat uppåt till hel sekund.
 - Utan slutdatum visas bara timmarna som återstår, med "Ange ett slutdatum". Efter perioden, eller när estimatet är nått, visas inget dagsbehov.
 - Uträkningen görs i `App\Support\EstimatePace` och skickas som `estimatePace` till alla som ser projektet, precis som estimatet och den rapporterade tiden.
+
+### Tillägg efter Fas 6: helgdagar per organisation (2026-11-23)
+
+Beställt i efterhand. Helgdagarna ligger i databasen per organisation (`holidays`: datum och namn, en per datum) i stället för att vara inbyggda.
+
+- **Hantera:** ägare och admin (rättigheten `UpdateOrganization`) ser avsnittet Helgdagar i organisationsinställningarna. Där listas dagarna från innevarande år, grupperade per år. Man kan lägga till egna dagar (datum och namn, t.ex. en kick-off), ta bort dagar och fylla på med svenska helgdagar för ett valt år (i år och två år framåt). Påfyllningen hoppar över datum som redan finns, även om de har ett annat namn.
+- **Svenska helgdagar** (`App\Support\SwedishHolidays`): de helgdagar som kan infalla på en vardag samt midsommar-, jul- och nyårsafton. Påsken räknas fram utan calendar-tillägget. Namnen sparas på svenska.
+- **Från start:** nya organisationer får svenska helgdagar för innevarande och nästa år (`CreateOrganization`). Migreringen gav befintliga organisationer 2026 och 2027.
+- **Används** av projektsidans arbetsdagar (`EstimatePace`). Lördag och söndag räknas aldrig som arbetsdagar.
+- **Kod:** `App\Actions\Holidays` (`CreateHoliday`, `DeleteHoliday`, `AddSwedishHolidays`) och `OrganizationHolidayController`. Andra organisationers helgdagar ger 404.
 
 ### Tillägg efter Fas 6: Coolify (2026-11-20)
 

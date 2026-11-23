@@ -20,6 +20,8 @@ import { ImageUploadField } from '@/components/form/image-upload-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
+import { HolidayManager } from '@/components/organizations/holiday-manager';
+import type { OrganizationHoliday } from '@/components/organizations/holiday-manager';
 import InviteMemberModal from '@/components/invite-member-modal';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
@@ -53,7 +55,9 @@ type Props = {
     invitations: OrganizationInvitation[];
     permissions: OrganizationPermissions;
     availableRoles: RoleOption[];
-    /** For owners and admins only. */
+    /** From this year on; for owners and admins only. */
+    holidays: OrganizationHoliday[] | null;
+    holidayYears: number[];
 };
 
 const currencies = ['SEK', 'EUR', 'NOK', 'DKK', 'USD', 'GBP'];
@@ -64,6 +68,8 @@ export default function OrganizationEdit({
     invitations,
     permissions,
     availableRoles,
+    holidays,
+    holidayYears,
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
@@ -541,6 +547,17 @@ export default function OrganizationEdit({
                         ))}
                     </ul>
                 </section>
+            )}
+
+            {holidays && (
+                <>
+                    <Separator />
+                    <HolidayManager
+                        organizationSlug={organization.slug}
+                        holidays={holidays}
+                        years={holidayYears}
+                    />
+                </>
             )}
 
             {permissions.canManageClients &&

@@ -32,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, User> $members
  * @property-read Collection<int, Client> $clients
  * @property-read Collection<int, Project> $projects
+ * @property-read Collection<int, Holiday> $holidays
  */
 #[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path'])]
 class Organization extends Model
@@ -117,6 +118,16 @@ class Organization extends Model
     public function memberships(): HasMany
     {
         return $this->hasMany(Membership::class);
+    }
+
+    /**
+     * Days off for everyone in the organization.
+     *
+     * @return HasMany<Holiday, $this>
+     */
+    public function holidays(): HasMany
+    {
+        return $this->hasMany(Holiday::class);
     }
 
     /**

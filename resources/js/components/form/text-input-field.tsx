@@ -13,7 +13,7 @@ type TextInputFieldProps = {
     /** Server-side validation message (e.g. from Inertia's `errors`). */
     error?: string;
     description?: ReactNode;
-    type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url';
+    type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'date';
     defaultValue?: string;
     value?: string;
     onChange?: (value: string) => void;

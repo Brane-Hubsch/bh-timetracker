@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Organizations\OrganizationController;
+use App\Http\Controllers\Organizations\OrganizationHolidayController;
 use App\Http\Controllers\Organizations\OrganizationImportController;
 use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Organizations\OrganizationLogoController;
@@ -63,6 +64,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('settings/organizations/{organization}/import/{import}', [OrganizationImportController::class, 'show'])->whereUuid('import')->name('organizations.import.show');
         Route::post('settings/organizations/{organization}/import/{import}', [OrganizationImportController::class, 'import'])->whereUuid('import')->name('organizations.import.run');
         Route::delete('settings/organizations/{organization}/import/{import}', [OrganizationImportController::class, 'destroy'])->whereUuid('import')->name('organizations.import.destroy');
+
+        Route::post('settings/organizations/{organization}/holidays', [OrganizationHolidayController::class, 'store'])->name('organizations.holidays.store');
+        Route::post('settings/organizations/{organization}/holidays/swedish', [OrganizationHolidayController::class, 'swedish'])->name('organizations.holidays.swedish');
+        Route::delete('settings/organizations/{organization}/holidays/{holiday}', [OrganizationHolidayController::class, 'destroy'])->whereNumber('holiday')->name('organizations.holidays.destroy');
 
         Route::post('settings/organizations/{organization}/invitations', [OrganizationInvitationController::class, 'store'])->name('organizations.invitations.store');
         Route::delete('settings/organizations/{organization}/invitations/{invitation}', [OrganizationInvitationController::class, 'destroy'])->name('organizations.invitations.destroy');

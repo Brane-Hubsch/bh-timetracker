@@ -95,7 +95,7 @@ export function EstimatePaceStats({ pace }: { pace: EstimatePace }) {
             {pace.workdaysLeft !== null && (
                 <p className="text-xs text-muted">
                     {t(
-                        "Working days are Monday to Friday, without public holidays and midsummer, Christmas and New Year's Eve.",
+                        "Working days are Monday to Friday, without the organization's holidays.",
                     )}
                 </p>
             )}
