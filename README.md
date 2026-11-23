@@ -64,6 +64,38 @@ request, default 120).
 
 ### Coolify
 
+#### Update production
+
+1. Open [Timetracker → production → bh-timetracker:main](https://coolify.bh.studio/project/9jp2s5uxm9njz1decz3yqivq/environment/0zxnmp5mamew49js4c3j6ypq/application/etwhjhqocvdffjti0ty3c5us).
+   In **Deployment Logs**, identify the running commit and compare it with the release you intend to
+   deploy. Review changes to `database/migrations/` and `compose.yaml`, especially any change that
+   could remove existing data or point PostgreSQL at a different volume.
+2. In **Persistent Storage**, confirm that the existing `postgres` and `storage` volumes are mounted
+   at `/var/lib/postgresql/data` and `/var/www/html/storage`, respectively. Reuse this production
+   resource and its volumes. They hold the database (including time entries), uploaded images and
+   any Passport keys stored on disk. Commands such as `docker compose down -v` and
+   `php artisan migrate:fresh` delete production data.
+3. In **Terminal**, select `scheduler`. Create a fresh backup of the database and uploads, then
+   verify that the new archive is listed on the `backups` disk. Pause the release if the backup fails
+   or the new archive is missing. See [Backups](#backups) for restore instructions.
+
+    ```bash
+    php artisan backup:run
+    php artisan backup:list
+    ```
+
+4. Check **Advanced → Deployment → Auto deploy** before merging the release. If push-to-deploy is
+   enabled, finish the backup before merging to `main` and check **Deployment Logs** for an automatic
+   run for that commit. If no run is queued, running or successful for the intended commit, click
+   **Redeploy**. It deploys the latest commit on the configured `main` branch, so confirm that commit
+   is the intended release before clicking.
+5. Follow **Deployment Logs** until the intended commit succeeds. Coolify rebuilds the application
+   image and reuses the data volumes. On startup, `web` applies pending migrations before `queue`
+   and `scheduler` start. The app may be briefly unavailable as the containers are replaced. Check
+   the production `/up` page and open a known existing time report to verify that it is still there.
+
+#### Initial setup
+
 1. New resource → your Git repository (the GitHub app or a deploy key) → build pack **Docker Compose**,
    branch `main`, Docker Compose location `/compose.yaml`.
 2. **Domains:** set the `web` service's domain with the container port, e.g. `https://tid.example.se:8080`.
@@ -82,9 +114,8 @@ request, default 120).
     php artisan app:create-owner you@example.com "Your Name" "Organization"
     ```
 
-Redeploys (e.g. automatic on push to `main`) build the image again; `web` runs the migrations before it
-reports healthy, and `queue` and `scheduler` start after it. The commands below with
-`docker compose exec <service>` run in that service's terminal in Coolify instead.
+Run the commands below that use `docker compose exec <service>` in the corresponding service's
+terminal in Coolify.
 
 ### Your own server
 
