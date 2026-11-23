@@ -1,10 +1,20 @@
 import { Avatar, Button } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
+import {
+    CalendarOff,
+    ChevronLeft,
+    ChevronRight,
+    Copy,
+    Plus,
+} from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import { SegmentedControl } from '@/components/segmented-control';
+import {
+    AbsenceDialog,
+    draftFromAbsence,
+} from '@/components/time/absence-dialog';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import { newDraft } from '@/components/time/drafts';
@@ -32,6 +42,10 @@ import {
 import { cn } from '@/lib/utils';
 import { index, update } from '@/routes/time';
 import type {
+    Absence,
+    AbsenceDraft,
+    AbsenceTypeOption,
+    ColleagueOff,
     ProjectOption,
     TimeEntry,
     TimeEntryDraft,
@@ -47,6 +61,11 @@ type Props = {
     weekStartsOn: number;
     timezone: string;
     entries: TimeEntry[];
+    absences: Absence[];
+    colleaguesOff: ColleagueOff[];
+    absenceTypes: AbsenceTypeOption[];
+    workdaySeconds: number;
+    holidays: string[];
     projects: ProjectOption[];
     /** The organization's tag names. */
     tags: string[];
@@ -66,6 +85,11 @@ export default function TimeIndex({
     weekStartsOn,
     timezone,
     entries,
+    absences,
+    colleaguesOff,
+    absenceTypes,
+    workdaySeconds,
+    holidays,
     projects,
     tags,
     recentTags,
@@ -85,6 +109,16 @@ export default function TimeIndex({
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
+    const [absenceDraft, setAbsenceDraft] = useState<AbsenceDraft | null>(null);
+    const newAbsence = (startsOn: string, endsOn = startsOn) =>
+        setAbsenceDraft({
+            userId: member.id,
+            type: 'vacation',
+            startsOn,
+            endsOn,
+            hoursPerDay: '',
+            note: '',
+        });
 
     // Opened from the command palette ("Report time", "Report time on …", "Copy previous week").
     useOpenFromQuery(
@@ -112,6 +146,9 @@ export default function TimeIndex({
         ['project'],
     );
     useOpenFromQuery('copy', () => setCopyOpen(true));
+    useOpenFromQuery('absence', () =>
+        newAbsence(dates.includes(today) ? today : date),
+    );
 
     const dates = weekDates(weekStart);
     const weekTotal = entries.reduce(
@@ -239,7 +276,7 @@ export default function TimeIndex({
                         {title}
                     </h2>
 
-                    <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto md:flex-wrap md:justify-end">
+                    <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
                         {members.length > 1 && (
                             <SelectField
                                 name="user"
@@ -278,7 +315,7 @@ export default function TimeIndex({
                                         </span>
                                     </span>
                                 )}
-                                className="min-w-0 flex-1 md:w-auto md:max-w-56 md:flex-none"
+                                className="min-w-40 flex-1 md:w-auto md:max-w-56 md:flex-none"
                                 triggerClassName="h-9 items-center rounded-full bg-transparent py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-4 shadow-none"
                                 hideIndicator
                                 data-test="member-select"
@@ -288,11 +325,7 @@ export default function TimeIndex({
                             aria-label={t('View')}
                             value={view}
                             onChange={(next) => visit({ view: next })}
-                            className={
-                                members.length > 1
-                                    ? 'shrink-0'
-                                    : 'flex-1 md:flex-none [&>*]:flex-1 md:[&>*]:flex-none'
-                            }
+                            className="flex-1 md:flex-none [&>*]:flex-1 md:[&>*]:flex-none"
                             options={[
                                 { id: 'list', label: t('List') },
                                 { id: 'week', label: t('Week') },
@@ -314,6 +347,24 @@ export default function TimeIndex({
                                 </span>
                             </Button>
                         )}
+                        <Button
+                            variant="tertiary"
+                            className="shrink-0"
+                            onPress={() =>
+                                newAbsence(
+                                    view === 'day' || !dates.includes(today)
+                                        ? date
+                                        : today,
+                                )
+                            }
+                            aria-label={t('Register absence')}
+                            data-test="new-absence-button"
+                        >
+                            <CalendarOff className="size-4" />
+                            <span className="hidden lg:inline">
+                                {t('Absence')}
+                            </span>
+                        </Button>
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"
@@ -349,7 +400,12 @@ export default function TimeIndex({
                             dates={dates}
                             today={today}
                             entries={entries}
+                            absences={absences}
+                            colleaguesOff={colleaguesOff}
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}
+                            onEditAbsence={(absence) =>
+                                setAbsenceDraft(draftFromAbsence(absence))
+                            }
                             onAdd={(day) =>
                                 setDraft(newDraft(day, entries, member.id))
                             }
@@ -361,6 +417,12 @@ export default function TimeIndex({
                             weekStartsOn={weekStartsOn}
                             timezone={timezone}
                             entries={entries}
+                            absences={absences}
+                            colleaguesOff={colleaguesOff}
+                            onSelectDays={newAbsence}
+                            onEditAbsence={(absence) =>
+                                setAbsenceDraft(draftFromAbsence(absence))
+                            }
                             onSelect={(start, end) =>
                                 setDraft({
                                     ...newDraft(
@@ -425,6 +487,14 @@ export default function TimeIndex({
                             : '',
                     });
                 }}
+            />
+
+            <AbsenceDialog
+                draft={absenceDraft}
+                onClose={() => setAbsenceDraft(null)}
+                absenceTypes={absenceTypes}
+                holidays={holidays}
+                workdaySeconds={workdaySeconds}
             />
 
             <CopyWeekDialog

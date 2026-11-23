@@ -48,3 +48,46 @@ export type TimeEntryDraft = {
     end: string;
     isBillable: boolean | null;
 };
+
+export type AbsenceType =
+    | 'vacation'
+    | 'child_care'
+    | 'sick'
+    | 'parental_leave'
+    | 'leave_of_absence'
+    | 'other';
+
+export type AbsenceTypeOption = { value: AbsenceType; label: string };
+
+/** The shown member's own absence, with its kind. */
+export type Absence = {
+    id: number;
+    userId: number;
+    type: AbsenceType;
+    label: string;
+    /** First and last day (YYYY-MM-DD), inclusive. */
+    startsOn: string;
+    endsOn: string;
+    /** Null means full working days. */
+    secondsPerDay: number | null;
+    note: string | null;
+};
+
+/** A colleague's absence: only who and when, never the kind. */
+export type ColleagueOff = {
+    id: number;
+    name: string;
+    startsOn: string;
+    endsOn: string;
+};
+
+/** Values to start the absence dialog with. */
+export type AbsenceDraft = {
+    id?: number;
+    userId: number;
+    type: AbsenceType;
+    startsOn: string;
+    endsOn: string;
+    hoursPerDay: string;
+    note: string;
+};

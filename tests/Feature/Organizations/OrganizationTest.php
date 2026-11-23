@@ -120,6 +120,7 @@ class OrganizationTest extends TestCase
                 'default_hourly_rate' => 95000,
                 'week_starts_on' => 7,
                 'timezone' => 'Europe/Helsinki',
+                'workday_hours' => '7.5',
             ]);
 
         $response->assertRedirect(route('organizations.edit', $organization->fresh()));
@@ -131,6 +132,7 @@ class OrganizationTest extends TestCase
             'default_hourly_rate' => 95000,
             'week_starts_on' => 7,
             'timezone' => 'Europe/Helsinki',
+            'workday_seconds' => 27000,
         ]);
     }
 
@@ -147,9 +149,10 @@ class OrganizationTest extends TestCase
                 'default_hourly_rate' => -1,
                 'week_starts_on' => 8,
                 'timezone' => 'Mars/Olympus',
+                'workday_hours' => 25,
             ]);
 
-        $response->assertSessionHasErrors(['currency', 'default_hourly_rate', 'week_starts_on', 'timezone']);
+        $response->assertSessionHasErrors(['currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'workday_hours']);
     }
 
     public function test_organizations_cannot_be_updated_by_members()

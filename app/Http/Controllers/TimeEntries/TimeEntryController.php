@@ -19,6 +19,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Support\AbsencePresenter;
 use App\Support\CurrentOrganization;
+use App\Support\HolidayDates;
 use App\Support\TimeEntryPresenter;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -86,6 +87,8 @@ class TimeEntryController extends Controller
             'colleaguesOff' => $weekAbsences->where('user_id', '!=', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::colleagueOff($absence)),
             'absenceTypes' => AbsenceType::options(),
             'workdaySeconds' => $organization->workday_seconds,
+            // So the absence dialog can count working days in periods around the week.
+            'holidays' => HolidayDates::between($organization->id, $weekStart->subYear(), $weekStart->addYear()),
             'projects' => $this->presenter->projectOptions($organization, $member),
             'tags' => $this->presenter->tagOptions($organization),
             'recentTags' => $this->presenter->recentTags($organization),

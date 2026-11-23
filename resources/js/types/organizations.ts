@@ -18,6 +18,8 @@ export type OrganizationSettings = Organization & {
     /** ISO-8601 weekday, 1 = Monday. */
     weekStartsOn: number;
     timezone: string;
+    /** Hours a full absence day counts as. */
+    workdayHours: number;
     /** Logo URL in preview size (256 px), or null without a logo. */
     logo: string | null;
 };

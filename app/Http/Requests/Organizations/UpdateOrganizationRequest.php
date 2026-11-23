@@ -31,22 +31,30 @@ class UpdateOrganizationRequest extends FormRequest
             'default_hourly_rate' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'week_starts_on' => ['required', 'integer', 'between:1,7'],
             'timezone' => ['required', 'string', 'timezone:all'],
+            // Full absence days count as this many hours.
+            'workday_hours' => ['sometimes', 'numeric', 'min:1', 'max:24'],
         ];
     }
 
     /**
      * The validated attributes for UpdateOrganization.
      *
-     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string}
+     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string, workday_seconds?: int}
      */
     public function settings(): array
     {
-        return [
+        $settings = [
             'name' => $this->string('name')->trim()->value(),
             'currency' => $this->string('currency')->value(),
             'default_hourly_rate' => $this->filled('default_hourly_rate') ? $this->integer('default_hourly_rate') : null,
             'week_starts_on' => $this->integer('week_starts_on'),
             'timezone' => $this->string('timezone')->value(),
         ];
+
+        if ($this->has('workday_hours')) {
+            $settings['workday_seconds'] = (int) round($this->float('workday_hours') * 3600);
+        }
+
+        return $settings;
     }
 }
