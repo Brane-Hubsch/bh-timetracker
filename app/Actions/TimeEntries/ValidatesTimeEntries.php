@@ -4,6 +4,7 @@ namespace App\Actions\TimeEntries;
 
 use App\Actions\Tags\ResolveTags;
 use App\Data\TimeEntryData;
+use App\Enums\TimeEntrySource;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Tag;
@@ -38,10 +39,12 @@ trait ValidatesTimeEntries
             throw ValidationException::withMessages(['project_id' => __('The project does not exist in this organization.')]);
         }
 
-        // Archived projects (or clients) can't get new time; existing entries may keep them.
+        // Archived projects (or clients) can't get new time; existing entries may keep them. Imported
+        // entries may be created on them, since old history mostly belongs to archived projects.
         $projectChanged = $userChanged || $existing->project_id !== $project->id;
+        $isImport = $existing === null && $data->source === TimeEntrySource::Import;
 
-        if ($projectChanged && ($project->isArchived() || $project->client?->isArchived())) {
+        if ($projectChanged && ! $isImport && ($project->isArchived() || $project->client?->isArchived())) {
             throw ValidationException::withMessages(['project_id' => __('The project is archived.')]);
         }
 

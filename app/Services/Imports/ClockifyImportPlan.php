@@ -26,6 +26,9 @@ use Illuminate\Support\Collection;
  * People with a pending invitation can get time too (they match on the invited email): they are
  * planned with invitationMemberId() as a stand-in id, and the import adds them as members first.
  *
+ * Archived projects get time too, since old history mostly belongs to them. Rows without a project
+ * are skipped unless a project is chosen for them.
+ *
  * Rows longer than 24 hours (e.g. a week's time logged as one entry) are split at midnight in the
  * importer's time zone, keeping Clockify's start and end, since an entry is at most 24 hours.
  *
@@ -76,6 +79,9 @@ final class ClockifyImportPlan
     /** Rows longer than 24 hours, split at midnight into one entry per day. */
     public int $splitRows = 0;
 
+    /** Rows without a project: skipped, or put on the project chosen for them. */
+    public int $rowsWithoutProject = 0;
+
     /**
      * Hourly rate (minor units) per member and project, for the entries above and the already
      * imported ones. "defaultRate" is what the rate order gives; "rate" is the one that applies.
@@ -92,6 +98,7 @@ final class ClockifyImportPlan
      * @param  array<string, int|null>  $memberMap  email => member id (null skips the user); missing emails match on email
      * @param  array<string, bool>  $billableByProject  project key => billable, for new projects
      * @param  array<string, int|null>  $chosenRates  rateKey() => hourly rate in minor units (null uses the rate order)
+     * @param  int|null  $projectForRowsWithoutProject  an existing project that rows without a project go to (null skips them)
      */
     public function __construct(
         public readonly Organization $organization,
@@ -100,6 +107,7 @@ final class ClockifyImportPlan
         array $memberMap = [],
         array $billableByProject = [],
         array $chosenRates = [],
+        public readonly ?int $projectForRowsWithoutProject = null,
     ) {
         $this->build($memberMap, $billableByProject);
         $this->buildRates($chosenRates);
@@ -221,6 +229,13 @@ final class ClockifyImportPlan
             $this->skip($error['line'], null, null, null, $error['message']);
         }
 
+        // Rows without a project go to the chosen project, if any.
+        $fallback = $this->projectForRowsWithoutProject === null ? null
+            : Project::query()->forOrganization($this->organization)->with('client')->find($this->projectForRowsWithoutProject);
+        $projectOf = fn (ClockifyRow $row): ?array => $row->project !== null
+            ? ['client' => $row->client, 'name' => $row->project]
+            : ($fallback === null ? null : ['client' => $fallback->client?->name, 'name' => $fallback->name]);
+
         // Users and projects in the file, in order of appearance.
         $members = [];
         $projects = [];
@@ -247,19 +262,21 @@ final class ClockifyImportPlan
                 }
             }
 
-            if ($row->project === null) {
+            $reference = $projectOf($row);
+
+            if ($reference === null) {
                 continue;
             }
 
-            $key = self::projectKey($row->client, $row->project);
+            $key = self::projectKey($reference['client'], $reference['name']);
 
             if (! isset($projects[$key])) {
                 $existing = $existingProjects->get($key);
 
                 $projects[$key] = [
                     'key' => $key,
-                    'name' => $existing->name ?? mb_substr(self::clean($row->project), 0, 255),
-                    'client' => $existing?->client->name ?? ($row->client === null ? null : mb_substr(self::clean($row->client), 0, 255)),
+                    'name' => $existing->name ?? mb_substr(self::clean($reference['name']), 0, 255),
+                    'client' => $existing?->client->name ?? ($reference['client'] === null ? null : mb_substr(self::clean($reference['client']), 0, 255)),
                     'projectId' => $existing?->id,
                     'isArchived' => $existing !== null && ($existing->isArchived() || $existing->client?->isArchived()),
                     'billable' => $existing->is_billable ?? ($billableByProject[$key] ?? true),
@@ -286,16 +303,22 @@ final class ClockifyImportPlan
             $date = $startedAt->toDateString();
 
             if ($row->project === null) {
+                $this->rowsWithoutProject++;
+            }
+
+            $reference = $projectOf($row);
+
+            if ($reference === null) {
                 $this->skip($row->line, $date, $row->userName, null, __('The entry has no project.'));
 
                 continue;
             }
 
-            $key = self::projectKey($row->client, $row->project);
+            $key = self::projectKey($reference['client'], $reference['name']);
             $project = &$projects[$key];
             $project['entries']++;
             $project['seconds'] += $seconds;
-            $skip = fn (string $reason) => $this->skip($row->line, $date, $row->userName, $row->project, $reason);
+            $skip = fn (string $reason) => $this->skip($row->line, $date, $row->userName, $reference['name'], $reason);
 
             if ($endedAt->lessThanOrEqualTo($startedAt)) {
                 $skip(__('The end time must be after the start time.'));
@@ -305,12 +328,6 @@ final class ClockifyImportPlan
 
             if ($member['memberId'] === null) {
                 $skip(__('No member chosen for :email.', ['email' => $row->email]));
-
-                continue;
-            }
-
-            if ($project['isArchived']) {
-                $skip(__('The project is archived.'));
 
                 continue;
             }

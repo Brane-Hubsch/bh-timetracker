@@ -82,7 +82,7 @@ it('puts time on a chosen member or skips users who are not members', function (
         ->and(TimeEntry::query()->sole()->user_id)->toBe($this->member->id);
 });
 
-it('skips entries on archived projects and that already exist', function () {
+it('imports history onto archived projects and skips entries that already exist', function () {
     $archived = Project::factory()->for($this->organization)->archived()->create(['name' => 'Gammalt']);
     $csv = clockifyCsv([
         clockifyRow('Webbshop', 'Acme', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
@@ -92,13 +92,43 @@ it('skips entries on archived projects and that already exist', function () {
 
     $first = ($this->import)($csv);
 
-    expect($first['created'])->toBe(1)
-        ->and(array_column($first['skipped'], 'line'))->toBe([3, 4])
-        ->and(TimeEntry::query()->where('project_id', $archived->id)->exists())->toBeFalse();
+    expect($first['created'])->toBe(2)
+        ->and(array_column($first['skipped'], 'line'))->toBe([4])
+        ->and(TimeEntry::query()->where('project_id', $archived->id)->sole()->source)->toBe(TimeEntrySource::Import)
+        ->and($archived->fresh()->isArchived())->toBeTrue();
 
     // Importing the same file again adds nothing.
     expect(fn () => ($this->import)($csv))->toThrow(ValidationException::class)
-        ->and(TimeEntry::query()->count())->toBe(1);
+        ->and(TimeEntry::query()->count())->toBe(2);
+});
+
+it('puts rows without a project on the chosen project, or skips them', function () {
+    $internal = Project::factory()->for($this->organization)->create(['name' => 'Intern tid']);
+    $csv = clockifyCsv([
+        clockifyRow('', '', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:30', 'Administration'),
+        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '11-30-2026', '13:00', '11-30-2026', '14:00'),
+    ]);
+
+    $plan = new ClockifyImportPlan($this->organization, $this->owner, ClockifyCsv::fromString($csv));
+    expect($plan->rowsWithoutProject)->toBe(1)
+        ->and($plan->skipped[0]['reason'])->toBe(__('The entry has no project.'));
+
+    $result = app(ImportClockifyEntries::class)->handle($this->organization, $this->owner, ClockifyCsv::fromString($csv), [], [], [], false, $internal->id);
+
+    expect($result['created'])->toBe(2)
+        ->and(TimeEntry::query()->where('project_id', $internal->id)->sole()->description)->toBe('Administration');
+});
+
+it('ignores a chosen project from another organization for rows without a project', function () {
+    $outsider = User::factory()->create();
+    $foreign = Project::factory()->for($outsider->currentOrganization)->create();
+
+    $plan = new ClockifyImportPlan($this->organization, $this->owner, ClockifyCsv::fromString(clockifyCsv([
+        clockifyRow('', '', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:30'),
+    ])), projectForRowsWithoutProject: $foreign->id);
+
+    expect($plan->entries)->toBe([])
+        ->and($plan->skipped)->toHaveCount(1);
 });
 
 it('splits entries longer than 24 hours at midnight, keeping the times from Clockify', function () {
