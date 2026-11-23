@@ -6,10 +6,12 @@ import {
     CalendarDays,
     ChartColumn,
     FolderKanban,
+    Tags,
 } from 'lucide-react';
 import { index as clients } from '@/routes/clients';
 import { index as projects } from '@/routes/projects';
 import { summary as reports } from '@/routes/reports';
+import { index as tags } from '@/routes/tags';
 import { index as time } from '@/routes/time';
 
 export type MainNavItem = {
@@ -59,6 +61,16 @@ export function useMainNavigation(): MainNavItem[] {
                       title: 'Clients',
                       href: clients(slug),
                       icon: Briefcase,
+                      mobile: false,
+                  },
+              ]
+            : []),
+        ...(can?.canManageTags
+            ? [
+                  {
+                      title: 'Tags',
+                      href: tags(slug),
+                      icon: Tags,
                       mobile: false,
                   },
               ]

@@ -518,7 +518,8 @@ Beställt i efterhand (taggar stod tidigare under "Senare").
 
 - **Skapa:** alla som rapporterar tid kan skapa taggar direkt i tidsformuläret. Fältet föreslår befintliga taggar och har "Skapa taggen …"; Enter eller komma lägger till. Namn jämförs utan hänsyn till versaler, så "möte" återanvänder "Möte".
 - **Gränser:** högst 10 taggar per post, högst 50 tecken per tagg.
-- **Hantera:** ägare och admin (rättigheten `ManageTags`) lägger till, byter namn på och tar bort taggar i organisationsinställningarna. Byter man namn till en befintlig taggs namn slås taggarna ihop. Att ta bort en tagg tar inte bort några poster. Tagglistan nås även via ⌘K.
+- **Hantera:** ägare och admin (rättigheten `ManageTags`) lägger till, byter namn på och tar bort taggar på sidan Taggar (`/{organisation}/tags`, i huvudmenyn efter Kunder och i ⌘K). Byter man namn till en befintlig taggs namn slås taggarna ihop. Att ta bort en tagg tar inte bort några poster.
+- **Sidan Taggar** (tillägg 2026-11-23, flyttad från organisationsinställningarna): varje tagg visas med antal poster, rapporterade timmar och dagen den senast användes, i användarens tidszon. Listan går att söka i. Medlemmar ser inte sidan.
 - **Tidsposter:** taggarna visas i listvyn. "Kopiera förra veckan" kopierar dem.
 - **Rapporter:**
   - Filter "någon av taggarna".
