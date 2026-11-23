@@ -30,29 +30,30 @@ export default function ReportsProjects({ projects }: Props) {
                 </p>
             ) : (
                 <ul
-                    className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3"
+                    className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3"
                     data-test="follow-up"
                 >
                     {sorted.map((project) => (
                         <li
                             key={project.id}
-                            className="grid gap-3 rounded-2xl bg-surface p-4 shadow-surface"
+                            className="grid grid-cols-1 gap-3 rounded-2xl bg-surface p-4 shadow-surface"
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <Link
                                     href={showProject({ project: project.id })}
-                                    className="flex min-w-0 items-center gap-2 font-medium"
+                                    className="min-w-0 flex-1"
                                 >
-                                    <ProjectDot color={project.color} />
-                                    <span className="truncate">
-                                        {project.name}
-                                        {project.clientName && (
-                                            <span className="font-normal text-muted">
-                                                {' · '}
-                                                {project.clientName}
-                                            </span>
-                                        )}
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <ProjectDot color={project.color} />
+                                        <span className="truncate">
+                                            {project.name}
+                                        </span>
                                     </span>
+                                    {project.clientName && (
+                                        <span className="block truncate pl-5 text-sm text-muted">
+                                            {project.clientName}
+                                        </span>
+                                    )}
                                 </Link>
                                 {project.remainingSeconds !== null && (
                                     <span
