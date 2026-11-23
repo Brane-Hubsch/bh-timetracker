@@ -341,6 +341,17 @@ export function CalendarPicker({
               ...MONTH_DAY,
               year: 'numeric',
           });
+    const compactFormat = {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    } as const;
+    const compactRange =
+        !isDesktop && !isList
+            ? isDay
+                ? formatDate(date, intlLocale, compactFormat)
+                : formatDateRange(weekStart, end, intlLocale, compactFormat)
+            : null;
     const label = t(isList ? 'Choose a week' : 'Choose a date or week');
 
     const select = (day: string) => {
@@ -364,46 +375,55 @@ export function CalendarPicker({
     );
 
     const header = (
-        <div className="grid gap-3 border-b border-separator px-4 py-3 min-[390px]:px-5">
-            <div className="flex min-w-0 items-center justify-between gap-2">
-                <p
-                    className="min-w-0 text-base font-semibold first-letter:uppercase"
-                    aria-live="polite"
+        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 min-[390px]:px-5">
+            <p
+                className={cn(
+                    'min-w-0 font-semibold first-letter:uppercase',
+                    compactRange
+                        ? 'text-xs wrap-anywhere min-[360px]:text-sm'
+                        : 'text-base',
+                )}
+                aria-live="polite"
+            >
+                {compactRange ? (
+                    <>
+                        <span className="sr-only">{fullRange}</span>
+                        <span aria-hidden>{compactRange}</span>
+                    </>
+                ) : (
+                    fullRange
+                )}
+            </p>
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    aria-label={t('Go to today')}
+                    onPress={() => select(today)}
                 >
-                    {fullRange}
-                </p>
-                <div className="flex shrink-0 items-center gap-1">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        aria-label={t('Go to today')}
-                        onPress={() => select(today)}
+                    {t('Today')}
+                </Button>
+                {!isList && (
+                    <SegmentedControl
+                        aria-label={t('View')}
+                        value={view}
+                        onChange={onViewChange}
+                        options={[
+                            { id: 'day', label: t('Day') },
+                            { id: 'week', label: t('Week') },
+                        ]}
+                        data-test="calendar-picker-view"
+                    />
+                )}
+                {!isDesktop && (
+                    <Drawer.CloseTrigger
+                        aria-label={t('Close')}
+                        className="static size-9 rounded-full bg-transparent hover:bg-transparent"
                     >
-                        {t('Today')}
-                    </Button>
-                    {!isDesktop && (
-                        <Drawer.CloseTrigger
-                            aria-label={t('Close')}
-                            className="static size-9 rounded-full bg-transparent hover:bg-transparent"
-                        >
-                            <X className="size-4" aria-hidden />
-                        </Drawer.CloseTrigger>
-                    )}
-                </div>
+                        <X className="size-4" aria-hidden />
+                    </Drawer.CloseTrigger>
+                )}
             </div>
-            {!isList && (
-                <SegmentedControl
-                    aria-label={t('View')}
-                    value={view}
-                    onChange={onViewChange}
-                    options={[
-                        { id: 'day', label: t('Day') },
-                        { id: 'week', label: t('Week') },
-                    ]}
-                    className="w-fit"
-                    data-test="calendar-picker-view"
-                />
-            )}
         </div>
     );
     const panel = (
@@ -436,7 +456,7 @@ export function CalendarPicker({
         <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
             {trigger}
             <Drawer.Backdrop variant="opaque">
-                <Drawer.Content placement="bottom">
+                <Drawer.Content placement="bottom" className="max-w-dvw">
                     <Drawer.Dialog className="max-h-[92svh] bg-surface p-0">
                         <Drawer.Handle className="pt-2 pb-0" />
                         <Drawer.Heading className="sr-only">
