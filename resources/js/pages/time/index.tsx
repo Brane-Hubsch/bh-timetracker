@@ -276,7 +276,7 @@ export default function TimeIndex({
                         {title}
                     </h2>
 
-                    <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
+                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
                         {members.length > 1 && (
                             <SelectField
                                 name="user"
@@ -315,7 +315,7 @@ export default function TimeIndex({
                                         </span>
                                     </span>
                                 )}
-                                className="min-w-40 flex-1 md:w-auto md:max-w-56 md:flex-none"
+                                className="w-fit max-w-full min-w-0"
                                 triggerClassName="h-9 items-center rounded-full bg-transparent py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-4 shadow-none"
                                 hideIndicator
                                 data-test="member-select"
