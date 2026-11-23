@@ -150,6 +150,7 @@ trait HasOrganizations
             roleLabel: $role?->label(),
             isCurrent: $this->isCurrentOrganization($organization),
             logo: $organization->logoUrl(),
+            hasTeam: $organization->team_enabled,
         );
     }
 

@@ -44,6 +44,8 @@ class DatabaseSeeder extends Seeder
             $user->switchOrganization($organization);
         }
 
+        $organization->update(['team_enabled' => true]);
+
         $createOrganization->handle($owner, 'Sidoprojekt HB');
         $owner->switchOrganization($organization);
 

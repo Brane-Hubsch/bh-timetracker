@@ -13,6 +13,7 @@ readonly class UserOrganization
         public ?bool $isCurrent = null,
         /** Logo URL (128 px), or null without a logo. */
         public ?string $logo = null,
+        public bool $hasTeam = false,
     ) {
         //
     }

@@ -22,9 +22,13 @@ class RemoveOrganizationMember
         }
 
         DB::transaction(function () use ($user, $organization) {
-            $organization->memberships()
+            $removed = $organization->memberships()
                 ->where('user_id', $user->id)
                 ->delete();
+
+            if ($removed > 0 && ! $organization->team_enabled) {
+                $organization->update(['team_enabled' => true]);
+            }
 
             if ($user->isCurrentOrganization($organization)) {
                 $user->resetCurrentOrganization(excluding: $organization);

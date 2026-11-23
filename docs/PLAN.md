@@ -521,6 +521,7 @@ Beställt i efterhand (taggar stod tidigare under "Senare").
 - **Gränser:** högst 10 taggar per post, högst 50 tecken per tagg.
 - **Hantera:** ägare och admin (rättigheten `ManageTags`) lägger till, byter namn på och tar bort taggar på sidan Taggar (`/{organisation}/tags`, i huvudmenyn efter Kunder och i ⌘K). Byter man namn till en befintlig taggs namn slås taggarna ihop. Att ta bort en tagg tar inte bort några poster.
 - **Sidan Taggar** (tillägg 2026-11-23, flyttad från organisationsinställningarna): varje tagg visas med antal poster, rapporterade timmar och dagen den senast användes, i användarens tidszon. Listan går att söka i. Medlemmar ser inte sidan.
+- **Sidan Team** visar aktiva och inaktiverade medlemmar med sök och rollfilter. Team visas i sidomenyn när organisationen fått en andra medlem och ligger sedan kvar. Första inbjudan görs via organisationsinställningarna. Ägare och admin kan bjuda in, se timpris och hantera medlemskap. Arbetsschemat lagras per medlemskap och kalendern använder den valda medlemmens veckostart. Profilbilder uppladdade från Team gäller i den aktuella organisationen.
 - **Tidsposter:** taggarna visas i listvyn. "Kopiera förra veckan" kopierar dem.
 - **Rapporter:**
   - Filter "någon av taggarna".
