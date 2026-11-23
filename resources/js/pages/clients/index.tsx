@@ -64,16 +64,20 @@ export default function ClientsIndex({ clients, filters }: Props) {
                                             </Chip>
                                         )}
                                     </div>
-                                    <p className="truncate text-sm text-muted">
-                                        {[
-                                            client.organizationNumber,
-                                            tc(
+                                    <p className="text-sm text-muted">
+                                        {client.organizationNumber &&
+                                            `${client.organizationNumber} · `}
+                                        <span className="inline-block">
+                                            {tc(
                                                 ':count active project|:count active projects',
                                                 client.activeProjectsCount,
-                                            ),
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ')}
+                                            )}
+                                            {' · '}
+                                            {tc(
+                                                ':count archived',
+                                                client.archivedProjectsCount,
+                                            )}
+                                        </span>
                                     </p>
                                 </div>
                                 <ChevronRight className="size-4 shrink-0 text-muted" />

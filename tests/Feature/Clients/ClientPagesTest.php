@@ -2,6 +2,7 @@
 
 use App\Enums\OrganizationRole;
 use App\Models\Client;
+use App\Models\Project;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -20,20 +21,28 @@ function asRole(OrganizationRole $role)
 }
 
 it('lists active clients with search, and archived clients separately', function () {
-    Client::factory()->for($this->organization)->create(['name' => 'Acme AB']);
+    $acme = Client::factory()->for($this->organization)->create(['name' => 'Acme AB']);
     Client::factory()->for($this->organization)->create(['name' => 'Nordic AB']);
     Client::factory()->for($this->organization)->archived()->create(['name' => 'Old AB']);
+    Project::factory()->for($this->organization)->for($acme)->create();
+    Project::factory()->for($this->organization)->for($acme)->archived()->count(2)->create();
 
     $this->actingAs($this->owner)
         ->get(route('clients.index', ['current_organization' => $this->slug, 'search' => 'acme']))
         ->assertInertia(fn (Assert $page) => $page
             ->component('clients/index')
             ->has('clients', 1)
-            ->where('clients.0.name', 'Acme AB'));
+            ->where('clients.0.name', 'Acme AB')
+            ->where('clients.0.activeProjectsCount', 1)
+            ->where('clients.0.archivedProjectsCount', 2));
 
     $this->actingAs($this->owner)
         ->get(route('clients.index', ['current_organization' => $this->slug, 'status' => 'archived']))
-        ->assertInertia(fn (Assert $page) => $page->has('clients', 1)->where('clients.0.name', 'Old AB'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('clients', 1)
+            ->where('clients.0.name', 'Old AB')
+            ->where('clients.0.activeProjectsCount', 0)
+            ->where('clients.0.archivedProjectsCount', 0));
 });
 
 it('lets admins create, update, archive and restore clients', function () {
