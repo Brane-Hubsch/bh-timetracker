@@ -30,6 +30,8 @@ type Props = {
     /** Shown before the text: a sample of the options while idle, the chosen ones while active. */
     renderPreview?: (options: FilterOption[]) => ReactNode;
     icon?: ReactNode;
+    /** Fit the list to its longest option label within the popover's width limits. */
+    fitOptionLabels?: boolean;
     'data-test'?: string;
 };
 
@@ -57,6 +59,7 @@ export function FilterChip({
     activeLabel,
     renderPreview,
     icon,
+    fitOptionLabels = false,
     'data-test': dataTest,
 }: Props) {
     const { t } = useTranslation();
@@ -119,13 +122,31 @@ export function FilterChip({
             <Popover.Content
                 placement="bottom start"
                 className={cn(
-                    'max-w-[calc(100vw-2rem)] rounded-2xl p-0',
-                    selectionMode === 'multiple' ? 'w-96' : 'w-72',
+                    'max-w-[min(24rem,calc(100vw-2rem))] rounded-2xl p-0',
+                    fitOptionLabels
+                        ? 'grid w-max min-w-[min(12rem,calc(100vw-2rem))] grid-cols-1'
+                        : selectionMode === 'multiple'
+                          ? 'w-96'
+                          : 'w-72',
                 )}
             >
+                {fitOptionLabels && (
+                    // Size from all labels, with room for the leading icon and selection indicator.
+                    <span
+                        aria-hidden="true"
+                        className="invisible col-start-1 row-start-1 h-0 [scrollbar-gutter:stable] overflow-hidden px-12 text-sm font-medium whitespace-pre"
+                    >
+                        {options
+                            .map((option) => option.label.replace(/\s+/g, ' '))
+                            .join('\n')}
+                    </span>
+                )}
                 <Popover.Dialog
                     aria-label={label}
-                    className="grid grid-cols-1 gap-1 p-2"
+                    className={cn(
+                        'grid grid-cols-1 gap-1 p-2',
+                        fitOptionLabels && 'col-start-1 row-start-1',
+                    )}
                 >
                     {isSearchable && (
                         <SearchField
@@ -137,7 +158,14 @@ export function FilterChip({
                         >
                             <SearchField.Group className="w-full min-w-0">
                                 <SearchField.SearchIcon />
-                                <SearchField.Input placeholder={t('Search')} />
+                                <SearchField.Input
+                                    placeholder={t('Search')}
+                                    className={
+                                        fitOptionLabels
+                                            ? 'w-0 min-w-0'
+                                            : undefined
+                                    }
+                                />
                                 <SearchField.ClearButton />
                             </SearchField.Group>
                         </SearchField>
@@ -149,7 +177,11 @@ export function FilterChip({
                         // Escape closes the list; it must not silently clear the filter.
                         escapeKeyBehavior="none"
                         onSelectionChange={select}
-                        className="scroll-fade-y -mx-2 max-h-72 overflow-y-auto px-2"
+                        className={cn(
+                            'scroll-fade-y -mx-2 max-h-72 overflow-y-auto px-2',
+                            fitOptionLabels &&
+                                'w-auto [scrollbar-gutter:stable]',
+                        )}
                         renderEmptyState={() => (
                             <p className="px-3 py-2 text-sm text-muted">
                                 {t('No matches')}

@@ -176,6 +176,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                         options={members}
                         value={filters.members}
                         onChange={(value) => apply({ members: value })}
+                        fitOptionLabels
                         renderPreview={(shown) => (
                             <Stack className="-space-x-1">
                                 {shown.slice(0, 3).map((option) => (
