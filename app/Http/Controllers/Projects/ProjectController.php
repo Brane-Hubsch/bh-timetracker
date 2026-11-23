@@ -52,12 +52,17 @@ class ProjectController extends Controller
             ->orderBy('name')
             ->get();
 
+        $canViewRates = $user->can('viewRates', $organization);
+
         return Inertia::render('projects/index', [
             'projects' => $projects->map(fn (Project $project) => [
                 ...$this->listItem($project),
                 // All time reported on the project, as on the project page and in the follow-up report.
                 'consumedSeconds' => is_numeric($consumed = $project->getAttribute('consumed_seconds')) ? (int) $consumed : 0,
+                'hourlyRate' => $canViewRates ? $project->hourly_rate : null,
             ]),
+            'canViewRates' => $canViewRates,
+            'currency' => $organization->currency,
             'clients' => Client::query()->active()->orderBy('name')->get(['id', 'name'])
                 ->when(! $user->can('viewAny', Client::class), fn ($clients) => $clients
                     ->whereIn('id', $projects->pluck('client_id')->filter()->all())

@@ -1,21 +1,26 @@
 import { Button, Chip } from '@heroui/react';
 import { Head, Link } from '@inertiajs/react';
-import { ChevronRight, FolderKanban, Lock, Plus } from 'lucide-react';
+import { FolderKanban, Lock, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
+import { LogoImage } from '@/components/logo-image';
 import { EstimateProgress } from '@/components/estimate-progress';
 import { ProjectDot } from '@/components/project-dot';
 import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
-import { formatHours } from '@/lib/format';
+import { formatHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { show } from '@/routes/projects';
 import type { ProjectFormOptions, ProjectListItem } from '@/types';
 
 type Props = {
-    projects: ProjectListItem[];
+    /** hourlyRate is null when not set or not visible to the viewer. */
+    projects: (ProjectListItem & { hourlyRate: number | null })[];
+    /** Whether the viewer may see rates (owners and admins). */
+    canViewRates: boolean;
+    currency: string;
     clients: { id: number; name: string }[];
     filters: {
         search: string;
@@ -28,14 +33,32 @@ type Props = {
 
 const ALL = 'all';
 
+/** Columns from lg up: project, client, billing, (rate,) visibility, reported time. */
+const COLUMNS = {
+    withRate:
+        'lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_7rem_6rem_minmax(11rem,1.5fr)]',
+    withoutRate:
+        'lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1.4fr)_8.5rem_6rem_minmax(11rem,1.5fr)]',
+};
+
 export default function ProjectsIndex({
     projects,
+    canViewRates,
+    currency,
     clients,
     filters,
     projectForm,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const [isCreateOpen, setCreateOpen] = useState(false);
+    const columns = canViewRates ? COLUMNS.withRate : COLUMNS.withoutRate;
+    const billableCount = projects.filter(
+        (project) => project.isBillable,
+    ).length;
+    const reportedSeconds = projects.reduce(
+        (sum, project) => sum + project.consumedSeconds,
+        0,
+    );
 
     // ?new=1 from the command palette and links on other pages.
     useOpenFromQuery('new', () => setCreateOpen(projectForm !== null));
@@ -93,87 +116,202 @@ export default function ProjectsIndex({
                     }
                 </ListFilters>
 
-                <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
-                    {projects.map((project) => (
-                        <li key={project.id} data-test="project-row">
-                            <Link
-                                href={show({ project: project.id })}
-                                className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4 transition-colors hover:bg-surface-secondary"
+                {projects.length > 0 && (
+                    <dl
+                        className="grid grid-cols-3 gap-2 sm:max-w-xl sm:gap-3"
+                        data-test="project-summary"
+                    >
+                        {[
+                            [t('Projects'), String(projects.length)],
+                            [t('Billable'), String(billableCount)],
+                            [
+                                t('Reported'),
+                                formatHours(reportedSeconds, intlLocale),
+                            ],
+                        ].map(([label, value]) => (
+                            <div
+                                key={label}
+                                className="grid gap-0.5 rounded-2xl bg-surface px-4 py-3 shadow-surface"
                             >
-                                <ProjectDot color={project.color} />
-                                <div className="min-w-0 flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="truncate font-medium">
-                                            {project.name}
-                                        </span>
-                                        {project.code && (
-                                            <span className="text-sm text-muted">
-                                                {project.code}
+                                <dt className="text-xs text-muted sm:text-sm">
+                                    {label}
+                                </dt>
+                                <dd className="text-lg font-semibold tabular-nums">
+                                    {value}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                )}
+
+                <div className="overflow-hidden rounded-2xl bg-surface shadow-surface">
+                    {projects.length > 0 && (
+                        <div
+                            aria-hidden="true"
+                            className={`hidden gap-4 border-b border-separator px-5 py-2.5 text-xs font-medium text-muted lg:grid ${columns}`}
+                        >
+                            <span>{t('Project')}</span>
+                            <span>{t('Client')}</span>
+                            <span>{t('Billing')}</span>
+                            {canViewRates && <span>{t('Hourly rate')}</span>}
+                            <span>{t('Visibility')}</span>
+                            <span className="text-right">
+                                {t('Reported time')}
+                            </span>
+                        </div>
+                    )}
+                    <ul className="divide-y divide-separator">
+                        {projects.map((project) => (
+                            <li key={project.id} data-test="project-row">
+                                <Link
+                                    href={show({ project: project.id })}
+                                    className={`grid gap-2.5 p-4 transition-colors hover:bg-surface-secondary lg:items-center lg:gap-4 lg:px-5 lg:py-3 ${columns}`}
+                                >
+                                    {/* Project: on mobile also the client and code. */}
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        <ProjectDot color={project.color} />
+                                        <div className="min-w-0">
+                                            <p className="flex items-center gap-2">
+                                                <span
+                                                    className="truncate font-medium"
+                                                    title={project.name}
+                                                >
+                                                    {project.name}
+                                                </span>
+                                                {project.isArchived && (
+                                                    <Chip
+                                                        size="sm"
+                                                        variant="soft"
+                                                    >
+                                                        {t('Archived')}
+                                                    </Chip>
+                                                )}
+                                            </p>
+                                            <p className="truncate text-xs text-muted">
+                                                <span className="lg:hidden">
+                                                    {[
+                                                        project.client?.name ??
+                                                            t('No client'),
+                                                        project.code,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(' · ')}
+                                                </span>
+                                                <span
+                                                    className="hidden lg:inline"
+                                                    data-test="project-code"
+                                                >
+                                                    {project.code}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="hidden min-w-0 items-center gap-2 text-sm lg:flex">
+                                        {project.client ? (
+                                            <>
+                                                <LogoImage
+                                                    src={project.client.logo}
+                                                    name={project.client.name}
+                                                    size={20}
+                                                    className="rounded-md text-[10px] font-semibold"
+                                                />
+                                                <span className="truncate">
+                                                    {project.client.name}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="text-muted">
+                                                {t('No client')}
                                             </span>
-                                        )}
-                                        {project.isPrivate && (
-                                            <Lock
-                                                className="size-3.5 text-muted"
-                                                aria-label={t('Private')}
-                                            />
                                         )}
                                     </div>
-                                    <p className="truncate text-sm text-muted">
-                                        {[
-                                            project.client?.name ??
-                                                t('No client'),
-                                            !project.isBillable &&
-                                                t('Not billable'),
-                                        ]
-                                            .filter(Boolean)
-                                            .join(' · ')}
-                                    </p>
-                                </div>
-                                {/* Reported time: below the name on mobile, beside it from sm. */}
-                                <div className="order-last w-full pl-6 sm:order-none sm:w-56 sm:pl-0">
-                                    {project.estimateSeconds ? (
-                                        <EstimateProgress
-                                            consumedSeconds={
-                                                project.consumedSeconds
-                                            }
-                                            estimateSeconds={
-                                                project.estimateSeconds
-                                            }
-                                        />
-                                    ) : (
-                                        <p className="text-xs tabular-nums sm:text-right">
-                                            {formatHours(
-                                                project.consumedSeconds,
-                                                intlLocale,
-                                            )}{' '}
-                                            <span className="text-muted">
-                                                {t('reported')}
+
+                                    {/* Billing, rate and visibility: chips on mobile, columns from lg. */}
+                                    <div className="flex flex-wrap items-center gap-1.5 pl-[22px] lg:contents">
+                                        <span>
+                                            <Chip
+                                                size="sm"
+                                                variant="soft"
+                                                color={
+                                                    project.isBillable
+                                                        ? 'accent'
+                                                        : 'default'
+                                                }
+                                                data-test="project-billable"
+                                            >
+                                                {project.isBillable
+                                                    ? t('Billable')
+                                                    : t('Not billable')}
+                                            </Chip>
+                                        </span>
+                                        {canViewRates && (
+                                            <span
+                                                className={`text-xs tabular-nums lg:text-sm ${project.hourlyRate === null ? 'hidden text-muted lg:inline' : 'rounded-full bg-surface-secondary px-2 py-0.5 lg:bg-transparent lg:p-0'}`}
+                                                data-test="project-rate"
+                                            >
+                                                {project.hourlyRate !== null
+                                                    ? `${formatMoney(project.hourlyRate, currency, intlLocale)}/h`
+                                                    : project.isBillable
+                                                      ? t('Default')
+                                                      : '–'}
                                             </span>
-                                        </p>
-                                    )}
-                                </div>
-                                {project.isArchived && (
-                                    <Chip size="sm" variant="soft">
-                                        {t('Archived')}
-                                    </Chip>
-                                )}
-                                <ChevronRight className="size-4 shrink-0 text-muted" />
-                            </Link>
-                        </li>
-                    ))}
-                    {projects.length === 0 && (
-                        <li className="grid justify-items-center gap-2 p-10 text-center">
-                            <FolderKanban className="size-6 text-muted" />
-                            <p className="text-sm text-muted">
-                                {filters.search
-                                    ? t('No projects match your search.')
-                                    : filters.status === 'archived'
-                                      ? t('No archived projects.')
-                                      : t('No projects yet.')}
-                            </p>
-                        </li>
-                    )}
-                </ul>
+                                        )}
+                                        <span
+                                            className={`items-center gap-1 text-xs text-muted lg:text-sm ${project.isPrivate ? 'flex rounded-full bg-surface-secondary px-2 py-0.5 lg:bg-transparent lg:p-0' : 'hidden lg:flex'}`}
+                                        >
+                                            {project.isPrivate && (
+                                                <Lock
+                                                    aria-hidden="true"
+                                                    className="size-3.5"
+                                                />
+                                            )}
+                                            {project.isPrivate
+                                                ? t('Private')
+                                                : t('Public')}
+                                        </span>
+                                    </div>
+
+                                    <div className="pl-[22px] lg:pl-0">
+                                        {project.estimateSeconds ? (
+                                            <EstimateProgress
+                                                consumedSeconds={
+                                                    project.consumedSeconds
+                                                }
+                                                estimateSeconds={
+                                                    project.estimateSeconds
+                                                }
+                                            />
+                                        ) : (
+                                            <p className="text-xs tabular-nums lg:text-right lg:text-sm lg:font-medium">
+                                                {formatHours(
+                                                    project.consumedSeconds,
+                                                    intlLocale,
+                                                )}
+                                                <span className="font-normal text-muted lg:hidden">
+                                                    {' '}
+                                                    {t('reported')}
+                                                </span>
+                                            </p>
+                                        )}
+                                    </div>
+                                </Link>
+                            </li>
+                        ))}
+                        {projects.length === 0 && (
+                            <li className="grid justify-items-center gap-2 p-10 text-center">
+                                <FolderKanban className="size-6 text-muted" />
+                                <p className="text-sm text-muted">
+                                    {filters.search
+                                        ? t('No projects match your search.')
+                                        : filters.status === 'archived'
+                                          ? t('No archived projects.')
+                                          : t('No projects yet.')}
+                                </p>
+                            </li>
+                        )}
+                    </ul>
+                </div>
             </div>
 
             {projectForm && (
