@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 export type ListFilterValues = Record<
     string,
@@ -14,12 +15,13 @@ type Props = {
     filters: ListFilterValues & { search?: string; status?: string };
     /** Extra filters, e.g. a client select. Call `apply` with changed values. */
     children?: (apply: (changes: ListFilterValues) => void) => ReactNode;
+    className?: string;
 };
 
 /**
  * Search + active/archived tabs for list pages. Filters live in the URL so lists can be bookmarked.
  */
-export function ListFilters({ filters, children }: Props) {
+export function ListFilters({ filters, children, className }: Props) {
     const { t } = useTranslation();
     const [search, setSearch] = useState(filters.search ?? '');
     const isFirstRender = useRef(true);
@@ -54,7 +56,12 @@ export function ListFilters({ filters, children }: Props) {
     }, [search]);
 
     return (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div
+            className={cn(
+                'flex flex-col gap-3 sm:flex-row sm:items-center',
+                className,
+            )}
+        >
             <SearchField
                 aria-label={t('Search')}
                 value={search}
