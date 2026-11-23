@@ -80,6 +80,7 @@ export function ImageUploadField({
                             }}
                         >
                             <Button
+                                type="button"
                                 variant="secondary"
                                 size="sm"
                                 isPending={isPending}
@@ -94,6 +95,7 @@ export function ImageUploadField({
                         {additionalAction}
                         {canRemove && (
                             <Button
+                                type="button"
                                 variant="ghost"
                                 size="sm"
                                 onPress={onRemove}
