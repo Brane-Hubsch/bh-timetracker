@@ -1,14 +1,19 @@
 import {
     Button,
     Chip,
+    ComboBox,
     Description,
+    FieldError,
+    Input,
     Label,
+    ListBox,
     TextArea,
     TextField,
 } from '@heroui/react';
-import { Form, Link, useHttp } from '@inertiajs/react';
+import { Form, useHttp } from '@inertiajs/react';
 import { Link2 } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Group, useFilter } from 'react-aria-components';
 import { ImageUploadField } from '@/components/form/image-upload-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
@@ -30,46 +35,78 @@ type Props = {
     | { client: null; clientNameOptions: ClientNameOption[] }
 );
 
-function ClientNameSuggestions({ options }: { options: ClientNameOption[] }) {
+function ClientNameField({
+    options,
+    value,
+    onChange,
+    error,
+}: {
+    options: ClientNameOption[];
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+}) {
     const { t } = useTranslation();
-    const labelId = useId();
+    const { contains } = useFilter({ sensitivity: 'base' });
 
     return (
-        <div
-            aria-live="polite"
-            className={options.length ? 'grid gap-2' : 'sr-only'}
+        <ComboBox
+            name="name"
+            allowsCustomValue
+            inputValue={value}
+            onInputChange={onChange}
+            selectedKey={null}
+            menuTrigger="input"
+            defaultFilter={(text, input) => {
+                const query = input.trim();
+                return query !== '' && contains(text.trim(), query);
+            }}
+            isInvalid={Boolean(error)}
+            isRequired
+            validationBehavior="aria"
+            className="w-full"
         >
-            {options.length > 0 && (
-                <>
-                    <p id={labelId} className="text-xs font-medium text-muted">
-                        {t('Existing clients')}
-                    </p>
-                    <ul aria-labelledby={labelId} className="grid gap-1">
-                        {options.map((option) => (
-                            <li key={option.id}>
-                                <Link
-                                    href={show({ client: option.id })}
-                                    className="flex min-h-10 items-center justify-between gap-2 rounded-lg bg-surface-secondary px-3 py-2 text-sm font-medium transition-colors hover:bg-surface-tertiary hover:underline focus-visible:underline"
+            <Label isRequired>{t('Name')}</Label>
+            <Group className="grid gap-1">
+                <Input autoFocus autoComplete="off" data-test="client-name" />
+                <FieldError>{error}</FieldError>
+            </Group>
+            <ComboBox.Popover>
+                <p
+                    aria-hidden="true"
+                    className="px-4 pt-2 text-xs font-medium text-muted"
+                >
+                    {t('Existing clients')}
+                </p>
+                <ListBox
+                    items={options}
+                    aria-label={t('Existing clients')}
+                    className="max-h-56"
+                >
+                    {(option: ClientNameOption) => (
+                        <ListBox.Item
+                            id={option.id}
+                            href={show.url({ client: option.id })}
+                            textValue={option.name}
+                            className="min-h-10 justify-between gap-2 rounded-[1.25rem]"
+                        >
+                            <span className="min-w-0 font-medium wrap-break-word">
+                                {option.name}
+                            </span>
+                            {option.isArchived && (
+                                <Chip
+                                    size="sm"
+                                    variant="soft"
+                                    className="shrink-0"
                                 >
-                                    <span className="min-w-0 break-words">
-                                        {option.name}
-                                    </span>
-                                    {option.isArchived && (
-                                        <Chip
-                                            size="sm"
-                                            variant="soft"
-                                            className="shrink-0"
-                                        >
-                                            {t('Archived')}
-                                        </Chip>
-                                    )}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </>
-            )}
-        </div>
+                                    {t('Archived')}
+                                </Chip>
+                            )}
+                        </ListBox.Item>
+                    )}
+                </ListBox>
+            </ComboBox.Popover>
+        </ComboBox>
     );
 }
 
@@ -83,22 +120,12 @@ export function ClientFormDrawer({
     const { t } = useTranslation();
     const form = client ? update.form({ client: client.id }) : store.form();
     const [name, setName] = useState('');
-    const nameQuery = name.trim().toLowerCase();
-    const matches =
-        !client && nameQuery
-            ? clientNameOptions.filter((option) =>
-                  option.name.trim().toLowerCase().includes(nameQuery),
-              )
-            : [];
-    const duplicate = matches.find(
-        (option) => option.name.trim().toLowerCase() === nameQuery,
-    );
-    const suggestions = duplicate
-        ? [
-              duplicate,
-              ...matches.filter((option) => option.id !== duplicate.id),
-          ].slice(0, 5)
-        : matches.slice(0, 5);
+    const normalizedName = name.trim().toLowerCase();
+    const duplicate =
+        normalizedName !== '' &&
+        clientNameOptions.some(
+            (option) => option.name.trim().toLowerCase() === normalizedName,
+        );
     // The logo is sent with the form: a newly chosen file, or a request to remove the current one.
     const [logo, setLogo] = useState<File | null>(null);
     const [removeLogo, setRemoveLogo] = useState(false);
@@ -225,21 +252,24 @@ export function ClientFormDrawer({
                     <>
                         <SideDrawerBody>
                             <div className="grid gap-4">
-                                <div className="grid gap-2">
+                                {client ? (
                                     <TextInputField
                                         name="name"
                                         label={t('Name')}
-                                        defaultValue={client?.name}
-                                        value={client ? undefined : name}
-                                        onChange={
-                                            client
-                                                ? undefined
-                                                : (value) => {
-                                                      setName(value);
-                                                      if (errors.name)
-                                                          clearErrors('name');
-                                                  }
-                                        }
+                                        defaultValue={client.name}
+                                        error={errors.name}
+                                        isRequired
+                                        data-test="client-name"
+                                    />
+                                ) : (
+                                    <ClientNameField
+                                        options={clientNameOptions}
+                                        value={name}
+                                        onChange={(value) => {
+                                            setName(value);
+                                            if (errors.name)
+                                                clearErrors('name');
+                                        }}
                                         error={
                                             duplicate
                                                 ? t(
@@ -247,19 +277,8 @@ export function ClientFormDrawer({
                                                   )
                                                 : errors.name
                                         }
-                                        isRequired
-                                        autoFocus={!client}
-                                        autoComplete={
-                                            client ? undefined : 'off'
-                                        }
-                                        data-test="client-name"
                                     />
-                                    {!client && (
-                                        <ClientNameSuggestions
-                                            options={suggestions}
-                                        />
-                                    )}
-                                </div>
+                                )}
                                 <TextInputField
                                     name="website"
                                     label={t('Website')}
@@ -355,7 +374,7 @@ export function ClientFormDrawer({
                             <Button
                                 type="submit"
                                 isPending={processing}
-                                isDisabled={findingLogo || Boolean(duplicate)}
+                                isDisabled={findingLogo || duplicate}
                                 data-test="client-save"
                             >
                                 {t('Save')}
