@@ -145,7 +145,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Kalendervy** (standard på desktop)
 - Veckovy och dagvy (dagvy är standard på mobil). Veckan börjar enligt organisationens inställning.
-- På desktop ligger vyväljaren före datumnavigeringen. I veckovyn visar periodknappen Denna vecka, Förra veckan, Nästa vecka eller veckonumret, med datumintervallet på raden under. Den öppnar en veckoväljare där både snabbvalen och kalenderraderna väljer hela veckor. Idag i väljaren visar månaden med dagens markerade datum. Pilarna vid periodknappen stegar en vecka i taget.
+- På desktop ligger datumnavigeringen före vyväljaren. I veckovyn visar periodknappen Denna vecka, Förra veckan, Nästa vecka eller veckonumret, med datumintervallet på raden under. Den öppnar en veckoväljare där både snabbvalen och kalenderraderna väljer hela veckor. Under snabbvalen visas vald period och knappen Idag, som visar månaden med dagens markerade datum. Pilarna vid periodknappen stegar en vecka i taget.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
 - Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.

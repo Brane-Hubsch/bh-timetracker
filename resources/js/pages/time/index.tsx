@@ -246,7 +246,6 @@ export default function TimeIndex({
 
                 {/* Two rows on mobile (period, then filters and actions); one on desktop. */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
-                    {isDesktop && viewControl}
                     <div className="flex shrink-0 items-center gap-1">
                         <Button
                             isIconOnly
@@ -305,6 +304,7 @@ export default function TimeIndex({
                         </>
                     )}
 
+                    {isDesktop && viewControl}
                     <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
                         {members.length > 1 && (
                             <SelectField

@@ -45,151 +45,142 @@ function WeekPanel({
 
     return (
         <div className="sm:grid sm:grid-cols-[198px_minmax(0,1fr)]">
-            <div
-                role="group"
-                aria-label={t('Week presets')}
-                className="grid grid-cols-2 content-start gap-x-2 gap-y-0.5 border-b border-separator px-4 py-2.5 sm:grid-cols-1 sm:border-e sm:border-b-0 sm:px-3"
-            >
-                {presets.map(({ label, date, start }) => (
-                    <Button
-                        key={date}
-                        variant="ghost"
-                        aria-pressed={start === weekStart}
-                        className="h-9 w-full justify-start px-3 text-foreground aria-pressed:bg-accent/15"
-                        onPress={() => onChange(date)}
-                    >
-                        {label}
-                    </Button>
-                ))}
-            </div>
-            <div>
-                <div className="px-4 pt-3.5 min-[390px]:px-5 sm:px-3.5">
-                    <div className="flex h-9 items-center justify-between gap-1">
+            <div className="min-w-0 border-b border-separator px-4 py-2.5 min-[390px]:px-5 sm:border-e sm:border-b-0 sm:px-3">
+                <div
+                    role="group"
+                    aria-label={t('Week presets')}
+                    className="grid grid-cols-2 gap-x-2 gap-y-0.5 sm:grid-cols-1"
+                >
+                    {presets.map(({ label, date, start }) => (
                         <Button
-                            isIconOnly
+                            key={date}
                             variant="ghost"
-                            size="sm"
-                            aria-label={t('Previous month')}
-                            onPress={() =>
-                                setMonth((value) =>
-                                    value.subtract({ months: 1 }),
-                                )
-                            }
+                            aria-pressed={start === weekStart}
+                            className="h-9 w-full justify-start px-3 text-foreground aria-pressed:bg-accent/15"
+                            onPress={() => onChange(date)}
                         >
-                            <ChevronLeft className="size-4" aria-hidden />
+                            {label}
                         </Button>
-                        <h3
-                            aria-live="polite"
-                            className="text-sm font-medium first-letter:uppercase"
-                        >
-                            {formatDate(month.toString(), intlLocale, {
-                                month: 'long',
-                                year: 'numeric',
-                            })}
-                        </h3>
-                        <Button
-                            isIconOnly
-                            variant="ghost"
-                            size="sm"
-                            aria-label={t('Next month')}
-                            onPress={() =>
-                                setMonth((value) => value.add({ months: 1 }))
-                            }
-                        >
-                            <ChevronRight className="size-4" aria-hidden />
-                        </Button>
-                    </div>
-                    <div
-                        aria-hidden
-                        className="mt-1 grid h-7 grid-cols-7 items-center text-center text-xs text-muted"
-                    >
-                        {WEEKDAYS.map((_, index) => {
-                            const day = firstWeek
-                                .add({ days: index })
-                                .toString();
-
-                            return (
-                                <span
-                                    key={day}
-                                    className="first-letter:uppercase"
-                                >
-                                    {formatDate(day, intlLocale, {
-                                        weekday: 'short',
-                                    }).replace(/\.$/, '')}
-                                </span>
-                            );
-                        })}
-                    </div>
-                    <div
-                        className="grid gap-px"
-                        role="group"
-                        aria-label={t('Weeks')}
-                    >
-                        {weeks.map((week) => {
-                            const start = week.toString();
-                            const end = week.add({ days: 6 }).toString();
-                            const isCurrentWeek =
-                                start <= today && today <= end;
-                            const name = t('Week :number', {
-                                number: isoWeek(start),
-                            });
-                            const range = longRange(start, end);
-                            const todayLabel = isCurrentWeek
-                                ? `, ${t('Today')} ${todayDate.day}`
-                                : '';
-
-                            return (
-                                <Button
-                                    key={start}
-                                    variant="ghost"
-                                    aria-label={`${name}, ${range}${todayLabel}`}
-                                    aria-pressed={start === weekStart}
-                                    className="grid h-9 w-full grid-cols-7 gap-0 px-0 text-foreground tabular-nums aria-pressed:bg-accent/15 data-focus-visible:bg-default data-hovered:bg-default"
-                                    onPress={() =>
-                                        onChange(isCurrentWeek ? today : start)
-                                    }
-                                >
-                                    {WEEKDAYS.map((_, index) => {
-                                        const day = week.add({ days: index });
-                                        const isToday =
-                                            day.compare(todayDate) === 0;
-
-                                        return (
-                                            <span
-                                                key={day.toString()}
-                                                aria-hidden
-                                                data-today={
-                                                    isToday || undefined
-                                                }
-                                                className={cn(
-                                                    'relative justify-self-stretch text-center',
-                                                    day.month !== month.month &&
-                                                        'text-muted',
-                                                    isToday &&
-                                                        'font-semibold text-foreground after:absolute after:-bottom-1 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full after:bg-accent after:content-[""]',
-                                                )}
-                                            >
-                                                {day.day}
-                                            </span>
-                                        );
-                                    })}
-                                </Button>
-                            );
-                        })}
-                    </div>
+                    ))}
                 </div>
-                <div className="mt-4 flex min-h-11 items-center justify-between gap-2 border-t border-separator px-4 py-1.5">
-                    <span className="text-sm font-medium">
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-separator pt-2.5 sm:flex-col sm:items-start sm:ps-3">
+                    <span className="min-w-0 text-sm font-medium">
                         {longRange(weekStart, addDays(weekStart, 6))}
                     </span>
                     <Button
                         variant="secondary"
                         size="sm"
                         aria-label={t('Go to today')}
+                        className="shrink-0"
                         onPress={() => setMonth(todayDate.set({ day: 1 }))}
                     >
                         {t('Today')}
                     </Button>
+                </div>
+            </div>
+            <div className="px-4 pt-3.5 pb-4 min-[390px]:px-5 sm:px-3.5">
+                <div className="flex h-9 items-center justify-between gap-1">
+                    <Button
+                        isIconOnly
+                        variant="ghost"
+                        size="sm"
+                        aria-label={t('Previous month')}
+                        onPress={() =>
+                            setMonth((value) => value.subtract({ months: 1 }))
+                        }
+                    >
+                        <ChevronLeft className="size-4" aria-hidden />
+                    </Button>
+                    <h3
+                        aria-live="polite"
+                        className="text-sm font-medium first-letter:uppercase"
+                    >
+                        {formatDate(month.toString(), intlLocale, {
+                            month: 'long',
+                            year: 'numeric',
+                        })}
+                    </h3>
+                    <Button
+                        isIconOnly
+                        variant="ghost"
+                        size="sm"
+                        aria-label={t('Next month')}
+                        onPress={() =>
+                            setMonth((value) => value.add({ months: 1 }))
+                        }
+                    >
+                        <ChevronRight className="size-4" aria-hidden />
+                    </Button>
+                </div>
+                <div
+                    aria-hidden
+                    className="mt-1 grid h-7 grid-cols-7 items-center text-center text-xs text-muted"
+                >
+                    {WEEKDAYS.map((_, index) => {
+                        const day = firstWeek.add({ days: index }).toString();
+
+                        return (
+                            <span key={day} className="first-letter:uppercase">
+                                {formatDate(day, intlLocale, {
+                                    weekday: 'short',
+                                }).replace(/\.$/, '')}
+                            </span>
+                        );
+                    })}
+                </div>
+                <div
+                    className="grid gap-px"
+                    role="group"
+                    aria-label={t('Weeks')}
+                >
+                    {weeks.map((week) => {
+                        const start = week.toString();
+                        const end = week.add({ days: 6 }).toString();
+                        const isCurrentWeek = start <= today && today <= end;
+                        const name = t('Week :number', {
+                            number: isoWeek(start),
+                        });
+                        const range = longRange(start, end);
+                        const todayLabel = isCurrentWeek
+                            ? `, ${t('Today')} ${todayDate.day}`
+                            : '';
+
+                        return (
+                            <Button
+                                key={start}
+                                variant="ghost"
+                                aria-label={`${name}, ${range}${todayLabel}`}
+                                aria-pressed={start === weekStart}
+                                className="grid h-9 w-full grid-cols-7 gap-0 px-0 text-foreground tabular-nums aria-pressed:bg-accent/15 data-focus-visible:bg-default data-hovered:bg-default"
+                                onPress={() =>
+                                    onChange(isCurrentWeek ? today : start)
+                                }
+                            >
+                                {WEEKDAYS.map((_, index) => {
+                                    const day = week.add({ days: index });
+                                    const isToday =
+                                        day.compare(todayDate) === 0;
+
+                                    return (
+                                        <span
+                                            key={day.toString()}
+                                            aria-hidden
+                                            data-today={isToday || undefined}
+                                            className={cn(
+                                                'relative justify-self-stretch text-center',
+                                                day.month !== month.month &&
+                                                    'text-muted',
+                                                isToday &&
+                                                    'font-semibold text-foreground after:absolute after:-bottom-1 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full after:bg-accent after:content-[""]',
+                                            )}
+                                        >
+                                            {day.day}
+                                        </span>
+                                    );
+                                })}
+                            </Button>
+                        );
+                    })}
                 </div>
             </div>
         </div>
@@ -236,7 +227,7 @@ export function WeekPicker(props: Props) {
             data-test="calendar-week-picker"
         >
             <span className="text-sm/4 font-semibold">{name}</span>
-            <span className="text-xs/3.5 font-normal whitespace-nowrap text-muted tabular-nums">
+            <span className="text-[0.6875rem]/3.5 font-normal whitespace-nowrap text-muted tabular-nums">
                 {range}
             </span>
         </Button>
