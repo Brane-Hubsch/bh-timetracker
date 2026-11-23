@@ -29,7 +29,7 @@ export function UserMenu({ showName = false, className }: Props) {
                 variant="ghost"
                 isIconOnly={!showName}
                 className={cn(
-                    showName && 'w-full justify-start gap-3',
+                    showName && '-my-1 h-auto w-full justify-start gap-3 py-1',
                     className,
                 )}
                 aria-label={t('Account')}
