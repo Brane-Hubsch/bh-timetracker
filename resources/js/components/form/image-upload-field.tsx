@@ -26,7 +26,12 @@ type Props = {
 };
 
 /** Accepted formats; the server also checks size and pixel limits. */
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+export const ACCEPTED_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+];
 
 /**
  * Preview, upload/replace and remove for a profile picture or logo. Uploading happens in the
@@ -70,7 +75,7 @@ export function ImageUploadField({
                     <span className="text-sm font-medium">{label}</span>
                     <div className="flex flex-wrap gap-2">
                         <FileTrigger
-                            acceptedFileTypes={ACCEPTED_TYPES}
+                            acceptedFileTypes={ACCEPTED_IMAGE_TYPES}
                             onSelect={(files) => {
                                 const file = files?.[0];
 

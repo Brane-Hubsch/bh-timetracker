@@ -37,6 +37,7 @@ import {
     Target,
     UserPlus,
     UserRound,
+    UsersRound,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createContext, use, useCallback, useEffect, useState } from 'react';
@@ -61,6 +62,7 @@ import {
 } from '@/routes/reports';
 import { edit as editSecurity } from '@/routes/security';
 import { index as tagsIndex } from '@/routes/tags';
+import { index as teamIndex } from '@/routes/team';
 import { index as timeIndex } from '@/routes/time';
 
 type PaletteData = {
@@ -383,7 +385,10 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                               label: t('Invite member'),
                               icon: UserPlus,
                               perform: go(
-                                  editOrganization.url(slug, {
+                                  (currentOrganization.hasTeam
+                                      ? teamIndex
+                                      : editOrganization
+                                  ).url(slug, {
                                       query: { invite: 1 },
                                   }),
                               ),
@@ -441,6 +446,17 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                               label: t('Clients'),
                               icon: Briefcase,
                               perform: go(clientsIndex.url(slug)),
+                          },
+                      ]
+                    : []),
+                ...(currentOrganization.hasTeam
+                    ? [
+                          {
+                              id: 'go-team',
+                              label: t('Team'),
+                              keywords: t('members rates invitations'),
+                              icon: UsersRound,
+                              perform: go(teamIndex.url(slug)),
                           },
                       ]
                     : []),

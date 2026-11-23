@@ -30,6 +30,10 @@ class AcceptOrganizationInvitation
                 ['role' => $invitation->role],
             );
 
+            if (! $organization->team_enabled) {
+                $organization->update(['team_enabled' => true]);
+            }
+
             $invitation->update(['accepted_at' => now()]);
 
             $user->switchOrganization($organization);

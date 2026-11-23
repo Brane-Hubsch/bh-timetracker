@@ -7,6 +7,7 @@ export type Organization = {
     role?: OrganizationRole;
     roleLabel?: string;
     isCurrent?: boolean;
+    hasTeam?: boolean;
     /** Logo URL (128 px), or null without a logo. */
     logo?: string | null;
 };
@@ -76,4 +77,29 @@ export type OrganizationPermissions = {
 export type RoleOption = {
     value: OrganizationRole;
     label: string;
+};
+
+export type TeamOrganization = Pick<
+    OrganizationSettings,
+    'id' | 'slug' | 'name' | 'currency' | 'weekStartsOn' | 'workdayHours'
+>;
+
+export type TeamSchedule = {
+    weekStartsOn: number | null;
+    workingDays: number[];
+    workdayHours: number | null;
+};
+
+export type TeamMember = {
+    id: number;
+    name: string;
+    email: string;
+    role: OrganizationRole;
+    roleLabel: string;
+    avatar: string | null;
+    hourlyRate?: number | null;
+    isDeactivated: boolean;
+    canEdit: boolean;
+    hasTeamAvatar?: boolean;
+    schedule?: TeamSchedule;
 };

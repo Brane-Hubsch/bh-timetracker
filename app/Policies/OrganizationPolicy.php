@@ -3,6 +3,8 @@
 namespace App\Policies;
 
 use App\Enums\OrganizationPermission;
+use App\Enums\OrganizationRole;
+use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\User;
 
@@ -63,6 +65,14 @@ class OrganizationPolicy
     public function updateMember(User $user, Organization $organization): bool
     {
         return $user->hasOrganizationPermission($organization, OrganizationPermission::UpdateMember);
+    }
+
+    public function editTeamMember(User $user, Organization $organization, Membership $member): bool
+    {
+        return $member->organization_id === $organization->id
+            && ! $member->isDeactivated()
+            && $this->updateMember($user, $organization)
+            && ($member->role !== OrganizationRole::Owner || $member->user_id === $user->id);
     }
 
     /**
