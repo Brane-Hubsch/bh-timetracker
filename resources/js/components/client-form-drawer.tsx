@@ -170,6 +170,7 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                                     }}
                                     error={websiteError ?? errors.website}
                                     inputMode="url"
+                                    enterKeyHint="done"
                                     autoComplete="url"
                                     placeholder={t('example.com')}
                                     data-test="client-website"
@@ -243,7 +244,11 @@ export function ClientFormDrawer({ client, isOpen, onOpenChange }: Props) {
                             </div>
                         </SideDrawerBody>
                         <SideDrawerFooter>
-                            <Button slot="close" variant="tertiary">
+                            <Button
+                                type="button"
+                                slot="close"
+                                variant="tertiary"
+                            >
                                 {t('Cancel')}
                             </Button>
                             <Button
