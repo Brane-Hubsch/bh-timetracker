@@ -1,14 +1,17 @@
-export type ClientListItem = {
+export type ClientNameOption = {
     id: number;
     slug: string;
     name: string;
+    isArchived: boolean;
+};
+
+export type ClientListItem = ClientNameOption & {
     organizationNumber: string | null;
     email: string | null;
     /** Logo URL (128 px), or null without a logo. */
     logo: string | null;
     activeProjectsCount: number;
     archivedProjectsCount: number;
-    isArchived: boolean;
 };
 
 export type ClientDetails = {

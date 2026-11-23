@@ -380,7 +380,7 @@ it('reports all historical time for the selected client within the viewer’s sc
         ->between($start, $start->addHour())->create(['description' => 'Other client history']);
 
     $this->actingAs($this->owner)
-        ->get(reportRoute('clients.show', ['client' => $this->client->id, 'period' => 'all_time']))
+        ->get(reportRoute('clients.show', ['client' => $this->client, 'period' => 'all_time']))
         ->assertInertia(fn (Assert $page) => $page
             ->where('report.period', 'all_time')
             ->where('report.totals.seconds', 16200));

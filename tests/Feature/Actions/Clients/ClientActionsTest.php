@@ -6,6 +6,7 @@ use App\Actions\Clients\UpdateClient;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\Project;
+use Illuminate\Validation\ValidationException;
 
 it('creates a client in the given organization', function () {
     $organization = Organization::factory()->create();
@@ -44,6 +45,27 @@ it('updates a client', function () {
     expect($client->fresh()->name)->toBe('New')
         ->and($client->fresh()->slug)->toBe('old')
         ->and($client->fresh()->notes)->toBe('VIP');
+});
+
+it('rejects a duplicate client name in the given organization', function (bool $archived) {
+    $client = Client::factory()->create([
+        'name' => ' Åkerman AB ',
+        'archived_at' => $archived ? now() : null,
+    ]);
+
+    expect(fn () => app(CreateClient::class)->handle($client->organization, ['name' => 'åkerman ab']))
+        ->toThrow(ValidationException::class);
+
+    expect(Client::forOrganization($client->organization)->count())->toBe(1);
+})->with([false, true]);
+
+it('allows the same client name in different organizations', function () {
+    Client::factory()->archived()->create(['name' => 'Acme AB']);
+    $organization = Organization::factory()->create();
+
+    $client = app(CreateClient::class)->handle($organization, ['name' => 'Acme AB']);
+
+    expect($client->organization_id)->toBe($organization->id);
 });
 
 it('archives and restores a client without touching its projects', function () {
