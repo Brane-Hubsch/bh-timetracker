@@ -469,6 +469,7 @@ export default function TimeIndex({
                 recentTags={recentTags}
                 members={members}
                 recentProjects={recentProjects}
+                absence={{ absenceTypes, holidays, workdaySeconds }}
                 onDuplicate={(values) => {
                     const base = newDraft(today, entries, member.id);
                     const seconds = values.end

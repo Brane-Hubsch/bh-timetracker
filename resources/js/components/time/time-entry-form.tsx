@@ -17,6 +17,9 @@ import { DatePickerField } from '@/components/form/date-picker-field';
 import { TagInput } from '@/components/form/tag-input';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
+import { SegmentedControl } from '@/components/segmented-control';
+import { ABSENCE_FORM_ID, AbsenceForm } from '@/components/time/absence-dialog';
+import type { AbsenceOptions } from '@/components/time/absence-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
 import { TimeScrubLabel } from '@/components/time/time-scrub-label';
 import { useInitials } from '@/hooks/use-initials';
@@ -52,6 +55,8 @@ type Props = {
     /** Recently used project ids per member id, so the shortcuts follow the selected member. */
     recentProjects?: Record<string, string[]>;
     onDuplicate?: (draft: TimeEntryDraft) => void;
+    /** Lets a new entry switch to registering absence instead. */
+    absence?: AbsenceOptions;
 };
 
 const FORM_ID = 'time-entry-form';
@@ -112,6 +117,7 @@ export function TimeEntryForm({
     recentTags,
     recentProjects,
     onDuplicate,
+    absence,
 }: Props) {
     const { t } = useTranslation();
     const { auth, can } = usePage().props;
@@ -124,6 +130,7 @@ export function TimeEntryForm({
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+    const [mode, setMode] = useState<'time' | 'absence'>('time');
 
     // Start from the draft each time a new one is opened.
     if (draft && draft !== source) {
@@ -134,10 +141,13 @@ export function TimeEntryForm({
         setErrors({});
         setIsMemberPickerOpen(false);
         setIsActionsMenuOpen(false);
+        setMode('time');
     }
 
     const current = values ?? draft;
     const isEditing = Boolean(source?.id);
+    const canSwitchMode = Boolean(absence) && !isEditing;
+    const isAbsence = canSwitchMode && mode === 'absence';
     const todayDate = today(auth.user.timezone).toString();
     const dateLabel =
         current?.date === todayDate
@@ -371,7 +381,13 @@ export function TimeEntryForm({
                     ? values === source && !hasTyped && !processing
                     : undefined
             }
-            title={isEditing ? t('Edit time') : t('Report time')}
+            title={
+                isAbsence
+                    ? t('Register absence')
+                    : isEditing
+                      ? t('Edit time')
+                      : t('Report time')
+            }
             closeInHeader
             desktopClassName="sm:max-w-[40rem]"
             containerClassName={
@@ -439,9 +455,11 @@ export function TimeEntryForm({
                         </Button>
                         <Button
                             type="submit"
-                            form={FORM_ID}
+                            form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
                             isPending={processing}
-                            data-test="time-entry-save"
+                            data-test={
+                                isAbsence ? 'absence-save' : 'time-entry-save'
+                            }
                         >
                             {t('Save')}
                         </Button>
@@ -450,219 +468,270 @@ export function TimeEntryForm({
             }
         >
             {current && (
-                <form
-                    id={FORM_ID}
-                    onSubmit={submit}
-                    onChange={() => setHasTyped(true)}
-                    className="time-entry-form grid gap-5"
-                    data-test="time-entry-form"
-                >
-                    {errors.user_id && (
-                        <p
-                            id={MEMBER_ERROR_ID}
-                            role="alert"
-                            className="text-sm text-danger"
+                <div className="grid gap-5">
+                    {canSwitchMode && (
+                        <SegmentedControl
+                            aria-label={t('Time or absence')}
+                            value={mode}
+                            onChange={setMode}
+                            className="w-fit"
+                            options={[
+                                { id: 'time', label: t('Time') },
+                                { id: 'absence', label: t('Absence') },
+                            ]}
+                            data-test="time-entry-mode"
+                        />
+                    )}
+                    {isAbsence && absence ? (
+                        <AbsenceForm
+                            {...absence}
+                            draft={{
+                                userId: current.userId,
+                                type: 'vacation',
+                                startsOn: current.date,
+                                endsOn: current.date,
+                                hoursPerDay: '',
+                                note: '',
+                            }}
+                            userId={current.userId}
+                            onClose={onClose}
+                        />
+                    ) : (
+                        <form
+                            id={FORM_ID}
+                            onSubmit={submit}
+                            onChange={() => setHasTyped(true)}
+                            className="time-entry-form grid gap-5"
+                            data-test="time-entry-form"
                         >
-                            {errors.user_id}
-                        </p>
-                    )}
-
-                    {projects.length === 0 && !can?.canManageProjects && (
-                        <Alert status="warning" data-test="no-projects">
-                            <Alert.Indicator />
-                            <Alert.Content>
-                                <Alert.Description>
-                                    {t(
-                                        'There are no projects to report time on yet. Ask an administrator to add one.',
-                                    )}
-                                </Alert.Description>
-                            </Alert.Content>
-                        </Alert>
-                    )}
-
-                    <ProjectPicker
-                        projects={projects}
-                        createProjectUrl={
-                            can?.canManageProjects
-                                ? projectsIndex.url(undefined, {
-                                      query: { new: 1 },
-                                  })
-                                : undefined
-                        }
-                        recentIds={
-                            canChangeMember
-                                ? (recentProjects?.[memberId] ?? [])
-                                : undefined
-                        }
-                        value={current.projectId}
-                        onChange={changeProject}
-                        isBillable={current.isBillable ?? true}
-                        onBillableChange={(isBillable) => set({ isBillable })}
-                        error={errors.project_id}
-                        autoFocus={!isEditing && current.projectId === ''}
-                    />
-
-                    <div className="grid gap-2">
-                        <div className="grid gap-3 md:grid-cols-[10rem_17.25rem_minmax(0,1fr)]">
-                            <DatePickerField
-                                label={t('Date')}
-                                value={current.date}
-                                onChange={(date) => set({ date })}
-                                relativeLabel={dateLabel}
-                                error={errors.date}
-                                isRequired
-                                data-test="time-entry-date"
-                            />
-                            <fieldset
-                                aria-label={t('Start and end time')}
-                                className="min-w-0"
-                            >
-                                <legend className="label mb-1 grid w-full grid-cols-2">
-                                    <TimeScrubLabel
-                                        label={t('Start')}
-                                        value={current.start}
-                                        minutes={
-                                            current.start
-                                                ? timeToMinutes(current.start)
-                                                : undefined
-                                        }
-                                        isRequired
-                                        onAdjust={(offset) =>
-                                            changeStart(
-                                                offsetTime(
-                                                    current.start,
-                                                    source?.start ?? '',
-                                                    offset,
-                                                ),
-                                            )
-                                        }
-                                    />
-                                    <TimeScrubLabel
-                                        label={t('End')}
-                                        value={current.end}
-                                        minutes={
-                                            current.end
-                                                ? timeToMinutes(current.end)
-                                                : undefined
-                                        }
-                                        onAdjust={adjustEnd}
-                                    />
-                                </legend>
-                                {/* Same height as the date and duration fields (see .date-input-group). */}
-                                <div
-                                    className="grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field sm:h-[2.375rem]"
-                                    data-invalid={Boolean(
-                                        errors.start ||
-                                        errors.end ||
-                                        errors.ended_at,
-                                    )}
+                            {errors.user_id && (
+                                <p
+                                    id={MEMBER_ERROR_ID}
+                                    role="alert"
+                                    className="text-sm text-danger"
                                 >
-                                    <TimeInputField
-                                        label={t('Start')}
-                                        value={current.start}
-                                        onChange={changeStart}
-                                        isInvalid={Boolean(errors.start)}
+                                    {errors.user_id}
+                                </p>
+                            )}
+
+                            {projects.length === 0 &&
+                                !can?.canManageProjects && (
+                                    <Alert
+                                        status="warning"
+                                        data-test="no-projects"
+                                    >
+                                        <Alert.Indicator />
+                                        <Alert.Content>
+                                            <Alert.Description>
+                                                {t(
+                                                    'There are no projects to report time on yet. Ask an administrator to add one.',
+                                                )}
+                                            </Alert.Description>
+                                        </Alert.Content>
+                                    </Alert>
+                                )}
+
+                            <ProjectPicker
+                                projects={projects}
+                                createProjectUrl={
+                                    can?.canManageProjects
+                                        ? projectsIndex.url(undefined, {
+                                              query: { new: 1 },
+                                          })
+                                        : undefined
+                                }
+                                recentIds={
+                                    canChangeMember
+                                        ? (recentProjects?.[memberId] ?? [])
+                                        : undefined
+                                }
+                                value={current.projectId}
+                                onChange={changeProject}
+                                isBillable={current.isBillable ?? true}
+                                onBillableChange={(isBillable) =>
+                                    set({ isBillable })
+                                }
+                                error={errors.project_id}
+                                autoFocus={
+                                    !isEditing && current.projectId === ''
+                                }
+                            />
+
+                            <div className="grid gap-2">
+                                <div className="grid gap-3 md:grid-cols-[10rem_17.25rem_minmax(0,1fr)]">
+                                    <DatePickerField
+                                        label={t('Date')}
+                                        value={current.date}
+                                        onChange={(date) => set({ date })}
+                                        relativeLabel={dateLabel}
+                                        error={errors.date}
                                         isRequired
-                                        isEmbedded
-                                        data-test="time-entry-start"
+                                        data-test="time-entry-date"
                                     />
-                                    <span
-                                        aria-hidden="true"
-                                        className="h-5 bg-[var(--field-border)]"
-                                    />
-                                    <TimeInputField
-                                        label={t('End')}
-                                        value={current.end}
-                                        onChange={changeEnd}
-                                        isInvalid={Boolean(
-                                            errors.end ?? errors.ended_at,
-                                        )}
-                                        isEmbedded
-                                        data-test="time-entry-end"
-                                    />
+                                    <fieldset
+                                        aria-label={t('Start and end time')}
+                                        className="min-w-0"
+                                    >
+                                        <legend className="label mb-1 grid w-full grid-cols-2">
+                                            <TimeScrubLabel
+                                                label={t('Start')}
+                                                value={current.start}
+                                                minutes={
+                                                    current.start
+                                                        ? timeToMinutes(
+                                                              current.start,
+                                                          )
+                                                        : undefined
+                                                }
+                                                isRequired
+                                                onAdjust={(offset) =>
+                                                    changeStart(
+                                                        offsetTime(
+                                                            current.start,
+                                                            source?.start ?? '',
+                                                            offset,
+                                                        ),
+                                                    )
+                                                }
+                                            />
+                                            <TimeScrubLabel
+                                                label={t('End')}
+                                                value={current.end}
+                                                minutes={
+                                                    current.end
+                                                        ? timeToMinutes(
+                                                              current.end,
+                                                          )
+                                                        : undefined
+                                                }
+                                                onAdjust={adjustEnd}
+                                            />
+                                        </legend>
+                                        {/* Same height as the date and duration fields (see .date-input-group). */}
+                                        <div
+                                            className="grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field sm:h-[2.375rem]"
+                                            data-invalid={Boolean(
+                                                errors.start ||
+                                                errors.end ||
+                                                errors.ended_at,
+                                            )}
+                                        >
+                                            <TimeInputField
+                                                label={t('Start')}
+                                                value={current.start}
+                                                onChange={changeStart}
+                                                isInvalid={Boolean(
+                                                    errors.start,
+                                                )}
+                                                isRequired
+                                                isEmbedded
+                                                data-test="time-entry-start"
+                                            />
+                                            <span
+                                                aria-hidden="true"
+                                                className="h-5 bg-[var(--field-border)]"
+                                            />
+                                            <TimeInputField
+                                                label={t('End')}
+                                                value={current.end}
+                                                onChange={changeEnd}
+                                                isInvalid={Boolean(
+                                                    errors.end ??
+                                                    errors.ended_at,
+                                                )}
+                                                isEmbedded
+                                                data-test="time-entry-end"
+                                            />
+                                        </div>
+                                    </fieldset>
+                                    <TextField
+                                        name="duration"
+                                        value={duration}
+                                        onChange={changeDuration}
+                                        validationBehavior="aria"
+                                        className="w-full"
+                                    >
+                                        <Label className="sr-only">
+                                            {t('Duration')}
+                                        </Label>
+                                        <span className="label">
+                                            <TimeScrubLabel
+                                                label={t('Duration')}
+                                                value={duration}
+                                                minutes={
+                                                    duration
+                                                        ? Math.round(
+                                                              durationForDrag /
+                                                                  60,
+                                                          )
+                                                        : undefined
+                                                }
+                                                maxMinutes={1440}
+                                                onAdjust={adjustDuration}
+                                            />
+                                        </span>
+                                        <Input
+                                            inputMode="decimal"
+                                            placeholder="1:30"
+                                            data-test="time-entry-duration"
+                                        />
+                                    </TextField>
                                 </div>
-                            </fieldset>
+                                {timeError ? (
+                                    <p className="text-sm text-danger">
+                                        {timeError}
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-muted">
+                                        {t(
+                                            'Enter an end time or a duration such as 1,5, 1:30 or 90m.',
+                                        )}{' '}
+                                        {t(
+                                            'Drag the field label sideways to adjust in 15-minute steps.',
+                                        )}
+                                    </p>
+                                )}
+                            </div>
+
                             <TextField
-                                name="duration"
-                                value={duration}
-                                onChange={changeDuration}
-                                validationBehavior="aria"
+                                value={current.description}
+                                onChange={(description) => set({ description })}
+                                isInvalid={Boolean(errors.description)}
                                 className="w-full"
                             >
-                                <Label className="sr-only">
-                                    {t('Duration')}
-                                </Label>
-                                <span className="label">
-                                    <TimeScrubLabel
-                                        label={t('Duration')}
-                                        value={duration}
-                                        minutes={
-                                            duration
-                                                ? Math.round(
-                                                      durationForDrag / 60,
-                                                  )
-                                                : undefined
-                                        }
-                                        maxMinutes={1440}
-                                        onAdjust={adjustDuration}
-                                    />
-                                </span>
-                                <Input
-                                    inputMode="decimal"
-                                    placeholder="1:30"
-                                    data-test="time-entry-duration"
+                                <Label>{t('Description')}</Label>
+                                <TextArea
+                                    rows={3}
+                                    placeholder={t('What did you work on?')}
                                 />
-                            </TextField>
-                        </div>
-                        {timeError ? (
-                            <p className="text-sm text-danger">{timeError}</p>
-                        ) : (
-                            <p className="text-xs text-muted">
-                                {t(
-                                    'Enter an end time or a duration such as 1,5, 1:30 or 90m.',
-                                )}{' '}
-                                {t(
-                                    'Drag the field label sideways to adjust in 15-minute steps.',
+                                {errors.description && (
+                                    <Description className="text-danger">
+                                        {errors.description}
+                                    </Description>
                                 )}
-                            </p>
-                        )}
-                    </div>
+                            </TextField>
 
-                    <TextField
-                        value={current.description}
-                        onChange={(description) => set({ description })}
-                        isInvalid={Boolean(errors.description)}
-                        className="w-full"
-                    >
-                        <Label>{t('Description')}</Label>
-                        <TextArea
-                            rows={3}
-                            placeholder={t('What did you work on?')}
-                        />
-                        {errors.description && (
-                            <Description className="text-danger">
-                                {errors.description}
-                            </Description>
-                        )}
-                    </TextField>
+                            <TagInput
+                                value={current.tags}
+                                onChange={(tags) => set({ tags })}
+                                suggestions={tags}
+                                recentTags={recentTags}
+                                error={
+                                    errors.tags ??
+                                    Object.entries(errors).find(([key]) =>
+                                        key.startsWith('tags.'),
+                                    )?.[1]
+                                }
+                            />
 
-                    <TagInput
-                        value={current.tags}
-                        onChange={(tags) => set({ tags })}
-                        suggestions={tags}
-                        recentTags={recentTags}
-                        error={
-                            errors.tags ??
-                            Object.entries(errors).find(([key]) =>
-                                key.startsWith('tags.'),
-                            )?.[1]
-                        }
-                    />
-
-                    {errors.user_id && members.length <= 1 && (
-                        <p className="text-sm text-danger">{errors.user_id}</p>
+                            {errors.user_id && members.length <= 1 && (
+                                <p className="text-sm text-danger">
+                                    {errors.user_id}
+                                </p>
+                            )}
+                        </form>
                     )}
-                </form>
+                </div>
             )}
         </ResponsiveDialog>
     );
