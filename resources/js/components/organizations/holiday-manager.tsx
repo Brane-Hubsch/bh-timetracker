@@ -172,7 +172,7 @@ export function HolidayManager({ organizationSlug, holidays, years }: Props) {
                                         )
                                     }
                                 >
-                                    <Trash2 className="size-4" />
+                                    <Trash2 className="size-4 text-danger" />
                                 </Button>
                             </li>
                         ))}

@@ -202,7 +202,7 @@ export default function TagsIndex({ tags }: Props) {
                                         })}
                                         onPress={() => setDeleting(tag)}
                                     >
-                                        <Trash2 className="size-4" />
+                                        <Trash2 className="size-4 text-danger" />
                                     </Button>
                                 </div>
                             </li>
