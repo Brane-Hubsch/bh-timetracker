@@ -59,6 +59,7 @@ import {
     summary as reportSummary,
 } from '@/routes/reports';
 import { edit as editSecurity } from '@/routes/security';
+import { index as tagsIndex } from '@/routes/tags';
 import { index as timeIndex } from '@/routes/time';
 
 type PaletteData = {
@@ -463,7 +464,7 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                               label: t('Tags'),
                               keywords: t('rename merge'),
                               icon: Tags,
-                              perform: go(`${editOrganization.url(slug)}#tags`),
+                              perform: go(tagsIndex.url(slug)),
                           },
                       ]
                     : []),

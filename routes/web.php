@@ -10,6 +10,7 @@ use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectMemberController;
 use App\Http\Controllers\Reports\ReportController;
+use App\Http\Controllers\Tags\TagController;
 use App\Http\Controllers\TimeEntries\TimeEntryController;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,11 @@ Route::prefix('{current_organization}')
         Route::get('reports/detailed', [ReportController::class, 'detailed'])->name('reports.detailed');
         Route::get('reports/projects', [ReportController::class, 'projects'])->name('reports.projects');
         Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+
+        Route::get('tags', [TagController::class, 'index'])->name('tags.index');
+        Route::post('tags', [TagController::class, 'store'])->name('tags.store');
+        Route::patch('tags/{tag}', [TagController::class, 'update'])->name('tags.update');
+        Route::delete('tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
 
         Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
         Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
