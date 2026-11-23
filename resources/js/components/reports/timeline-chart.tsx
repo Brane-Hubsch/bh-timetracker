@@ -180,14 +180,13 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
     const activeKey = projects ? activeProjectBar?.key : selected?.key;
     const chartTitle =
         title ?? (unit === 'week' ? t('Hours per week') : t('Hours per day'));
-    const projectsById = new Map(
-        projects?.map((project) => [project.id, project]),
-    );
+    // In the order of the projects (largest first), not of the object's numeric keys, so every bar
+    // stacks the same way with the large projects at the bottom.
     const projectHours = (bucket: TimelineBucket): ProjectHours[] =>
-        Object.entries(bucket.projectSeconds ?? {}).flatMap(([id, seconds]) => {
-            const project = projectsById.get(Number(id));
+        (projects ?? []).flatMap((project) => {
+            const seconds = bucket.projectSeconds?.[project.id] ?? 0;
 
-            return project ? [{ ...project, seconds }] : [];
+            return seconds > 0 ? [{ ...project, seconds }] : [];
         });
     const { max, step } = axis(
         Math.max(0, ...buckets.map((bucket) => bucket.seconds)),
