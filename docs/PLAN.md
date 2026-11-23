@@ -141,11 +141,11 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Snabbinmatning (formulär)** – datum, start–slut *eller* start + varaktighet ("1,5", "1:30", "90m" ska alla fungera), projekt (sökbar väljare med senast använda först), beskrivning, debiterbar. Smarta förval: start = slut på dagens senaste post.
 
-**Listvy** (standard på mobil) – poster grupperade per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
+**Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 
-**Kalendervy** (standard på desktop)
-- Veckovy och dagvy (dagvy är standard på mobil). Veckan börjar enligt organisationens inställning.
-- På desktop ligger datumnavigeringen före vyväljaren. I veckovyn visar periodknappen Denna vecka, Förra veckan, Nästa vecka eller veckonumret, med datumintervallet på raden under. Den öppnar en veckoväljare där både snabbvalen och kalenderraderna väljer hela veckor. Under snabbvalen visas vald period och knappen Idag, som visar månaden med dagens markerade datum. Pilarna vid periodknappen stegar en vecka i taget.
+**Kalendervy** (veckovy är standard)
+- Periodknappen visar namnet på dagen eller veckan med datum på raden under. Pilarna vid knappen stegar en dag eller vecka enligt vald vy.
+- Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare utan lägesbyte.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
 - Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.

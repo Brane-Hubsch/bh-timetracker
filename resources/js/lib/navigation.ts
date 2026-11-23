@@ -6,8 +6,10 @@ import {
     CalendarDays,
     ChartColumn,
     FolderKanban,
+    List,
     Tags,
 } from 'lucide-react';
+import { useCurrentUrl } from '@/hooks/use-current-url';
 import { index as clients } from '@/routes/clients';
 import { index as projects } from '@/routes/projects';
 import { summary as reports } from '@/routes/reports';
@@ -19,6 +21,7 @@ export type MainNavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon: LucideIcon;
+    isActive?: boolean;
     /** Shown in the mobile bottom navigation (others are under "More"). */
     mobile: boolean;
 };
@@ -27,21 +30,37 @@ export type MainNavItem = {
  * Main navigation for the active organization. Without an active organization there is nothing to navigate to.
  */
 export function useMainNavigation(): MainNavItem[] {
-    const { currentOrganization, can } = usePage().props;
+    const {
+        url,
+        props: { currentOrganization, can },
+    } = usePage();
+    const { isCurrentUrl } = useCurrentUrl();
 
     if (!currentOrganization) {
         return [];
     }
 
     const slug = currentOrganization.slug;
+    const calendar = time(slug);
+    const isTimePage = isCurrentUrl(calendar);
+    const isList =
+        new URL(url, 'http://localhost').searchParams.get('view') === 'list';
 
     // The "Today" dashboard is paused: the calendar is the start page.
     return [
         {
             title: 'Calendar',
-            href: time(slug),
+            href: calendar,
             icon: CalendarDays,
+            isActive: isTimePage && !isList,
             mobile: true,
+        },
+        {
+            title: 'List',
+            href: time(slug, { query: { view: 'list' } }),
+            icon: List,
+            isActive: isTimePage && isList,
+            mobile: false,
         },
         {
             title: 'Reports',
