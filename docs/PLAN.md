@@ -129,7 +129,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 ### 4.3 Kunder
 
 - Lista med sök, skapa/redigera/arkivera. Fält: namn, hemsida, org.nr, e-post, anteckning. Hemsidan är valfri och kan användas för att hämta en logga till formuläret.
-- Kundsida: kundens projekt + summerad tid (period).
+- Kundsida: kundens projekt + summerad tid för vald period, inklusive sedan start.
 
 ### 4.4 Projekt
 
@@ -154,7 +154,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.6 Rapporter
 
-- **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, anpassad), filter (medlemmar, kunder, projekt, debiterbar), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt.
+- **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, sedan start, anpassad), filter (medlemmar, kunder, projekt, debiterbar), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt.
 - **Detaljerad**: lista med alla poster enligt filter, sortering, summering.
 - **Projektuppföljning**: alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export**: CSV och XLSX (t.ex. `openspout/openspout`). PDF tillagt i efterhand (se tillägg efter Fas 6).

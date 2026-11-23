@@ -65,7 +65,7 @@ it('resolves quick date presets in the viewer’s time zone', function (string $
             ->where('filters.to', $to)
             ->where('options.periods', fn ($options) => $options->pluck('value')->all() === [
                 'today', 'yesterday', 'this_week', 'last_week', 'last_14_days',
-                'this_month', 'last_month', 'this_year', 'last_year', 'custom',
+                'this_month', 'last_month', 'this_year', 'last_year', 'all_time', 'custom',
             ]));
 })->with([
     'today' => ['today', '2026-01-02', '2026-01-02'],
@@ -367,4 +367,43 @@ it('shows time for a period on the client page', function () {
     $this->actingAs($this->owner)
         ->get(route('clients.show', ['current_organization' => $this->slug, 'client' => $this->client->id, 'period' => 'last_month']))
         ->assertInertia(fn (Assert $page) => $page->where('report.totals.seconds', 0)->where('report.projects', []));
+});
+
+it('reports all historical time for the selected client within the viewer’s scope', function () {
+    $start = CarbonImmutable::parse('2023-06-12 08:00', 'UTC');
+    TimeEntry::factory()->by($this->member, $this->project)
+        ->between($start, $start->addHour())->create(['description' => 'Historical work']);
+    TimeEntry::factory()->by($this->owner, $this->project)
+        ->between($start, $start->addHour())->create(['description' => 'Owner history']);
+    $otherProject = Project::factory()->for($this->organization)->create(['client_id' => null]);
+    TimeEntry::factory()->by($this->member, $otherProject)
+        ->between($start, $start->addHour())->create(['description' => 'Other client history']);
+
+    $this->actingAs($this->owner)
+        ->get(reportRoute('clients.show', ['client' => $this->client->id, 'period' => 'all_time']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('report.period', 'all_time')
+            ->where('report.totals.seconds', 16200));
+
+    $query = ['period' => 'all_time', 'clients' => [$this->client->id]];
+    $this->actingAs($this->member)->get(reportRoute('reports.summary', $query))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.period', 'all_time')
+            ->where('filters.from', '')
+            ->where('filters.to', '')
+            ->where('summary.totals.seconds', 9000)
+            ->where('summary.timeline.buckets.0.key', '2023-06-12'));
+
+    $this->get(reportRoute('reports.detailed', $query))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('entries.data', 2)
+            ->where('entries.data.1.description', 'Historical work'));
+
+    $response = $this->get(reportRoute('reports.export', [...$query, 'type' => 'detailed', 'format' => 'csv']))
+        ->assertOk()
+        ->assertDownload();
+
+    expect(file_get_contents($response->baseResponse->getFile()->getPathname()))
+        ->toContain('Historical work')
+        ->not->toContain('Owner history', 'Other client history');
 });

@@ -79,7 +79,7 @@ class GetReportTool extends TimetrackerTool
         $absence = $this->reports->absences($filters);
 
         return Response::structured([
-            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'period' => ['from' => $from?->toDateString(), 'to' => $to?->toDateString()],
             'scope' => $filters->canViewTeam() ? 'team' : 'own time only',
             'currency' => $filters->canViewAmounts() ? $context->organization->currency : null,
             'totals' => $this->totals($summary['totals']),
