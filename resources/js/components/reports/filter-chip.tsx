@@ -118,7 +118,10 @@ export function FilterChip({
             </Button>
             <Popover.Content
                 placement="bottom start"
-                className="w-72 max-w-[calc(100vw-2rem)] rounded-2xl p-0"
+                className={cn(
+                    'max-w-[calc(100vw-2rem)] rounded-2xl p-0',
+                    selectionMode === 'multiple' ? 'w-96' : 'w-72',
+                )}
             >
                 <Popover.Dialog
                     aria-label={label}
@@ -164,7 +167,7 @@ export function FilterChip({
                                 <span className="min-w-0 flex-1">
                                     <Label
                                         className={cn(
-                                            'block truncate',
+                                            'block max-w-full truncate',
                                             option.isMuted && 'text-muted',
                                         )}
                                     >
