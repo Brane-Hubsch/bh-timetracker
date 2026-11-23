@@ -246,6 +246,29 @@
     --time-calendar-entry-shift: 0px;
 }
 
+/* Line up the first card with standalone cards, including when it has an overlap. */
+.time-calendar-event-lane
+    > :is(
+        [style*='inset-inline: 0%;'],
+        [style*='inset-inline: 0% '],
+        [style*='inset-inline-start: 0%;']
+    )
+    > .time-calendar-event,
+.time-calendar-event-lane .time-calendar-event-mirror {
+    margin-inline-start: calc(-1 * var(--time-calendar-entry-shift));
+    padding-inline-start: 0 !important;
+}
+
+/* Give the last card in an overlap more width within its assigned slot. */
+.time-calendar-event-lane
+    > :is(
+        [style*='inset-inline:'][style*=' 0%;'],
+        [style*='inset-inline-end: 0%;']
+    ):not([style*='margin-inline-end:'])
+    > .time-calendar-event {
+    padding-inline: 0 !important;
+}
+
 /* Standalone events have zero inline insets and no margin reserved for overlapping events. */
 .time-calendar-event-lane
     > :is(
@@ -254,8 +277,7 @@
     ):not([style*='margin-inline-end:'])
     > .time-calendar-event,
 .time-calendar-event-lane .time-calendar-event-mirror {
-    margin-inline: calc(-1 * var(--time-calendar-entry-shift))
-        var(--time-calendar-entry-shift);
+    margin-inline-end: var(--time-calendar-entry-shift);
     padding-inline: 0 8px !important;
 }
 
