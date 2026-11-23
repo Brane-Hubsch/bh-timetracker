@@ -26,6 +26,9 @@ use Illuminate\Support\Collection;
  * People with a pending invitation can get time too (they match on the invited email): they are
  * planned with invitationMemberId() as a stand-in id, and the import adds them as members first.
  *
+ * Rows longer than 24 hours (e.g. a week's time logged as one entry) are split at midnight in the
+ * importer's time zone, keeping Clockify's start and end, since an entry is at most 24 hours.
+ *
  * Every member with time on a project gets an hourly rate: the one chosen in the preview, else the
  * one the rate order gives. Rows that an earlier import already created are listed separately, so
  * their rate and billable setting can be updated instead of importing them again.
@@ -66,9 +69,12 @@ final class ClockifyImportPlan
     /**
      * Rows an earlier import created (same member, project and times), which can be updated.
      *
-     * @var array<int, array{entryId: int, row: ClockifyRow, userId: int, projectKey: string}>
+     * @var array<int, array{entryId: int, row: ClockifyRow, userId: int, projectKey: string, seconds: int}>
      */
     public array $alreadyImported = [];
+
+    /** Rows longer than 24 hours, split at midnight into one entry per day. */
+    public int $splitRows = 0;
 
     /**
      * Hourly rate (minor units) per member and project, for the entries above and the already
@@ -297,12 +303,6 @@ final class ClockifyImportPlan
                 continue;
             }
 
-            if ($seconds > TimeEntry::MAX_DURATION_SECONDS) {
-                $skip(__('The entry is longer than 24 hours (:hours h).', ['hours' => round($seconds / 3600, 2)]));
-
-                continue;
-            }
-
             if ($member['memberId'] === null) {
                 $skip(__('No member chosen for :email.', ['email' => $row->email]));
 
@@ -330,37 +330,46 @@ final class ClockifyImportPlan
                 }
             }
 
-            $entryKey = $userId.'|'.$key.'|'.$startedAt->utc()->toIso8601String().'|'.$endedAt->utc()->toIso8601String();
+            $segments = $seconds > TimeEntry::MAX_DURATION_SECONDS ? self::splitAtMidnight($startedAt, $endedAt) : [[$startedAt, $endedAt]];
 
-            if (isset($seen[$entryKey])) {
-                $skip(__('The entry appears twice in the file.'));
-
-                continue;
+            if (count($segments) > 1) {
+                $this->splitRows++;
             }
 
-            $seen[$entryKey] = true;
+            foreach ($segments as [$segmentStart, $segmentEnd]) {
+                $times = $segmentStart->utc()->toIso8601String().'|'.$segmentEnd->utc()->toIso8601String();
+                $entryKey = $userId.'|'.$key.'|'.$times;
 
-            $existing = $project['projectId'] === null ? null : ($existingKeys[$userId.'|'.$project['projectId'].'|'.$startedAt->utc()->toIso8601String().'|'.$endedAt->utc()->toIso8601String()] ?? null);
+                if (isset($seen[$entryKey])) {
+                    $skip(__('The entry appears twice in the file.'));
 
-            if ($existing !== null && $existing['imported']) {
-                $this->alreadyImported[] = ['entryId' => $existing['id'], 'row' => $row, 'userId' => $userId, 'projectKey' => $key];
+                    continue;
+                }
 
-                continue;
+                $seen[$entryKey] = true;
+
+                $existing = $project['projectId'] === null ? null : ($existingKeys[$userId.'|'.$project['projectId'].'|'.$times] ?? null);
+
+                if ($existing !== null && $existing['imported']) {
+                    $this->alreadyImported[] = ['entryId' => $existing['id'], 'row' => $row, 'userId' => $userId, 'projectKey' => $key, 'seconds' => (int) $segmentStart->diffInSeconds($segmentEnd)];
+
+                    continue;
+                }
+
+                if ($existing !== null) {
+                    $skip(__('The entry already exists.'));
+
+                    continue;
+                }
+
+                $this->entries[] = [
+                    'row' => $row,
+                    'userId' => $userId,
+                    'projectKey' => $key,
+                    'startedAt' => $segmentStart,
+                    'endedAt' => $segmentEnd,
+                ];
             }
-
-            if ($existing !== null) {
-                $skip(__('The entry already exists.'));
-
-                continue;
-            }
-
-            $this->entries[] = [
-                'row' => $row,
-                'userId' => $userId,
-                'projectKey' => $key,
-                'startedAt' => $startedAt,
-                'endedAt' => $endedAt,
-            ];
         }
 
         unset($member, $project);
@@ -387,14 +396,13 @@ final class ClockifyImportPlan
     private function buildRates(array $chosenRates): void
     {
         $pairs = [];
-        $timezone = $this->timezone();
 
         foreach ($this->entries as $entry) {
             $pairs[self::rateKey($entry['projectKey'], $entry['userId'])][] = (int) $entry['startedAt']->diffInSeconds($entry['endedAt']);
         }
 
         foreach ($this->alreadyImported as $entry) {
-            $pairs[self::rateKey($entry['projectKey'], $entry['userId'])][] = (int) CarbonImmutable::parse($entry['row']->start, $timezone)->diffInSeconds(CarbonImmutable::parse($entry['row']->end, $timezone));
+            $pairs[self::rateKey($entry['projectKey'], $entry['userId'])][] = $entry['seconds'];
         }
 
         if ($pairs === []) {
@@ -438,6 +446,36 @@ final class ClockifyImportPlan
                 ];
             }
         }
+    }
+
+    /**
+     * Split a long period at each midnight (in the period's time zone), so every part is within one
+     * day. A part never exceeds 24 hours, also on the day clocks go back.
+     *
+     * @return array<int, array{0: CarbonImmutable, 1: CarbonImmutable}>
+     */
+    private static function splitAtMidnight(CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        $segments = [];
+        $cursor = $start;
+
+        while ($cursor->lessThan($end)) {
+            $segmentEnd = $cursor->addDay()->startOfDay();
+            $limit = $cursor->addSeconds(TimeEntry::MAX_DURATION_SECONDS);
+
+            if ($limit->lessThan($segmentEnd)) {
+                $segmentEnd = $limit;
+            }
+
+            if ($end->lessThan($segmentEnd)) {
+                $segmentEnd = $end;
+            }
+
+            $segments[] = [$cursor, $segmentEnd];
+            $cursor = $segmentEnd;
+        }
+
+        return $segments;
     }
 
     /**
@@ -505,6 +543,8 @@ final class ClockifyImportPlan
     private function existingEntryKeys(string $timezone): array
     {
         $starts = array_map(fn (ClockifyRow $row) => CarbonImmutable::parse($row->start, $timezone)->utc(), $this->csv->rows);
+        // Parts of a split row start as late as the row ends.
+        $ends = array_map(fn (ClockifyRow $row) => CarbonImmutable::parse($row->end, $timezone)->utc(), $this->csv->rows);
 
         if ($starts === []) {
             return [];
@@ -514,7 +554,7 @@ final class ClockifyImportPlan
 
         TimeEntry::query()
             ->forOrganization($this->organization)
-            ->whereBetween('started_at', [min($starts), max($starts)])
+            ->whereBetween('started_at', [min($starts), max([...$starts, ...$ends])])
             ->orderBy('id')
             ->get(['id', 'user_id', 'project_id', 'started_at', 'ended_at', 'source'])
             ->each(function (TimeEntry $entry) use (&$keys) {

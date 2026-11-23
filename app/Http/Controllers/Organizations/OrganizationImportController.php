@@ -80,6 +80,7 @@ class OrganizationImportController extends Controller
                 'rows' => count($plan->csv->rows) + count($plan->csv->errors),
                 'importable' => count($plan->entries),
                 'importableSeconds' => $plan->importableSeconds(),
+                'splitRows' => $plan->splitRows,
                 'members' => $plan->members,
                 'projects' => array_map(fn (array $project) => [
                     'key' => $project['key'],

@@ -82,11 +82,10 @@ it('puts time on a chosen member or skips users who are not members', function (
         ->and(TimeEntry::query()->sole()->user_id)->toBe($this->member->id);
 });
 
-it('skips entries longer than 24 hours, on archived projects and that already exist', function () {
+it('skips entries on archived projects and that already exist', function () {
     $archived = Project::factory()->for($this->organization)->archived()->create(['name' => 'Gammalt']);
     $csv = clockifyCsv([
         clockifyRow('Webbshop', 'Acme', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
-        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '03-02-2026', '8:30', '03-05-2026', '0:30'),
         clockifyRow('Gammalt', '', 'anna@example.com', '11-30-2026', '13:00', '11-30-2026', '14:00'),
         clockifyRow('Webbshop', 'Acme', 'anna@example.com', '11-30-2026', '9:00', '11-30-2026', '10:00'),
     ]);
@@ -94,13 +93,44 @@ it('skips entries longer than 24 hours, on archived projects and that already ex
     $first = ($this->import)($csv);
 
     expect($first['created'])->toBe(1)
-        ->and(array_column($first['skipped'], 'line'))->toBe([3, 4, 5])
-        ->and($first['skipped'][0]['reason'])->toContain('24')
+        ->and(array_column($first['skipped'], 'line'))->toBe([3, 4])
         ->and(TimeEntry::query()->where('project_id', $archived->id)->exists())->toBeFalse();
 
     // Importing the same file again adds nothing.
     expect(fn () => ($this->import)($csv))->toThrow(ValidationException::class)
         ->and(TimeEntry::query()->count())->toBe(1);
+});
+
+it('splits entries longer than 24 hours at midnight, keeping the times from Clockify', function () {
+    $csv = clockifyCsv([
+        // 64 hours from Monday 08:30 to Thursday 00:30, Stockholm time.
+        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '03-02-2026', '8:30', '03-05-2026', '0:30', 'Sprint'),
+        // The clocks go back on 25 October: that day has 25 hours, more than one entry may have.
+        clockifyRow('Webbshop', 'Acme', 'anna@example.com', '10-24-2026', '12:00', '10-26-2026', '0:00'),
+    ]);
+
+    $result = ($this->import)($csv);
+
+    $local = fn (TimeEntry $entry) => $entry->started_at->setTimezone('Europe/Stockholm')->format('Y-m-d H:i').' – '.$entry->ended_at->setTimezone('Europe/Stockholm')->format('Y-m-d H:i');
+    $entries = TimeEntry::query()->orderBy('started_at')->get();
+
+    expect($result['created'])->toBe(7)
+        ->and($result['seconds'])->toBe((64 + 37) * 3600)
+        ->and($entries->map($local)->all())->toBe([
+            '2026-03-02 08:30 – 2026-03-03 00:00',
+            '2026-03-03 00:00 – 2026-03-04 00:00',
+            '2026-03-04 00:00 – 2026-03-05 00:00',
+            '2026-03-05 00:00 – 2026-03-05 00:30',
+            '2026-10-24 12:00 – 2026-10-25 00:00',
+            '2026-10-25 00:00 – 2026-10-25 23:00',
+            '2026-10-25 23:00 – 2026-10-26 00:00',
+        ])
+        ->and($entries->every(fn (TimeEntry $entry) => $entry->duration_seconds <= TimeEntry::MAX_DURATION_SECONDS))->toBeTrue()
+        ->and($entries->first()->description)->toBe('Sprint');
+
+    // The parts are recognized when the file is imported again.
+    expect(fn () => ($this->import)($csv))->toThrow(ValidationException::class)
+        ->and(TimeEntry::query()->count())->toBe(7);
 });
 
 it('skips private projects the member is not assigned to', function () {

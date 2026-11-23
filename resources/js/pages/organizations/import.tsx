@@ -298,6 +298,12 @@ function PreviewStep({
                     'Times are read in :timezone and dates as :format. Entries that already exist are skipped, so the same file can be imported again.',
                     { timezone: preview.timezone, format: preview.dateFormat },
                 )}
+                {preview.splitRows > 0 &&
+                    ` ${tc(
+                        ':count entry is longer than 24 hours and is split at midnight into one entry per day, with the times from Clockify.|:count entries are longer than 24 hours and are split at midnight into one entry per day, with the times from Clockify.',
+                        preview.splitRows,
+                        { count: preview.splitRows },
+                    )}`}
             </p>
 
             <section className="grid gap-3">
