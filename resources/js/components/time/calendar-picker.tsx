@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const MONTH_DAY = { day: 'numeric', month: 'long' } as const;
-const FULL_DATE = { ...MONTH_DAY, weekday: 'long', year: 'numeric' } as const;
 
 type CalendarView = 'day' | 'week';
 
@@ -312,8 +311,8 @@ export function CalendarPicker({
           ).toString();
     const offsets = isDay
         ? [
-              { label: 'Today', offset: 0 },
               { label: 'Yesterday', offset: -1 },
+              { label: 'Today', offset: 0 },
               { label: 'Tomorrow', offset: 1 },
           ]
         : [
@@ -335,16 +334,26 @@ export function CalendarPicker({
     const range = isDay
         ? formatDate(date, intlLocale, MONTH_DAY)
         : formatDateRange(weekStart, end, intlLocale, MONTH_DAY);
+    const currentYear = today.slice(0, 4);
+    const lastDay = isDay ? date : end;
+    const year =
+        value.slice(0, 4) === currentYear && lastDay.slice(0, 4) === currentYear
+            ? undefined
+            : 'numeric';
     const fullRange = isDay
-        ? formatDate(date, intlLocale, FULL_DATE)
+        ? formatDate(date, intlLocale, {
+              ...MONTH_DAY,
+              weekday: 'long',
+              year,
+          })
         : formatDateRange(weekStart, end, intlLocale, {
               ...MONTH_DAY,
-              year: 'numeric',
+              year,
           });
     const compactFormat = {
         day: 'numeric',
         month: 'short',
-        year: 'numeric',
+        year,
     } as const;
     const compactRange =
         !isDesktop && !isList
