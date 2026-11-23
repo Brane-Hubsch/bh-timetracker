@@ -6,7 +6,8 @@ import classicTheme from '@fullcalendar/react/themes/classic';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
-import { Banknote } from 'lucide-react';
+import { Tooltip } from '@heroui/react';
+import { Banknote, CalendarOff } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { formatHours } from '@/lib/format';
@@ -172,6 +173,12 @@ export function TimeCalendar({
     const absenceById = new Map(
         absences.map((absence) => [`absence-${absence.id}`, absence]),
     );
+    // Both absence lists cover the whole week, even when the calendar shows one day.
+    const showAbsenceRow = [...absences, ...colleaguesOff].some(
+        ({ startsOn, endsOn }) =>
+            view === 'week' || (startsOn <= date && date <= endsOn),
+    );
+    const absenceLabel = t('Absence');
     const absenceTitle = (absence: Absence) =>
         absence.secondsPerDay === null
             ? absence.label
@@ -204,7 +211,27 @@ export function TimeCalendar({
                 // The day view's date and total are in the page header above.
                 dayHeaders={view === 'week'}
                 borderless
-                allDayText={t('Absence')}
+                allDaySlot={showAbsenceRow}
+                allDayHeaderClass="items-center justify-center"
+                allDayHeaderContent={() => (
+                    <Tooltip delay={350} closeDelay={0}>
+                        <Tooltip.Trigger
+                            role="img"
+                            tabIndex={0}
+                            aria-label={absenceLabel}
+                            className="grid size-6 place-items-center rounded-sm text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        >
+                            <CalendarOff
+                                aria-hidden="true"
+                                className="size-4"
+                            />
+                        </Tooltip.Trigger>
+                        <Tooltip.Content placement="right" showArrow>
+                            <Tooltip.Arrow />
+                            {absenceLabel}
+                        </Tooltip.Content>
+                    </Tooltip>
+                )}
                 nowIndicator
                 height={height}
                 // Leave space above 07:00 for its label to straddle the grid line.
