@@ -10,7 +10,7 @@ class UpdateOrganization
     /**
      * Update the organization's name and settings.
      *
-     * @param  array{name?: string, currency?: string, default_hourly_rate?: int|null, week_starts_on?: int, timezone?: string}  $attributes
+     * @param  array{name?: string, currency?: string, default_hourly_rate?: int|null, week_starts_on?: int, timezone?: string, workday_seconds?: int}  $attributes
      */
     public function handle(Organization $organization, array $attributes): Organization
     {

@@ -17,6 +17,7 @@ import {
     Briefcase,
     Building2,
     CalendarDays,
+    CalendarOff,
     ChartColumn,
     CircleUserRound,
     Clock,
@@ -339,6 +340,13 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     label: t('Copy previous week'),
                     icon: CopyPlus,
                     perform: go(time({ copy: 1 })),
+                },
+                {
+                    id: 'register-absence',
+                    label: t('Register absence'),
+                    keywords: t('vacation sick leave child care off'),
+                    icon: CalendarOff,
+                    perform: go(time({ absence: 1 })),
                 },
                 ...(can?.canManageProjects
                     ? [

@@ -2,6 +2,7 @@ import {
     Avatar,
     Button,
     Chip,
+    Description,
     ComboBox,
     Dropdown,
     Input,
@@ -196,6 +197,40 @@ export default function OrganizationEdit({
                                             <p className="text-sm text-danger">
                                                 {errors.default_hourly_rate}
                                             </p>
+                                        )}
+                                    </NumberField>
+                                    <NumberField
+                                        name="workday_hours"
+                                        defaultValue={organization.workdayHours}
+                                        minValue={1}
+                                        maxValue={24}
+                                        step={0.5}
+                                        formatOptions={{
+                                            maximumFractionDigits: 2,
+                                        }}
+                                        isInvalid={Boolean(
+                                            errors.workday_hours,
+                                        )}
+                                        validationBehavior="aria"
+                                        className="w-full"
+                                        data-test="organization-workday-hours"
+                                    >
+                                        <Label>
+                                            {t('Workday length (hours)')}
+                                        </Label>
+                                        <NumberField.Group>
+                                            <NumberField.Input />
+                                        </NumberField.Group>
+                                        {errors.workday_hours ? (
+                                            <p className="text-sm text-danger">
+                                                {errors.workday_hours}
+                                            </p>
+                                        ) : (
+                                            <Description>
+                                                {t(
+                                                    'A full day of absence counts as this many hours.',
+                                                )}
+                                            </Description>
                                         )}
                                     </NumberField>
                                     <SelectField

@@ -2,12 +2,16 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\AbsenceType;
 use App\Enums\ReportGrouping;
+use App\Models\Absence;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Tag;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Support\AbsenceTime;
+use App\Support\HolidayDates;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -29,6 +33,8 @@ use Illuminate\Support\Facades\DB;
  * @phpstan-type TimelineProject array{id: int, name: string, clientName: string|null, color: string}
  * @phpstan-type Timeline array{unit: string, buckets: array<int, TimelineBucket>, projects?: list<TimelineProject>}
  * @phpstan-type ProjectShare array{id: int|null, name: string, color: string|null, clientName: string|null, seconds: int}
+ * @phpstan-type AbsenceMember array{id: int, name: string, seconds: int, types: array<string, int>}
+ * @phpstan-type AbsenceSummary array{workdaySeconds: int, types: list<array{value: string, label: string}>, members: list<AbsenceMember>}
  */
 class ReportBuilder
 {
@@ -166,6 +172,71 @@ class ReportBuilder
             'isBillable' => $entry->is_billable,
             'hourlyRate' => $canViewAmounts ? $entry->hourly_rate : null,
             'amount' => $canViewAmounts ? $this->amount($entry) : null,
+        ];
+    }
+
+    /**
+     * Absence in the period per member and type, in seconds (full days count as the organization's
+     * working day; weekends and holidays don't count). Only the member and period filters apply, with
+     * the same visibility as time: without ManageTeamTime the viewer only gets their own absence.
+     * Absences without an end to the period are counted in full.
+     *
+     * @return AbsenceSummary
+     */
+    public function absences(ReportFilters $filters): array
+    {
+        $organization = $filters->organization;
+        // Absence days are plain dates, so compare with the period's dates, not the viewer's instants.
+        $from = $filters->from ? CarbonImmutable::parse($filters->from->toDateString()) : null;
+        $to = $filters->to ? CarbonImmutable::parse($filters->to->toDateString()) : null;
+
+        $absences = Absence::query()
+            ->forOrganization($organization)
+            ->when(
+                $filters->canViewTeam(),
+                fn (Builder $query) => $query->when($filters->userIds !== [], fn (Builder $query) => $query->whereIn('user_id', $filters->userIds)),
+                fn (Builder $query) => $query->where('user_id', $filters->viewer->id),
+            )
+            ->when($from, fn (Builder $query, CarbonImmutable $from) => $query->whereDate('ends_on', '>=', $from->toDateString()))
+            ->when($to, fn (Builder $query, CarbonImmutable $to) => $query->whereDate('starts_on', '<=', $to->toDateString()))
+            ->with('user:id,name')
+            ->get();
+
+        // Each absence clipped to the period.
+        $periods = [];
+
+        foreach ($absences as $absence) {
+            $periods[$absence->id] = [
+                $from && $from->greaterThan($absence->starts_on) ? $from : $absence->starts_on->toImmutable(),
+                $to && $to->lessThan($absence->ends_on) ? $to : $absence->ends_on->toImmutable(),
+            ];
+        }
+
+        $members = [];
+
+        if ($periods !== []) {
+            $holidays = HolidayDates::between(
+                $organization->id,
+                min(array_column($periods, 0)),
+                max(array_column($periods, 1)),
+            );
+
+            foreach ($absences as $absence) {
+                [$startsOn, $endsOn] = $periods[$absence->id];
+                $seconds = AbsenceTime::for($startsOn, $endsOn, $absence->seconds_per_day, $organization->workday_seconds, $holidays)['seconds'];
+                $member = $members[$absence->user_id] ?? ['id' => $absence->user_id, 'name' => $absence->user->name, 'seconds' => 0, 'types' => []];
+                $member['seconds'] += $seconds;
+                $member['types'][$absence->type->value] = ($member['types'][$absence->type->value] ?? 0) + $seconds;
+                $members[$absence->user_id] = $member;
+            }
+        }
+
+        usort($members, fn (array $a, array $b) => strcasecmp($a['name'], $b['name']));
+
+        return [
+            'workdaySeconds' => $organization->workday_seconds,
+            'types' => AbsenceType::options(),
+            'members' => array_values(array_filter($members, fn (array $member) => $member['seconds'] > 0)),
         ];
     }
 

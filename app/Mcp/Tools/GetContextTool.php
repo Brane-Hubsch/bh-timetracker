@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Enums\AbsenceType;
 use App\Enums\OrganizationPermission;
 use App\Mcp\Support\McpContext;
 use App\Models\Organization;
@@ -44,6 +45,8 @@ class GetContextTool extends TimetrackerTool
                 'name' => $context->organization->name,
                 'currency' => $context->organization->currency,
                 'week_starts_on' => self::WEEKDAYS[$context->organization->week_starts_on - 1] ?? 'Monday',
+                // A full day of absence counts as this many hours.
+                'workday_hours' => $this->hours($context->organization->workday_seconds),
                 'role' => $context->role?->value,
                 'permissions' => [
                     'report_time_for_others' => $context->can(OrganizationPermission::ManageTeamTime),
@@ -53,6 +56,7 @@ class GetContextTool extends TimetrackerTool
                 ],
             ],
             // Existing tags, to reuse instead of creating near-duplicates.
+            'absence_types' => array_column(AbsenceType::cases(), 'value'),
             'tags' => Tag::query()->forOrganization($context->organization)->orderBy('name')->pluck('name')->all(),
             'organizations' => $user->organizations()->orderBy('name')->get()
                 ->map(fn (Organization $organization) => ['slug' => $organization->slug, 'name' => $organization->name])

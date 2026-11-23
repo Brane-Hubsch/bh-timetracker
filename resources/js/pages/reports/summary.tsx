@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { SelectField } from '@/components/form/select-field';
+import { AbsenceTable } from '@/components/reports/absence-table';
 import { ExportMenu } from '@/components/reports/export-menu';
 import { GroupTable } from '@/components/reports/group-table';
 import { MemberProjectTable } from '@/components/reports/member-project-table';
@@ -11,6 +12,7 @@ import { useTranslation } from '@/lib/i18n';
 import { reportQuery } from '@/lib/reports';
 import type {
     ReportAbilities,
+    ReportAbsence,
     ReportFilterValues,
     ReportGroupingKey,
     ReportOptions,
@@ -24,6 +26,7 @@ type Props = {
     currency: string;
     weekStartsOn: number;
     summary: ReportSummary;
+    absence: ReportAbsence;
 };
 
 export default function ReportsSummary({
@@ -32,6 +35,7 @@ export default function ReportsSummary({
     currency,
     weekStartsOn,
     summary,
+    absence,
 }: Props) {
     const { t } = useTranslation();
     const byMemberAndProject =
@@ -134,6 +138,8 @@ export default function ReportsSummary({
                     </p>
                 )}
             </section>
+
+            {absence.members.length > 0 && <AbsenceTable absence={absence} />}
         </ReportLayout>
     );
 }

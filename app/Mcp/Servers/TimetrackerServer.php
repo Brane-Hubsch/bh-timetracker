@@ -5,9 +5,11 @@ namespace App\Mcp\Servers;
 use App\Mcp\Tools\ArchiveClientTool;
 use App\Mcp\Tools\ArchiveProjectTool;
 use App\Mcp\Tools\CancelInvitationTool;
+use App\Mcp\Tools\CreateAbsenceTool;
 use App\Mcp\Tools\CreateClientTool;
 use App\Mcp\Tools\CreateProjectTool;
 use App\Mcp\Tools\CreateTimeEntriesTool;
+use App\Mcp\Tools\DeleteAbsenceTool;
 use App\Mcp\Tools\DeleteTagTool;
 use App\Mcp\Tools\DeleteTimeEntryTool;
 use App\Mcp\Tools\ExportReportTool;
@@ -15,12 +17,14 @@ use App\Mcp\Tools\GetContextTool;
 use App\Mcp\Tools\GetProjectStatusTool;
 use App\Mcp\Tools\GetReportTool;
 use App\Mcp\Tools\InviteMemberTool;
+use App\Mcp\Tools\ListAbsencesTool;
 use App\Mcp\Tools\ListClientsTool;
 use App\Mcp\Tools\ListMembersTool;
 use App\Mcp\Tools\ListProjectsTool;
 use App\Mcp\Tools\ListTimeEntriesTool;
 use App\Mcp\Tools\RemoveMemberTool;
 use App\Mcp\Tools\RenameTagTool;
+use App\Mcp\Tools\UpdateAbsenceTool;
 use App\Mcp\Tools\UpdateClientTool;
 use App\Mcp\Tools\UpdateMemberTool;
 use App\Mcp\Tools\UpdateProjectTool;
@@ -51,6 +55,9 @@ amounts; owners and admins can see and report time for others and manage clients
 - Owners and admins can also manage members and invitations, rename/merge/delete tags and change or
   archive clients and projects. Archiving can be undone (archived=false); removing a member, cancelling
   an invitation and deleting a tag cannot, so confirm those first.
+- Absence (vacation, care of a sick child "VAB", sick leave, parental leave, leave of absence) is kept
+  apart from time entries: register it with create_absence, never as time on a project. Full days count
+  as the organization's working day (get_context); weekends and holidays don't count.
 - export_report gives a download link to a PDF, Excel or CSV file for the user to open in their browser;
   use get_report when you need the numbers yourself.
 - Answer in the user's language (often Swedish). Hours are decimals; amounts are in the organization's
@@ -88,5 +95,9 @@ class TimetrackerServer extends Server
         CancelInvitationTool::class,
         UpdateMemberTool::class,
         RemoveMemberTool::class,
+        ListAbsencesTool::class,
+        CreateAbsenceTool::class,
+        UpdateAbsenceTool::class,
+        DeleteAbsenceTool::class,
     ];
 }

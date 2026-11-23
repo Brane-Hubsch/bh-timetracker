@@ -24,10 +24,10 @@ it('lists the tools for an authenticated user and logs the call', function () {
 
     // Every tool on one page, without a pagination cursor.
     expect(collect($response->json('result.tools'))->pluck('name')->sort()->values()->all())->toBe([
-        'archive_client', 'archive_project', 'cancel_invitation', 'create_client', 'create_project',
-        'create_time_entries', 'delete_tag', 'delete_time_entry', 'export_report', 'get_context',
-        'get_project_status', 'get_report', 'invite_member', 'list_clients', 'list_members', 'list_projects',
-        'list_time_entries', 'remove_member', 'rename_tag', 'update_client', 'update_member', 'update_project',
+        'archive_client', 'archive_project', 'cancel_invitation', 'create_absence', 'create_client', 'create_project',
+        'create_time_entries', 'delete_absence', 'delete_tag', 'delete_time_entry', 'export_report', 'get_context',
+        'get_project_status', 'get_report', 'invite_member', 'list_absences', 'list_clients', 'list_members', 'list_projects',
+        'list_time_entries', 'remove_member', 'rename_tag', 'update_absence', 'update_client', 'update_member', 'update_project',
         'update_time_entry',
     ])->and($response->json('result.nextCursor'))->toBeNull();
 

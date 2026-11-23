@@ -64,6 +64,7 @@ class OrganizationController extends Controller
                 'defaultHourlyRate' => $user->can('update', $organization) ? $organization->default_hourly_rate : null,
                 'weekStartsOn' => $organization->week_starts_on,
                 'timezone' => $organization->timezone,
+                'workdayHours' => $organization->workday_seconds / 3600,
                 'logo' => $organization->logoUrl(256),
             ],
             'members' => $organization->members()->orderBy('name')->get()->map(function (User $member) use ($user, $organization) {

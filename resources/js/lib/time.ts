@@ -81,6 +81,31 @@ export function weekDates(weekStart: string): string[] {
     return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 }
 
+/**
+ * Working days from `from` to `to` (inclusive): weekdays that aren't one of the organization's
+ * holidays ("YYYY-MM-DD"). Mirrors `App\Support\WorkingDays`.
+ */
+export function workingDays(
+    from: string,
+    to: string,
+    holidays: string[],
+): number {
+    const skip = new Set(holidays);
+    let count = 0;
+
+    for (let day = from, guard = 0; day <= to && guard < 400; guard++) {
+        const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
+
+        if (weekday !== 0 && weekday !== 6 && !skip.has(day)) {
+            count++;
+        }
+
+        day = addDays(day, 1);
+    }
+
+    return count;
+}
+
 /** Format a "YYYY-MM-DD" date, e.g. "mån 18 nov". */
 export function formatDate(
     date: string,

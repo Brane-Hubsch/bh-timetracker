@@ -5,11 +5,16 @@ namespace App\Mcp\Tools;
 use App\Enums\OrganizationPermission;
 use App\Enums\ReportPeriod;
 use App\Mcp\Support\McpContext;
+use App\Models\Absence;
 use App\Models\TimeEntry;
+use App\Support\AbsenceTime;
+use App\Support\DurationParser;
+use App\Support\HolidayDates;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Server\Tool;
 
@@ -136,6 +141,59 @@ abstract class TimetrackerTool extends Tool
     protected function money(?int $minorUnits): ?float
     {
         return $minorUnits === null ? null : round($minorUnits / 100, 2);
+    }
+
+    /**
+     * Hours per day for an absence ("4", "4,5", "4:30") in seconds; null when not given (full days).
+     */
+    protected function absenceSecondsPerDay(Request $request): ?int
+    {
+        $input = $this->stringArgument($request, 'hours_per_day');
+
+        if ($input === null) {
+            return null;
+        }
+
+        $seconds = app(DurationParser::class)->parse($input);
+
+        if ($seconds === null || $seconds <= 0 || $seconds > 86400) {
+            throw ValidationException::withMessages(['hours_per_day' => 'Give the hours per day such as "4", "4,5" or "4:30" (at most 24), or leave it out for full days.']);
+        }
+
+        return $seconds;
+    }
+
+    /**
+     * An absence with its working days and hours (weekends and the organization's holidays don't
+     * count; a full day is the organization's working day).
+     *
+     * @param  array<int, string>|null  $holidays  The organization's holidays covering the absence, when already loaded.
+     * @return array<string, mixed>
+     */
+    protected function absence(Absence $absence, McpContext $context, ?array $holidays = null): array
+    {
+        $startsOn = $absence->starts_on->toImmutable();
+        $endsOn = $absence->ends_on->toImmutable();
+        $time = AbsenceTime::for(
+            $startsOn,
+            $endsOn,
+            $absence->seconds_per_day,
+            $context->organization->workday_seconds,
+            $holidays ?? HolidayDates::between($context->organization->id, $startsOn, $endsOn),
+        );
+
+        return array_filter([
+            'id' => $absence->id,
+            'member' => ['id' => $absence->user_id, 'name' => $absence->user->name],
+            'type' => $absence->type->value,
+            'starts_on' => $startsOn->toDateString(),
+            'ends_on' => $endsOn->toDateString(),
+            'hours_per_day' => $absence->seconds_per_day !== null ? $this->hours($absence->seconds_per_day) : null,
+            'full_days' => $absence->seconds_per_day === null ?: null,
+            'working_days' => $time['days'],
+            'hours' => $this->hours($time['seconds']),
+            'note' => $absence->note,
+        ], fn (mixed $value) => $value !== null);
     }
 
     /**

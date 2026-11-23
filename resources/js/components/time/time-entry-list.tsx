@@ -1,22 +1,39 @@
-import { Clock } from 'lucide-react';
+import { CalendarOff, Clock } from 'lucide-react';
 import { ProjectDot } from '@/components/project-dot';
+import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatDate, formatDuration, timeOf } from '@/lib/time';
-import type { TimeEntry } from '@/types';
+import type { Absence, ColleagueOff, TimeEntry } from '@/types';
 
 type Props = {
     dates: string[];
     today: string;
     entries: TimeEntry[];
+    absences: Absence[];
+    colleaguesOff: ColleagueOff[];
     onEdit: (entry: TimeEntry) => void;
+    onEditAbsence: (absence: Absence) => void;
     onAdd: (date: string) => void;
 };
 
 /**
  * The week grouped by day, with day totals. Default view on mobile.
  */
-export function TimeEntryList({ dates, today, entries, onEdit, onAdd }: Props) {
+export function TimeEntryList({
+    dates,
+    today,
+    entries,
+    absences,
+    colleaguesOff,
+    onEdit,
+    onEditAbsence,
+    onAdd,
+}: Props) {
     const { t, intlLocale } = useTranslation();
+    const covers = (
+        period: { startsOn: string; endsOn: string },
+        date: string,
+    ) => period.startsOn <= date && date <= period.endsOn;
 
     return (
         <div className="grid gap-4">
@@ -29,7 +46,16 @@ export function TimeEntryList({ dates, today, entries, onEdit, onAdd }: Props) {
                     0,
                 );
 
-                if (dayEntries.length === 0 && date !== today) {
+                const dayAbsences = absences.filter((absence) =>
+                    covers(absence, date),
+                );
+                const dayOff = colleaguesOff.filter((off) => covers(off, date));
+
+                if (
+                    dayEntries.length === 0 &&
+                    dayAbsences.length === 0 &&
+                    date !== today
+                ) {
                     return null;
                 }
 
@@ -53,7 +79,49 @@ export function TimeEntryList({ dates, today, entries, onEdit, onAdd }: Props) {
                                 {formatDuration(total)}
                             </span>
                         </header>
+                        {dayOff.length > 0 && (
+                            <p
+                                className="truncate px-1 text-xs text-muted"
+                                data-test="time-day-off"
+                            >
+                                {t('Off: :names', {
+                                    names: dayOff
+                                        .map((off) => off.name)
+                                        .join(', '),
+                                })}
+                            </p>
+                        )}
                         <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
+                            {dayAbsences.map((absence) => (
+                                <li key={`absence-${absence.id}`}>
+                                    <button
+                                        type="button"
+                                        onClick={() => onEditAbsence(absence)}
+                                        className="flex w-full items-center gap-3 border-l-3 border-warning bg-warning-soft p-4 text-left text-warning-soft-foreground transition-colors hover:bg-warning-soft-hover"
+                                        data-test="time-absence-row"
+                                    >
+                                        <CalendarOff className="size-4 shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="truncate font-medium">
+                                                {absence.label}
+                                            </div>
+                                            {absence.note && (
+                                                <div className="truncate text-sm opacity-80">
+                                                    {absence.note}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="shrink-0 text-sm font-medium tabular-nums">
+                                            {absence.secondsPerDay === null
+                                                ? t('Full day')
+                                                : formatHours(
+                                                      absence.secondsPerDay,
+                                                      intlLocale,
+                                                  )}
+                                        </div>
+                                    </button>
+                                </li>
+                            ))}
                             {dayEntries.map((entry) => (
                                 <li key={entry.id}>
                                     <button
@@ -109,27 +177,30 @@ export function TimeEntryList({ dates, today, entries, onEdit, onAdd }: Props) {
                                     </button>
                                 </li>
                             ))}
-                            {dayEntries.length === 0 && (
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => onAdd(date)}
-                                        className="flex w-full items-center justify-center gap-2 p-6 text-sm text-muted transition-colors hover:bg-surface-secondary"
-                                    >
-                                        <Clock className="size-4" />
-                                        {t('No time reported yet')}
-                                    </button>
-                                </li>
-                            )}
+                            {dayEntries.length === 0 &&
+                                dayAbsences.length === 0 && (
+                                    <li>
+                                        <button
+                                            type="button"
+                                            onClick={() => onAdd(date)}
+                                            className="flex w-full items-center justify-center gap-2 p-6 text-sm text-muted transition-colors hover:bg-surface-secondary"
+                                        >
+                                            <Clock className="size-4" />
+                                            {t('No time reported yet')}
+                                        </button>
+                                    </li>
+                                )}
                         </ul>
                     </section>
                 );
             })}
-            {entries.length === 0 && !dates.includes(today) && (
-                <p className="rounded-2xl bg-surface p-8 text-center text-sm text-muted shadow-surface">
-                    {t('No time reported this week.')}
-                </p>
-            )}
+            {entries.length === 0 &&
+                absences.length === 0 &&
+                !dates.includes(today) && (
+                    <p className="rounded-2xl bg-surface p-8 text-center text-sm text-muted shadow-surface">
+                        {t('No time reported this week.')}
+                    </p>
+                )}
         </div>
     );
 }

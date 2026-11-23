@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Holiday;
 use App\Models\Project;
 use Carbon\CarbonImmutable;
 
@@ -34,13 +33,7 @@ final class EstimatePace
         $startsOn = $project->starts_on ? CarbonImmutable::parse($project->starts_on->toDateString(), $today->timezone) : null;
         $from = $startsOn?->greaterThan($today) ? $startsOn : $today;
         $to = CarbonImmutable::parse($project->ends_on->toDateString(), $today->timezone);
-        $holidays = Holiday::query()
-            ->forOrganization($project->organization_id)
-            ->whereDate('date', '>=', $from->toDateString())
-            ->whereDate('date', '<=', $to->toDateString())
-            ->get(['date'])
-            ->map(fn (Holiday $holiday) => $holiday->date->toDateString())
-            ->all();
+        $holidays = HolidayDates::between($project->organization_id, $from, $to);
         $workdays = WorkingDays::between($from, $to, $holidays);
 
         return [

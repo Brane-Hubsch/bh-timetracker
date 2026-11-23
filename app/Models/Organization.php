@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $default_hourly_rate
  * @property int $week_starts_on
  * @property string $timezone
+ * @property int $workday_seconds Length of a full working day (a full day of absence counts as this)
  * @property string|null $logo_path Uploaded logo (directory in ImageStorage)
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -34,7 +35,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, Holiday> $holidays
  */
-#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path'])]
+#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path', 'workday_seconds'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -49,6 +50,7 @@ class Organization extends Model
         'currency' => 'SEK',
         'week_starts_on' => 1,
         'timezone' => 'Europe/Stockholm',
+        'workday_seconds' => 28800,
     ];
 
     /**
@@ -150,6 +152,7 @@ class Organization extends Model
         return [
             'default_hourly_rate' => 'integer',
             'week_starts_on' => 'integer',
+            'workday_seconds' => 'integer',
         ];
     }
 

@@ -9,15 +9,17 @@ import '@fullcalendar/react/themes/classic/theme.css';
 import { Banknote } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Temporal } from 'temporal-polyfill';
+import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import {
+    addDays,
     formatDate,
     formatDuration,
     fromCalendarDate,
     timeOf,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import type { TimeEntry } from '@/types';
+import type { Absence, ColleagueOff, TimeEntry } from '@/types';
 
 type Props = {
     view: 'week' | 'day';
@@ -25,9 +27,16 @@ type Props = {
     weekStartsOn: number;
     timezone: string;
     entries: TimeEntry[];
+    /** The shown member's absence, in the all-day row. */
+    absences: Absence[];
+    /** Colleagues' absence, shown as "Off · name". */
+    colleaguesOff: ColleagueOff[];
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
+    /** Drag across days in the all-day row; the first and last day. */
+    onSelectDays: (startsOn: string, endsOn: string) => void;
     onEdit: (entry: TimeEntry) => void;
+    onEditAbsence: (absence: Absence) => void;
     /** Moved or resized; call revert() if saving fails. */
     onChange: (
         entry: TimeEntry,
@@ -115,8 +124,12 @@ export function TimeCalendar({
     weekStartsOn,
     timezone,
     entries,
+    absences,
+    colleaguesOff,
     onSelect,
+    onSelectDays,
     onEdit,
+    onEditAbsence,
     onChange,
 }: Props) {
     const { t, locale, intlLocale } = useTranslation();
@@ -156,6 +169,13 @@ export function TimeCalendar({
     }, []);
 
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
+    const absenceById = new Map(
+        absences.map((absence) => [`absence-${absence.id}`, absence]),
+    );
+    const absenceTitle = (absence: Absence) =>
+        absence.secondsPerDay === null
+            ? absence.label
+            : `${absence.label} · ${formatHours(absence.secondsPerDay, intlLocale)}`;
     const dayTotal = (day: string) =>
         entries
             .filter((entry) => entry.date === day)
@@ -184,7 +204,7 @@ export function TimeCalendar({
                 // The day view's date and total are in the page header above.
                 dayHeaders={view === 'week'}
                 borderless
-                allDaySlot={false}
+                allDayText={t('Absence')}
                 nowIndicator
                 height={height}
                 // Leave space above 07:00 for its label to straddle the grid line.
@@ -215,22 +235,47 @@ export function TimeCalendar({
                 editable
                 eventMinHeight={0}
                 eventResizableFromStart
-                events={entries.map((entry) => ({
-                    id: String(entry.id),
-                    title: entry.project.name,
-                    start: `${entry.start}:00Z`,
-                    end: `${entry.end}:00Z`,
-                    color: entry.project.color,
-                }))}
-                eventClass={({ isMirror, isDragging, isResizing }) =>
-                    cn(
-                        'time-calendar-event',
-                        isMirror && 'time-calendar-event-mirror',
-                        isMirror && isDragging && 'time-calendar-move-preview',
-                        isMirror &&
-                            isResizing &&
-                            'time-calendar-resize-preview',
-                    )
+                events={[
+                    ...entries.map((entry) => ({
+                        id: String(entry.id),
+                        title: entry.project.name,
+                        start: `${entry.start}:00Z`,
+                        end: `${entry.end}:00Z`,
+                        color: entry.project.color,
+                    })),
+                    // All-day events end on the day after their last day.
+                    ...absences.map((absence) => ({
+                        id: `absence-${absence.id}`,
+                        title: absenceTitle(absence),
+                        start: absence.startsOn,
+                        end: addDays(absence.endsOn, 1),
+                        allDay: true,
+                        editable: false,
+                        color: 'transparent',
+                    })),
+                    ...colleaguesOff.map((off) => ({
+                        id: `off-${off.id}`,
+                        title: t('Off · :name', { name: off.name }),
+                        start: off.startsOn,
+                        end: addDays(off.endsOn, 1),
+                        allDay: true,
+                        editable: false,
+                        color: 'transparent',
+                    })),
+                ]}
+                eventClass={({ event, isMirror, isDragging, isResizing }) =>
+                    event.allDay
+                        ? 'time-calendar-absence'
+                        : cn(
+                              'time-calendar-event',
+                              isMirror && 'time-calendar-event-mirror',
+                              isMirror &&
+                                  isDragging &&
+                                  'time-calendar-move-preview',
+                              isMirror &&
+                                  isResizing &&
+                                  'time-calendar-resize-preview',
+                          )
                 }
                 eventBeforeClass={(info) =>
                     info.isStartResizable &&
@@ -290,6 +335,27 @@ export function TimeCalendar({
                 }}
                 eventContent={(info) => {
                     const { id, title, start, end } = info.event;
+
+                    if (info.event.allDay) {
+                        const isOwn = absenceById.has(id);
+
+                        return (
+                            <div
+                                className={cn(
+                                    'w-full truncate rounded-md px-2 py-0.5 text-xs/4.5 font-medium',
+                                    isOwn
+                                        ? 'cursor-pointer border-l-3 border-warning bg-warning-soft text-warning-soft-foreground'
+                                        : 'bg-default text-muted',
+                                )}
+                                data-test={
+                                    isOwn ? 'calendar-absence' : 'calendar-off'
+                                }
+                            >
+                                {title}
+                            </div>
+                        );
+                    }
+
                     // The selection preview has dates but no saved entry.
                     const entry = byId.get(id);
                     const color = entry?.project.color ?? 'var(--accent)';
@@ -402,12 +468,33 @@ export function TimeCalendar({
                     }
 
                     calendarRef.current?.getApi().unselect();
+
+                    if (info.allDay) {
+                        onSelectDays(
+                            fromCalendarDate(info.start).slice(0, 10),
+                            addDays(
+                                fromCalendarDate(info.end).slice(0, 10),
+                                -1,
+                            ),
+                        );
+
+                        return;
+                    }
+
                     onSelect(
                         fromCalendarDate(info.start),
                         fromCalendarDate(info.end),
                     );
                 }}
                 eventClick={(info) => {
+                    const absence = absenceById.get(info.event.id);
+
+                    if (absence) {
+                        onEditAbsence(absence);
+
+                        return;
+                    }
+
                     const entry = byId.get(info.event.id);
 
                     if (entry) {
