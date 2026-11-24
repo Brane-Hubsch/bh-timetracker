@@ -419,7 +419,7 @@ export function TimeEntryForm({
                                 <Tabs.Tab
                                     key={reportMode}
                                     id={reportMode}
-                                    className="h-9 w-auto rounded-sm px-0 text-xl/7 font-semibold text-muted/86 decoration-accent decoration-2 underline-offset-3 hover:text-foreground hover:opacity-100 aria-selected:text-foreground aria-selected:underline dark:not-aria-selected:not-hover:text-muted/76"
+                                    className="h-9 w-auto rounded-sm px-0 text-xl/7 font-semibold text-muted/74 decoration-accent decoration-2 underline-offset-3 hover:text-foreground hover:opacity-100 aria-selected:text-foreground aria-selected:underline dark:not-aria-selected:not-hover:text-muted/64"
                                 >
                                     {t(reportMode)}
                                 </Tabs.Tab>
