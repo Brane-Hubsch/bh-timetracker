@@ -16,7 +16,7 @@ import { index as projects } from '@/routes/projects';
 import { summary as reports } from '@/routes/reports';
 import { index as tags } from '@/routes/tags';
 import { index as team } from '@/routes/team';
-import { index as time } from '@/routes/time';
+import { index as timeCalendar, list as timeList } from '@/routes/time';
 
 export type MainNavItem = {
     /** Translation key (English source string). */
@@ -33,7 +33,6 @@ export type MainNavItem = {
  */
 export function useMainNavigation(): MainNavItem[] {
     const {
-        url,
         props: { currentOrganization, can },
     } = usePage();
     const { isCurrentUrl } = useCurrentUrl();
@@ -43,10 +42,8 @@ export function useMainNavigation(): MainNavItem[] {
     }
 
     const slug = currentOrganization.slug;
-    const calendar = time(slug);
-    const isTimePage = isCurrentUrl(calendar);
-    const isList =
-        new URL(url, 'http://localhost').searchParams.get('view') === 'list';
+    const calendar = timeCalendar(slug);
+    const list = timeList(slug);
 
     // The "Today" dashboard is paused: the calendar is the start page.
     return [
@@ -54,14 +51,14 @@ export function useMainNavigation(): MainNavItem[] {
             title: 'Calendar',
             href: calendar,
             icon: CalendarDays,
-            isActive: isTimePage && !isList,
+            isActive: isCurrentUrl(calendar),
             mobile: true,
         },
         {
             title: 'List',
-            href: time(slug, { query: { view: 'list' } }),
+            href: list,
             icon: List,
-            isActive: isTimePage && isList,
+            isActive: isCurrentUrl(list),
             mobile: false,
         },
         {

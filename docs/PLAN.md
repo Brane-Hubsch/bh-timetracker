@@ -109,6 +109,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 - **Fortsätt med Google** (Socialite). Matcha på verifierad e-post; koppla `google_id`.
 - **Passkey**: logga in med passkey (gärna med autofill/conditional UI). Hantera passkeys under Inställningar → Säkerhet (lägga till, döpa om, ta bort).
+- **Webbsession**: varje webbförfrågan förnyar en aktiv session. Inloggningen upphör efter 14 dagars inaktivitet som standard (`SESSION_LIFETIME` i minuter).
 - **Registrering utan Google**: namn + e-post → verifieringslänk (magic link) → skapa passkey.
 - **Återställning**: "Jag har tappat min passkey" → magic link till e-post → registrera ny passkey.
 - Stäng av Fortifys lösenordsfunktioner (registrering med lösenord, reset, 2FA/TOTP – passkeys ersätter det).
@@ -753,8 +754,9 @@ Beställt i efterhand. `laravel/octane` är ett godkänt beroende. Webbtjänsten
 
 Beslutat av beställaren: kalendern är det alla använder för att rapportera tid, så den är startsidan. Idag-sidan (dashboard, avsnitt 4.7) är pausad.
 
-- **Var man hamnar:** efter inloggning (passkey, Google, magisk länk, e-postverifiering), på `/`, efter onboarding och efter att ha tackat ja eller nej till en inbjudan hamnar man i kalendern (`/{organisation}/time`).
-  - Startsidan styrs på ett ställe: `fortify.home` (`/time`).
+- **Var man hamnar:** efter inloggning (passkey, Google, magisk länk, e-postverifiering), på `/`, efter onboarding och efter att ha tackat ja eller nej till en inbjudan hamnar man i kalendern (`/{organisation}/calendar`).
+  - Startsidan styrs på ett ställe: `fortify.home` (`/calendar`).
+  - Listvyn finns på `/{organisation}/list`. Gamla länkar till `/{organisation}/time` leder vidare till kalendern eller listvyn beroende på `view`.
 - **Menyer:** Idag är borttagen ur sidomenyn, mobilens bottennavigering och ⌘K. Mobilens bottennavigering är nu Kalender / Rapporter / Mer.
 - **Kvar i koden:** `DashboardController`, sidan `dashboard` och deras tester. Sidan nås fortfarande på `/{organisation}/dashboard`.
 - **Slå på igen:** lägg tillbaka menyposten i `resources/js/lib/navigation.ts` och ⌘K-kommandot, och sätt `fortify.home` till `/dashboard`.

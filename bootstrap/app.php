@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\DisableRememberMe;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Clear legacy remember cookies before authentication and before queued cookies are sent.
+        $middleware->prependToPriorityList(
+            before: StartSession::class,
+            prepend: DisableRememberMe::class,
+        );
+
         // Resolve the organization from the URL before route model binding, so tenant models are
         // bound through OrganizationScope of the organization in the URL (others give 404).
         $middleware->prependToPriorityList(
@@ -30,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->web(append: [
+            DisableRememberMe::class,
             LeaveInertiaForOAuth::class,
             SetLocale::class,
             HandleAppearance::class,
