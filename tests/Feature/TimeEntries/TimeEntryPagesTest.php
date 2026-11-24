@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\OrganizationRole;
+use App\Models\Holiday;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\TimeEntry;
@@ -74,6 +75,37 @@ it('shows the week of the signed-in user in their time zone', function (string $
     'calendar' => ['calendar', 'week'],
     'day' => ['calendar?view=day', 'day'],
     'list' => ['list', 'list'],
+]);
+
+it('sends saved holidays from the current organization for the visible calendar dates', function (string $path, array $expected) {
+    foreach ([
+        '2026-11-15' => 'Previous week',
+        '2026-11-16' => 'First day',
+        '2026-11-18' => 'Gemensam ledighet',
+        '2026-11-22' => 'Last day',
+        '2026-11-23' => 'Next week',
+    ] as $date => $name) {
+        Holiday::factory()->for($this->organization)->create(['date' => $date, 'name' => $name]);
+    }
+
+    Holiday::factory()->create(['date' => '2026-11-19', 'name' => 'Other organization']);
+
+    $this->actingAs($this->member)
+        ->get("/{$this->slug}/{$path}")
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('calendarHolidays', $expected)
+            ->where('holidays', fn ($dates) => $dates->contains('2026-11-18')));
+})->with([
+    'week' => ['calendar?date=2026-11-18', [
+        ['date' => '2026-11-16', 'name' => 'First day'],
+        ['date' => '2026-11-18', 'name' => 'Gemensam ledighet'],
+        ['date' => '2026-11-22', 'name' => 'Last day'],
+    ]],
+    'holiday in day view' => ['calendar?date=2026-11-18&view=day', [
+        ['date' => '2026-11-18', 'name' => 'Gemensam ledighet'],
+    ]],
+    'ordinary day' => ['calendar?date=2026-11-19&view=day', []],
+    'list' => ['list?date=2026-11-18', []],
 ]);
 
 it('redirects older time links and preserves the selected week, member and dialog', function (string $oldView, string $path, string $newView) {

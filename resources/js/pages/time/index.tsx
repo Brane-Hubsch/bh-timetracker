@@ -41,6 +41,7 @@ import type {
     AbsenceDraft,
     AbsenceType,
     AbsenceTypeOption,
+    CalendarHoliday,
     ColleagueOff,
     ProjectOption,
     TimeEntry,
@@ -64,6 +65,7 @@ type Props = {
     recentAbsenceTypes: AbsenceType[];
     workdaySeconds: number;
     holidays: string[];
+    calendarHolidays: CalendarHoliday[];
     projects: ProjectOption[];
     /** The organization's tag names. */
     tags: string[];
@@ -90,6 +92,7 @@ export default function TimeIndex({
     recentAbsenceTypes,
     workdaySeconds,
     holidays,
+    calendarHolidays,
     projects,
     tags,
     recentTags,
@@ -381,6 +384,7 @@ export default function TimeIndex({
                             weekStartsOn={weekStartsOn}
                             timezone={timezone}
                             entries={entries}
+                            holidays={calendarHolidays}
                             absences={absences}
                             colleaguesOff={colleaguesOff}
                             onSelectDays={newAbsence}

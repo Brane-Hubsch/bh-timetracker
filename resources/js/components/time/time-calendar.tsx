@@ -7,8 +7,9 @@ import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { Tooltip } from '@heroui/react';
-import { Banknote, CalendarOff } from 'lucide-react';
+import { Banknote, CalendarDays, CalendarOff } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -20,7 +21,12 @@ import {
     timeOf,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import type { Absence, ColleagueOff, TimeEntry } from '@/types';
+import type {
+    Absence,
+    CalendarHoliday,
+    ColleagueOff,
+    TimeEntry,
+} from '@/types';
 
 type Props = {
     view: 'week' | 'day';
@@ -28,6 +34,7 @@ type Props = {
     weekStartsOn: number;
     timezone: string;
     entries: TimeEntry[];
+    holidays: CalendarHoliday[];
     /** The shown member's absence, in the all-day row. */
     absences: Absence[];
     /** Colleagues' absence, shown as "Off · name". */
@@ -125,6 +132,7 @@ export function TimeCalendar({
     weekStartsOn,
     timezone,
     entries,
+    holidays,
     absences,
     colleaguesOff,
     onSelect,
@@ -138,6 +146,7 @@ export function TimeCalendar({
     const calendarRef = useRef<CalendarRef>(null);
     const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
+    const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
 
     useLayoutEffect(() => {
         const cancelSelection = (event: KeyboardEvent) => {
@@ -170,6 +179,9 @@ export function TimeCalendar({
     }, []);
 
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
+    const holidayByDate = new Map(
+        holidays.map(({ date, name }) => [date, name]),
+    );
     const absenceById = new Map(
         absences.map((absence) => [`absence-${absence.id}`, absence]),
     );
@@ -193,6 +205,7 @@ export function TimeCalendar({
             ref={containerRef}
             className="time-calendar overflow-hidden rounded-2xl border border-separator bg-surface"
             data-view={view}
+            data-holidays={holidays.length > 0 || undefined}
         >
             <FullCalendar
                 ref={calendarRef}
@@ -316,12 +329,24 @@ export function TimeCalendar({
                     'time-calendar-resizer time-calendar-resizer-end'
                 }
                 slotLaneClass={(info) =>
-                    info.isMinor && 'time-calendar-slot-minor'
+                    cn(
+                        info.isMinor && 'time-calendar-slot-minor',
+                        holidays.length > 0 &&
+                            info.time?.milliseconds === 0 &&
+                            'time-calendar-slot-midnight',
+                    )
                 }
+                tableBodyClass="time-calendar-body"
                 dayLaneClass={({ dow }) =>
                     dow === 0 || dow === 6
                         ? 'time-calendar-day time-calendar-weekend'
                         : 'time-calendar-day'
+                }
+                dayLaneDidMount={({ el }) =>
+                    setDayLanes((lanes) => [...lanes, el])
+                }
+                dayLaneWillUnmount={({ el }) =>
+                    setDayLanes((lanes) => lanes.filter((lane) => lane !== el))
                 }
                 dayLaneInnerClass={({ isStack, isNarrow }) =>
                     !isStack &&
@@ -331,9 +356,11 @@ export function TimeCalendar({
                 }
                 slotHeaderClass="time-calendar-slot-label"
                 slotHeaderInnerClass={({ isFirst }) =>
-                    isFirst
-                        ? 'time-calendar-slot-label-text'
-                        : 'time-calendar-slot-label-text time-calendar-slot-label-text-aligned'
+                    cn(
+                        'time-calendar-slot-label-text',
+                        (!isFirst || holidays.length > 0) &&
+                            'time-calendar-slot-label-text-aligned',
+                    )
                 }
                 dayHeaderClass="time-calendar-day-header"
                 nowIndicatorHeaderClass="time-calendar-now-arrow"
@@ -615,6 +642,26 @@ export function TimeCalendar({
                     }
                 }}
             />
+            {dayLanes.map((lane) => {
+                const name = holidayByDate.get(lane.dataset.date ?? '');
+
+                return name
+                    ? createPortal(
+                          <div
+                              className="time-calendar-holiday pointer-events-none mx-1 flex h-5 items-center gap-1 overflow-hidden rounded-xl px-2 text-[11px]/3.5 font-medium text-danger-soft-foreground"
+                              data-test="calendar-holiday"
+                          >
+                              <CalendarDays
+                                  aria-hidden="true"
+                                  className="size-2.75 shrink-0"
+                              />
+                              <span className="truncate">{name}</span>
+                          </div>,
+                          lane,
+                          lane.dataset.date,
+                      )
+                    : null;
+            })}
         </div>
     );
 }

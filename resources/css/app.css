@@ -413,6 +413,31 @@
     background-color: color-mix(in oklab, var(--foreground) 1.5%, transparent);
 }
 
+.time-calendar[data-holidays] {
+    --time-calendar-holiday-space: 2rem;
+}
+
+/* The time grid's scroll canvas is shared by the lanes, hour labels and now indicator. */
+.time-calendar[data-holidays]
+    .time-calendar-body
+    :has(> [role='row'] .time-calendar-day) {
+    margin-block-start: var(--time-calendar-holiday-space);
+}
+
+.time-calendar-slot-midnight {
+    box-shadow: inset 0 1px var(--separator);
+}
+
+.time-calendar-holiday {
+    position: sticky;
+    /* The tag floats above the first slot even at the scroll limit. */
+    inset-block-start: calc(var(--time-calendar-holiday-space) + 0.25rem);
+    z-index: 3;
+    translate: 0 calc(-1 * var(--time-calendar-holiday-space));
+    background:
+        linear-gradient(var(--danger-soft), var(--danger-soft)), var(--surface);
+}
+
 /* Center on the 1px grid rule. The first label stays inside the scroll area. */
 .time-calendar-slot-label-text-aligned {
     translate: 0 calc(-50% - 0.5px);

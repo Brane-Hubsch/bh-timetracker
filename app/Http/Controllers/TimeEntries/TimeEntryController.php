@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntries\CopyTimeEntriesRequest;
 use App\Http\Requests\TimeEntries\TimeEntryRequest;
 use App\Models\Absence;
+use App\Models\Holiday;
 use App\Models\Organization;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -44,6 +45,11 @@ class TimeEntryController extends Controller
 
     public function index(Request $request, #[CurrentUser] User $user): Response
     {
+        $view = match (true) {
+            $request->routeIs('time.list') => 'list',
+            $request->query('view') === 'day' => 'day',
+            default => 'week',
+        };
         $organization = $this->currentOrganization->getOrFail();
         $member = $this->selectedMember($request, $user, $organization);
         $timezone = $user->timezone;
@@ -52,6 +58,8 @@ class TimeEntryController extends Controller
         $weekStartsOn = $organization->memberships()->where('user_id', $member->id)->first()?->week_starts_on;
         $weekStart = $this->presenter->weekStart($date, $organization, $weekStartsOn);
         $weekEnd = $weekStart->addWeek();
+        $calendarStart = $view === 'day' ? $date : $weekStart;
+        $calendarEnd = $view === 'day' ? $date->addDay() : $weekEnd;
 
         $entries = TimeEntry::query()
             ->where('user_id', $member->id)
@@ -79,11 +87,7 @@ class TimeEntryController extends Controller
             : [];
 
         return Inertia::render('time/index', [
-            'view' => match (true) {
-                $request->routeIs('time.list') => 'list',
-                $request->query('view') === 'day' => 'day',
-                default => 'week',
-            },
+            'view' => $view,
             'date' => $date->toDateString(),
             'today' => CarbonImmutable::now($timezone)->toDateString(),
             'weekStart' => $weekStart->toDateString(),
@@ -97,6 +101,12 @@ class TimeEntryController extends Controller
             'workdaySeconds' => $organization->workday_seconds,
             // So the absence dialog can count working days in periods around the week.
             'holidays' => HolidayDates::between($organization->id, $weekStart->subYear(), $weekStart->addYear()),
+            'calendarHolidays' => fn () => $view === 'list' ? [] : $organization->holidays()
+                ->whereDate('date', '>=', $calendarStart->toDateString())
+                ->whereDate('date', '<', $calendarEnd->toDateString())
+                ->orderBy('date')
+                ->get(['date', 'name'])
+                ->map(fn (Holiday $holiday) => ['date' => $holiday->date->toDateString(), 'name' => $holiday->name]),
             'projects' => $this->presenter->projectOptions($organization, $member),
             'tags' => $this->presenter->tagOptions($organization),
             'recentTags' => $this->presenter->recentTags($organization),

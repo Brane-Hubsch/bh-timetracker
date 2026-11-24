@@ -35,6 +35,9 @@ export type TimeEntryMemberOption = {
     avatar: string | null;
 };
 
+/** A saved organization holiday on a calendar date (YYYY-MM-DD). */
+export type CalendarHoliday = { date: string; name: string };
+
 /** Values to start the time entry form with. */
 export type TimeEntryDraft = {
     id?: number;
