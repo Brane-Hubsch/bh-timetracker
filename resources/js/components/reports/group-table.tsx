@@ -186,7 +186,7 @@ export function GroupTable({
                     data-test="report-group-table"
                 >
                     <Table.Header className="group/report-header">
-                        <Table.Column isRowHeader className="w-full">
+                        <Table.Column isRowHeader className="w-full text-sm">
                             {t('Name')}
                         </Table.Column>
                         {columns.map((column, index) => (
