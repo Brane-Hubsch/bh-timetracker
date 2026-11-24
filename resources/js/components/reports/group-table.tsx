@@ -69,20 +69,20 @@ export function GroupTable({
                         <Table.Column isRowHeader className="w-full">
                             {t('Name')}
                         </Table.Column>
-                        <Table.Column className="text-right whitespace-nowrap">
-                            {t('Hours')}
-                        </Table.Column>
                         <Table.Column className="whitespace-nowrap">
                             {t('Share')}
-                        </Table.Column>
-                        <Table.Column className="text-right whitespace-nowrap">
-                            {t('Billable')}
                         </Table.Column>
                         {showAmounts ? (
                             <Table.Column className="text-right whitespace-nowrap">
                                 {t('Amount')}
                             </Table.Column>
                         ) : null}
+                        <Table.Column className="text-right whitespace-nowrap">
+                            {t('Billable')}
+                        </Table.Column>
+                        <Table.Column className="text-right whitespace-nowrap">
+                            {t('Hours')}
+                        </Table.Column>
                     </Table.Header>
                     <Table.Body
                         renderEmptyState={() => (
@@ -106,12 +106,6 @@ export function GroupTable({
                                             {label(line)}
                                         </span>
                                     </Table.Cell>
-                                    <Table.Cell className="text-right whitespace-nowrap tabular-nums">
-                                        {formatDecimalHours(
-                                            line.seconds,
-                                            intlLocale,
-                                        )}
-                                    </Table.Cell>
                                     <Table.Cell>
                                         <span className="flex items-center justify-between gap-2 text-sm whitespace-nowrap text-muted tabular-nums">
                                             <span
@@ -133,17 +127,23 @@ export function GroupTable({
                                             )}
                                         </span>
                                     </Table.Cell>
+                                    {showAmounts ? (
+                                        <Table.Cell className="text-right whitespace-nowrap tabular-nums">
+                                            {money(line.amount)}
+                                        </Table.Cell>
+                                    ) : null}
                                     <Table.Cell className="text-right whitespace-nowrap tabular-nums">
                                         {formatDecimalHours(
                                             line.billableSeconds,
                                             intlLocale,
                                         )}
                                     </Table.Cell>
-                                    {showAmounts ? (
-                                        <Table.Cell className="text-right whitespace-nowrap tabular-nums">
-                                            {money(line.amount)}
-                                        </Table.Cell>
-                                    ) : null}
+                                    <Table.Cell className="text-right whitespace-nowrap tabular-nums">
+                                        {formatDecimalHours(
+                                            line.seconds,
+                                            intlLocale,
+                                        )}
+                                    </Table.Cell>
                                 </Table.Row>
                             )),
                             ...(lines.length > 0
@@ -158,24 +158,24 @@ export function GroupTable({
                                                   {t('Total')}
                                               </span>
                                           </Table.Cell>
-                                          <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
-                                              {formatDecimalHours(
-                                                  totals.seconds,
-                                                  intlLocale,
-                                              )}
-                                          </Table.Cell>
                                           <Table.Cell>{''}</Table.Cell>
+                                          {showAmounts ? (
+                                              <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
+                                                  {money(totals.amount)}
+                                              </Table.Cell>
+                                          ) : null}
                                           <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
                                               {formatDecimalHours(
                                                   totals.billableSeconds,
                                                   intlLocale,
                                               )}
                                           </Table.Cell>
-                                          {showAmounts ? (
-                                              <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
-                                                  {money(totals.amount)}
-                                              </Table.Cell>
-                                          ) : null}
+                                          <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
+                                              {formatDecimalHours(
+                                                  totals.seconds,
+                                                  intlLocale,
+                                              )}
+                                          </Table.Cell>
                                       </Table.Row>,
                                   ]
                                 : []),
