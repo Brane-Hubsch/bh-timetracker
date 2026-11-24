@@ -1,5 +1,5 @@
 import { Button, Dropdown, Label, SearchField } from '@heroui/react';
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
 import {
     EllipsisVertical,
     Pencil,
@@ -7,10 +7,16 @@ import {
     Tags,
     Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
+import {
+    columnOrderHeaderClassName,
+    ColumnOrderStatus,
+    ReorderableColumnHeader,
+    useColumnOrder,
+} from '@/components/reorderable-column-header';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import {
     SideDrawer,
@@ -36,9 +42,22 @@ type Props = {
     tags: OrganizationTag[];
 };
 
-/** Columns from lg up: tag, entries, reported, last used, actions. */
-const COLUMNS =
-    'lg:grid-cols-[minmax(0,1fr)_7rem_8rem_8.5rem_2.5rem] lg:items-center lg:gap-4';
+const defaultColumnOrder = ['Entries', 'Reported', 'Last used'] as const;
+type UsageColumn = (typeof defaultColumnOrder)[number];
+
+const columnWidths: Record<UsageColumn, string> = {
+    Entries: '7rem',
+    Reported: '8rem',
+    'Last used': '8.5rem',
+};
+
+const lastUsedDateFormat: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+};
+
+const COLUMNS = 'lg:grid-cols-(--tag-grid-columns) lg:items-center lg:gap-4';
 
 const RENAME_FORM = 'rename-tag-form';
 
@@ -48,6 +67,18 @@ const RENAME_FORM = 'rename-tag-form';
  */
 export default function TagsIndex({ tags }: Props) {
     const { t, tc, intlLocale } = useTranslation();
+    const { id: userId } = usePage().props.auth.user;
+    const order = useColumnOrder({
+        storageKey: `timereport:tag-list-column-order:${userId}`,
+        defaultOrder: defaultColumnOrder,
+    });
+    const gridStyle = {
+        '--tag-grid-columns': [
+            'minmax(0,1fr)',
+            ...order.columns.map((column) => columnWidths[column]),
+            '2.5rem',
+        ].join(' '),
+    } as CSSProperties;
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [search, setSearch] = useState('');
     const query = search.trim().toLocaleLowerCase();
@@ -57,6 +88,20 @@ export default function TagsIndex({ tags }: Props) {
     const [renaming, setRenaming] = useState<OrganizationTag | null>(null);
     const [deleting, setDeleting] = useState<OrganizationTag | null>(null);
     const [isDeletePending, setDeletePending] = useState(false);
+
+    const formatLastUsed = (date: string) =>
+        formatDate(date, intlLocale, lastUsedDateFormat);
+
+    const usageValue = (column: UsageColumn, tag: OrganizationTag) => {
+        switch (column) {
+            case 'Entries':
+                return tag.entryCount;
+            case 'Reported':
+                return formatHours(tag.reportedSeconds, intlLocale);
+            case 'Last used':
+                return tag.lastUsedOn ? formatLastUsed(tag.lastUsedOn) : '–';
+        }
+    };
 
     return (
         <>
@@ -96,16 +141,25 @@ export default function TagsIndex({ tags }: Props) {
                     </Button>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl bg-surface shadow-surface">
+                <ColumnOrderStatus announcement={order.announcement} />
+                <div
+                    className="overflow-hidden rounded-2xl bg-surface shadow-surface"
+                    style={gridStyle}
+                >
                     {visible.length > 0 && (
                         <div
-                            aria-hidden="true"
-                            className={`hidden border-b border-separator py-2.5 ps-5 pe-3 text-xs font-medium text-muted lg:grid ${COLUMNS}`}
+                            className={`hidden border-b border-separator py-2.5 ps-5 pe-3 text-sm font-medium text-muted lg:grid ${COLUMNS} ${columnOrderHeaderClassName}`}
                         >
                             <span>{t('Tag')}</span>
-                            <span className="text-right">{t('Entries')}</span>
-                            <span className="text-right">{t('Reported')}</span>
-                            <span className="text-right">{t('Last used')}</span>
+                            {order.columns.map((column) => (
+                                <ReorderableColumnHeader
+                                    key={column}
+                                    order={order}
+                                    column={column}
+                                    label={t(column)}
+                                    className="justify-end"
+                                />
+                            ))}
                             <span />
                         </div>
                     )}
@@ -136,14 +190,8 @@ export default function TagsIndex({ tags }: Props) {
                                                         intlLocale,
                                                     ),
                                                 tag.lastUsedOn &&
-                                                    formatDate(
+                                                    formatLastUsed(
                                                         tag.lastUsedOn,
-                                                        intlLocale,
-                                                        {
-                                                            day: 'numeric',
-                                                            month: 'short',
-                                                            year: 'numeric',
-                                                        },
                                                     ),
                                             ]
                                                 .filter(Boolean)
@@ -151,28 +199,14 @@ export default function TagsIndex({ tags }: Props) {
                                         </p>
                                     </div>
                                 </div>
-                                <span className="hidden text-right text-sm tabular-nums lg:block">
-                                    {tag.entryCount}
-                                </span>
-                                <span className="hidden text-right text-sm tabular-nums lg:block">
-                                    {formatHours(
-                                        tag.reportedSeconds,
-                                        intlLocale,
-                                    )}
-                                </span>
-                                <span className="hidden text-right text-sm text-muted tabular-nums lg:block">
-                                    {tag.lastUsedOn
-                                        ? formatDate(
-                                              tag.lastUsedOn,
-                                              intlLocale,
-                                              {
-                                                  day: 'numeric',
-                                                  month: 'short',
-                                                  year: 'numeric',
-                                              },
-                                          )
-                                        : '–'}
-                                </span>
+                                {order.columns.map((column) => (
+                                    <span
+                                        key={column}
+                                        className={`hidden text-right text-sm tabular-nums lg:block ${column === 'Last used' ? 'text-muted' : ''}`}
+                                    >
+                                        {usageValue(column, tag)}
+                                    </span>
+                                ))}
                                 <div className="flex justify-end">
                                     <Dropdown>
                                         <Button
