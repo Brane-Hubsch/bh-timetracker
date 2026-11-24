@@ -262,7 +262,7 @@ export function TimelineChart({
 
     return (
         <section
-            className="grid h-full content-between gap-3 rounded-2xl bg-surface p-4 shadow-surface"
+            className="grid h-full grid-cols-1 content-between gap-3 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="timeline-chart"
         >
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
