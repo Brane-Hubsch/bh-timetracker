@@ -22,6 +22,7 @@ export type ReportFilterValues = {
     billable: string | null;
     group: ReportGroupingKey;
     subgroup: ReportGroupingKey | 'none';
+    scale: 'week' | 'month' | null;
     sort: 'date' | 'duration' | 'project' | 'member';
     direction: 'asc' | 'desc';
 };
@@ -94,7 +95,7 @@ export type ReportSummary = {
     totals: ReportTotals;
     groups: ReportGroup[];
     timeline: {
-        unit: 'day' | 'week';
+        unit: 'day' | 'week' | 'month';
         buckets: TimelineBucket[];
         projects?: TimelineProject[];
     };

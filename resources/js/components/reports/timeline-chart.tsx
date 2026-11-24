@@ -1,6 +1,6 @@
 import { Pressable, Tooltip } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { ProjectDot } from '@/components/project-dot';
 import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
 import { formatDecimalHours } from '@/lib/format';
@@ -10,21 +10,29 @@ import { formatDate, isoWeek } from '@/lib/time';
 import type { TimelineBucket, TimelineProject } from '@/types';
 
 type Props = {
-    unit: 'day' | 'week';
+    unit: 'day' | 'week' | 'month';
     buckets: TimelineBucket[];
     title?: string;
     projects?: TimelineProject[];
+    headerAction?: ReactNode;
 };
 
 type ProjectHours = TimelineProject & { seconds: number };
 type TooltipSource = 'hover' | 'focus' | 'touch';
 
 const STEPS = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 250, 500];
+const TIMELINE_TITLES = {
+    day: 'Hours per day',
+    week: 'Hours per week',
+    month: 'Hours per month',
+} as const;
 
 /** A round axis maximum (in hours) with at most four gridlines. */
 function axis(maxSeconds: number): { max: number; step: number } {
     const maxHours = Math.max(maxSeconds / 3600, 1);
-    const step = STEPS.find((candidate) => maxHours / candidate <= 4) ?? 1000;
+    const step =
+        STEPS.find((candidate) => maxHours / candidate <= 4) ??
+        1000 * Math.ceil(maxHours / 4000);
 
     return { max: Math.ceil(maxHours / step) * step, step };
 }
@@ -161,25 +169,47 @@ function ProjectTimelineBar({
             <BreakdownTooltip
                 title={title}
                 items={items}
-                placement="top"
+                placement="right"
                 triggerRef={anchorRef}
             />
         </Tooltip>
     );
 }
 
-/** Hours per day or week, stacked by project in reports and by billable status on project pages. */
-export function TimelineChart({ unit, buckets, title, projects }: Props) {
+/** Hours over time, stacked by project in reports and by billable status on project pages. */
+export function TimelineChart({
+    unit,
+    buckets,
+    title,
+    projects,
+    headerAction,
+}: Props) {
     const { t, intlLocale } = useTranslation();
+    const axisRef = useRef<HTMLDivElement>(null);
+    const [axisWidth, setAxisWidth] = useState(0);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [activeProjectBar, setActiveProjectBar] = useState<{
+        unit: Props['unit'];
         key: string;
         source: TooltipSource;
     } | null>(null);
+    const projectBar =
+        activeProjectBar?.unit === unit ? activeProjectBar : null;
     const selected = buckets.find((bucket) => bucket.key === selectedKey);
-    const activeKey = projects ? activeProjectBar?.key : selected?.key;
-    const chartTitle =
-        title ?? (unit === 'week' ? t('Hours per week') : t('Hours per day'));
+    const activeKey = projects ? projectBar?.key : selected?.key;
+    const chartTitle = title ?? t(TIMELINE_TITLES[unit]);
+
+    useEffect(() => {
+        const axis = axisRef.current;
+        if (!axis || unit === 'day') return;
+
+        const observer = new ResizeObserver(([entry]) =>
+            setAxisWidth(entry.contentRect.width),
+        );
+        observer.observe(axis);
+
+        return () => observer.disconnect();
+    }, [unit]);
     // In the order of the projects (largest first), not of the object's numeric keys, so every bar
     // stacks the same way with the large projects at the bottom.
     const projectHours = (bucket: TimelineBucket): ProjectHours[] =>
@@ -195,7 +225,16 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
         { length: max / step + 1 },
         (_, index) => index * step,
     );
-    const labelEvery = Math.max(1, Math.ceil(buckets.length / 8));
+    // Reserve room for two digits per week or an abbreviated month, with a gap between labels.
+    const minLabelWidth = unit === 'week' ? 20 : 40;
+    const labelEvery = Math.max(
+        1,
+        Math.ceil(
+            unit === 'day' || !axisWidth
+                ? buckets.length / 8
+                : (buckets.length * minLabelWidth) / axisWidth,
+        ),
+    );
     const hasBillable = buckets.some((bucket) => bucket.billableSeconds > 0);
     const hasNonBillable = buckets.some(
         (bucket) => bucket.seconds > bucket.billableSeconds,
@@ -209,20 +248,24 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
     const describe = (bucket: TimelineBucket) =>
         `${period(bucket)}: ${hours(bucket.seconds)}`;
 
-    const tick = (bucket: TimelineBucket) =>
-        unit === 'week'
-            ? t('w. :number', { number: isoWeek(bucket.key) })
-            : formatDate(bucket.key, intlLocale, {
-                  day: 'numeric',
-                  month: 'numeric',
-              });
+    const tick = (bucket: TimelineBucket) => {
+        if (unit === 'week') return isoWeek(bucket.key);
+
+        return formatDate(
+            bucket.key,
+            intlLocale,
+            unit === 'month'
+                ? { month: 'short' }
+                : { day: 'numeric', month: 'numeric' },
+        );
+    };
 
     return (
         <section
             className="grid h-full content-between gap-3 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="timeline-chart"
         >
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     <h2 className="text-sm font-semibold">{chartTitle}</h2>
                     {!projects && hasBillable && hasNonBillable && (
@@ -241,6 +284,7 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                         </ul>
                     )}
                 </div>
+                {headerAction}
                 {!projects && (
                     <p
                         className="min-h-5 text-sm text-muted tabular-nums"
@@ -261,7 +305,9 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                 </div>
             )}
 
-            <div className={`relative pl-10 ${projects ? 'h-60' : 'h-48'}`}>
+            <div
+                className={`relative pl-10 ${projects ? 'h-72' : 'h-[14.4rem]'}`}
+            >
                 {gridlines.map((hours) => (
                     <div
                         key={hours}
@@ -289,7 +335,7 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
 
                         return (
                             <div
-                                key={bucket.key}
+                                key={`${unit}:${bucket.key}`}
                                 role="listitem"
                                 className="flex h-full min-w-0 flex-1"
                             >
@@ -300,19 +346,21 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                                         className={barClassName}
                                         style={barStyle}
                                         source={
-                                            activeProjectBar?.key === bucket.key
-                                                ? activeProjectBar.source
+                                            projectBar?.key === bucket.key
+                                                ? projectBar.source
                                                 : null
                                         }
                                         onChange={(source) =>
                                             setActiveProjectBar((current) =>
                                                 source
                                                     ? {
+                                                          unit,
                                                           key: bucket.key,
                                                           source,
                                                       }
-                                                    : current?.key ===
-                                                        bucket.key
+                                                    : current?.unit === unit &&
+                                                        current.key ===
+                                                            bucket.key
                                                       ? null
                                                       : current,
                                             )
@@ -358,11 +406,15 @@ export function TimelineChart({ unit, buckets, title, projects }: Props) {
                 </div>
             </div>
 
-            <div className="flex gap-0.5 pl-10" aria-hidden="true">
+            <div
+                ref={axisRef}
+                className="flex gap-0.5 pl-10"
+                aria-hidden="true"
+            >
                 {buckets.map((bucket, index) => (
                     <span
                         key={bucket.key}
-                        className="min-w-0 flex-1 overflow-visible text-center text-xs whitespace-nowrap text-muted"
+                        className="min-w-0 flex-1 overflow-visible text-center text-xs whitespace-nowrap text-muted tabular-nums"
                     >
                         {index % labelEvery === 0 ? tick(bucket) : ''}
                     </span>

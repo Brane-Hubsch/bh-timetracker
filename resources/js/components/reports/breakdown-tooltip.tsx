@@ -19,7 +19,7 @@ export function BreakdownTooltip({
 }: {
     title: string;
     items: BreakdownItem[];
-    placement: 'bottom' | 'top';
+    placement: 'bottom' | 'right';
     triggerRef?: RefObject<Element | null>;
 }) {
     const { intlLocale } = useTranslation();
@@ -29,7 +29,11 @@ export function BreakdownTooltip({
             showArrow
             placement={placement}
             triggerRef={triggerRef}
-            className="w-max max-w-[calc(100vw-1.5rem)] min-w-[min(16rem,calc(100vw-1.5rem))] px-3 py-2.5 break-normal"
+            className={`w-max px-3 py-2.5 break-normal ${
+                placement === 'right'
+                    ? 'max-w-[min(20rem,calc(50dvw-1.5rem))] min-w-[min(16rem,calc(50dvw-1.5rem))]'
+                    : 'max-w-[calc(100vw-1.5rem)] min-w-[min(16rem,calc(100vw-1.5rem))]'
+            }`}
         >
             <Tooltip.Arrow className="pointer-events-none" />
             <p className="text-[13px] leading-[18px] font-semibold wrap-anywhere">

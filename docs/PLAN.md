@@ -156,7 +156,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.6 Rapporter
 
-- **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, sedan start, anpassad), filter (medlemmar, kunder, projekt, debiterbar), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt.
+- **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, sedan start, anpassad), filter (medlemmar, kunder, projekt, debiterbar), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt. För hela kalenderår kan diagrammet växla mellan vecka och månad.
 - **Detaljerad**: lista med alla poster enligt filter, sortering, summering.
 - **Projektuppföljning**: alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export**: CSV och XLSX (t.ex. `openspout/openspout`). PDF tillagt i efterhand (se tillägg efter Fas 6).
