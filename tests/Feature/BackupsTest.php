@@ -88,18 +88,28 @@ it('mails when the newest backup is much smaller than the one before it', functi
     'slightly smaller' => [900, false],
 ]);
 
-it('boots when the notification addresses are empty', function () {
-    $variables = ['BACKUP_NOTIFICATION_EMAIL', 'MAIL_FROM_ADDRESS'];
-    $original = array_map(fn (string $name) => $_SERVER[$name] ?? null, $variables);
+/**
+ * Reads config/backup.php with the given environment variables (null: not set).
+ *
+ * @param  array<string, string|null>  $variables
+ * @return array<string, mixed>
+ */
+function backupConfigWith(array $variables): array
+{
+    $original = array_map(fn (string $name) => $_SERVER[$name] ?? null, array_keys($variables));
 
     try {
-        foreach ($variables as $name) {
-            $_SERVER[$name] = $_ENV[$name] = '';
+        foreach ($variables as $name => $value) {
+            unset($_SERVER[$name], $_ENV[$name]);
+
+            if ($value !== null) {
+                $_SERVER[$name] = $_ENV[$name] = $value;
+            }
         }
 
-        $config = Config::fromArray(require config_path('backup.php'));
+        return require config_path('backup.php');
     } finally {
-        foreach ($variables as $index => $name) {
+        foreach (array_keys($variables) as $index => $name) {
             unset($_SERVER[$name], $_ENV[$name]);
 
             if ($original[$index] !== null) {
@@ -107,9 +117,24 @@ it('boots when the notification addresses are empty', function () {
             }
         }
     }
+}
+
+it('boots when the notification addresses are empty', function () {
+    $config = Config::fromArray(backupConfigWith(['BACKUP_NOTIFICATION_EMAIL' => '', 'MAIL_FROM_ADDRESS' => '']));
 
     expect($config->notifications->mail->to)->toBe('hello@example.com');
 });
+
+it('enables backups when a bucket is configured unless BACKUP_ENABLED says otherwise', function (?string $enabled, ?string $bucket, bool $expected) {
+    expect(backupConfigWith(['BACKUP_ENABLED' => $enabled, 'BACKUP_AWS_BUCKET' => $bucket])['enabled'])->toBe($expected);
+})->with([
+    'bucket, not set' => [null, 'backups', true],
+    'bucket, empty (compose default)' => ['', 'backups', true],
+    'no bucket, not set' => [null, null, false],
+    'no bucket, empty' => ['', '', false],
+    'bucket, turned off' => ['false', 'backups', false],
+    'no bucket, turned on' => ['true', null, true],
+]);
 
 it('runs the backups every night in production only', function () {
     $events = collect(app(Schedule::class)->events())
@@ -124,3 +149,16 @@ it('runs the backups every night in production only', function () {
         ->and($events->every(fn (Event $event) => $event->timezone === 'Europe/Stockholm'))->toBeTrue()
         ->and($events->every(fn (Event $event) => $event->runsInEnvironment('production') && ! $event->runsInEnvironment('local')))->toBeTrue();
 });
+
+it('skips the scheduled backups when backups are disabled', function (bool $enabled) {
+    config(['backup.enabled' => $enabled]);
+
+    $events = collect(app(Schedule::class)->events())
+        ->filter(fn (Event $event) => str_contains((string) $event->command, 'backup:'));
+
+    expect($events)->toHaveCount(3)
+        ->and($events->every(fn (Event $event) => $event->filtersPass(app()) === $enabled))->toBeTrue();
+})->with([
+    'enabled' => true,
+    'disabled' => false,
+]);

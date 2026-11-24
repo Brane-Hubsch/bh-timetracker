@@ -23,7 +23,22 @@ use Spatie\DbDumper\Compressors\GzipCompressor;
 $name = env('BACKUP_NAME', 'bh-timetracker');
 $disk = env('BACKUP_DISK', 'backups');
 
+/*
+ * Backups are optional. BACKUP_ENABLED=true/false decides; when it is not set (or empty, as compose.yaml
+ * passes it), they are on exactly when a backup bucket is configured.
+ */
+$enabled = env('BACKUP_ENABLED');
+$enabled = $enabled === null || $enabled === ''
+    ? null
+    : filter_var($enabled, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
+
 return [
+
+    /*
+     * Whether the nightly backup, cleanup and monitoring run (routes/console.php). Running
+     * php artisan backup:run by hand works either way.
+     */
+    'enabled' => $enabled ?? filled(env('BACKUP_AWS_BUCKET')),
 
     'backup' => [
         /*

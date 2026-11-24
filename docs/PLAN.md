@@ -641,6 +641,7 @@ Beställt i efterhand. Backup till en S3-kompatibel bucket, i första hand Cloud
   - API-token begränsad till bucketen.
   - Rekommenderat: en låsregel (R2 bucket lock / S3 Object Lock) så att en kapad server inte kan radera backuperna.
 - **Larm:** e-post till `BACKUP_NOTIFICATION_EMAIL` när en backup eller gallring misslyckas, och när morgonkontrollen hittar att senaste backupen saknas, är äldre än ett dygn, är under hälften så stor som den förra (`App\Support\Backups\NewestBackupIsNotMuchSmaller`) eller att backuperna tar mer än 5 GB. Ett misslyckat försök görs om efter 5 minuter. Lyckade körningar loggas men mejlas inte. Mejlen är på engelska (paketets texter).
+- **Valfritt (tillägg 2026-11-24, beslutat av beställaren):** backuperna körs bara när `backup.enabled` är sant. `BACKUP_ENABLED=true/false` avgör; utan värde (eller tomt, som `compose.yaml` skickar det) är de på när `BACKUP_AWS_BUCKET` är satt. Andra installationer kan alltså köra utan bucket utan att få felmejl varje natt. `php artisan backup:run` för hand fungerar oavsett.
 - **Återställning:** beskriven i `docs/self-hosting.md`. Provas mot en tom databas en gång per kvartal.
 
 ### Tillägg efter Fas 6: drift med Docker (2026-11-19)
