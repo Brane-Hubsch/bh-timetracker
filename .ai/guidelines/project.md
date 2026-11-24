@@ -142,6 +142,9 @@ describes; propose additions instead of building them.
 
 - Start every UI change in the [TimeReport Figma file](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport)
   before editing the application code.
+- Before wrapping up a Figma change, zoom out to review the edited area and its surroundings. Check
+  that sibling frames and sections have clear spacing and that no existing work is hidden behind a
+  new or moved frame or section. Fix any unintended overlap and check the layout again.
 - For every UI change, capture a screenshot of the updated interface in the running app and include
   it in the final response. Attach screenshots to pull requests only when the user asks for them.
 - Inertia 3 + React 19 + TypeScript (strict) + Tailwind CSS 4.
