@@ -123,6 +123,52 @@ it('orders the stacked projects largest first, whatever their ids', function () 
             ->where('summary.timeline.projects.1.id', $this->project->id));
 });
 
+it('groups annual report hours by local calendar month for each project', function () {
+    $this->owner->update(['timezone' => 'Europe/Stockholm']);
+    $internal = Project::factory()->for($this->organization)->create();
+    foreach (['2026-10-31 22:30', '2026-10-31 23:30'] as $start) {
+        $startedAt = CarbonImmutable::parse($start, 'UTC');
+        TimeEntry::factory()->by($this->owner, $internal)
+            ->between($startedAt, $startedAt->addMinutes(30))
+            ->create(['is_billable' => false]);
+    }
+
+    $this->actingAs($this->owner)
+        ->get(reportRoute('reports.summary', ['period' => 'this_year', 'scale' => 'month']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.scale', 'month')
+            ->where('summary.timeline.unit', 'month')
+            ->has('summary.timeline.buckets', 12)
+            ->where('summary.timeline.buckets.0.key', '2026-01-01')
+            ->where('summary.timeline.buckets.0.seconds', 0)
+            ->where('summary.timeline.buckets.9.key', '2026-10-01')
+            ->where('summary.timeline.buckets.9.projectSeconds', [$internal->id => 1800])
+            ->where('summary.timeline.buckets.10.key', '2026-11-01')
+            ->where('summary.timeline.buckets.10.seconds', 10800)
+            ->where('summary.timeline.buckets.10.billableSeconds', 9000)
+            ->where('summary.timeline.buckets.10.projectSeconds', [$this->project->id => 9000, $internal->id => 1800]));
+});
+
+it('offers a weekly default and only applies monthly scale to full calendar years', function () {
+    $this->actingAs($this->owner);
+
+    $this->get(reportRoute('reports.summary', ['period' => 'last_year']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.scale', 'week')
+            ->where('summary.timeline.unit', 'week'));
+
+    $this->get(reportRoute('reports.summary', ['period' => 'custom', 'from' => '2024-01-01', 'to' => '2024-12-31', 'scale' => 'month']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.scale', 'month')
+            ->has('summary.timeline.buckets', 12)
+            ->where('summary.timeline.buckets.11.key', '2024-12-01'));
+
+    $this->get(reportRoute('reports.summary', ['period' => 'this_month', 'scale' => 'month']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.scale', null)
+            ->where('summary.timeline.unit', 'day'));
+});
+
 it('gives the filters member pictures, inactive members and client logos', function () {
     $this->owner->update(['avatar_url' => 'https://lh3.googleusercontent.com/olivia.jpg']);
     $this->organization->members()->updateExistingPivot($this->member->id, ['deactivated_at' => now()]);

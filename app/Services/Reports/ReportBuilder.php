@@ -77,8 +77,7 @@ class ReportBuilder
     }
 
     /**
-     * Totals, up to two levels of groups, a timeline (per day, or per week for long periods) and the
-     * distribution per project.
+     * Totals, up to two levels of groups, a timeline and the distribution per project.
      *
      * @return array{totals: ReportTotals, groups: array<int, ReportGroup>, timeline: Timeline, projects: array<int, ProjectShare>}
      */
@@ -87,6 +86,7 @@ class ReportBuilder
         ReportGrouping $grouping,
         ?ReportGrouping $subGrouping = null,
         bool $includeTimelineProjects = false,
+        ?ReportGrouping $timelineScale = null,
     ): array {
         $usesTags = in_array(ReportGrouping::Tag, [$grouping, $subGrouping], true);
         $entries = $this->query($filters)
@@ -96,7 +96,7 @@ class ReportBuilder
         return [
             'totals' => $this->totals($entries, $filters),
             'groups' => $this->group($entries, $filters, $grouping, $subGrouping === $grouping ? null : $subGrouping),
-            'timeline' => $this->timeline($entries, $filters, $includeTimelineProjects),
+            'timeline' => $this->timeline($entries, $filters, $includeTimelineProjects, $timelineScale),
             'projects' => $this->projectShares($entries, $filters),
         ];
     }
@@ -406,7 +406,7 @@ class ReportBuilder
      * @param  Collection<int, TimeEntry>  $entries
      * @return Timeline
      */
-    private function timeline(Collection $entries, ReportFilters $filters, bool $includeProjects): array
+    private function timeline(Collection $entries, ReportFilters $filters, bool $includeProjects, ?ReportGrouping $scale): array
     {
         $timezone = $filters->timezone();
         $dates = $entries->map(fn (TimeEntry $entry) => $entry->started_at->setTimezone($timezone)->startOfDay());
@@ -417,14 +417,22 @@ class ReportBuilder
             return ['unit' => 'day', 'buckets' => [], ...($includeProjects ? ['projects' => []] : [])];
         }
 
-        $unit = $from->diffInDays($to) + 1 > self::MAX_DAILY_BUCKETS ? ReportGrouping::Week : ReportGrouping::Day;
-        $cursor = $unit === ReportGrouping::Week ? $this->weekStart($from, $filters) : $from->startOfDay();
+        $unit = $scale ?? ($from->diffInDays($to) + 1 > self::MAX_DAILY_BUCKETS ? ReportGrouping::Week : ReportGrouping::Day);
+        $cursor = match ($unit) {
+            ReportGrouping::Week => $this->weekStart($from, $filters),
+            ReportGrouping::Month => $from->startOfMonth(),
+            default => $from->startOfDay(),
+        };
         $buckets = [];
         $projects = [];
 
         while ($cursor->lessThanOrEqualTo($to)) {
             $buckets[$cursor->toDateString()] = ['key' => $cursor->toDateString(), 'seconds' => 0, 'billableSeconds' => 0];
-            $cursor = $unit === ReportGrouping::Week ? $cursor->addWeek() : $cursor->addDay();
+            $cursor = match ($unit) {
+                ReportGrouping::Week => $cursor->addWeek(),
+                ReportGrouping::Month => $cursor->addMonth(),
+                default => $cursor->addDay(),
+            };
         }
 
         foreach ($entries as $entry) {

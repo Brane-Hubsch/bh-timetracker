@@ -8,6 +8,7 @@ import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
 import { ReportStats } from '@/components/reports/report-stats';
 import { TimelineChart } from '@/components/reports/timeline-chart';
+import { SegmentedControl } from '@/components/segmented-control';
 import { useTranslation } from '@/lib/i18n';
 import { reportQuery } from '@/lib/reports';
 import type {
@@ -64,6 +65,19 @@ export default function ReportsSummary({
                 unit={summary.timeline.unit}
                 buckets={summary.timeline.buckets}
                 projects={summary.timeline.projects}
+                headerAction={
+                    filters.scale && (
+                        <SegmentedControl
+                            aria-label={t('Chart scale')}
+                            options={[
+                                { id: 'week', label: t('Week') },
+                                { id: 'month', label: t('Month') },
+                            ]}
+                            value={filters.scale}
+                            onChange={(scale) => regroup({ scale })}
+                        />
+                    )
+                }
             />
 
             <ReportStats totals={summary.totals} currency={currency} />
