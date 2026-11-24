@@ -184,6 +184,24 @@ it('gives the filters member pictures, inactive members and client logos', funct
             ->where('options.clients.0.logo', fn (string $url) => str_ends_with($url, 'images/logos/acme/64.webp')));
 });
 
+it('includes archived clients and projects in the report filters with independent statuses', function () {
+    $archivedClient = Client::factory()->for($this->organization)->archived()->create(['name' => 'Archived Client']);
+    $activeProject = Project::factory()->for($this->organization)->for($archivedClient)->create(['name' => 'Active Project']);
+    $archivedProject = Project::factory()->for($this->organization)->for($this->client)->archived()->create(['name' => 'Archived Project']);
+
+    $this->actingAs($this->owner)
+        ->get(reportRoute('reports.summary'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('options.clients.0.value', (string) $this->client->id)
+            ->where('options.clients.0.isArchived', false)
+            ->where('options.clients.1.value', (string) $archivedClient->id)
+            ->where('options.clients.1.isArchived', true)
+            ->where('options.projects.0.value', (string) $activeProject->id)
+            ->where('options.projects.0.isArchived', false)
+            ->where('options.projects.1.value', (string) $archivedProject->id)
+            ->where('options.projects.1.isArchived', true));
+});
+
 it('shows members only their own time and no amounts', function () {
     $this->actingAs($this->member)
         ->get(reportRoute('reports.summary', ['members' => [$this->owner->id]]))
@@ -366,6 +384,7 @@ it('does not show another organization in reports or exports', function () {
                 'name' => 'Webb',
                 'client' => 'Acme',
                 'color' => $this->project->color,
+                'isArchived' => false,
             ]]));
 
     $response = $this->actingAs($this->owner)->get(reportRoute('reports.export', ['type' => 'detailed', 'format' => 'csv']));

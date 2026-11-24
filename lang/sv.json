@@ -304,6 +304,7 @@
     "Import :count project|Import :count projects": "Importera :count projekt|Importera :count projekt",
     "Import from Clockify": "Importera från Clockify",
     "Importing older history? Upload the project export first (Projects → Export → CSV, active and archived), so the projects get their status, visibility, notes and members. Then upload the time one year at a time.": "Importerar du äldre historik? Ladda först upp projektexporten (Projects → Export → CSV, både aktiva och arkiverade), så får projekten rätt status, synlighet, noteringar och medlemmar. Ladda sedan upp tiden ett år i taget.",
+    "Inactive (plural)": "Inaktiva",
     "In Clockify, export the time as CSV (Reports → Detailed → Export → Save as CSV) or use the user data export.": "Exportera tiden som CSV i Clockify (Reports → Detailed → Export → Save as CSV) eller använd exporten av användardata.",
     "Invitation accepted.": "Inbjudan accepterad.",
     "Invitation cancelled.": "Inbjudan återkallad.",

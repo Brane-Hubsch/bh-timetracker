@@ -1,4 +1,11 @@
-import { Button, Label, ListBox, Popover, SearchField } from '@heroui/react';
+import {
+    Button,
+    Header,
+    Label,
+    ListBox,
+    Popover,
+    SearchField,
+} from '@heroui/react';
 import type { Key, Selection } from '@heroui/react';
 import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -14,6 +21,7 @@ export type FilterOption = {
     /** Secondary text after the label, e.g. a project's client. */
     detail?: string;
     isMuted?: boolean;
+    isInactive?: boolean;
 };
 
 type Props = {
@@ -32,6 +40,7 @@ type Props = {
     icon?: ReactNode;
     /** Fit the list to its longest option label within the popover's width limits. */
     fitOptionLabels?: boolean;
+    statusSections?: { active: string; inactive: string };
     'data-test'?: string;
 };
 
@@ -60,6 +69,7 @@ export function FilterChip({
     renderPreview,
     icon,
     fitOptionLabels = false,
+    statusSections,
     'data-test': dataTest,
 }: Props) {
     const { t } = useTranslation();
@@ -76,6 +86,45 @@ export function FilterChip({
                   .includes(query),
           )
         : options;
+    const sections =
+        statusSections &&
+        [
+            {
+                label: statusSections.active,
+                options: visible.filter((option) => !option.isInactive),
+            },
+            {
+                label: statusSections.inactive,
+                options: visible.filter((option) => option.isInactive),
+            },
+        ].filter((section) => section.options.length > 0);
+
+    const renderOption = (option: FilterOption) => (
+        <ListBox.Item
+            key={option.value}
+            id={option.value}
+            textValue={option.label}
+            className="gap-2.5"
+        >
+            {option.leading}
+            <span className="min-w-0 flex-1">
+                <Label
+                    className={cn(
+                        'block max-w-full truncate',
+                        option.isMuted && 'text-muted',
+                    )}
+                >
+                    {option.label}
+                </Label>
+                {option.detail && (
+                    <span className="block truncate text-xs text-muted">
+                        {option.detail}
+                    </span>
+                )}
+            </span>
+            <ListBox.ItemIndicator />
+        </ListBox.Item>
+    );
 
     const select = (keys: Selection) => {
         const next =
@@ -188,32 +237,16 @@ export function FilterChip({
                             </p>
                         )}
                     >
-                        {visible.map((option) => (
-                            <ListBox.Item
-                                key={option.value}
-                                id={option.value}
-                                textValue={option.label}
-                                className="gap-2.5"
-                            >
-                                {option.leading}
-                                <span className="min-w-0 flex-1">
-                                    <Label
-                                        className={cn(
-                                            'block max-w-full truncate',
-                                            option.isMuted && 'text-muted',
-                                        )}
-                                    >
-                                        {option.label}
-                                    </Label>
-                                    {option.detail && (
-                                        <span className="block truncate text-xs text-muted">
-                                            {option.detail}
-                                        </span>
-                                    )}
-                                </span>
-                                <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                        ))}
+                        {sections
+                            ? sections.map((section) => (
+                                  <ListBox.Section key={section.label}>
+                                      <Header className="px-2 py-1 text-xs font-medium text-muted">
+                                          {section.label}
+                                      </Header>
+                                      {section.options.map(renderOption)}
+                                  </ListBox.Section>
+                              ))
+                            : visible.map(renderOption)}
                     </ListBox>
                     {selectionMode === 'multiple' && (
                         <div className="flex items-center justify-between border-t border-separator ps-2 pt-1">
