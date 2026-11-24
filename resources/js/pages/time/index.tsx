@@ -10,7 +10,7 @@ import {
     draftFromAbsence,
 } from '@/components/time/absence-dialog';
 import { CalendarPicker } from '@/components/time/calendar-picker';
-import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
+import { CopyPeriodDialog } from '@/components/time/copy-period-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import {
     newDraft,
@@ -72,8 +72,8 @@ type Props = {
     members: TimeEntryMemberOption[];
     /** Recently used project ids per member id (owners and admins). */
     recentProjects: Record<string, string[]>;
-    canCopyPreviousWeek: boolean;
-    previousWeek?: TimeEntry[];
+    canCopyPreviousPeriod: boolean;
+    previousPeriodEntries?: TimeEntry[];
 };
 
 export default function TimeIndex({
@@ -96,8 +96,8 @@ export default function TimeIndex({
     member,
     members,
     recentProjects,
-    canCopyPreviousWeek,
-    previousWeek,
+    canCopyPreviousPeriod,
+    previousPeriodEntries,
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
@@ -171,7 +171,7 @@ export default function TimeIndex({
     const dayTotal = entries
         .filter((entry) => entry.date === date)
         .reduce((sum, entry) => sum + entry.durationSeconds, 0);
-    const copyWeekButton = canCopyPreviousWeek && (
+    const copyPeriodButton = canCopyPreviousPeriod && (
         <Tooltip delay={350} closeDelay={0}>
             <Tooltip.Trigger role="presentation" tabIndex={-1} className="flex">
                 <Button
@@ -180,7 +180,11 @@ export default function TimeIndex({
                     size={view === 'list' ? 'md' : 'lg'}
                     className={view === 'list' ? undefined : 'shadow-lg'}
                     onPress={() => setCopyOpen(true)}
-                    aria-label={t('Copy previous week')}
+                    aria-label={t(
+                        view === 'day'
+                            ? 'Copy previous day'
+                            : 'Copy previous week',
+                    )}
                     data-test="copy-week-button"
                 >
                     <Copy aria-hidden="true" />
@@ -191,7 +195,11 @@ export default function TimeIndex({
                 showArrow
             >
                 <Tooltip.Arrow />
-                {t('Copy entries from the previous week')}
+                {t(
+                    view === 'day'
+                        ? 'Copy entries from the previous day'
+                        : 'Copy entries from the previous week',
+                )}
             </Tooltip.Content>
         </Tooltip>
     );
@@ -349,7 +357,7 @@ export default function TimeIndex({
                                 data-test="member-select"
                             />
                         )}
-                        {view === 'list' && copyWeekButton}
+                        {view === 'list' && copyPeriodButton}
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"
@@ -394,7 +402,7 @@ export default function TimeIndex({
                             entries={entries}
                             absences={absences}
                             colleaguesOff={colleaguesOff}
-                            floatingAction={copyWeekButton}
+                            floatingAction={copyPeriodButton}
                             onSelectDays={newAbsence}
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
@@ -424,7 +432,7 @@ export default function TimeIndex({
                 className={cn(
                     'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
                     view !== 'list' &&
-                        canCopyPreviousWeek &&
+                        canCopyPreviousPeriod &&
                         'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',
                 )}
                 aria-label={t('Report time')}
@@ -486,10 +494,11 @@ export default function TimeIndex({
                 workdaySeconds={workdaySeconds}
             />
 
-            <CopyWeekDialog
+            <CopyPeriodDialog
                 isOpen={isCopyOpen}
                 onOpenChange={setCopyOpen}
-                entries={previousWeek}
+                targetDay={view === 'day' ? date : undefined}
+                entries={previousPeriodEntries}
             />
         </>
     );

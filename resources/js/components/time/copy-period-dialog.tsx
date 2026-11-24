@@ -11,21 +11,27 @@ import type { TimeEntry } from '@/types';
 type Props = {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
+    targetDay?: string;
     /** Loaded on demand (Inertia optional prop). */
     entries: TimeEntry[] | undefined;
 };
 
 /**
- * "Copy previous week" as a draft: the user picks which entries to copy to this week.
+ * The user picks which entries to copy from the preceding day or week.
  */
-export function CopyWeekDialog({ isOpen, onOpenChange, entries }: Props) {
+export function CopyPeriodDialog({
+    isOpen,
+    onOpenChange,
+    targetDay,
+    entries,
+}: Props) {
     const { t, intlLocale } = useTranslation();
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         if (isOpen && entries === undefined) {
-            router.reload({ only: ['previousWeek'] });
+            router.reload({ only: ['previousPeriodEntries'] });
         }
     }, [isOpen, entries]);
 
@@ -49,7 +55,10 @@ export function CopyWeekDialog({ isOpen, onOpenChange, entries }: Props) {
     const submit = () =>
         router.post(
             copy.url(),
-            { entry_ids: [...selected] },
+            {
+                entry_ids: [...selected],
+                ...(targetDay && { target_day: targetDay }),
+            },
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
@@ -62,7 +71,7 @@ export function CopyWeekDialog({ isOpen, onOpenChange, entries }: Props) {
         <ResponsiveDialog
             isOpen={isOpen}
             onOpenChange={onOpenChange}
-            title={t('Copy previous week')}
+            title={t(targetDay ? 'Copy previous day' : 'Copy previous week')}
             footer={
                 <>
                     <Button slot="close" variant="tertiary">
@@ -83,13 +92,19 @@ export function CopyWeekDialog({ isOpen, onOpenChange, entries }: Props) {
                 <p className="text-sm text-muted">{t('Loading…')}</p>
             ) : entries.length === 0 ? (
                 <p className="text-sm text-muted">
-                    {t('No time was reported last week.')}
+                    {t(
+                        targetDay
+                            ? 'No time was reported on the previous day.'
+                            : 'No time was reported last week.',
+                    )}
                 </p>
             ) : (
                 <div className="grid gap-1">
                     <p className="mb-2 text-sm text-muted">
                         {t(
-                            'The selected entries are added to this week, seven days later.',
+                            targetDay
+                                ? 'The selected entries are added to the selected day.'
+                                : 'The selected entries are added to this week, seven days later.',
                         )}
                     </p>
                     {entries.map((entry) => (
