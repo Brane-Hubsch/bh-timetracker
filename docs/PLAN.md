@@ -791,6 +791,7 @@ Beställt i efterhand: filtret ovanför rapporterna var sju formulärfält (peri
 ### Tillägg efter Fas 6: besöksstatistik med Umami (2026-11-21)
 
 - **Produktion:** Time Tracker ligger under teamet Bräne Hübsch i den egna Umami-instansen på `analytics.bh.studio`. Spåraren laddas på `timetrack.bh.studio` och mäter sidvisningar vid sidladdning och navigering i Inertia, inklusive bakåt och framåt.
+- **Konfiguration:** skriptets adress, webbplats-id och domän sätts med `UMAMI_SCRIPT_URL`, `UMAMI_WEBSITE_ID` och `UMAMI_DOMAIN` (inte i koden, så att andra installationer kan använda en egen instans eller låta bli). Utan alla tre laddas ingen spårare.
 - **Insamling:** Umami sammanställer sin vanliga besöksstatistik. Sidadresser skickas utan frågeparametrar och fragment. Inloggnings- och inbjudningstoken tas bort från sökvägarna. Externa hänvisningar begränsas till ursprunget och sidtitlar utelämnas eftersom de kan innehålla kund- och projektnamn.
 
 ### Tillägg efter Fas 6: läsbara kund- och projektadresser

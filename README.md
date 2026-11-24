@@ -1,8 +1,26 @@
 # BH Timetracker
 
-Internal time tracking tool (projects, estimates, reports and an MCP server for AI assistants).
+Time tracking for small teams: report time in a week calendar, keep track of clients, projects and
+estimates, and get reports with hours and amounts. An MCP server lets AI assistants such as Claude
+report time and pull reports on your behalf.
 
-- Product and technical plan: [`docs/PLAN.md`](docs/PLAN.md) – the source of truth.
+## Features
+
+- **Time reporting** in a week/day calendar (drag to create, resize and move), with tags, billable
+  time and absence. Mobile friendly.
+- **Clients and projects** with estimates, hourly rates (per organization, member, project and project
+  member), colors and public or private visibility.
+- **Reports** grouped by client, project, member or period, with charts and export to CSV, XLSX and
+  PDF. Filters live in the URL, so reports can be bookmarked.
+- **Organizations** with owner, admin and member roles; a user can belong to several.
+- **Passwordless sign-in** with passkeys, Google or email links. Accounts come from invitations.
+- **MCP server** (OAuth 2.1) for AI assistants, acting with the signed-in user's permissions.
+- **Clockify import** from CSV exports, with a preview before anything is saved.
+- Swedish user interface (English prepared), self-hosted with Docker Compose.
+
+## Documentation
+
+- Product and technical plan: [`docs/PLAN.md`](docs/PLAN.md) (in Swedish) – the source of truth.
 - Project conventions for humans and AI agents: [`.ai/guidelines/project.md`](.ai/guidelines/project.md).
 
 ## Stack
@@ -128,7 +146,7 @@ a Let's Encrypt certificate for `APP_URL`'s host on ports 80/443 (certificates i
 First deploy:
 
 ```bash
-git clone git@github.com:Brane-Hubsch/bh-timetracker.git && cd bh-timetracker
+git clone https://github.com/Brane-Hubsch/bh-timetracker.git && cd bh-timetracker
 cp .env.production.example .env   # fill in APP_KEY, APP_URL, DB_PASSWORD, mail, backups, ...
 docker compose up -d --build
 docker compose exec web php artisan passport:keys   # unless PASSPORT_*_KEY are set in .env
@@ -195,6 +213,12 @@ docker compose cp restore/images web:/var/www/html/storage/app/public/
 docker compose exec -u root web chown -R www-data:www-data storage/app/public/images
 ```
 
+### Analytics (optional)
+
+Pageviews can be tracked with [Umami](https://umami.is). It is off unless `UMAMI_SCRIPT_URL`,
+`UMAMI_WEBSITE_ID` and `UMAMI_DOMAIN` are all set, and the tracker only loads in production on the
+`UMAMI_DOMAIN` host.
+
 ## AI assistants (MCP)
 
 The MCP server lives at `{APP_URL}/mcp` and uses OAuth 2.1 (Passport). `composer setup` creates the
@@ -213,3 +237,13 @@ use `php artisan mcp:inspector mcp`.
 ```bash
 composer ci:check     # vp check (lint/format), tsc, pint, larastan, pest
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. Work on a branch, keep commits small, and run
+`composer ci:check` before opening a pull request. Business logic lives in `app/Actions` and is
+covered by Pest tests; see the project conventions above.
+
+## License
+
+BH Timetracker is open-source software licensed under the [MIT license](LICENSE).

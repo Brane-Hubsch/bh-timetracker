@@ -42,7 +42,7 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
         <link rel="manifest" href="/site.webmanifest">
 
-        @if (app()->isProduction() && request()->getHost() === config('services.umami.domain'))
+        @if (app()->isProduction() && filled(config('services.umami.script_url')) && filled(config('services.umami.website_id')) && request()->getHost() === config('services.umami.domain'))
             @include('analytics.umami')
         @endif
 

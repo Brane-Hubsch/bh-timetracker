@@ -42,9 +42,9 @@ return [
     ],
 
     'umami' => [
-        'script_url' => 'https://analytics.bh.studio/script.js',
-        'website_id' => 'f1fea136-618f-48b1-b768-d0f3753fde64',
-        'domain' => 'timetrack.bh.studio',
+        'script_url' => env('UMAMI_SCRIPT_URL'),
+        'website_id' => env('UMAMI_WEBSITE_ID'),
+        'domain' => env('UMAMI_DOMAIN'),
     ],
 
 ];
