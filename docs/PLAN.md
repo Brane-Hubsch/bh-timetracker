@@ -163,6 +163,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - **Projektuppföljning**: alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export**: CSV och XLSX (t.ex. `openspout/openspout`). PDF tillagt i efterhand (se tillägg efter Fas 6).
 - Rapportens filter ligger i URL:en så att den går att bokmärka och dela internt.
+- I tabeller med flyttbara kolumner kan användaren dra i handtagen eller använda flyttmenyn med tangentbord eller pekskärm. Ordningen sparas lokalt per tabell och användare. Identitets- och åtgärdskolumner ligger fast där de behövs.
 - Medlemmar ser endast sin egen tid. Belopp visas endast för ägare/admin.
 
 ### 4.7 Startsida (dashboard)
