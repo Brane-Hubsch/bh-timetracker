@@ -244,6 +244,10 @@ Issues and pull requests are welcome. Work on a branch, keep commits small, and 
 `composer ci:check` before opening a pull request. Business logic lives in `app/Actions` and is
 covered by Pest tests; see the project conventions above.
 
+## Security
+
+Please report vulnerabilities privately, not in public issues. See [`SECURITY.md`](SECURITY.md).
+
 ## License
 
 BH Timetracker is open-source software licensed under the [MIT license](LICENSE).
