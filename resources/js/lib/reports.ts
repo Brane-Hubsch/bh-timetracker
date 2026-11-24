@@ -23,6 +23,7 @@ export function reportQuery(
         billable: values.billable ?? undefined,
         group: values.group,
         subgroup: values.subgroup,
+        scale: values.scale === 'month' ? values.scale : undefined,
         sort: values.sort,
         direction: values.direction,
     };

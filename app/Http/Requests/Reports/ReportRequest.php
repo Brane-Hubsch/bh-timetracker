@@ -37,6 +37,7 @@ class ReportRequest extends FormRequest
             'billable' => ['nullable', 'boolean'],
             'group' => ['nullable', Rule::enum(ReportGrouping::class)],
             'subgroup' => ['nullable', Rule::in([...array_column(ReportGrouping::cases(), 'value'), 'none'])],
+            'scale' => ['nullable', Rule::in(['week', 'month'])],
             'sort' => ['nullable', Rule::in(['date', 'duration', 'project', 'member'])],
             'direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ];
@@ -50,6 +51,17 @@ class ReportRequest extends FormRequest
     public function grouping(): ReportGrouping
     {
         return $this->enum('group', ReportGrouping::class) ?? ReportGrouping::Client;
+    }
+
+    public function timelineScale(ReportFilters $filters): ?ReportGrouping
+    {
+        $from = $filters->from;
+
+        if ($from === null || $from->format('m-d') !== '01-01' || $filters->to?->toDateString() !== $from->format('Y-12-31')) {
+            return null;
+        }
+
+        return $this->input('scale') === ReportGrouping::Month->value ? ReportGrouping::Month : ReportGrouping::Week;
     }
 
     /**
@@ -118,7 +130,7 @@ class ReportRequest extends FormRequest
     /**
      * The filters as sent to the page (to prefill the controls).
      *
-     * @return array{period: string, from: string, to: string, members: array<int, string>, clients: array<int, string>, projects: array<int, string>, tags: array<int, string>, billable: string|null, group: string, subgroup: string, sort: string, direction: string}
+     * @return array{period: string, from: string, to: string, members: array<int, string>, clients: array<int, string>, projects: array<int, string>, tags: array<int, string>, billable: string|null, group: string, subgroup: string, scale: string|null, sort: string, direction: string}
      */
     public function echo(ReportFilters $filters): array
     {
@@ -135,6 +147,7 @@ class ReportRequest extends FormRequest
             'billable' => $filters->billable === null ? null : ($filters->billable ? '1' : '0'),
             'group' => $this->grouping()->value,
             'subgroup' => $this->subGrouping()->value ?? 'none',
+            'scale' => $this->timelineScale($filters)?->value,
             'sort' => $this->sort(),
             'direction' => $this->direction(),
         ];
