@@ -26,6 +26,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -78,6 +79,11 @@ class TimeEntryController extends Controller
             : [];
 
         return Inertia::render('time/index', [
+            'view' => match (true) {
+                $request->routeIs('time.list') => 'list',
+                $request->query('view') === 'day' => 'day',
+                default => 'week',
+            },
             'date' => $date->toDateString(),
             'today' => CarbonImmutable::now($timezone)->toDateString(),
             'weekStart' => $weekStart->toDateString(),
@@ -107,6 +113,25 @@ class TimeEntryController extends Controller
                 ->get()
                 ->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone))),
         ]);
+    }
+
+    public function redirectLegacyIndex(Request $request): RedirectResponse
+    {
+        $query = $request->query();
+        $isList = ($query['view'] ?? null) === 'list';
+
+        if ($isList) {
+            unset($query['view']);
+        }
+
+        // A form submitted from an older tab may redirect back here with validation errors.
+        $request->session()->reflash();
+
+        $path = route($isList ? 'time.list' : 'time.index', [
+            'current_organization' => $this->currentOrganization->getOrFail()->slug,
+        ]);
+
+        return redirect()->to(URL::query($path, $query));
     }
 
     public function store(TimeEntryRequest $request, #[CurrentUser] User $user, CreateTimeEntry $createTimeEntry): RedirectResponse

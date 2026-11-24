@@ -50,15 +50,16 @@ function entryFor(User $user, string $start = '2026-11-16 08:00', string $end = 
     )->create();
 }
 
-it('shows the week of the signed-in user in their time zone', function () {
+it('shows the week of the signed-in user in their time zone', function (string $path, string $view) {
     $mine = entryFor($this->member, '2026-11-16 07:00', '2026-11-16 08:30');
     entryFor($this->colleague);
     entryFor($this->member, '2026-11-09 07:00', '2026-11-09 08:00');
 
     $this->actingAs($this->member)
-        ->get(timeRoute('time.index'))
+        ->get("/{$this->slug}/{$path}")
         ->assertInertia(fn (Assert $page) => $page
             ->component('time/index')
+            ->where('view', $view)
             ->where('weekStart', '2026-11-16')
             ->where('today', '2026-11-18')
             ->has('entries', 1)
@@ -69,6 +70,32 @@ it('shows the week of the signed-in user in their time zone', function () {
             ->where('member.id', $this->member->id)
             ->where('members', [])
             ->missing('previousWeek'));
+})->with([
+    'calendar' => ['calendar', 'week'],
+    'day' => ['calendar?view=day', 'day'],
+    'list' => ['list', 'list'],
+]);
+
+it('redirects older time links and preserves the selected week, member and dialog', function (string $oldView, string $path, string $newView) {
+    $query = "date=2026-11-16&user={$this->member->id}&new=1";
+
+    $this->actingAs($this->admin)
+        ->get("/{$this->slug}/time?{$query}{$oldView}")
+        ->assertRedirect("/{$this->slug}/{$path}?{$query}{$newView}");
+})->with([
+    'calendar' => ['', 'calendar', ''],
+    'day' => ['&view=day', 'calendar', '&view=day'],
+    'list' => ['&view=list', 'list', ''],
+]);
+
+it('preserves validation errors when an older tab submits a form', function () {
+    $this->actingAs($this->member)
+        ->from("/{$this->slug}/time?view=list")
+        ->followingRedirects()
+        ->post(timeRoute('time.store'), timePayload(['project_id' => null]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('view', 'list')
+            ->has('errors.project_id'));
 });
 
 it('offers week copying only for an empty selected week with earlier entries', function (bool $selectedWeekHasEntries, bool $previousWeekHasEntries, bool $canCopy) {
