@@ -263,21 +263,28 @@ export default function ProjectsIndex({
 
                                     {/* Billing, rate and visibility: chips on mobile, columns on desktop. */}
                                     <div className="flex flex-wrap items-center gap-1.5 pl-[22px] xl:contents">
-                                        <span>
-                                            <Chip
-                                                size="sm"
-                                                variant="soft"
-                                                color={
-                                                    project.isBillable
-                                                        ? 'accent'
-                                                        : 'default'
-                                                }
-                                                data-test="project-billable"
-                                            >
-                                                {project.isBillable
-                                                    ? t('Billable')
-                                                    : t('Not billable')}
-                                            </Chip>
+                                        <span data-test="project-billable">
+                                            {project.isBillable ? (
+                                                <Chip
+                                                    size="sm"
+                                                    variant="soft"
+                                                    color="accent"
+                                                >
+                                                    {t('Billable')}
+                                                </Chip>
+                                            ) : (
+                                                <>
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="text-xs text-muted xl:text-sm"
+                                                    >
+                                                        –
+                                                    </span>
+                                                    <span className="sr-only">
+                                                        {t('Not billable')}
+                                                    </span>
+                                                </>
+                                            )}
                                         </span>
                                         {canViewRates && (
                                             <span
