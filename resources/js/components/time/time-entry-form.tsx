@@ -13,7 +13,7 @@ import {
 import { router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
 import { Copy, EllipsisVertical, Trash2, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
 import { TagInput } from '@/components/form/tag-input';
@@ -136,6 +136,30 @@ export function TimeEntryForm({
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
     const [mode, setMode] = useState<ReportMode | null>(null);
+    const modeIndicator = useRef<HTMLSpanElement>(null);
+    const observeSelectedTab = useCallback((tab: HTMLDivElement | null) => {
+        const tabList = tab?.parentElement;
+        if (!tab || !tabList) {
+            return;
+        }
+
+        const observer = new ResizeObserver(() => {
+            const indicator = modeIndicator.current;
+            if (!indicator) {
+                return;
+            }
+
+            // Measure relative to the list so a resizing dialog cannot move the line vertically.
+            const { left, width } = tab.getBoundingClientRect();
+            const offset = left - tabList.getBoundingClientRect().left;
+            indicator.style.translate = `${offset}px`;
+            indicator.style.width = `${width}px`;
+        });
+        observer.observe(tab);
+        observer.observe(tabList);
+
+        return () => observer.disconnect();
+    }, []);
 
     // Start from the draft each time a new one is opened.
     if (draft && draft !== source) {
@@ -410,21 +434,38 @@ export function TimeEntryForm({
                 canSwitchMode && (
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-xl/7 font-semibold">
                         <span aria-hidden="true">{beforeType.trim()}</span>
-                        <Tabs.List
-                            aria-label={t('Report type')}
-                            className="min-w-0! gap-1.5 p-0"
-                            data-test="time-entry-mode"
-                        >
-                            {reportModes.map((reportMode) => (
-                                <Tabs.Tab
-                                    key={reportMode}
-                                    id={reportMode}
-                                    className="h-9 w-auto rounded-sm px-0 text-xl/7 font-semibold text-muted/88 decoration-accent decoration-2 underline-offset-3 hover:text-foreground hover:opacity-100 aria-selected:text-foreground aria-selected:underline"
-                                >
-                                    {t(reportMode)}
-                                </Tabs.Tab>
-                            ))}
-                        </Tabs.List>
+                        <div className="relative">
+                            <Tabs.List
+                                aria-label={t('Report type')}
+                                className="min-w-0! gap-1.5 p-0"
+                                data-test="time-entry-mode"
+                            >
+                                {reportModes.map((reportMode) => (
+                                    <Tabs.Tab
+                                        key={reportMode}
+                                        id={reportMode}
+                                        ref={
+                                            reportMode === selectedMode
+                                                ? observeSelectedTab
+                                                : undefined
+                                        }
+                                        className="h-9 w-auto rounded-sm px-0 text-xl/7 font-semibold text-muted/50 hover:text-foreground hover:opacity-100 aria-selected:text-foreground"
+                                    >
+                                        {t(reportMode)}
+                                    </Tabs.Tab>
+                                ))}
+                            </Tabs.List>
+                            <span
+                                ref={modeIndicator}
+                                aria-hidden="true"
+                                className={cn(
+                                    'pointer-events-none absolute top-7 left-0 h-0.5 w-0 bg-accent',
+                                    mode &&
+                                        'transition-[translate,width] duration-240 ease-out-soft motion-reduce:transition-none',
+                                )}
+                                data-test="report-mode-indicator"
+                            />
+                        </div>
                         {afterType && (
                             <span aria-hidden="true">{afterType.trim()}</span>
                         )}
