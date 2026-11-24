@@ -1,4 +1,11 @@
 import { Table } from '@heroui/react';
+import { usePage } from '@inertiajs/react';
+import {
+    ColumnOrderStatus,
+    ReorderableColumnHeader,
+    columnOrderHeaderClassName,
+    useColumnOrder,
+} from '@/components/reorderable-column-header';
 import { formatDays } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import type { ReportAbsence } from '@/types';
@@ -13,9 +20,16 @@ type Props = {
  */
 export function AbsenceTable({ absence }: Props) {
     const { t, intlLocale } = useTranslation();
-    const types = absence.types.filter((type) =>
-        absence.members.some((member) => member.types[type.value]),
+    const { id: userId } = usePage().props.auth.user;
+    const labels = new Map(
+        absence.types.map((type) => [type.value, type.label]),
     );
+    const order = useColumnOrder({
+        storageKey: `timereport:report-absence-column-order:${userId}`,
+        defaultOrder: [...labels.keys()],
+        isVisible: (column) =>
+            absence.members.some((member) => member.types[column]),
+    });
     const days = (seconds: number | undefined) =>
         seconds
             ? formatDays(seconds / absence.workdaySeconds, intlLocale)
@@ -25,24 +39,39 @@ export function AbsenceTable({ absence }: Props) {
         <section className="grid grid-cols-1 gap-3" data-test="report-absence">
             <h2 className="text-base font-semibold">{t('Absence')}</h2>
             <Table>
+                <ColumnOrderStatus announcement={order.announcement} />
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label={t('Absence per member')}
                         className="min-w-[480px]"
                     >
-                        <Table.Header>
-                            <Table.Column isRowHeader>
+                        <Table.Header className={columnOrderHeaderClassName}>
+                            <Table.Column
+                                isRowHeader
+                                className="text-sm font-medium"
+                            >
                                 {t('Member')}
                             </Table.Column>
-                            {types.map((type) => (
-                                <Table.Column
-                                    key={type.value}
-                                    className="text-right"
-                                >
-                                    {type.label}
-                                </Table.Column>
-                            ))}
-                            <Table.Column className="text-right">
+                            {order.columns.map((column) => {
+                                const label = labels.get(column) ?? column;
+
+                                return (
+                                    <Table.Column
+                                        key={column}
+                                        id={column}
+                                        textValue={label}
+                                        className="text-right text-sm font-medium whitespace-nowrap"
+                                    >
+                                        <ReorderableColumnHeader
+                                            order={order}
+                                            column={column}
+                                            label={label}
+                                            className="justify-end"
+                                        />
+                                    </Table.Column>
+                                );
+                            })}
+                            <Table.Column className="text-right text-sm font-medium">
                                 {t('Total')}
                             </Table.Column>
                         </Table.Header>
@@ -52,12 +81,12 @@ export function AbsenceTable({ absence }: Props) {
                                     <Table.Cell className="font-medium">
                                         {member.name}
                                     </Table.Cell>
-                                    {types.map((type) => (
+                                    {order.columns.map((column) => (
                                         <Table.Cell
-                                            key={type.value}
+                                            key={column}
                                             className="text-right text-muted tabular-nums"
                                         >
-                                            {days(member.types[type.value])}
+                                            {days(member.types[column])}
                                         </Table.Cell>
                                     ))}
                                     <Table.Cell className="text-right font-semibold tabular-nums">
