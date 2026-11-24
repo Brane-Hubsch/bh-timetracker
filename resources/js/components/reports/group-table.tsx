@@ -185,7 +185,7 @@ export function GroupTable({
                     className="min-w-[560px]"
                     data-test="report-group-table"
                 >
-                    <Table.Header>
+                    <Table.Header className="group/report-header">
                         <Table.Column isRowHeader className="w-full">
                             {t('Name')}
                         </Table.Column>
@@ -244,7 +244,7 @@ export function GroupTable({
                                     <span
                                         aria-hidden="true"
                                         draggable
-                                        className="flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm hover:bg-default active:cursor-grabbing"
+                                        className="pointer-events-none flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm opacity-0 transition-opacity duration-150 group-hover/report-header:pointer-events-auto group-hover/report-header:opacity-70 hover:bg-default active:cursor-grabbing motion-reduce:transition-none"
                                         onDragStart={(event) => {
                                             event.dataTransfer.effectAllowed =
                                                 'move';
