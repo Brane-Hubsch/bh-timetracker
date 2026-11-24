@@ -12,7 +12,11 @@ import {
 import { CalendarPicker } from '@/components/time/calendar-picker';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
-import { newDraft } from '@/components/time/drafts';
+import {
+    newDraft,
+    readPlusDurationMinutes,
+    savePlusDurationMinutes,
+} from '@/components/time/drafts';
 import {
     TimeEntryForm,
     draftFromEntry,
@@ -95,7 +99,11 @@ export default function TimeIndex({
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
-    const { url } = usePage();
+    const {
+        url,
+        props: { auth, currentOrganization },
+    } = usePage();
+    const plusDurationKey = `time-report:plus-duration:${auth.user.id}:${currentOrganization?.id}`;
     const params = new URLSearchParams(url.split('?')[1] ?? '');
     const requestedView = params.get('view');
     const view: View =
@@ -149,7 +157,8 @@ export default function TimeIndex({
 
     const dates = weekDates(weekStart);
     const openNewTime = () => {
-        const { hour } = Temporal.Now.plainDateTimeISO(timezone);
+        const start = Temporal.Now.plainDateTimeISO(timezone).hour * 60;
+        const duration = readPlusDurationMinutes(plusDurationKey);
 
         setDraft({
             ...newDraft(
@@ -157,7 +166,9 @@ export default function TimeIndex({
                 entries,
                 member.id,
             ),
-            start: minutesToTime(hour * 60),
+            start: minutesToTime(start),
+            end: duration ? minutesToTime(start + duration) : '',
+            openedFrom: 'plus',
         });
     };
     const weekTotal = entries.reduce(
@@ -391,7 +402,7 @@ export default function TimeIndex({
                                     ),
                                     start: timeOf(start),
                                     end: timeOf(end),
-                                    fromCalendar: true,
+                                    openedFrom: 'calendar',
                                 })
                             }
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}
@@ -420,6 +431,15 @@ export default function TimeIndex({
                 recentTags={recentTags}
                 members={members}
                 recentProjects={recentProjects}
+                onCreate={
+                    draft?.openedFrom === 'plus'
+                        ? (seconds) =>
+                              savePlusDurationMinutes(
+                                  plusDurationKey,
+                                  Math.round(seconds / 60),
+                              )
+                        : undefined
+                }
                 absence={{
                     absenceTypes,
                     recentAbsenceTypes,
