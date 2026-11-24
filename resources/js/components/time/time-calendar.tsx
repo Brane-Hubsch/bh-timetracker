@@ -41,6 +41,7 @@ type Props = {
     /** Colleagues' absence, shown as "Off · name". */
     colleaguesOff: ColleagueOff[];
     floatingAction?: ReactNode;
+    hasSelectionDraft: boolean;
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
     /** Drag across days in the all-day row; the first and last day. */
@@ -138,6 +139,7 @@ export function TimeCalendar({
     absences,
     colleaguesOff,
     floatingAction,
+    hasSelectionDraft,
     onSelect,
     onSelectDays,
     onEdit,
@@ -150,6 +152,12 @@ export function TimeCalendar({
     const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
+
+    useLayoutEffect(() => {
+        if (!hasSelectionDraft) {
+            calendarRef.current?.getApi().unselect();
+        }
+    }, [hasSelectionDraft]);
 
     useLayoutEffect(() => {
         const cancelSelection = (event: KeyboardEvent) => {
@@ -266,6 +274,8 @@ export function TimeCalendar({
                 }}
                 selectable
                 selectMirror
+                // The dialog owns the selection until it closes.
+                unselectAuto={false}
                 selectAllow={() => {
                     if (selection.current === 'cancelled') {
                         return false;
@@ -525,9 +535,8 @@ export function TimeCalendar({
                         return;
                     }
 
-                    calendarRef.current?.getApi().unselect();
-
                     if (info.allDay) {
+                        calendarRef.current?.getApi().unselect();
                         onSelectDays(
                             fromCalendarDate(info.start).slice(0, 10),
                             addDays(

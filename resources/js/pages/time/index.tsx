@@ -407,6 +407,7 @@ export default function TimeIndex({
                             absences={absences}
                             colleaguesOff={colleaguesOff}
                             floatingAction={copyPeriodButton}
+                            hasSelectionDraft={draft?.openedFrom === 'calendar'}
                             onSelectDays={newAbsence}
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
