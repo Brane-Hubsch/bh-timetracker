@@ -7,6 +7,8 @@ type Props = {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     title: ReactNode;
+    headerContent?: ReactNode;
+    wrapContent?: (content: ReactNode) => ReactNode;
     closeInHeader?: boolean;
     children: ReactNode;
     footer?: ReactNode;
@@ -27,6 +29,8 @@ export function ResponsiveDialog({
     isOpen,
     onOpenChange,
     title,
+    headerContent,
+    wrapContent = (content) => content,
     closeInHeader,
     children,
     footer,
@@ -40,6 +44,7 @@ export function ResponsiveDialog({
         ? 'min-h-9 flex-row items-center justify-between gap-2'
         : undefined;
     const headerCloseClassName = `static shrink-0 ${closeClassName}`;
+    const titleClassName = headerContent ? 'sr-only' : headingClassName;
 
     const onKeyDownCapture = (event: KeyboardEvent<HTMLElement>) => {
         // Catch Escape before an open field popover handles it.
@@ -73,19 +78,26 @@ export function ResponsiveDialog({
                         {!closeInHeader && (
                             <Modal.CloseTrigger className={closeClassName} />
                         )}
-                        <Modal.Header className={headerClassName}>
-                            <Modal.Heading className={headingClassName}>
-                                {title}
-                            </Modal.Heading>
-                            {closeInHeader && (
-                                <Modal.CloseTrigger
-                                    className={headerCloseClassName}
-                                    aria-label={t('Close')}
-                                />
-                            )}
-                        </Modal.Header>
-                        <Modal.Body>{children}</Modal.Body>
-                        {footer && <Modal.Footer>{footer}</Modal.Footer>}
+                        {wrapContent(
+                            <>
+                                <Modal.Header className={headerClassName}>
+                                    <Modal.Heading className={titleClassName}>
+                                        {title}
+                                    </Modal.Heading>
+                                    {headerContent}
+                                    {closeInHeader && (
+                                        <Modal.CloseTrigger
+                                            className={headerCloseClassName}
+                                            aria-label={t('Close')}
+                                        />
+                                    )}
+                                </Modal.Header>
+                                <Modal.Body>{children}</Modal.Body>
+                                {footer && (
+                                    <Modal.Footer>{footer}</Modal.Footer>
+                                )}
+                            </>,
+                        )}
                     </Modal.Dialog>
                 </Modal.Container>
             </Modal.Backdrop>
@@ -101,21 +113,26 @@ export function ResponsiveDialog({
             <Drawer.Content placement="bottom" className={containerClassName}>
                 <Drawer.Dialog className="max-h-[92svh]" render={renderDialog}>
                     <Drawer.Handle />
-                    <Drawer.Header className={headerClassName}>
-                        <Drawer.Heading className={headingClassName}>
-                            {title}
-                        </Drawer.Heading>
-                        {closeInHeader && (
-                            <Drawer.CloseTrigger
-                                className={headerCloseClassName}
-                                aria-label={t('Close')}
-                            />
-                        )}
-                    </Drawer.Header>
-                    <Drawer.Body className="overflow-y-auto">
-                        {children}
-                    </Drawer.Body>
-                    {footer && <Drawer.Footer>{footer}</Drawer.Footer>}
+                    {wrapContent(
+                        <>
+                            <Drawer.Header className={headerClassName}>
+                                <Drawer.Heading className={titleClassName}>
+                                    {title}
+                                </Drawer.Heading>
+                                {headerContent}
+                                {closeInHeader && (
+                                    <Drawer.CloseTrigger
+                                        className={headerCloseClassName}
+                                        aria-label={t('Close')}
+                                    />
+                                )}
+                            </Drawer.Header>
+                            <Drawer.Body className="overflow-y-auto">
+                                {children}
+                            </Drawer.Body>
+                            {footer && <Drawer.Footer>{footer}</Drawer.Footer>}
+                        </>,
+                    )}
                 </Drawer.Dialog>
             </Drawer.Content>
         </Drawer.Backdrop>
