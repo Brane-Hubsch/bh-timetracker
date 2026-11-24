@@ -1,13 +1,13 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { SidebarNavigation } from '@/components/app-shell/sidebar-navigation';
 import {
     CommandPaletteShortcut,
     useCommandPalette,
 } from '@/components/command-palette';
 import { OrganizationSwitcher } from '@/components/organization-switcher';
 import { UserMenu } from '@/components/user-menu';
-import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ import { home } from '@/routes';
 export function AppSidebar({ className }: { className?: string }) {
     const { t } = useTranslation();
     const items = useMainNavigation();
-    const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { auth, currentOrganization } = usePage().props;
     const { open } = useCommandPalette();
 
     return (
@@ -46,29 +46,17 @@ export function AppSidebar({ className }: { className?: string }) {
                 <CommandPaletteShortcut className="ms-auto" />
             </button>
 
-            <nav aria-label={t('Main')} className="grid gap-1">
-                {items.map((item) => {
-                    const isActive =
-                        item.isActive ?? isCurrentOrParentUrl(item.href);
-
-                    return (
-                        <Link
-                            key={item.title}
-                            href={item.href}
-                            prefetch
-                            aria-current={isActive ? 'page' : undefined}
-                            className={cn(
-                                'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors hover:bg-default',
-                                isActive && 'bg-default text-foreground',
-                                !isActive && 'text-muted',
-                            )}
-                        >
-                            <item.icon className="size-4" />
-                            {t(item.title)}
-                        </Link>
-                    );
-                })}
-            </nav>
+            {currentOrganization && (
+                <SidebarNavigation
+                    key={JSON.stringify([
+                        auth.user.id,
+                        currentOrganization.id,
+                        items.map(({ title }) => title),
+                    ])}
+                    storageKey={`timereport:sidebar-order:${auth.user.id}:${currentOrganization.id}`}
+                    items={items}
+                />
+            )}
 
             <div className="mt-auto">
                 <UserMenu showName />

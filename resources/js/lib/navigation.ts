@@ -18,6 +18,55 @@ import { index as tags } from '@/routes/tags';
 import { index as team } from '@/routes/team';
 import { index as timeCalendar, list as timeList } from '@/routes/time';
 
+type NavigationProps = Pick<
+    ReturnType<typeof usePage>['props'],
+    'can' | 'currentOrganization'
+>;
+
+type NavigationEntry = {
+    title: string;
+    route: (slug: string) => NonNullable<InertiaLinkProps['href']>;
+    icon: LucideIcon;
+    mobile?: boolean;
+    exact?: boolean;
+    isVisible?: (props: NavigationProps) => boolean;
+};
+
+// The "Today" dashboard is paused: the calendar is the start page.
+const navigationEntries: readonly NavigationEntry[] = [
+    {
+        title: 'Calendar',
+        route: timeCalendar,
+        icon: CalendarDays,
+        mobile: true,
+        exact: true,
+    },
+    { title: 'List', route: timeList, icon: List, exact: true },
+    { title: 'Reports', route: reports, icon: ChartColumn, mobile: true },
+    { title: 'Projects', route: projects, icon: FolderKanban },
+    {
+        title: 'Clients',
+        route: clients,
+        icon: Briefcase,
+        isVisible: ({ can }) => Boolean(can?.canManageClients),
+    },
+    {
+        title: 'Tags',
+        route: tags,
+        icon: Tags,
+        isVisible: ({ can }) => Boolean(can?.canManageTags),
+    },
+    {
+        title: 'Team',
+        route: team,
+        icon: UsersRound,
+        isVisible: ({ currentOrganization }) =>
+            Boolean(currentOrganization?.hasTeam),
+    },
+];
+
+export const mainNavigationOrder = navigationEntries.map(({ title }) => title);
+
 export type MainNavItem = {
     /** Translation key (English source string). */
     title: string;
@@ -32,76 +81,25 @@ export type MainNavItem = {
  * Main navigation for the active organization. Without an active organization there is nothing to navigate to.
  */
 export function useMainNavigation(): MainNavItem[] {
-    const {
-        props: { currentOrganization, can },
-    } = usePage();
+    const { props } = usePage();
     const { isCurrentUrl } = useCurrentUrl();
+    const slug = props.currentOrganization?.slug;
 
-    if (!currentOrganization) {
+    if (!slug) {
         return [];
     }
 
-    const slug = currentOrganization.slug;
-    const calendar = timeCalendar(slug);
-    const list = timeList(slug);
+    return navigationEntries
+        .filter((entry) => !entry.isVisible || entry.isVisible(props))
+        .map(({ title, route, icon, mobile, exact }) => {
+            const href = route(slug);
 
-    // The "Today" dashboard is paused: the calendar is the start page.
-    return [
-        {
-            title: 'Calendar',
-            href: calendar,
-            icon: CalendarDays,
-            isActive: isCurrentUrl(calendar),
-            mobile: true,
-        },
-        {
-            title: 'List',
-            href: list,
-            icon: List,
-            isActive: isCurrentUrl(list),
-            mobile: false,
-        },
-        {
-            title: 'Reports',
-            href: reports(slug),
-            icon: ChartColumn,
-            mobile: true,
-        },
-        {
-            title: 'Projects',
-            href: projects(slug),
-            icon: FolderKanban,
-            mobile: false,
-        },
-        ...(can?.canManageClients
-            ? [
-                  {
-                      title: 'Clients',
-                      href: clients(slug),
-                      icon: Briefcase,
-                      mobile: false,
-                  },
-              ]
-            : []),
-        ...(can?.canManageTags
-            ? [
-                  {
-                      title: 'Tags',
-                      href: tags(slug),
-                      icon: Tags,
-                      mobile: false,
-                  },
-              ]
-            : []),
-        ...(currentOrganization.hasTeam
-            ? [
-                  {
-                      title: 'Team',
-                      href: team(slug),
-                      icon: UsersRound,
-                      mobile: false,
-                  },
-              ]
-            : []),
-    ];
+            return {
+                title,
+                href,
+                icon,
+                isActive: exact ? isCurrentUrl(href) : undefined,
+                mobile: mobile ?? false,
+            };
+        });
 }
