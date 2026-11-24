@@ -4,6 +4,12 @@ import { ChevronDown } from 'lucide-react';
 import { useId, useState } from 'react';
 import { ProjectDot } from '@/components/project-dot';
 import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
+import {
+    ColumnOrderStatus,
+    ReorderableColumnHeader,
+    columnOrderHeaderClassName,
+    useColumnOrder,
+} from '@/components/reorderable-column-header';
 import { useInitials } from '@/hooks/use-initials';
 import { formatDecimalHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -16,6 +22,21 @@ type Props = {
     currency: string;
 };
 
+const defaultColumnOrder = [
+    'Project breakdown',
+    'Billable',
+    'Amount',
+    'Total',
+] as const;
+type MemberProjectColumn = (typeof defaultColumnOrder)[number];
+
+const columnWidths: Record<MemberProjectColumn, string> = {
+    'Project breakdown': '',
+    Billable: 'w-36',
+    Amount: 'w-32',
+    Total: 'w-28',
+};
+
 export function MemberProjectTable({
     groups,
     members,
@@ -24,6 +45,13 @@ export function MemberProjectTable({
 }: Props) {
     const { auth } = usePage().props;
     const { t, intlLocale } = useTranslation();
+    const order = useColumnOrder({
+        storageKey: `timereport:report-member-project-column-order:${auth.user.id}`,
+        defaultOrder: defaultColumnOrder,
+        isVisible: (column) => showAmounts || column !== 'Amount',
+    });
+    const { columns } = order;
+    const projectColumnIndex = columns.indexOf('Project breakdown');
     const getInitials = useInitials();
     const tableId = useId();
     const [expandedMembers, setExpandedMembers] = useState<Set<string>>(
@@ -42,6 +70,22 @@ export function MemberProjectTable({
     );
     const hours = (seconds: number) => formatDecimalHours(seconds, intlLocale);
 
+    function metricValue(
+        column: Exclude<MemberProjectColumn, 'Project breakdown'>,
+        member: ReportGroup,
+    ) {
+        switch (column) {
+            case 'Billable':
+                return hours(member.billableSeconds);
+            case 'Amount':
+                return member.amount === null
+                    ? ''
+                    : formatMoney(member.amount, currency, intlLocale);
+            case 'Total':
+                return hours(member.seconds);
+        }
+    }
+
     function toggleMember(key: string) {
         setExpandedMembers((current) => {
             const next = new Set(current);
@@ -52,28 +96,39 @@ export function MemberProjectTable({
 
     return (
         <Table>
+            <ColumnOrderStatus announcement={order.announcement} />
             <Table.ScrollContainer>
                 <Table.Content
                     aria-label={t('Time per member and project')}
-                    className={`table-fixed ${showAmounts ? 'min-w-[760px]' : 'min-w-[632px]'}`}
+                    className={`table-fixed ${showAmounts ? 'min-w-[792px]' : 'min-w-[664px]'}`}
                     data-test="report-member-project-table"
                 >
-                    <Table.Header>
-                        <Table.Column isRowHeader className="w-40 lg:w-[18%]">
+                    <Table.Header className={columnOrderHeaderClassName}>
+                        <Table.Column
+                            isRowHeader
+                            className="w-40 text-sm lg:w-[18%]"
+                        >
                             {t('Member')}
                         </Table.Column>
-                        <Table.Column>{t('Project breakdown')}</Table.Column>
-                        <Table.Column className="w-28 text-right">
-                            {t('Billable')}
-                        </Table.Column>
-                        {showAmounts ? (
-                            <Table.Column className="w-32 text-right">
-                                {t('Amount')}
+                        {columns.map((column) => (
+                            <Table.Column
+                                key={column}
+                                id={column}
+                                textValue={t(column)}
+                                className={`text-sm whitespace-nowrap ${columnWidths[column]}`}
+                            >
+                                <ReorderableColumnHeader
+                                    order={order}
+                                    column={column}
+                                    label={t(column)}
+                                    className={
+                                        column === 'Project breakdown'
+                                            ? 'justify-start'
+                                            : 'justify-end'
+                                    }
+                                />
                             </Table.Column>
-                        ) : null}
-                        <Table.Column className="w-24 text-right">
-                            {t('Total')}
-                        </Table.Column>
+                        ))}
                         <Table.Column
                             className="w-12"
                             aria-label={t('Projects')}
@@ -99,6 +154,21 @@ export function MemberProjectTable({
                                 (member.key === String(auth.user.id)
                                     ? auth.user.avatar
                                     : null);
+
+                            function handleTooltipFocus(isOpen: boolean) {
+                                setActiveTooltip((current) => {
+                                    if (isOpen) {
+                                        return {
+                                            key: member.key,
+                                            source: 'focus',
+                                        };
+                                    }
+
+                                    return current?.key === member.key
+                                        ? null
+                                        : current;
+                                });
+                            }
 
                             const row = (
                                 <Table.Row
@@ -157,46 +227,34 @@ export function MemberProjectTable({
                                             </span>
                                         </span>
                                     </Table.Cell>
-                                    <Table.Cell className="relative">
-                                        <ProjectPreview
-                                            name={member.label}
-                                            projects={projects}
-                                            maxSeconds={maxSeconds}
-                                            isOpen={
-                                                activeTooltip?.key ===
-                                                member.key
-                                            }
-                                            onOpenChange={(isOpen) =>
-                                                setActiveTooltip((current) =>
-                                                    isOpen
-                                                        ? {
-                                                              key: member.key,
-                                                              source: 'focus',
-                                                          }
-                                                        : current?.key ===
-                                                            member.key
-                                                          ? null
-                                                          : current,
-                                                )
-                                            }
-                                        />
-                                    </Table.Cell>
-                                    <Table.Cell className="text-right whitespace-nowrap tabular-nums">
-                                        {hours(member.billableSeconds)}
-                                    </Table.Cell>
-                                    {showAmounts ? (
-                                        <Table.Cell className="text-right whitespace-nowrap tabular-nums">
-                                            {member.amount !== null &&
-                                                formatMoney(
-                                                    member.amount,
-                                                    currency,
-                                                    intlLocale,
-                                                )}
-                                        </Table.Cell>
-                                    ) : null}
-                                    <Table.Cell className="text-right font-semibold whitespace-nowrap tabular-nums">
-                                        {hours(member.seconds)}
-                                    </Table.Cell>
+                                    {columns.map((column) =>
+                                        column === 'Project breakdown' ? (
+                                            <Table.Cell
+                                                key={column}
+                                                className="relative"
+                                            >
+                                                <ProjectPreview
+                                                    name={member.label}
+                                                    projects={projects}
+                                                    maxSeconds={maxSeconds}
+                                                    isOpen={
+                                                        activeTooltip?.key ===
+                                                        member.key
+                                                    }
+                                                    onOpenChange={
+                                                        handleTooltipFocus
+                                                    }
+                                                />
+                                            </Table.Cell>
+                                        ) : (
+                                            <Table.Cell
+                                                key={column}
+                                                className={`text-right whitespace-nowrap tabular-nums ${column === 'Total' ? 'font-semibold' : ''}`}
+                                            >
+                                                {metricValue(column, member)}
+                                            </Table.Cell>
+                                        ),
+                                    )}
                                     <Table.Cell className="px-2 py-0 text-center">
                                         {canExpand && (
                                             <Button
@@ -238,9 +296,16 @@ export function MemberProjectTable({
                                 ? [
                                       row,
                                       <Table.Row key={detailsId} id={detailsId}>
-                                          <Table.Cell className="bg-surface-secondary" />
                                           <Table.Cell
-                                              colSpan={showAmounts ? 5 : 4}
+                                              colSpan={projectColumnIndex + 1}
+                                              className="bg-surface-secondary"
+                                          />
+                                          <Table.Cell
+                                              colSpan={
+                                                  columns.length -
+                                                  projectColumnIndex +
+                                                  1
+                                              }
                                               className="bg-surface-secondary"
                                           >
                                               <ProjectHours
@@ -338,18 +403,23 @@ function ProjectHours({
     const { intlLocale } = useTranslation();
 
     return (
-        <ul id={id} className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
-            {projects.map((project) => (
-                <li key={project.key} className="flex items-baseline gap-2">
-                    <ProjectDot color={project.color ?? 'var(--muted)'} />
-                    <span className="min-w-0 font-medium wrap-break-word">
-                        {project.label}
-                    </span>
-                    <span className="shrink-0 text-muted tabular-nums">
-                        {formatDecimalHours(project.seconds, intlLocale)}
-                    </span>
-                </li>
-            ))}
-        </ul>
+        <div className="@container">
+            <ul
+                id={id}
+                className="grid gap-x-5 gap-y-2 text-sm @sm:grid-cols-2"
+            >
+                {projects.map((project) => (
+                    <li key={project.key} className="flex items-baseline gap-2">
+                        <ProjectDot color={project.color ?? 'var(--muted)'} />
+                        <span className="min-w-0 font-medium wrap-break-word">
+                            {project.label}
+                        </span>
+                        <span className="shrink-0 text-muted tabular-nums">
+                            {formatDecimalHours(project.seconds, intlLocale)}
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }
