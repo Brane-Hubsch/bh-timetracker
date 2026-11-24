@@ -2,6 +2,7 @@ import { Avatar, Button } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import {
@@ -147,6 +148,18 @@ export default function TimeIndex({
     );
 
     const dates = weekDates(weekStart);
+    const openNewTime = () => {
+        const { hour } = Temporal.Now.plainDateTimeISO(timezone);
+
+        setDraft({
+            ...newDraft(
+                dates.includes(today) ? today : date,
+                entries,
+                member.id,
+            ),
+            start: minutesToTime(hour * 60),
+        });
+    };
     const weekTotal = entries.reduce(
         (sum, entry) => sum + entry.durationSeconds,
         0,
@@ -325,17 +338,7 @@ export default function TimeIndex({
                             isIconOnly
                             className="hidden md:inline-flex"
                             aria-label={t('Report time')}
-                            onPress={() =>
-                                setDraft(
-                                    newDraft(
-                                        date === today || dates.includes(today)
-                                            ? today
-                                            : date,
-                                        entries,
-                                        member.id,
-                                    ),
-                                )
-                            }
+                            onPress={openNewTime}
                             data-test="new-time-button"
                         >
                             <Plus className="size-4" />
@@ -403,15 +406,7 @@ export default function TimeIndex({
                 isIconOnly
                 className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden"
                 aria-label={t('Report time')}
-                onPress={() =>
-                    setDraft(
-                        newDraft(
-                            dates.includes(today) ? today : date,
-                            entries,
-                            member.id,
-                        ),
-                    )
-                }
+                onPress={openNewTime}
                 data-test="new-time-fab"
             >
                 <Plus className="size-6" />
