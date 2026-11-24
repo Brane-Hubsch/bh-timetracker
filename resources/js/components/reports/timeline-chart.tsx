@@ -15,6 +15,7 @@ type Props = {
     title?: string;
     projects?: TimelineProject[];
     headerAction?: ReactNode;
+    tall?: boolean;
 };
 
 type ProjectHours = TimelineProject & { seconds: number };
@@ -183,6 +184,7 @@ export function TimelineChart({
     title,
     projects,
     headerAction,
+    tall = false,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const axisRef = useRef<HTMLDivElement>(null);
@@ -201,6 +203,11 @@ export function TimelineChart({
     const barMaxWidth = projects
         ? 'max-w-[clamp(--spacing(6),75%,--spacing(24))]'
         : 'max-w-6';
+    const plotHeight = tall
+        ? 'h-[23.625rem]'
+        : projects
+          ? 'h-72'
+          : 'h-[14.4rem]';
 
     useEffect(() => {
         const axis = axisRef.current;
@@ -308,9 +315,7 @@ export function TimelineChart({
                 </div>
             )}
 
-            <div
-                className={`relative pl-10 ${projects ? 'h-72' : 'h-[14.4rem]'}`}
-            >
+            <div className={`relative pl-10 ${plotHeight}`}>
                 {gridlines.map((hours) => (
                     <div
                         key={hours}
