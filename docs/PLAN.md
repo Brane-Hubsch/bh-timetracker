@@ -145,6 +145,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 **Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 
 **Kalendervy** (veckovy är standard)
+- Plusknappen förifyller starttiden med början av den aktuella timmen i användarens tidszon. Varaktigheten hämtas från den senaste tidsposten som användaren sparade via plusknappen i den aktuella organisationen och webbläsaren. Sluttiden räknas ut från starttiden och varaktigheten. Samma förval gäller på dator och mobil.
 - Periodknappen visar namnet på dagen eller veckan med datum på raden under. Pilarna vid knappen stegar en dag eller vecka enligt vald vy.
 - Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare utan lägesbyte.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.

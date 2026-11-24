@@ -55,6 +55,7 @@ type Props = {
     recentTags: string[];
     /** Recently used project ids per member id, so the shortcuts follow the selected member. */
     recentProjects?: Record<string, string[]>;
+    onCreate?: (durationSeconds: number) => void;
     onDuplicate?: (draft: TimeEntryDraft) => void;
     /** Lets a new entry switch to registering absence instead. */
     absence?: AbsenceOptions;
@@ -117,6 +118,7 @@ export function TimeEntryForm({
     tags = [],
     recentTags,
     recentProjects,
+    onCreate,
     onDuplicate,
     absence,
 }: Props) {
@@ -274,7 +276,17 @@ export function TimeEntryForm({
         if (source?.id) {
             router.patch(update.url({ timeEntry: source.id }), data, options);
         } else {
-            router.post(store.url(), data, options);
+            router.post(store.url(), data, {
+                ...options,
+                onSuccess: () => {
+                    onCreate?.(
+                        current.end
+                            ? secondsBetween(current.start, current.end)
+                            : (parseDuration(duration) ?? 0),
+                    );
+                    requestOptions.onSuccess();
+                },
+            });
         }
     };
 
@@ -381,7 +393,9 @@ export function TimeEntryForm({
             isOpen={draft !== null}
             onOpenChange={(isOpen) => !isOpen && onClose()}
             dismissOnEscape={
-                draft?.fromCalendar && !isMemberPickerOpen && !isActionsMenuOpen
+                draft?.openedFrom === 'calendar' &&
+                !isMemberPickerOpen &&
+                !isActionsMenuOpen
                     ? values === source && !hasTyped && !processing
                     : undefined
             }

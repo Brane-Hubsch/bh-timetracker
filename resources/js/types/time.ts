@@ -38,7 +38,7 @@ export type TimeEntryMemberOption = {
 /** Values to start the time entry form with. */
 export type TimeEntryDraft = {
     id?: number;
-    fromCalendar?: boolean;
+    openedFrom?: 'calendar' | 'plus';
     userId: number;
     projectId: string;
     description: string;

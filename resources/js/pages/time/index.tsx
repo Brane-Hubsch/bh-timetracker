@@ -1,7 +1,8 @@
 import { Avatar, Button } from '@heroui/react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import {
@@ -11,7 +12,11 @@ import {
 import { CalendarPicker } from '@/components/time/calendar-picker';
 import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
-import { newDraft } from '@/components/time/drafts';
+import {
+    newDraft,
+    readPlusDurationMinutes,
+    savePlusDurationMinutes,
+} from '@/components/time/drafts';
 import {
     TimeEntryForm,
     draftFromEntry,
@@ -96,6 +101,8 @@ export default function TimeIndex({
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
+    const { auth, currentOrganization } = usePage().props;
+    const plusDurationKey = `time-report:plus-duration:${auth.user.id}:${currentOrganization?.id}`;
     const pageTitle = t(view === 'list' ? 'List' : 'Calendar');
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
@@ -142,6 +149,21 @@ export default function TimeIndex({
     );
 
     const dates = weekDates(weekStart);
+    const openNewTime = () => {
+        const start = Temporal.Now.plainDateTimeISO(timezone).hour * 60;
+        const duration = readPlusDurationMinutes(plusDurationKey);
+
+        setDraft({
+            ...newDraft(
+                dates.includes(today) ? today : date,
+                entries,
+                member.id,
+            ),
+            start: minutesToTime(start),
+            end: duration ? minutesToTime(start + duration) : '',
+            openedFrom: 'plus',
+        });
+    };
     const weekTotal = entries.reduce(
         (sum, entry) => sum + entry.durationSeconds,
         0,
@@ -321,17 +343,7 @@ export default function TimeIndex({
                             isIconOnly
                             className="hidden md:inline-flex"
                             aria-label={t('Report time')}
-                            onPress={() =>
-                                setDraft(
-                                    newDraft(
-                                        date === today || dates.includes(today)
-                                            ? today
-                                            : date,
-                                        entries,
-                                        member.id,
-                                    ),
-                                )
-                            }
+                            onPress={openNewTime}
                             data-test="new-time-button"
                         >
                             <Plus className="size-4" />
@@ -384,7 +396,7 @@ export default function TimeIndex({
                                     ),
                                     start: timeOf(start),
                                     end: timeOf(end),
-                                    fromCalendar: true,
+                                    openedFrom: 'calendar',
                                 })
                             }
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}
@@ -399,15 +411,7 @@ export default function TimeIndex({
                 isIconOnly
                 className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden"
                 aria-label={t('Report time')}
-                onPress={() =>
-                    setDraft(
-                        newDraft(
-                            dates.includes(today) ? today : date,
-                            entries,
-                            member.id,
-                        ),
-                    )
-                }
+                onPress={openNewTime}
                 data-test="new-time-fab"
             >
                 <Plus className="size-6" />
@@ -421,6 +425,15 @@ export default function TimeIndex({
                 recentTags={recentTags}
                 members={members}
                 recentProjects={recentProjects}
+                onCreate={
+                    draft?.openedFrom === 'plus'
+                        ? (seconds) =>
+                              savePlusDurationMinutes(
+                                  plusDurationKey,
+                                  Math.round(seconds / 60),
+                              )
+                        : undefined
+                }
                 absence={{
                     absenceTypes,
                     recentAbsenceTypes,
