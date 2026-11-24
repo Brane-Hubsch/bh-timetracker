@@ -70,7 +70,7 @@ it('shows the week of the signed-in user in their time zone', function (string $
             ->where('entries.0.durationSeconds', 5400)
             ->where('member.id', $this->member->id)
             ->where('members', [])
-            ->missing('previousWeek'));
+            ->missing('previousPeriodEntries'));
 })->with([
     'calendar' => ['calendar', 'week'],
     'day' => ['calendar?view=day', 'day'],
@@ -143,10 +143,10 @@ it('offers week copying only for an empty selected week with earlier entries', f
     entryFor($this->colleague, '2026-11-10 08:00', '2026-11-10 10:00');
 
     $this->actingAs($this->admin)
-        ->get(timeRoute('time.index', ['date' => '2026-11-18', 'view' => 'day', 'user' => $this->member->id]))
+        ->get(timeRoute('time.index', ['date' => '2026-11-18', 'user' => $this->member->id]))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('canCopyPreviousWeek', $canCopy)
-            ->missing('previousWeek'));
+            ->where('canCopyPreviousPeriod', $canCopy)
+            ->missing('previousPeriodEntries'));
 })->with([
     'both weeks empty' => [false, false, false],
     'only the previous week has entries' => [false, true, true],
@@ -160,9 +160,47 @@ it('loads the previous week on demand', function () {
     $this->actingAs($this->member)
         ->get(timeRoute('time.index', ['date' => '2026-11-17']))
         ->assertInertia(fn (Assert $page) => $page
-            ->reloadOnly('previousWeek', fn (Assert $reload) => $reload
-                ->has('previousWeek', 1)
-                ->where('previousWeek.0.id', $previous->id)));
+            ->reloadOnly('previousPeriodEntries', fn (Assert $reload) => $reload
+                ->has('previousPeriodEntries', 1)
+                ->where('previousPeriodEntries.0.id', $previous->id)));
+});
+
+it('offers day copying based on the selected member and the two days in view', function (bool $selectedDayHasEntries, bool $previousDayHasEntries, bool $canCopy) {
+    entryFor($this->member);
+    entryFor($this->colleague, '2026-11-17 07:00', '2026-11-17 08:00');
+
+    if ($selectedDayHasEntries) {
+        entryFor($this->member, '2026-11-18 07:00', '2026-11-18 08:00');
+    }
+
+    if ($previousDayHasEntries) {
+        entryFor($this->member, '2026-11-17 07:00', '2026-11-17 08:00');
+    }
+
+    $this->actingAs($this->admin)
+        ->get(timeRoute('time.index', ['date' => '2026-11-18', 'view' => 'day', 'user' => $this->member->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('canCopyPreviousPeriod', $canCopy)
+            ->missing('previousPeriodEntries'));
+})->with([
+    'both days empty' => [false, false, false],
+    'only the previous day has entries' => [false, true, true],
+    'only the selected day has entries' => [true, false, false],
+    'both days have entries' => [true, true, false],
+]);
+
+it('loads entries starting on the previous local day across a week boundary', function () {
+    $previous = entryFor($this->member, '2026-11-14 23:00', '2026-11-15 00:00');
+    entryFor($this->member, '2026-11-14 22:00', '2026-11-14 23:00');
+    entryFor($this->member, '2026-11-15 23:00', '2026-11-16 00:00');
+
+    $this->actingAs($this->member)
+        ->get(timeRoute('time.index', ['date' => '2026-11-16', 'view' => 'day']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->reloadOnly('previousPeriodEntries', fn (Assert $reload) => $reload
+                ->has('previousPeriodEntries', 1)
+                ->where('previousPeriodEntries.0.id', $previous->id)
+                ->where('previousPeriodEntries.0.date', '2026-11-15')));
 });
 
 it('lets admins view another member but not members', function () {
@@ -380,6 +418,10 @@ it('returns 404 for entries of another organization', function () {
         ->post(timeRoute('time.copy'), ['entry_ids' => [$foreign->id]])
         ->assertNotFound();
 
+    $this->actingAs($this->owner)
+        ->post(timeRoute('time.copy'), ['entry_ids' => [$foreign->id], 'target_day' => '2026-11-18'])
+        ->assertNotFound();
+
     expect(TimeEntry::query()->withoutGlobalScopes()->count())->toBe(1);
 });
 
@@ -401,12 +443,46 @@ it('copies selected entries to the following week', function () {
         ->and($copies[1]->started_at->utc()->format('Y-m-d H:i'))->toBe('2026-11-17 07:00');
 });
 
-it('forbids members to copy entries of others', function () {
+it('copies selected entries to the next local day across a daylight-saving change', function () {
+    $source = entryFor($this->member, '2026-03-28 08:00', '2026-03-28 10:00');
+    entryFor($this->member, '2026-03-28 10:00', '2026-03-28 11:00');
+    $day = timeRoute('time.index', ['date' => '2026-03-29', 'view' => 'day']);
+
+    $this->actingAs($this->member)
+        ->from($day)
+        ->post(timeRoute('time.copy'), ['entry_ids' => [$source->id], 'target_day' => '2026-03-29'])
+        ->assertRedirect($day)
+        ->assertSessionHasNoErrors();
+
+    $copy = TimeEntry::query()->where('started_at', '>=', '2026-03-29')->sole();
+
+    expect($copy->user_id)->toBe($source->user_id)
+        ->and($copy->project_id)->toBe($source->project_id)
+        ->and($copy->started_at->utc()->format('Y-m-d H:i'))->toBe('2026-03-29 07:00')
+        ->and($copy->ended_at->utc()->format('Y-m-d H:i'))->toBe('2026-03-29 09:00')
+        ->and($copy->duration_seconds)->toBe($source->duration_seconds);
+});
+
+it('rejects day copying when any source is outside the previous day', function () {
+    $previous = entryFor($this->member, '2026-11-17 08:00', '2026-11-17 10:00');
+    $older = entryFor($this->member);
+
+    $this->actingAs($this->member)
+        ->post(timeRoute('time.copy'), ['entry_ids' => [$previous->id, $older->id], 'target_day' => '2026-11-18'])
+        ->assertSessionHasErrors('entry_ids');
+
+    expect(TimeEntry::count())->toBe(2);
+});
+
+it('forbids members to copy entries of others', function (array $period) {
     $entry = entryFor($this->colleague, '2026-11-09 07:00', '2026-11-09 09:00');
 
     $this->actingAs($this->member)
-        ->post(timeRoute('time.copy'), ['entry_ids' => [$entry->id]])
+        ->post(timeRoute('time.copy'), ['entry_ids' => [$entry->id], ...$period])
         ->assertForbidden();
 
     expect(TimeEntry::count())->toBe(1);
-});
+})->with([
+    'week copy' => [[]],
+    'day copy' => [['target_day' => '2026-11-10']],
+]);
