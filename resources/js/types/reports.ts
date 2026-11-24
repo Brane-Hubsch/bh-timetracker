@@ -32,12 +32,16 @@ export type ReportMemberOption = SelectOption & {
     isInactive: boolean;
 };
 
-export type ReportClientOption = SelectOption & { logo: string | null };
+export type ReportClientOption = SelectOption & {
+    logo: string | null;
+    isArchived: boolean;
+};
 
 export type ReportProjectOption = SelectOption & {
     name: string;
     client: string | null;
     color: string;
+    isArchived: boolean;
 };
 
 export type ReportOptions = {

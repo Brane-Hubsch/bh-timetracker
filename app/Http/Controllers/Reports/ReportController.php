@@ -159,15 +159,20 @@ class ReportController extends Controller
     }
 
     /**
-     * @return array<int, array{value: string, label: string, logo: string|null}>
+     * @return array<int, array{value: string, label: string, logo: string|null, isArchived: bool}>
      */
     private function clientOptions(Organization $organization, User $viewer): array
     {
         return Client::query()
             ->whereIn('id', Project::query()->accessibleBy($viewer, $organization)->whereNotNull('client_id')->select('client_id'))
             ->orderBy('name')
-            ->get(['id', 'name', 'logo_path'])
-            ->map(fn (Client $client) => ['value' => (string) $client->id, 'label' => $client->name, 'logo' => $client->logoUrl(64)])
+            ->get(['id', 'name', 'logo_path', 'archived_at'])
+            ->map(fn (Client $client) => [
+                'value' => (string) $client->id,
+                'label' => $client->name,
+                'logo' => $client->logoUrl(64),
+                'isArchived' => $client->archived_at !== null,
+            ])
             ->values()
             ->all();
     }
@@ -176,7 +181,7 @@ class ReportController extends Controller
      * Projects the viewer can access, archived ones included (they still appear in reports). The label
      * includes the client; `name`, `client` and `color` are for the filter's list.
      *
-     * @return array<int, array{value: string, label: string, name: string, client: string|null, color: string}>
+     * @return array<int, array{value: string, label: string, name: string, client: string|null, color: string, isArchived: bool}>
      */
     private function projectOptions(Organization $organization, User $viewer): array
     {
@@ -191,6 +196,7 @@ class ReportController extends Controller
                 'name' => $project->name,
                 'client' => $project->client?->name,
                 'color' => $project->color,
+                'isArchived' => $project->archived_at !== null,
             ])
             ->values()
             ->all();

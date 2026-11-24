@@ -116,6 +116,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
         value: member.value,
         label: member.label,
         isMuted: member.isInactive,
+        isInactive: member.isInactive,
         leading: (
             <MemberAvatar name={member.label} src={member.avatar} size="md" />
         ),
@@ -127,6 +128,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
     const clients: FilterOption[] = options.clients.map((client) => ({
         value: client.value,
         label: client.label,
+        isInactive: client.isArchived,
         leading: <LogoImage src={client.logo} name={client.label} size={28} />,
     }));
     const clientLogos = new Map(
@@ -136,12 +138,17 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
     const projects: FilterOption[] = options.projects.map((project) => ({
         value: project.value,
         label: project.name,
+        isInactive: project.isArchived,
         detail: project.client ?? undefined,
         leading: <ProjectDot color={project.color} />,
     }));
     const projectColors = new Map(
         options.projects.map((project) => [project.value, project.color]),
     );
+    const archiveSections = {
+        active: t('Active (plural)'),
+        inactive: t('Archived (plural)'),
+    };
 
     const billableLabels: Record<string, string> = {
         all: t('All entries'),
@@ -174,6 +181,10 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                     <FilterChip
                         label={t('Members')}
                         options={members}
+                        statusSections={{
+                            active: archiveSections.active,
+                            inactive: t('Inactive (plural)'),
+                        }}
                         value={filters.members}
                         onChange={(value) => apply({ members: value })}
                         fitOptionLabels
@@ -200,6 +211,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                     <FilterChip
                         label={t('Clients')}
                         options={clients}
+                        statusSections={archiveSections}
                         value={filters.clients}
                         onChange={(value) => apply({ clients: value })}
                         renderPreview={(shown) => (
@@ -226,6 +238,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
                     <FilterChip
                         label={t('Projects')}
                         options={projects}
+                        statusSections={archiveSections}
                         value={filters.projects}
                         onChange={(value) => apply({ projects: value })}
                         activeLabel={
