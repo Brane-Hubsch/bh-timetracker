@@ -6,14 +6,14 @@ import {
     Dropdown,
     Input,
     Label,
+    Tabs,
     TextArea,
     TextField,
 } from '@heroui/react';
 import { router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
 import { Copy, EllipsisVertical, Trash2, UserRound } from 'lucide-react';
-import { useId, useState } from 'react';
-import { Button as AriaButton } from 'react-aria-components';
+import { useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
 import { TagInput } from '@/components/form/tag-input';
@@ -63,6 +63,8 @@ type Props = {
 
 const FORM_ID = 'time-entry-form';
 const MEMBER_ERROR_ID = 'time-entry-member-error';
+const reportModes = ['time', 'absence'] as const;
+type ReportMode = (typeof reportModes)[number];
 
 function durationOf(draft: TimeEntryDraft): string {
     return draft.end
@@ -124,7 +126,6 @@ export function TimeEntryForm({
 }: Props) {
     const { t } = useTranslation();
     const { auth, can } = usePage().props;
-    const modeHintId = useId();
     // The last opened draft: kept while the dialog animates out.
     const [source, setSource] = useState(draft);
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
@@ -134,7 +135,7 @@ export function TimeEntryForm({
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-    const [mode, setMode] = useState<'time' | 'absence' | null>(null);
+    const [mode, setMode] = useState<ReportMode | null>(null);
 
     // Start from the draft each time a new one is opened.
     if (draft && draft !== source) {
@@ -153,7 +154,8 @@ export function TimeEntryForm({
     const canSwitchMode = Boolean(absence) && !isEditing;
     const isAbsence = canSwitchMode && mode === 'absence';
     const [beforeType, afterType] = t('Report :type').split(':type');
-    const nextMode = isAbsence ? 'time' : 'absence';
+    const selectedMode = isAbsence ? 'absence' : 'time';
+    const ModePanel = canSwitchMode ? Tabs.Panel : 'div';
     const todayDate = today(auth.user.timezone).toString();
     const dateLabel =
         current?.date === todayDate
@@ -400,32 +402,51 @@ export function TimeEntryForm({
                     : undefined
             }
             title={
-                canSwitchMode ? (
-                    <>
-                        {beforeType}
-                        <AriaButton
-                            type="button"
-                            aria-describedby={modeHintId}
-                            className="-my-1 cursor-pointer rounded-sm py-1 underline decoration-accent decoration-2 underline-offset-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                            onPress={() => setMode(nextMode)}
+                isEditing
+                    ? t('Edit time')
+                    : t('Report :type', { type: t(selectedMode) })
+            }
+            headerContent={
+                canSwitchMode && (
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-xl/7 font-semibold">
+                        <span aria-hidden="true">{beforeType.trim()}</span>
+                        <Tabs.List
+                            aria-label={t('Report type')}
+                            className="min-w-0! gap-1.5 p-0"
                             data-test="time-entry-mode"
                         >
-                            {t(isAbsence ? 'absence' : 'time')}
-                        </AriaButton>
-                        {afterType}
-                        <span id={modeHintId} hidden>
-                            {t('Switch to :name', {
-                                name: t(
-                                    nextMode === 'time' ? 'Time' : 'Absence',
-                                ),
-                            })}
-                        </span>
-                    </>
-                ) : isEditing ? (
-                    t('Edit time')
-                ) : (
-                    t('Report time')
+                            {reportModes.map((reportMode) => (
+                                <Tabs.Tab
+                                    key={reportMode}
+                                    id={reportMode}
+                                    className="h-9 w-auto rounded-sm px-0 text-xl/7 font-semibold text-muted/88 decoration-accent decoration-2 underline-offset-3 hover:text-foreground hover:opacity-100 aria-selected:text-foreground aria-selected:underline"
+                                >
+                                    {t(reportMode)}
+                                </Tabs.Tab>
+                            ))}
+                        </Tabs.List>
+                        {afterType && (
+                            <span aria-hidden="true">{afterType.trim()}</span>
+                        )}
+                    </div>
                 )
+            }
+            wrapContent={
+                canSwitchMode
+                    ? (content) => (
+                          <Tabs
+                              className="contents"
+                              selectedKey={selectedMode}
+                              onSelectionChange={(key) =>
+                                  setMode(
+                                      key === 'absence' ? 'absence' : 'time',
+                                  )
+                              }
+                          >
+                              {content}
+                          </Tabs>
+                      )
+                    : undefined
             }
             closeInHeader
             desktopClassName="sm:max-w-xl"
@@ -507,7 +528,11 @@ export function TimeEntryForm({
             }
         >
             {current && (
-                <div className="grid gap-5">
+                <ModePanel
+                    key={selectedMode}
+                    id={canSwitchMode ? selectedMode : undefined}
+                    className="m-0 grid gap-5 p-0"
+                >
                     {isAbsence && absence ? (
                         <AbsenceForm
                             {...absence}
@@ -754,7 +779,7 @@ export function TimeEntryForm({
                             )}
                         </form>
                     )}
-                </div>
+                </ModePanel>
             )}
         </ResponsiveDialog>
     );
