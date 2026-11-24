@@ -65,6 +65,7 @@ export default function ReportsSummary({
                 unit={summary.timeline.unit}
                 buckets={summary.timeline.buckets}
                 projects={summary.timeline.projects}
+                tall={Boolean(filters.scale)}
                 headerAction={
                     filters.scale && (
                         <SegmentedControl
