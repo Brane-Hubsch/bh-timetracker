@@ -147,6 +147,8 @@ describes; propose additions instead of building them.
   new or moved frame or section. Fix any unintended overlap and check the layout again.
 - For every UI change, capture a screenshot of the updated interface in the running app and include
   it in the final response. Attach screenshots to pull requests only when the user asks for them.
+- When opening a local demo environment for the user, sign in with the seeded demo account from the
+  [README](../../README.md) and leave the requested view open.
 - Inertia 3 + React 19 + TypeScript (strict) + Tailwind CSS 4.
 - Typeface: Inter (400/500/600 from Bunny Fonts via `vite.config.ts`, `--font-sans` in `app.css`). PDFs
   embed the same family from `resources/fonts/inter` (Regular/Bold, OFL) with font subsetting.
