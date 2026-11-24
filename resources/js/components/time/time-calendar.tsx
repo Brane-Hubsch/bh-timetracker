@@ -9,6 +9,7 @@ import '@fullcalendar/react/themes/classic/theme.css';
 import { Tooltip } from '@heroui/react';
 import { Banknote, CalendarOff } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -32,6 +33,7 @@ type Props = {
     absences: Absence[];
     /** Colleagues' absence, shown as "Off · name". */
     colleaguesOff: ColleagueOff[];
+    footer?: ReactNode;
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
     /** Drag across days in the all-day row; the first and last day. */
@@ -50,8 +52,7 @@ type Props = {
 /**
  * Fills the viewport below the calendar's top edge, so it uses all available height whatever the
  * toolbar above it wraps to. It stops at the content area's bottom padding, which on mobile also
- * keeps it clear of the bottom navigation, so the page itself never scrolls. The returned height is
- * for the calendar inside the element, so the element's own border is left out of it.
+ * keeps it clear of the bottom navigation.
  */
 function useFillHeight(): [
     React.RefObject<HTMLDivElement | null>,
@@ -73,18 +74,10 @@ function useFillHeight(): [
             const bottomPadding = main
                 ? Number.parseFloat(getComputedStyle(main).paddingBottom)
                 : 0;
-            const { borderTopWidth, borderBottomWidth } =
-                getComputedStyle(element);
-            const borders =
-                Number.parseFloat(borderTopWidth) +
-                Number.parseFloat(borderBottomWidth);
-
             setHeight(
                 Math.max(
-                    240,
-                    Math.floor(
-                        window.innerHeight - top - bottomPadding - borders,
-                    ),
+                    242,
+                    Math.floor(window.innerHeight - top - bottomPadding),
                 ),
             );
         };
@@ -127,6 +120,7 @@ export function TimeCalendar({
     entries,
     absences,
     colleaguesOff,
+    footer,
     onSelect,
     onSelectDays,
     onEdit,
@@ -191,8 +185,9 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            className="time-calendar overflow-hidden rounded-2xl border border-separator bg-surface"
+            className="time-calendar grid grid-rows-[minmax(0,1fr)_auto] overflow-hidden rounded-2xl border border-separator bg-surface"
             data-view={view}
+            style={{ height }}
         >
             <FullCalendar
                 ref={calendarRef}
@@ -233,7 +228,7 @@ export function TimeCalendar({
                     </Tooltip>
                 )}
                 nowIndicator
-                height={height}
+                height="100%"
                 // Leave space above 07:00 for its label to straddle the grid line.
                 scrollTime="06:30:00"
                 slotDuration="00:30:00"
@@ -615,6 +610,11 @@ export function TimeCalendar({
                     }
                 }}
             />
+            {footer && (
+                <div className="flex justify-center border-t border-separator p-2">
+                    {footer}
+                </div>
+            )}
         </div>
     );
 }
