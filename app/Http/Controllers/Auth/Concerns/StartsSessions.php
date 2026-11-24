@@ -21,7 +21,7 @@ trait StartsSessions
      */
     protected function startSession(Request $request, User $user): void
     {
-        Auth::login($user, remember: true);
+        Auth::login($user);
 
         $request->session()->regenerate();
         $request->session()->passwordConfirmed();

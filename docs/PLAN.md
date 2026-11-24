@@ -109,6 +109,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 - **Fortsätt med Google** (Socialite). Matcha på verifierad e-post; koppla `google_id`.
 - **Passkey**: logga in med passkey (gärna med autofill/conditional UI). Hantera passkeys under Inställningar → Säkerhet (lägga till, döpa om, ta bort).
+- **Webbsession**: varje webbförfrågan förnyar en aktiv session. Inloggningen upphör efter 14 dagars inaktivitet som standard (`SESSION_LIFETIME` i minuter).
 - **Registrering utan Google**: namn + e-post → verifieringslänk (magic link) → skapa passkey.
 - **Återställning**: "Jag har tappat min passkey" → magic link till e-post → registrera ny passkey.
 - Stäng av Fortifys lösenordsfunktioner (registrering med lösenord, reset, 2FA/TOTP – passkeys ersätter det).
