@@ -33,8 +33,9 @@ You need:
 - **An SMTP account** for outgoing email. Everyone signs in with passkeys, Google or an emailed link,
   and new users join through emailed invitations, so the app does not work without email. Any SMTP
   provider works (Postmark, Resend, Amazon SES, Mailgun, your own mail server, ...).
-- **An S3-compatible bucket** for the nightly backups, e.g. Cloudflare R2, Amazon S3 or Backblaze B2.
-  Strongly recommended: without it the backups fail every night and you get an email about it.
+- **Recommended:** an S3-compatible bucket for the nightly backups, e.g. Cloudflare R2, Amazon S3 or
+  Backblaze B2. Backups are optional, but without them a lost server means lost data.
+  See [Backups](#backups).
 - **Optional:** a Google Cloud OAuth client if you want "Sign in with Google".
 
 Good to know before you start:
@@ -67,7 +68,7 @@ Also needed for a working installation:
 | Variables                                                              | Purpose                                                                                                                            |
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`             | Your SMTP account. Keep `MAIL_MAILER=smtp`.                                                                                        |
-| `BACKUP_AWS_*`, `BACKUP_ARCHIVE_PASSWORD`, `BACKUP_NOTIFICATION_EMAIL` | Nightly backups, see [Backups](#backups).                                                                                          |
+| `BACKUP_AWS_*`, `BACKUP_ARCHIVE_PASSWORD`, `BACKUP_NOTIFICATION_EMAIL` | Nightly backups (optional, recommended), see [Backups](#backups).                                                                  |
 | `APP_NAME`                                                             | The name shown in the app and in emails (default "BH Timetracker"). It is built into the frontend, so changing it needs a rebuild. |
 
 Optional:
@@ -210,6 +211,11 @@ a month for a year. At 08:00 the scheduler checks that the newest backup is less
 not much smaller than the previous one. Failures and suspicious backups are emailed to
 `BACKUP_NOTIFICATION_EMAIL`. Settings: [`config/backup.php`](../config/backup.php).
 
+Backups are optional. They run when `BACKUP_AWS_BUCKET` is set and are off otherwise, so an
+installation without a bucket gets no failure emails. To pause them while a bucket is configured, set
+`BACKUP_ENABLED=false`. Without backups, the `postgres` and `storage` volumes hold the only copy of
+your data: back them up some other way, e.g. with snapshots of the server.
+
 ### Set up
 
 1. Create a **private** bucket and an API token that can only read and write that bucket.
@@ -269,7 +275,8 @@ New versions arrive on the `main` branch. Before you upgrade:
 
 1. Read what changed since your version, especially new files in `database/migrations/`, changes to
    `compose.yaml` and new variables in `.env.production.example`.
-2. Take a fresh backup and check that it is in the bucket:
+2. Take a fresh backup and check that it is in the bucket (or snapshot the server if you run without
+   backups):
 
     ```bash
     docker compose exec scheduler php artisan backup:run
