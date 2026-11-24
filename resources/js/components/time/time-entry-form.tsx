@@ -412,7 +412,7 @@ export function TimeEntryForm({
                         <span aria-hidden="true">{beforeType.trim()}</span>
                         <Tabs.List
                             aria-label={t('Report type')}
-                            className="min-w-0! gap-2 p-0"
+                            className="min-w-0! gap-1.5 p-0"
                             data-test="time-entry-mode"
                         >
                             {reportModes.map((reportMode) => (
