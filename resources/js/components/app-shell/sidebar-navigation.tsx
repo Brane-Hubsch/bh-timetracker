@@ -300,7 +300,7 @@ export function SidebarNavigation({
                                         (!drag && hovered === title) ||
                                         undefined
                                     }
-                                    className="pointer-events-none absolute end-2 top-1/2 flex size-6 -translate-y-1/2 cursor-grab touch-none items-center justify-center rounded-md text-muted opacity-0 transition-opacity duration-150 hover:bg-default hover:text-foreground focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none aria-pressed:cursor-grabbing data-visible:pointer-events-auto data-visible:opacity-100 motion-reduce:transition-none [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
+                                    className="pointer-events-none absolute end-2 top-1/2 flex size-6 -translate-y-1/2 cursor-grab touch-none items-center justify-center rounded-md text-muted opacity-0 transition-opacity duration-150 hover:bg-default hover:text-foreground focus-visible:pointer-events-auto focus-visible:opacity-70 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none aria-pressed:cursor-grabbing data-visible:pointer-events-auto data-visible:opacity-70 motion-reduce:transition-none [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-70"
                                     onPointerDown={(event) => {
                                         if (
                                             event.button !== 0 ||
