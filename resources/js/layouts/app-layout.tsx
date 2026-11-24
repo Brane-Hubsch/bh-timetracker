@@ -5,6 +5,7 @@ import {
     MobileBottomNav,
     MobileTopBar,
 } from '@/components/app-shell/mobile-navigation';
+import { useRefreshOnReturn } from '@/hooks/use-refresh-on-return';
 import { useTranslation } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
 import type { AppLayoutProps, ContentWidth } from '@/types';
@@ -17,7 +18,7 @@ const WIDTHS: Record<ContentWidth, string> = {
 /**
  * Authenticated app shell: sidebar on desktop, top bar + bottom navigation on mobile, and the ⌘K
  * command palette. Pages that benefit from wide screens (calendar, reports) set the `wide` width
- * through layout props.
+ * through layout props. The page's data is reloaded when the user comes back after a while.
  */
 export default function AppLayout({
     breadcrumbs = [],
@@ -26,6 +27,8 @@ export default function AppLayout({
     children,
 }: AppLayoutProps) {
     const { t } = useTranslation();
+    // Show time reported elsewhere when the user comes back to the app.
+    useRefreshOnReturn();
 
     return (
         <CommandPaletteProvider>

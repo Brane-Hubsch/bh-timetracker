@@ -710,6 +710,10 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 - **Inget saldo** (semesterdagar kvar) och inget attestflöde i den här versionen.
 - **Kod:** `App\Actions\Absences` (`CreateAbsence`, `UpdateAbsence`, `DeleteAbsence`, gemensamma regler i `ValidatesAbsences`), `App\Support\AbsenceTime`, `AbsencePresenter` och `AbsenceController`.
 
+### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
+
+Beställt i efterhand. När man kommer tillbaka till appen (fliken blir synlig eller fönstret får fokus) efter minst 30 sekunder borta laddas sidans data om i bakgrunden (`useRefreshOnReturn` i `AppLayout`). Då syns tid som rapporterats på en annan enhet eller via MCP utan att man laddar om sidan. Omladdningen behåller sidans tillstånd och scrollposition, visar ingen förloppsindikator, görs inte när man är offline och rensar förhämtade sidor (`router.flushAll()`), eftersom de kan vara lika gamla.
+
 ### Tillägg efter Fas 6: Coolify (2026-11-20)
 
 Beställt i efterhand: produktionsstacken ska fungera i [Coolify](https://coolify.io) som en applikation med byggpaketet Docker Compose. Samma `compose.yaml` används i Coolify och på egen server.

@@ -443,3 +443,29 @@ describe('reports', function () {
             ]);
     });
 });
+
+describe('rates for members', function () {
+    it('never gives members rates or amounts, from any tool', function () {
+        $entry = mcpEntry($this->member, $this->webbshop, '2026-11-16 07:00', 90);
+        $member = TimetrackerServer::actingAs($this->member);
+        $hidesMoney = fn ($response) => $response->assertOk()
+            ->assertDontSee('hourly_rate')
+            ->assertDontSee('"amount"')
+            ->assertDontSee('1100')
+            ->assertDontSee('SEK');
+
+        $member->tool(GetContextTool::class)->assertStructuredContentPath('organization.permissions.see_rates_and_amounts', false);
+        $hidesMoney($member->tool(ListTimeEntriesTool::class));
+        $hidesMoney($member->tool(GetReportTool::class, ['group_by' => 'project']));
+        $hidesMoney($member->tool(ListProjectsTool::class));
+        $hidesMoney($member->tool(GetProjectStatusTool::class));
+        $hidesMoney($member->tool(CreateTimeEntriesTool::class, ['entries' => [
+            ['project' => 'Webbshop', 'date' => '2026-11-17', 'start' => '09:00', 'duration' => '1'],
+        ]]));
+        $hidesMoney($member->tool(UpdateTimeEntryTool::class, ['id' => $entry->id, 'description' => 'Ny']));
+        $hidesMoney($member->tool(DeleteTimeEntryTool::class, ['id' => $entry->id]));
+
+        // Members can't set rates either.
+        $member->tool(CreateProjectTool::class, ['name' => 'Eget', 'hourly_rate' => 2000])->assertHasErrors();
+    });
+});
