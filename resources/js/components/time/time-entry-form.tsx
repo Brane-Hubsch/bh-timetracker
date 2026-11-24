@@ -414,7 +414,7 @@ export function TimeEntryForm({
                 )
             }
             closeInHeader
-            desktopClassName="sm:max-w-[40rem]"
+            desktopClassName="sm:max-w-xl"
             containerClassName={
                 isEditing
                     ? 'data-[entering=true]:animate-fade-in! motion-reduce:data-[entering=true]:animate-none!'
@@ -572,7 +572,7 @@ export function TimeEntryForm({
                             />
 
                             <div className="grid gap-2">
-                                <div className="grid gap-3 md:grid-cols-[10rem_17.25rem_minmax(0,1fr)]">
+                                <div className="grid gap-3 md:grid-cols-[9rem_15.25rem_minmax(0,1fr)]">
                                     <DatePickerField
                                         label={t('Date')}
                                         value={current.date}
