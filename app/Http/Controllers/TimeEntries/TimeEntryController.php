@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntries\CopyTimeEntriesRequest;
 use App\Http\Requests\TimeEntries\TimeEntryRequest;
 use App\Models\Absence;
+use App\Models\Holiday;
 use App\Models\Organization;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -65,6 +66,7 @@ class TimeEntryController extends Controller
             ->get();
 
         $periodStart = $view === 'day' ? $date : $weekStart;
+        $periodEnd = $view === 'day' ? $date->addDay() : $weekEnd;
         $previousPeriodStart = $view === 'day' ? $date->subDay() : $weekStart->subWeek();
         $periodEntries = $view === 'day'
             ? $entries->filter(fn (TimeEntry $entry) => $entry->started_at->setTimezone($timezone)->isSameDay($date))
@@ -102,6 +104,12 @@ class TimeEntryController extends Controller
             'workdaySeconds' => $organization->workday_seconds,
             // So the absence dialog can count working days in periods around the week.
             'holidays' => HolidayDates::between($organization->id, $weekStart->subYear(), $weekStart->addYear()),
+            'calendarHolidays' => fn () => $view === 'list' ? [] : $organization->holidays()
+                ->whereDate('date', '>=', $periodStart->toDateString())
+                ->whereDate('date', '<', $periodEnd->toDateString())
+                ->orderBy('date')
+                ->get(['date', 'name'])
+                ->map(fn (Holiday $holiday) => ['date' => $holiday->date->toDateString(), 'name' => $holiday->name]),
             'projects' => $this->presenter->projectOptions($organization, $member),
             'tags' => $this->presenter->tagOptions($organization),
             'recentTags' => $this->presenter->recentTags($organization),

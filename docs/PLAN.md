@@ -692,6 +692,7 @@ Beställt i efterhand. Helgdagarna ligger i databasen per organisation (`holiday
 - **Hantera:** ägare och admin (rättigheten `UpdateOrganization`) ser avsnittet Helgdagar i organisationsinställningarna. Där listas dagarna från innevarande år, grupperade per år. Man kan lägga till egna dagar (datum och namn, t.ex. en kick-off), ta bort dagar och fylla på med svenska helgdagar för ett valt år (i år och två år framåt). Påfyllningen hoppar över datum som redan finns, även om de har ett annat namn.
 - **Svenska helgdagar** (`App\Support\SwedishHolidays`): de helgdagar som kan infalla på en vardag samt midsommar-, jul- och nyårsafton. Påsken räknas fram utan calendar-tillägget. Namnen sparas på svenska.
 - **Från start:** nya organisationer får svenska helgdagar för innevarande och nästa år (`CreateOrganization`). Migreringen gav befintliga organisationer 2026 och 2027.
+- **Kalender:** sparade helgdagar visas med namn som röda taggar överst i rätt dagskolumn i vecko- och dagvyn. Taggarna ligger kvar när tiderna scrollas, och den första tidsrutan vid 00:00 går att markera när man scrollar hela vägen upp.
 - **Används** av projektsidans arbetsdagar (`EstimatePace`) och av frånvaro (se nedan). Lördag och söndag räknas aldrig som arbetsdagar.
 - **Kod:** `App\Actions\Holidays` (`CreateHoliday`, `DeleteHoliday`, `AddSwedishHolidays`) och `OrganizationHolidayController`. Andra organisationers helgdagar ger 404.
 
