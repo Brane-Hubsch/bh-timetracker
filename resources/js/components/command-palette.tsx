@@ -63,7 +63,7 @@ import {
 import { edit as editSecurity } from '@/routes/security';
 import { index as tagsIndex } from '@/routes/tags';
 import { index as teamIndex } from '@/routes/team';
-import { index as timeIndex } from '@/routes/time';
+import { index as timeIndex, list as timeList } from '@/routes/time';
 
 type PaletteData = {
     projects: {
@@ -407,13 +407,13 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     label: t('Calendar'),
                     keywords: t('week time'),
                     icon: CalendarDays,
-                    perform: go(time({ view: 'week' })),
+                    perform: go(timeIndex.url(slug)),
                 },
                 {
                     id: 'go-time-list',
                     label: t('Time list'),
                     icon: List,
-                    perform: go(time({ view: 'list' })),
+                    perform: go(timeList.url(slug)),
                 },
                 {
                     id: 'go-reports',

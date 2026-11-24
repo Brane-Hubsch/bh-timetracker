@@ -18,6 +18,8 @@ use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+// Fortify can send verified users directly to its unscoped home path.
+Route::get('calendar', HomeController::class);
 
 require __DIR__.'/auth.php';
 
@@ -26,7 +28,9 @@ Route::prefix('{current_organization}')
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
 
-        Route::get('time', [TimeEntryController::class, 'index'])->name('time.index');
+        Route::get('calendar', [TimeEntryController::class, 'index'])->name('time.index');
+        Route::get('list', [TimeEntryController::class, 'index'])->name('time.list');
+        Route::get('time', [TimeEntryController::class, 'redirectLegacyIndex']);
         Route::post('time', [TimeEntryController::class, 'store'])->name('time.store');
         Route::post('time/copy', [TimeEntryController::class, 'copy'])->name('time.copy');
         Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');

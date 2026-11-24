@@ -1,5 +1,5 @@
 import { Avatar, Button } from '@heroui/react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
@@ -30,7 +30,7 @@ import {
     weekDates,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { index, update } from '@/routes/time';
+import { index, list, update } from '@/routes/time';
 import type {
     Absence,
     AbsenceDraft,
@@ -46,6 +46,7 @@ import type {
 type View = 'list' | 'week' | 'day';
 
 type Props = {
+    view: View;
     date: string;
     today: string;
     weekStart: string;
@@ -71,6 +72,7 @@ type Props = {
 };
 
 export default function TimeIndex({
+    view,
     date,
     today,
     weekStart,
@@ -94,13 +96,6 @@ export default function TimeIndex({
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
-    const { url } = usePage();
-    const params = new URLSearchParams(url.split('?')[1] ?? '');
-    const requestedView = params.get('view');
-    const view: View =
-        requestedView === 'day' || requestedView === 'list'
-            ? requestedView
-            : 'week';
     const pageTitle = t(view === 'list' ? 'List' : 'Calendar');
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
@@ -155,19 +150,20 @@ export default function TimeIndex({
         .filter((entry) => entry.date === date)
         .reduce((sum, entry) => sum + entry.durationSeconds, 0);
 
-    const visit = (changes: { date?: string; view?: View; user?: number }) =>
-        router.get(
-            index.url(),
+    const visit = (changes: { date?: string; view?: View; user?: number }) => {
+        const nextView = changes.view ?? view;
+        const route = nextView === 'list' ? list : index;
+
+        return router.get(
+            route.url(),
             {
                 date: changes.date ?? date,
-                view: changes.view ?? view,
-                user:
-                    (changes.user ?? member.id) === undefined
-                        ? undefined
-                        : (changes.user ?? member.id),
+                ...(nextView === 'day' ? { view: nextView } : {}),
+                user: changes.user ?? member.id,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
+    };
 
     const step = view === 'day' ? 1 : 7;
 
