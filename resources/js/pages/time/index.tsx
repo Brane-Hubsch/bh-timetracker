@@ -1,4 +1,4 @@
-import { Avatar, Button, CloseButton } from '@heroui/react';
+import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -107,9 +107,6 @@ export default function TimeIndex({
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
-    const [dismissedCopyWeeks, setDismissedCopyWeeks] = useState(
-        () => new Set<string>(),
-    );
     const [absenceDraft, setAbsenceDraft] = useState<AbsenceDraft | null>(null);
     const newAbsence = (startsOn: string, endsOn = startsOn) =>
         setAbsenceDraft({
@@ -174,37 +171,30 @@ export default function TimeIndex({
     const dayTotal = entries
         .filter((entry) => entry.date === date)
         .reduce((sum, entry) => sum + entry.durationSeconds, 0);
-    const copyWeekKey = `${currentOrganization?.id}:${member.id}:${weekStart}`;
-    const copySuggestion = canCopyPreviousWeek &&
-        !dismissedCopyWeeks.has(copyWeekKey) && (
-            <div className="flex shrink-0 items-center gap-1">
+    const copyWeekButton = canCopyPreviousWeek && (
+        <Tooltip delay={350} closeDelay={0}>
+            <Tooltip.Trigger role="presentation" tabIndex={-1} className="flex">
                 <Button
+                    isIconOnly
                     variant="tertiary"
+                    size={view === 'list' ? 'md' : 'lg'}
+                    className={view === 'list' ? undefined : 'shadow-lg'}
                     onPress={() => setCopyOpen(true)}
                     aria-label={t('Copy previous week')}
                     data-test="copy-week-button"
                 >
-                    <Copy className="size-4" />
-                    <span
-                        className={
-                            view === 'list' ? 'hidden lg:inline' : undefined
-                        }
-                    >
-                        {t('Copy previous week')}
-                    </span>
+                    <Copy aria-hidden="true" />
                 </Button>
-                <CloseButton
-                    slot={null}
-                    aria-label={t('Dismiss copy suggestion')}
-                    className="size-9 rounded-full border-6 border-transparent bg-clip-padding"
-                    onPress={() =>
-                        setDismissedCopyWeeks((weeks) =>
-                            new Set(weeks).add(copyWeekKey),
-                        )
-                    }
-                />
-            </div>
-        );
+            </Tooltip.Trigger>
+            <Tooltip.Content
+                placement={view === 'list' ? 'bottom' : 'left'}
+                showArrow
+            >
+                <Tooltip.Arrow />
+                {t('Copy entries from the previous week')}
+            </Tooltip.Content>
+        </Tooltip>
+    );
 
     const visit = (changes: { date?: string; view?: View; user?: number }) => {
         const nextView = changes.view ?? view;
@@ -359,7 +349,7 @@ export default function TimeIndex({
                                 data-test="member-select"
                             />
                         )}
-                        {view === 'list' && copySuggestion}
+                        {view === 'list' && copyWeekButton}
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"
@@ -404,7 +394,7 @@ export default function TimeIndex({
                             entries={entries}
                             absences={absences}
                             colleaguesOff={colleaguesOff}
-                            footer={copySuggestion}
+                            floatingAction={copyWeekButton}
                             onSelectDays={newAbsence}
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
@@ -434,8 +424,8 @@ export default function TimeIndex({
                 className={cn(
                     'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
                     view !== 'list' &&
-                        copySuggestion &&
-                        'max-[379px]:bottom-[calc(11rem+env(safe-area-inset-bottom))]',
+                        canCopyPreviousWeek &&
+                        'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',
                 )}
                 aria-label={t('Report time')}
                 onPress={openNewTime}
