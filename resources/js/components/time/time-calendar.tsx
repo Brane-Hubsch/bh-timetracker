@@ -9,6 +9,7 @@ import '@fullcalendar/react/themes/classic/theme.css';
 import { Tooltip } from '@heroui/react';
 import { Banknote, CalendarOff } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -32,6 +33,7 @@ type Props = {
     absences: Absence[];
     /** Colleagues' absence, shown as "Off · name". */
     colleaguesOff: ColleagueOff[];
+    floatingAction?: ReactNode;
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
     /** Drag across days in the all-day row; the first and last day. */
@@ -127,6 +129,7 @@ export function TimeCalendar({
     entries,
     absences,
     colleaguesOff,
+    floatingAction,
     onSelect,
     onSelectDays,
     onEdit,
@@ -191,7 +194,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            className="time-calendar overflow-hidden rounded-2xl border border-separator bg-surface"
+            className="time-calendar relative overflow-hidden rounded-2xl border border-separator bg-surface"
             data-view={view}
         >
             <FullCalendar
@@ -615,6 +618,11 @@ export function TimeCalendar({
                     }
                 }}
             />
+            {floatingAction && (
+                <div className="absolute end-4 bottom-4 z-10 flex">
+                    {floatingAction}
+                </div>
+            )}
         </div>
     );
 }

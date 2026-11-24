@@ -15,6 +15,7 @@ class CopyTimeEntriesRequest extends FormRequest
         return [
             'entry_ids' => ['required', 'array', 'min:1', 'max:200'],
             'entry_ids.*' => ['integer', 'distinct'],
+            'target_day' => ['sometimes', 'required', 'date_format:Y-m-d'],
         ];
     }
 

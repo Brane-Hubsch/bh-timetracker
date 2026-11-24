@@ -1,4 +1,4 @@
-import { Avatar, Button } from '@heroui/react';
+import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +10,7 @@ import {
     draftFromAbsence,
 } from '@/components/time/absence-dialog';
 import { CalendarPicker } from '@/components/time/calendar-picker';
-import { CopyWeekDialog } from '@/components/time/copy-week-dialog';
+import { CopyPeriodDialog } from '@/components/time/copy-period-dialog';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import {
     newDraft,
@@ -72,8 +72,8 @@ type Props = {
     members: TimeEntryMemberOption[];
     /** Recently used project ids per member id (owners and admins). */
     recentProjects: Record<string, string[]>;
-    canCopyPreviousWeek: boolean;
-    previousWeek?: TimeEntry[];
+    canCopyPreviousPeriod: boolean;
+    previousPeriodEntries?: TimeEntry[];
 };
 
 export default function TimeIndex({
@@ -96,8 +96,8 @@ export default function TimeIndex({
     member,
     members,
     recentProjects,
-    canCopyPreviousWeek,
-    previousWeek,
+    canCopyPreviousPeriod,
+    previousPeriodEntries,
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
@@ -171,6 +171,38 @@ export default function TimeIndex({
     const dayTotal = entries
         .filter((entry) => entry.date === date)
         .reduce((sum, entry) => sum + entry.durationSeconds, 0);
+    const copyPeriodButton = canCopyPreviousPeriod && (
+        <Tooltip delay={350} closeDelay={0}>
+            <Tooltip.Trigger role="presentation" tabIndex={-1} className="flex">
+                <Button
+                    isIconOnly
+                    variant="tertiary"
+                    size={view === 'list' ? 'md' : 'lg'}
+                    className={view === 'list' ? undefined : 'shadow-lg'}
+                    onPress={() => setCopyOpen(true)}
+                    aria-label={t(
+                        view === 'day'
+                            ? 'Copy previous day'
+                            : 'Copy previous week',
+                    )}
+                    data-test="copy-week-button"
+                >
+                    <Copy aria-hidden="true" />
+                </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content
+                placement={view === 'list' ? 'bottom' : 'left'}
+                showArrow
+            >
+                <Tooltip.Arrow />
+                {t(
+                    view === 'day'
+                        ? 'Copy entries from the previous day'
+                        : 'Copy entries from the previous week',
+                )}
+            </Tooltip.Content>
+        </Tooltip>
+    );
 
     const visit = (changes: { date?: string; view?: View; user?: number }) => {
         const nextView = changes.view ?? view;
@@ -325,20 +357,7 @@ export default function TimeIndex({
                                 data-test="member-select"
                             />
                         )}
-                        {canCopyPreviousWeek && (
-                            <Button
-                                variant="tertiary"
-                                className="shrink-0"
-                                onPress={() => setCopyOpen(true)}
-                                aria-label={t('Copy previous week')}
-                                data-test="copy-week-button"
-                            >
-                                <Copy className="size-4" />
-                                <span className="hidden lg:inline">
-                                    {t('Copy previous week')}
-                                </span>
-                            </Button>
-                        )}
+                        {view === 'list' && copyPeriodButton}
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"
@@ -383,6 +402,7 @@ export default function TimeIndex({
                             entries={entries}
                             absences={absences}
                             colleaguesOff={colleaguesOff}
+                            floatingAction={copyPeriodButton}
                             onSelectDays={newAbsence}
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
@@ -409,7 +429,12 @@ export default function TimeIndex({
             {/* Big "+" on mobile. */}
             <Button
                 isIconOnly
-                className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden"
+                className={cn(
+                    'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
+                    view !== 'list' &&
+                        canCopyPreviousPeriod &&
+                        'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',
+                )}
                 aria-label={t('Report time')}
                 onPress={openNewTime}
                 data-test="new-time-fab"
@@ -469,10 +494,11 @@ export default function TimeIndex({
                 workdaySeconds={workdaySeconds}
             />
 
-            <CopyWeekDialog
+            <CopyPeriodDialog
                 isOpen={isCopyOpen}
                 onOpenChange={setCopyOpen}
-                entries={previousWeek}
+                targetDay={view === 'day' ? date : undefined}
+                entries={previousPeriodEntries}
             />
         </>
     );

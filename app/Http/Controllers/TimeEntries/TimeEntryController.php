@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\TimeEntries;
 
-use App\Actions\TimeEntries\CreateTimeEntries;
+use App\Actions\TimeEntries\CopyTimeEntries;
 use App\Actions\TimeEntries\CreateTimeEntry;
 use App\Actions\TimeEntries\DeleteTimeEntry;
 use App\Actions\TimeEntries\RestoreTimeEntry;
 use App\Actions\TimeEntries\UpdateTimeEntry;
-use App\Data\TimeEntryData;
 use App\Enums\AbsenceType;
 use App\Enums\OrganizationPermission;
 use App\Http\Controllers\Controller;
@@ -48,6 +47,11 @@ class TimeEntryController extends Controller
         $member = $this->selectedMember($request, $user, $organization);
         $timezone = $user->timezone;
 
+        $view = match (true) {
+            $request->routeIs('time.list') => 'list',
+            $request->query('view') === 'day' => 'day',
+            default => 'week',
+        };
         $date = $this->parseDate($request->string('date')->value(), $timezone);
         $weekStartsOn = $organization->memberships()->where('user_id', $member->id)->first()?->week_starts_on;
         $weekStart = $this->presenter->weekStart($date, $organization, $weekStartsOn);
@@ -60,9 +64,14 @@ class TimeEntryController extends Controller
             ->orderBy('started_at')
             ->get();
 
-        $previousWeek = TimeEntry::query()
+        $periodStart = $view === 'day' ? $date : $weekStart;
+        $previousPeriodStart = $view === 'day' ? $date->subDay() : $weekStart->subWeek();
+        $periodEntries = $view === 'day'
+            ? $entries->filter(fn (TimeEntry $entry) => $entry->started_at->setTimezone($timezone)->isSameDay($date))
+            : $entries;
+        $previousPeriod = TimeEntry::query()
             ->where('user_id', $member->id)
-            ->startingBetween($weekStart->subWeek(), $weekStart);
+            ->startingBetween($previousPeriodStart, $periodStart);
 
         // Absences in the week: the shown member's in full, colleagues' only as "off".
         $weekAbsences = Absence::query()
@@ -79,11 +88,7 @@ class TimeEntryController extends Controller
             : [];
 
         return Inertia::render('time/index', [
-            'view' => match (true) {
-                $request->routeIs('time.list') => 'list',
-                $request->query('view') === 'day' => 'day',
-                default => 'week',
-            },
+            'view' => $view,
             'date' => $date->toDateString(),
             'today' => CarbonImmutable::now($timezone)->toDateString(),
             'weekStart' => $weekStart->toDateString(),
@@ -105,9 +110,8 @@ class TimeEntryController extends Controller
             'members' => $members,
             // So the entry form's project shortcuts follow the member it reports for.
             'recentProjects' => $this->presenter->recentProjectsByMember($organization, $members),
-            'canCopyPreviousWeek' => fn () => $entries->isEmpty() && $previousWeek->exists(),
-            // Loaded on demand for "copy previous week".
-            'previousWeek' => Inertia::optional(fn () => (clone $previousWeek)
+            'canCopyPreviousPeriod' => fn () => $periodEntries->isEmpty() && $previousPeriod->exists(),
+            'previousPeriodEntries' => Inertia::optional(fn () => (clone $previousPeriod)
                 ->with(['project.client', 'tags'])
                 ->orderBy('started_at')
                 ->get()
@@ -187,32 +191,20 @@ class TimeEntryController extends Controller
         return back();
     }
 
-    /**
-     * Copy selected entries from a week to the following week (the user confirmed the draft).
-     */
-    public function copy(CopyTimeEntriesRequest $request, #[CurrentUser] User $user, CreateTimeEntries $createTimeEntries): RedirectResponse
+    public function copy(CopyTimeEntriesRequest $request, #[CurrentUser] User $user, CopyTimeEntries $copyTimeEntries): RedirectResponse
     {
         $organization = $this->currentOrganization->getOrFail();
 
         $sources = TimeEntry::query()->whereKey($request->entryIds())->with(['organization', 'tags'])->get();
         abort_if($sources->count() !== count($request->entryIds()), 404);
 
-        $data = $sources->map(function (TimeEntry $entry) use ($user, $organization) {
+        foreach ($sources as $entry) {
             Gate::authorize('view', $entry);
             $this->authorizeMember($user, $organization, $entry->user_id);
+        }
 
-            return new TimeEntryData(
-                userId: $entry->user_id,
-                projectId: $entry->project_id,
-                startedAt: $entry->started_at->addWeek(),
-                endedAt: $entry->ended_at->addWeek(),
-                description: $entry->description,
-                isBillable: $entry->is_billable,
-                tags: $entry->tagNames(),
-            );
-        })->all();
-
-        $created = $createTimeEntries->handle($organization, $data);
+        $targetDay = $request->date('target_day', '!Y-m-d', $user->timezone)?->toImmutable();
+        $created = $copyTimeEntries->handle($organization, $sources, $targetDay);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice(':count entry copied.|:count entries copied.', $created->count(), ['count' => $created->count()])]);
 
