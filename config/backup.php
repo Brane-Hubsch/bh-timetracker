@@ -17,7 +17,7 @@ use Spatie\DbDumper\Compressors\GzipCompressor;
  * Nightly backups (spatie/laravel-backup), scheduled in routes/console.php: a dump of the database and
  * the uploaded images, zipped, encrypted with BACKUP_ARCHIVE_PASSWORD and written to the "backups"
  * disk (an S3-compatible bucket such as Cloudflare R2, see config/filesystems.php). Restoring is
- * described in the README.
+ * described in docs/self-hosting.md.
  */
 
 $name = env('BACKUP_NAME', 'bh-timetracker');

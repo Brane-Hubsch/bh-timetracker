@@ -1,6 +1,6 @@
 # Production stack. Deploy it in Coolify as a "Docker Compose" application (this file is the compose
-# location), or on a server of your own together with compose.standalone.yaml (see the README's
-# Production section).
+# location), or on a server of your own together with compose.standalone.yaml (see
+# docs/self-hosting.md).
 #
 # - web: Laravel Octane on FrankenPHP (worker mode), plain HTTP on port 8080. Coolify's proxy routes the
 #   domain to it and terminates TLS. Runs the start-up automations first: storage:link, migrations,
