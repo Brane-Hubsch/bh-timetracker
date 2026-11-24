@@ -8,7 +8,6 @@ import {
     Switch,
     ToggleButton,
     ToggleButtonGroup,
-    Tooltip,
 } from '@heroui/react';
 import { Banknote } from 'lucide-react';
 import { use, useId, useState } from 'react';
@@ -198,32 +197,6 @@ export function ProjectPicker({
         : projects.filter((project) => !project.isRecent);
     // On mobile, focusing the search opens the keyboard over the shortcuts; let people tap one instead.
     const focusSearch = autoFocus && (isDesktop || recent.length === 0);
-    const billableSwitch = (
-        <Switch
-            aria-label={t('Billable')}
-            size="sm"
-            className="w-fit"
-            isSelected={isBillable}
-            onChange={onBillableChange}
-        >
-            <Switch.Content
-                className={cn('gap-2', selectedProject ? 'min-h-5' : 'min-h-6')}
-            >
-                {selectedProject ? (
-                    <span className="text-xs font-medium">{t('Billable')}</span>
-                ) : (
-                    <Banknote
-                        aria-hidden="true"
-                        className="shrink-0 text-muted"
-                        size={14}
-                    />
-                )}
-                <Switch.Control>
-                    <Switch.Thumb />
-                </Switch.Control>
-            </Switch.Content>
-        </Switch>
-    );
 
     return (
         <div className="grid gap-2">
@@ -253,23 +226,7 @@ export function ProjectPicker({
                 }
                 data-test="project-picker"
             >
-                <div className="flex items-center justify-between gap-2">
-                    <Label isRequired>{t('Project')}</Label>
-                    {!selectedProject && (
-                        <Tooltip delay={350} closeDelay={0}>
-                            <Tooltip.Trigger role="presentation" tabIndex={-1}>
-                                {billableSwitch}
-                            </Tooltip.Trigger>
-                            <Tooltip.Content
-                                placement="bottom end"
-                                offset={4}
-                                className="rounded-full px-2 py-1.5"
-                            >
-                                {t('Billable')}
-                            </Tooltip.Content>
-                        </Tooltip>
-                    )}
-                </div>
+                <Label isRequired>{t('Project')}</Label>
                 <ProjectInput
                     project={selectedProject}
                     autoFocus={focusSearch}
@@ -349,7 +306,24 @@ export function ProjectPicker({
                 </ComboBox.Popover>
             </ComboBox>
 
-            {selectedProject && billableSwitch}
+            {selectedProject && (
+                <Switch
+                    aria-label={t('Billable')}
+                    size="sm"
+                    className="w-fit"
+                    isSelected={isBillable}
+                    onChange={onBillableChange}
+                >
+                    <Switch.Content className="min-h-5 gap-2">
+                        <span className="text-xs font-medium">
+                            {t('Billable')}
+                        </span>
+                        <Switch.Control>
+                            <Switch.Thumb />
+                        </Switch.Control>
+                    </Switch.Content>
+                </Switch>
+            )}
 
             {!selectedProject && recent.length > 0 && (
                 <ShortcutRow data-test="recent-projects">
