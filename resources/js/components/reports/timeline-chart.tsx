@@ -198,6 +198,9 @@ export function TimelineChart({
     const selected = buckets.find((bucket) => bucket.key === selectedKey);
     const activeKey = projects ? projectBar?.key : selected?.key;
     const chartTitle = title ?? t(TIMELINE_TITLES[unit]);
+    const barMaxWidth = projects
+        ? 'max-w-[clamp(--spacing(6),75%,--spacing(24))]'
+        : 'max-w-6';
 
     useEffect(() => {
         const axis = axisRef.current;
@@ -331,7 +334,7 @@ export function TimelineChart({
                             height: `${(bucket.seconds / 3600 / max) * 100}%`,
                             animationDelay: `${Math.min(index * 12, 360)}ms`,
                         };
-                        const barClassName = `flex w-full max-w-6 origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
+                        const barClassName = `flex w-full ${barMaxWidth} origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
 
                         return (
                             <div
