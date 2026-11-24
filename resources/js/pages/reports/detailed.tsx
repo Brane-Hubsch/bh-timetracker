@@ -1,7 +1,13 @@
 import { Button, Table } from '@heroui/react';
 import type { SortDescriptor } from '@heroui/react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+    ColumnOrderStatus,
+    ReorderableColumnHeader,
+    columnOrderHeaderClassName,
+    useColumnOrder,
+} from '@/components/reorderable-column-header';
 import { ProjectDot } from '@/components/project-dot';
 import { ExportMenu } from '@/components/reports/export-menu';
 import { ReportFilterBar } from '@/components/reports/report-filter-bar';
@@ -32,6 +38,23 @@ type Props = {
 
 type SortKey = ReportFilterValues['sort'];
 
+const defaultColumnOrder = [
+    'member',
+    'project',
+    'description',
+    'duration',
+    'amount',
+] as const;
+type DetailedColumn = (typeof defaultColumnOrder)[number];
+
+const columnLabels: Record<DetailedColumn, string> = {
+    member: 'Member',
+    project: 'Project',
+    description: 'Description',
+    duration: 'Hours',
+    amount: 'Amount',
+};
+
 export default function ReportsDetailed({
     filters,
     options,
@@ -42,7 +65,14 @@ export default function ReportsDetailed({
     totals,
 }: Props) {
     const { t, intlLocale } = useTranslation();
-    const showAmounts = abilities.canViewAmounts;
+    const { id: userId } = usePage().props.auth.user;
+    const order = useColumnOrder({
+        storageKey: `timereport:report-detailed-column-order:${userId}`,
+        defaultOrder: defaultColumnOrder,
+        isVisible: (column) =>
+            (column !== 'member' || abilities.canViewTeam) &&
+            (column !== 'amount' || abilities.canViewAmounts),
+    });
 
     const visit = (changes: Partial<ReportFilterValues>, page?: number) =>
         router.get(
@@ -56,15 +86,61 @@ export default function ReportsDetailed({
         direction: filters.direction === 'asc' ? 'ascending' : 'descending',
     };
 
-    const sortable = (id: SortKey, label: string) => (
-        <Table.Column allowsSorting id={id} isRowHeader={id === 'date'}>
-            {({ sortDirection }) => (
-                <Table.SortableColumnHeader sortDirection={sortDirection}>
-                    {label}
-                </Table.SortableColumnHeader>
-            )}
-        </Table.Column>
-    );
+    const renderCell = (column: DetailedColumn, entry: ReportRow) => {
+        switch (column) {
+            case 'member':
+                return entry.memberName;
+            case 'project':
+                return (
+                    <span className="flex items-center gap-2">
+                        <ProjectDot color={entry.project.color} />
+                        <span>
+                            {entry.project.name}
+                            {entry.project.clientName && (
+                                <span className="block text-xs text-muted">
+                                    {entry.project.clientName}
+                                </span>
+                            )}
+                        </span>
+                    </span>
+                );
+            case 'description':
+                return (
+                    <>
+                        <span className="line-clamp-2">
+                            {entry.description}
+                        </span>
+                        {entry.tags.length > 0 && (
+                            <span className="mt-1 flex flex-wrap gap-1">
+                                {entry.tags.map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </span>
+                        )}
+                    </>
+                );
+            case 'duration':
+                return (
+                    <>
+                        {formatDuration(entry.durationSeconds)}
+                        {!entry.isBillable && (
+                            <span className="block text-xs text-muted">
+                                {t('Non-billable')}
+                            </span>
+                        )}
+                    </>
+                );
+            case 'amount':
+                return entry.amount !== null && entry.amount > 0
+                    ? formatMoney(entry.amount, currency, intlLocale)
+                    : '–';
+        }
+    };
 
     return (
         <ReportLayout
@@ -81,6 +157,7 @@ export default function ReportsDetailed({
             <ReportStats totals={totals} currency={currency} />
 
             <Table>
+                <ColumnOrderStatus announcement={order.announcement} />
                 <Table.ScrollContainer>
                     <Table.Content
                         aria-label={t('Detailed')}
@@ -97,19 +174,76 @@ export default function ReportsDetailed({
                         }
                         data-test="report-entries"
                     >
-                        <Table.Header>
-                            {sortable('date', t('Date'))}
-                            {abilities.canViewTeam
-                                ? sortable('member', t('Member'))
-                                : null}
-                            {sortable('project', t('Project'))}
-                            <Table.Column>{t('Description')}</Table.Column>
-                            {sortable('duration', t('Duration'))}
-                            {showAmounts ? (
-                                <Table.Column className="text-right">
-                                    {t('Amount')}
-                                </Table.Column>
-                            ) : null}
+                        <Table.Header className={columnOrderHeaderClassName}>
+                            <Table.Column
+                                allowsSorting
+                                id="date"
+                                isRowHeader
+                                className="text-sm font-medium whitespace-nowrap"
+                            >
+                                {({ sortDirection }) => (
+                                    <Table.SortableColumnHeader
+                                        className="gap-1"
+                                        sortDirection={sortDirection}
+                                    >
+                                        {t('Date')}
+                                    </Table.SortableColumnHeader>
+                                )}
+                            </Table.Column>
+                            {order.columns.map((column) => {
+                                const label = t(columnLabels[column]);
+                                const sortable =
+                                    column !== 'description' &&
+                                    column !== 'amount';
+
+                                return (
+                                    <Table.Column
+                                        key={column}
+                                        id={column}
+                                        textValue={label}
+                                        aria-label={label}
+                                        allowsSorting={sortable}
+                                    >
+                                        {(header) => (
+                                            <ReorderableColumnHeader
+                                                order={order}
+                                                column={column}
+                                                label={label}
+                                                className={
+                                                    column === 'amount'
+                                                        ? 'justify-end'
+                                                        : undefined
+                                                }
+                                            >
+                                                {sortable ? (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 min-w-0 justify-start bg-transparent px-0 text-sm font-medium text-inherit"
+                                                        onPress={() =>
+                                                            header.sort(
+                                                                header.sortDirection ===
+                                                                    'ascending'
+                                                                    ? 'descending'
+                                                                    : 'ascending',
+                                                            )
+                                                        }
+                                                    >
+                                                        <Table.SortableColumnHeader
+                                                            className="gap-1"
+                                                            sortDirection={
+                                                                header.sortDirection
+                                                            }
+                                                        >
+                                                            {label}
+                                                        </Table.SortableColumnHeader>
+                                                    </Button>
+                                                ) : undefined}
+                                            </ReorderableColumnHeader>
+                                        )}
+                                    </Table.Column>
+                                );
+                            })}
                         </Table.Header>
                         <Table.Body
                             renderEmptyState={() => (
@@ -129,66 +263,20 @@ export default function ReportsDetailed({
                                             {timeOf(entry.end)}
                                         </span>
                                     </Table.Cell>
-                                    {abilities.canViewTeam ? (
-                                        <Table.Cell>
-                                            {entry.memberName}
+                                    {order.columns.map((column) => (
+                                        <Table.Cell
+                                            key={column}
+                                            className={
+                                                column === 'amount'
+                                                    ? 'text-right tabular-nums'
+                                                    : column === 'duration'
+                                                      ? 'tabular-nums'
+                                                      : undefined
+                                            }
+                                        >
+                                            {renderCell(column, entry)}
                                         </Table.Cell>
-                                    ) : null}
-                                    <Table.Cell>
-                                        <span className="flex items-center gap-2">
-                                            <ProjectDot
-                                                color={entry.project.color}
-                                            />
-                                            <span>
-                                                {entry.project.name}
-                                                {entry.project.clientName && (
-                                                    <span className="block text-xs text-muted">
-                                                        {
-                                                            entry.project
-                                                                .clientName
-                                                        }
-                                                    </span>
-                                                )}
-                                            </span>
-                                        </span>
-                                    </Table.Cell>
-                                    <Table.Cell>
-                                        <span className="line-clamp-2">
-                                            {entry.description}
-                                        </span>
-                                        {entry.tags.length > 0 && (
-                                            <span className="mt-1 flex flex-wrap gap-1">
-                                                {entry.tags.map((tag) => (
-                                                    <span
-                                                        key={tag}
-                                                        className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
-                                                    >
-                                                        {tag}
-                                                    </span>
-                                                ))}
-                                            </span>
-                                        )}
-                                    </Table.Cell>
-                                    <Table.Cell className="tabular-nums">
-                                        {formatDuration(entry.durationSeconds)}
-                                        {!entry.isBillable && (
-                                            <span className="block text-xs text-muted">
-                                                {t('Non-billable')}
-                                            </span>
-                                        )}
-                                    </Table.Cell>
-                                    {showAmounts ? (
-                                        <Table.Cell className="text-right tabular-nums">
-                                            {entry.amount !== null &&
-                                            entry.amount > 0
-                                                ? formatMoney(
-                                                      entry.amount,
-                                                      currency,
-                                                      intlLocale,
-                                                  )
-                                                : '–'}
-                                        </Table.Cell>
-                                    ) : null}
+                                    ))}
                                 </Table.Row>
                             ))}
                         </Table.Body>
