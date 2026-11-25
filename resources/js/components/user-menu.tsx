@@ -3,59 +3,45 @@ import { router, usePage } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
+import type { User } from '@/types/auth';
 
 export function logoutAndFlush() {
     router.flushAll();
     router.visit(logout());
 }
 
-type Props = {
-    /** Show the user's name next to the avatar (desktop sidebar). */
-    showName?: boolean;
+export function UserAvatar({
+    user,
+    className,
+}: {
+    user: Pick<User, 'name' | 'avatar'>;
     className?: string;
-};
+}) {
+    const getInitials = useInitials();
 
-export function UserMenu({ showName = false, className }: Props) {
+    return (
+        <Avatar size="sm" className={className}>
+            {user.avatar && <Avatar.Image src={user.avatar} alt={user.name} />}
+            <Avatar.Fallback>{getInitials(user.name)}</Avatar.Fallback>
+        </Avatar>
+    );
+}
+
+export function UserMenu() {
     const { t } = useTranslation();
     const { auth } = usePage().props;
-    const getInitials = useInitials();
 
     return (
         <Dropdown>
             <Button
                 variant="ghost"
-                isIconOnly={!showName}
-                className={cn(
-                    showName && '-my-1 h-auto w-full justify-start gap-3 py-1',
-                    className,
-                )}
+                isIconOnly
                 aria-label={t('Account')}
                 data-test="sidebar-menu-button"
             >
-                <Avatar size="sm">
-                    {auth.user.avatar && (
-                        <Avatar.Image
-                            src={auth.user.avatar}
-                            alt={auth.user.name}
-                        />
-                    )}
-                    <Avatar.Fallback>
-                        {getInitials(auth.user.name)}
-                    </Avatar.Fallback>
-                </Avatar>
-                {showName && (
-                    <span className="min-w-0 text-left">
-                        <span className="block truncate text-sm font-medium">
-                            {auth.user.name}
-                        </span>
-                        <span className="block truncate text-xs text-muted">
-                            {auth.user.email}
-                        </span>
-                    </span>
-                )}
+                <UserAvatar user={auth.user} />
             </Button>
             <Dropdown.Popover placement="top start" className="min-w-56">
                 <Dropdown.Menu

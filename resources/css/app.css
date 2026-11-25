@@ -88,6 +88,13 @@
     );
 }
 
+/* The 32px avatar is clipped where the 20px rounded badge footprint overlaps it. */
+.sidebar-account-avatar-cutout {
+    clip-path: path(
+        'M16 0 C24.8366 0 32 7.16344 32 16 C32 16.6774 31.9567 17.3448 31.875 18 H25 C21.6863 18 19 20.6863 19 24 V31.7178 C18.0282 31.9021 17.0255 32 16 32 C7.16344 32 0 24.8366 0 16 C0 7.16344 7.16344 0 16 0 Z'
+    );
+}
+
 .report-period-icon {
     @apply block size-4 shrink-0 bg-current;
     mask: var(--report-period-icon) center no-repeat;
