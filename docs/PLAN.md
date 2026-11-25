@@ -146,7 +146,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Kalendervy** (veckovy är standard)
 - Plusknappen förifyller starttiden med början av den aktuella timmen i användarens tidszon. Varaktigheten hämtas från den senaste tidsposten som användaren sparade via plusknappen i den aktuella organisationen och webbläsaren. Sluttiden räknas ut från starttiden och varaktigheten. Samma förval gäller på dator och mobil.
-- Periodknappen visar namnet på dagen eller veckan med datum på raden under. Pilarna vid knappen stegar en dag eller vecka enligt vald vy.
+- På breda skärmar delar kalenderrubriken och periodens totalsumma rad med personväljaren, periodväljaren och plusknappen. Periodväljaren använder samma komponent som i rapporterna och visar periodens namn bredvid datumen. Pilarna stegar en dag eller vecka enligt vald vy.
 - Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare utan lägesbyte.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.

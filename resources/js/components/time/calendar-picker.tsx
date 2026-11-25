@@ -1,4 +1,4 @@
-import { Button, Calendar, Drawer, Popover } from '@heroui/react';
+import { Button, Calendar, Drawer } from '@heroui/react';
 import {
     parseDate,
     startOfWeek,
@@ -8,8 +8,8 @@ import {
 import type { CalendarDate } from '@internationalized/date';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useState } from 'react';
+import { PeriodPicker } from '@/components/period-picker';
 import { SegmentedControl } from '@/components/segmented-control';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import { addDays, formatDate, formatDateRange, isoWeek } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -297,8 +297,6 @@ export function CalendarPicker({
     onViewChange,
 }: Props) {
     const { t, intlLocale } = useTranslation();
-    const isDesktop = useMediaQuery('(min-width: 640px)');
-    const [isOpen, setIsOpen] = useState(false);
     const isDay = view === 'day';
     const isList = view === 'list';
     const value = isDay ? date : weekStart;
@@ -331,9 +329,6 @@ export function CalendarPicker({
             ? formatDate(date, intlLocale, { weekday: 'long' })
             : t('Week :number', { number: isoWeek(weekStart) }));
     const end = addDays(weekStart, 6);
-    const range = isDay
-        ? formatDate(date, intlLocale, MONTH_DAY)
-        : formatDateRange(weekStart, end, intlLocale, MONTH_DAY);
     const currentYear = today.slice(0, 4);
     const lastDay = isDay ? date : end;
     const year =
@@ -355,129 +350,101 @@ export function CalendarPicker({
         month: 'short',
         year,
     } as const;
-    const compactRange =
-        !isDesktop && !isList
-            ? isDay
-                ? formatDate(date, intlLocale, compactFormat)
-                : formatDateRange(weekStart, end, intlLocale, compactFormat)
-            : null;
+    const range = isDay
+        ? formatDate(date, intlLocale, compactFormat)
+        : formatDateRange(weekStart, end, intlLocale, compactFormat);
     const label = t(isList ? 'Choose a week' : 'Choose a date or week');
 
-    const select = (day: string) => {
-        setIsOpen(false);
-        onChange(day);
-    };
-    const trigger = (
-        <Button
-            variant="secondary"
-            size="sm"
-            className="h-10 min-w-[8.25rem] flex-col gap-0 text-center text-foreground"
-            data-test="calendar-period-picker"
+    return (
+        <PeriodPicker
+            name={name}
+            range={range}
+            onStep={(direction) =>
+                onChange(addDays(date, direction * (isDay ? 1 : 7)))
+            }
+            stepLabels={
+                isDay
+                    ? [t('Previous day'), t('Next day')]
+                    : [t('Previous week'), t('Next week')]
+            }
+            label={label}
+            compact
+            className="min-w-0"
+            testId="calendar-period-picker"
         >
-            <span className="text-sm/4 font-semibold first-letter:uppercase">
-                {name}
-            </span>
-            <span className="text-[0.6875rem]/3.5 font-normal whitespace-nowrap text-muted tabular-nums">
-                {range}
-            </span>
-        </Button>
-    );
+            {({ isDesktop, dismiss }) => {
+                const select = (day: string) => {
+                    dismiss();
+                    onChange(day);
+                };
+                const compactRange = !isDesktop && !isList;
 
-    const header = (
-        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 min-[390px]:px-5">
-            <p
-                className={cn(
-                    'min-w-0 font-semibold first-letter:uppercase',
-                    compactRange
-                        ? 'text-xs wrap-anywhere min-[360px]:text-sm'
-                        : 'text-base',
-                )}
-                aria-live="polite"
-            >
-                {compactRange ? (
+                return (
                     <>
-                        <span className="sr-only">{fullRange}</span>
-                        <span aria-hidden>{compactRange}</span>
+                        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 min-[390px]:px-5">
+                            <p
+                                className={cn(
+                                    'min-w-0 font-semibold first-letter:uppercase',
+                                    compactRange
+                                        ? 'text-xs wrap-anywhere min-[360px]:text-sm'
+                                        : 'text-base',
+                                )}
+                                aria-live="polite"
+                            >
+                                {compactRange ? (
+                                    <>
+                                        <span className="sr-only">
+                                            {fullRange}
+                                        </span>
+                                        <span aria-hidden>{range}</span>
+                                    </>
+                                ) : (
+                                    fullRange
+                                )}
+                            </p>
+                            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    aria-label={t('Go to today')}
+                                    onPress={() => select(today)}
+                                >
+                                    {t('Today')}
+                                </Button>
+                                {!isList && (
+                                    <SegmentedControl
+                                        aria-label={t('View')}
+                                        value={view}
+                                        onChange={onViewChange}
+                                        options={[
+                                            { id: 'day', label: t('Day') },
+                                            { id: 'week', label: t('Week') },
+                                        ]}
+                                        data-test="calendar-picker-view"
+                                    />
+                                )}
+                                {!isDesktop && (
+                                    <Drawer.CloseTrigger
+                                        aria-label={t('Close')}
+                                        className="static size-9 rounded-full bg-transparent hover:bg-transparent"
+                                    >
+                                        <X className="size-4" aria-hidden />
+                                    </Drawer.CloseTrigger>
+                                )}
+                            </div>
+                        </div>
+                        <PickerBody
+                            view={view}
+                            value={value}
+                            today={today}
+                            timezone={timezone}
+                            weekStartsOn={weekStartsOn}
+                            presets={presets}
+                            onChange={select}
+                        />
                     </>
-                ) : (
-                    fullRange
-                )}
-            </p>
-            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    aria-label={t('Go to today')}
-                    onPress={() => select(today)}
-                >
-                    {t('Today')}
-                </Button>
-                {!isList && (
-                    <SegmentedControl
-                        aria-label={t('View')}
-                        value={view}
-                        onChange={onViewChange}
-                        options={[
-                            { id: 'day', label: t('Day') },
-                            { id: 'week', label: t('Week') },
-                        ]}
-                        data-test="calendar-picker-view"
-                    />
-                )}
-                {!isDesktop && (
-                    <Drawer.CloseTrigger
-                        aria-label={t('Close')}
-                        className="static size-9 rounded-full bg-transparent hover:bg-transparent"
-                    >
-                        <X className="size-4" aria-hidden />
-                    </Drawer.CloseTrigger>
-                )}
-            </div>
-        </div>
-    );
-    const panel = (
-        <PickerBody
-            view={view}
-            value={value}
-            today={today}
-            timezone={timezone}
-            weekStartsOn={weekStartsOn}
-            presets={presets}
-            onChange={select}
-        />
-    );
-
-    return isDesktop ? (
-        <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-            {trigger}
-            <Popover.Content
-                placement="bottom start"
-                offset={8}
-                className="w-[560px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-separator bg-surface p-0"
-            >
-                <Popover.Dialog aria-label={label} className="p-0">
-                    {header}
-                    {panel}
-                </Popover.Dialog>
-            </Popover.Content>
-        </Popover>
-    ) : (
-        <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
-            {trigger}
-            <Drawer.Backdrop variant="opaque">
-                <Drawer.Content placement="bottom" className="max-w-dvw">
-                    <Drawer.Dialog className="max-h-[92svh] bg-surface p-0">
-                        <Drawer.Handle className="pt-2 pb-0" />
-                        <Drawer.Heading className="sr-only">
-                            {label}
-                        </Drawer.Heading>
-                        <Drawer.Body className="m-0! p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                            {header}
-                            {panel}
-                        </Drawer.Body>
-                    </Drawer.Dialog>
-                </Drawer.Content>
-            </Drawer.Backdrop>
-        </Drawer>
+                );
+            }}
+        </PeriodPicker>
     );
 }

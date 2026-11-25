@@ -5,7 +5,7 @@ import { LogoImage } from '@/components/logo-image';
 import { ProjectDot } from '@/components/project-dot';
 import { FilterChip } from '@/components/reports/filter-chip';
 import type { FilterOption } from '@/components/reports/filter-chip';
-import { PeriodPicker } from '@/components/reports/period-picker';
+import { ReportPeriodPicker } from '@/components/reports/period-picker';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import { reportQuery } from '@/lib/reports';
@@ -161,7 +161,7 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
             className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:gap-2"
             data-test="report-filters"
         >
-            <PeriodPicker
+            <ReportPeriodPicker
                 period={filters.period}
                 from={filters.from}
                 to={filters.to}
