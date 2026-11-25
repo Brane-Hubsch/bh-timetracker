@@ -1,24 +1,4 @@
-import { useState, useSyncExternalStore } from 'react';
-
-const storedOrderChanged = 'timereport:stored-order-changed';
-
-function subscribeToOrder(listener: () => void) {
-    window.addEventListener('storage', listener);
-    window.addEventListener(storedOrderChanged, listener);
-
-    return () => {
-        window.removeEventListener('storage', listener);
-        window.removeEventListener(storedOrderChanged, listener);
-    };
-}
-
-function readOrder(key: string) {
-    try {
-        return localStorage.getItem(key);
-    } catch {
-        return null;
-    }
-}
+import { useStoredValue, writeStoredValue } from '@/hooks/use-stored-value';
 
 function parseOrder<Item extends string>(
     savedOrder: string | null,
@@ -60,19 +40,8 @@ export function useStoredOrder<Item extends string>({
     defaultOrder,
     isVisible = () => true,
 }: StoredOrderOptions<Item>) {
-    const savedOrder = useSyncExternalStore(
-        subscribeToOrder,
-        () => readOrder(storageKey),
-        () => null,
-    );
-    const [temporaryOrder, setTemporaryOrder] = useState<{
-        storageKey: string;
-        items: Item[];
-    }>();
-    const order =
-        temporaryOrder?.storageKey === storageKey
-            ? temporaryOrder.items
-            : parseOrder(savedOrder, defaultOrder);
+    const savedOrder = useStoredValue(storageKey);
+    const order = parseOrder(savedOrder, defaultOrder);
     const items = order.filter(isVisible);
 
     function move(item: Item, target: Item) {
@@ -90,13 +59,7 @@ export function useStoredOrder<Item extends string>({
             isVisible(id) ? reordered[visibleIndex++] : id,
         );
 
-        try {
-            localStorage.setItem(storageKey, JSON.stringify(nextOrder));
-            setTemporaryOrder(undefined);
-            window.dispatchEvent(new Event(storedOrderChanged));
-        } catch {
-            setTemporaryOrder({ storageKey, items: nextOrder });
-        }
+        writeStoredValue(storageKey, JSON.stringify(nextOrder));
 
         return to + 1;
     }

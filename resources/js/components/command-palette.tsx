@@ -31,6 +31,7 @@ import {
     Moon,
     Palette,
     Play,
+    PanelLeft,
     Plus,
     Sparkles,
     Square,
@@ -45,7 +46,7 @@ import type { ReactNode } from 'react';
 import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { LogoImage } from '@/components/logo-image';
 import { ProjectDot } from '@/components/project-dot';
-import { stopTimer } from '@/components/time/running-timer';
+import { startTimer, stopTimer } from '@/components/time/running-timer';
 import { logoutAndFlush } from '@/components/user-menu';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
@@ -64,10 +65,10 @@ import {
     summary as reportSummary,
 } from '@/routes/reports';
 import { edit as editSecurity } from '@/routes/security';
+import { edit as editSidebar } from '@/routes/sidebar';
 import { index as tagsIndex } from '@/routes/tags';
 import { index as teamIndex } from '@/routes/team';
 import { index as timeIndex, list as timeList } from '@/routes/time';
-import { start as startTimer } from '@/routes/timer';
 
 type PaletteData = {
     projects: {
@@ -360,15 +361,7 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                                 label: t('Start timer'),
                                 keywords: t('timer clock'),
                                 icon: Play,
-                                perform: () =>
-                                    router.post(
-                                        startTimer.url(slug),
-                                        {},
-                                        {
-                                            preserveScroll: true,
-                                            preserveState: true,
-                                        },
-                                    ),
+                                perform: () => startTimer(slug),
                             },
                         ]
                       : []),
@@ -501,6 +494,13 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     keywords: t('settings account name'),
                     icon: CircleUserRound,
                     perform: go(editProfile.url()),
+                },
+                {
+                    id: 'go-sidebar-settings',
+                    label: t('Sidebar'),
+                    keywords: t('Settings'),
+                    icon: PanelLeft,
+                    perform: go(editSidebar.url()),
                 },
                 {
                     id: 'go-security',

@@ -733,6 +733,10 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
   - `start_timer`, `stop_timer` (kan ange projekt och sluttid) och `discard_timer` (destruktiv).
   - `get_context` visar en pågående timer och `timer_enabled`.
 
+### Tillägg efter Fas 6: inställningar för sidomenyn
+
+I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägarna Rapportera tid och Starta timer. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Ändringarna gäller direkt för sidomenyn på desktop och sparas i webbläsaren per användare och organisation, med den tidigare sparade menylänksordningen som utgångspunkt. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
+
 ### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
 
 Beställt i efterhand. När man kommer tillbaka till appen (fliken blir synlig eller fönstret får fokus) efter minst 30 sekunder borta laddas sidans data om i bakgrunden (`useRefreshOnReturn` i `AppLayout`). Då syns tid som rapporterats på en annan enhet eller via MCP utan att man laddar om sidan. Omladdningen behåller sidans tillstånd och scrollposition, visar ingen förloppsindikator, görs inte när man är offline och rensar förhämtade sidor (`router.flushAll()`), eftersom de kan vara lika gamla.

@@ -9,6 +9,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { index as organizations } from '@/routes/organizations';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { edit as editSidebar } from '@/routes/sidebar';
 
 const items = [
     { title: 'Profile', href: editProfile() },
@@ -16,6 +17,7 @@ const items = [
     { title: 'Organizations', href: organizations() },
     { title: 'AI connections', href: editAiConnections() },
     { title: 'Appearance', href: editAppearance() },
+    { title: 'Sidebar', href: editSidebar() },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
