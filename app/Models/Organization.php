@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property int $week_starts_on
  * @property string $timezone
  * @property bool $team_enabled
+ * @property bool $timer_enabled Whether members may use the timer
  * @property int $workday_seconds Length of a full working day (a full day of absence counts as this)
  * @property string|null $logo_path Uploaded logo (directory in ImageStorage)
  * @property Carbon|null $created_at
@@ -36,7 +37,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, Holiday> $holidays
  */
-#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path', 'workday_seconds', 'team_enabled'])]
+#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path', 'workday_seconds', 'team_enabled', 'timer_enabled'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -53,6 +54,7 @@ class Organization extends Model
         'timezone' => 'Europe/Stockholm',
         'workday_seconds' => 28800,
         'team_enabled' => false,
+        'timer_enabled' => true,
     ];
 
     /**
@@ -156,6 +158,7 @@ class Organization extends Model
             'week_starts_on' => 'integer',
             'workday_seconds' => 'integer',
             'team_enabled' => 'boolean',
+            'timer_enabled' => 'boolean',
         ];
     }
 

@@ -8,6 +8,8 @@ export type Organization = {
     roleLabel?: string;
     isCurrent?: boolean;
     hasTeam?: boolean;
+    /** Whether members may use the timer. */
+    timerEnabled?: boolean;
     /** Logo URL (128 px), or null without a logo. */
     logo?: string | null;
 };
@@ -21,6 +23,7 @@ export type OrganizationSettings = Organization & {
     timezone: string;
     /** Hours a full absence day counts as. */
     workdayHours: number;
+    timerEnabled: boolean;
     /** Logo URL in preview size (256 px), or null without a logo. */
     logo: string | null;
 };

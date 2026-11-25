@@ -26,8 +26,49 @@ import type {
     Absence,
     CalendarHoliday,
     ColleagueOff,
+    RunningTimer,
     TimeEntry,
 } from '@/types';
+
+const TIMER_EVENT_ID = 'running-timer';
+
+/**
+ * Where the running timer's event ends: now (local wall-clock time), at least 15 minutes after the
+ * start so a timer that just started is visible. Updated every 30 seconds.
+ */
+function useTimerEnd(
+    timer: RunningTimer | null,
+    timezone: string,
+): string | null {
+    const [now, setNow] = useState(() =>
+        Temporal.Now.plainDateTimeISO(timezone),
+    );
+
+    useLayoutEffect(() => {
+        if (!timer) {
+            return;
+        }
+
+        const interval = window.setInterval(
+            () => setNow(Temporal.Now.plainDateTimeISO(timezone)),
+            30000,
+        );
+
+        return () => window.clearInterval(interval);
+    }, [timer, timezone]);
+
+    if (!timer) {
+        return null;
+    }
+
+    const minimum = Temporal.PlainDateTime.from(timer.start).add({
+        minutes: 15,
+    });
+    const end =
+        Temporal.PlainDateTime.compare(now, minimum) > 0 ? now : minimum;
+
+    return end.toString({ smallestUnit: 'minute' });
+}
 
 type Props = {
     view: 'week' | 'day';
@@ -48,6 +89,9 @@ type Props = {
     onSelectDays: (startsOn: string, endsOn: string) => void;
     onEdit: (entry: TimeEntry) => void;
     onEditAbsence: (absence: Absence) => void;
+    /** The viewer's running timer, shown from its start to now. */
+    timer?: RunningTimer | null;
+    onEditTimer?: () => void;
     /** Moved or resized; call revert() if saving fails. */
     onChange: (
         entry: TimeEntry,
@@ -144,9 +188,12 @@ export function TimeCalendar({
     onSelectDays,
     onEdit,
     onEditAbsence,
+    timer,
+    onEditTimer,
     onChange,
 }: Props) {
     const { t, locale, intlLocale } = useTranslation();
+    const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight();
     const calendarRef = useRef<CalendarRef>(null);
     const resizeLane = useRef<HTMLElement | null>(null);
@@ -306,6 +353,20 @@ export function TimeCalendar({
                         editable: false,
                         color: 'transparent',
                     })),
+                    ...(timer && timerEnd
+                        ? [
+                              {
+                                  id: TIMER_EVENT_ID,
+                                  title:
+                                      timer.project?.name ??
+                                      t('No project yet'),
+                                  start: `${timer.start}:00Z`,
+                                  end: `${timerEnd}:00Z`,
+                                  editable: false,
+                                  color: 'transparent',
+                              },
+                          ]
+                        : []),
                     ...colleaguesOff.map((off) => ({
                         id: `off-${off.id}`,
                         title: t('Off · :name', { name: off.name }),
@@ -403,6 +464,24 @@ export function TimeCalendar({
                 }}
                 eventContent={(info) => {
                     const { id, title, start, end } = info.event;
+
+                    if (id === TIMER_EVENT_ID && timer) {
+                        return (
+                            <div
+                                className="time-calendar-entry relative size-full cursor-pointer overflow-hidden rounded-[inherit] border border-dashed border-accent bg-accent-soft p-2 text-xs leading-tight text-foreground"
+                                data-test="calendar-timer"
+                            >
+                                <div className="truncate font-semibold">
+                                    {title}
+                                </div>
+                                <div className="truncate text-[11px]/3.5 font-medium text-accent">
+                                    {t(':start – now · running', {
+                                        start: timeOf(timer.start),
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    }
 
                     if (info.event.allDay) {
                         const isOwn = absenceById.has(id);
@@ -554,6 +633,12 @@ export function TimeCalendar({
                     );
                 }}
                 eventClick={(info) => {
+                    if (info.event.id === TIMER_EVENT_ID) {
+                        onEditTimer?.();
+
+                        return;
+                    }
+
                     const absence = absenceById.get(info.event.id);
 
                     if (absence) {

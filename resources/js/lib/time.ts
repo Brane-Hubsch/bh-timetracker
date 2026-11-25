@@ -68,6 +68,15 @@ export function secondsBetween(start: string, end: string): number {
     return (difference <= 0 ? difference + 1440 : difference) * 60;
 }
 
+/** A running clock, e.g. "1:23:45". */
+export function formatClock(seconds: number): string {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
 /** Add days to a "YYYY-MM-DD" date. */
 export function addDays(date: string, days: number): string {
     const value = new Date(`${date}T00:00:00Z`);

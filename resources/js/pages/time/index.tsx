@@ -1,6 +1,6 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Play, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
@@ -36,6 +36,7 @@ import {
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { index, list, update } from '@/routes/time';
+import { start as startTimer } from '@/routes/timer';
 import type {
     Absence,
     AbsenceDraft,
@@ -104,7 +105,35 @@ export default function TimeIndex({
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
-    const { auth, currentOrganization } = usePage().props;
+    const { auth, currentOrganization, timer } = usePage().props;
+    const timerEnabled = currentOrganization?.timerEnabled ?? false;
+    // The viewer's running timer, when it runs in this organization and their own time is shown.
+    const timerHere =
+        timer &&
+        timer.organization.slug === currentOrganization?.slug &&
+        member.id === auth.user.id
+            ? timer
+            : null;
+    const timerDraft = (stop: boolean): TimeEntryDraft | null =>
+        timer && {
+            timer: true,
+            stopTimer: stop,
+            userId: auth.user.id,
+            projectId: timer.project ? String(timer.project.id) : '',
+            description: timer.description ?? '',
+            tags: timer.tags,
+            date: timer.start.slice(0, 10),
+            start: timeOf(timer.start),
+            // Stopping after a long run asks to check the end, starting from now. Otherwise the
+            // end stays empty, which stops the timer when the form is sent.
+            end:
+                stop && timer.isLong
+                    ? Temporal.Now.plainTimeISO(timezone)
+                          .toString({ smallestUnit: 'minute' })
+                          .slice(0, 5)
+                    : '',
+            isBillable: timer.isBillable,
+        };
     const plusDurationKey = `time-report:plus-duration:${auth.user.id}:${currentOrganization?.id}`;
     const pageTitle = t(view === 'list' ? 'List' : 'Calendar');
 
@@ -147,6 +176,10 @@ export default function TimeIndex({
         ['project'],
     );
     useOpenFromQuery('copy', () => setCopyOpen(true));
+    // Opened from the running timer ("?timer=edit" or "?timer=stop").
+    useOpenFromQuery('timer', (params) =>
+        setDraft(timerDraft(params.get('timer') === 'stop')),
+    );
     useOpenFromQuery('absence', () =>
         newAbsence(dates.includes(today) ? today : date),
     );
@@ -361,6 +394,31 @@ export default function TimeIndex({
                             />
                         )}
                         {view === 'list' && copyPeriodButton}
+                        {timerEnabled &&
+                            !timer &&
+                            member.id === auth.user.id && (
+                                <Button
+                                    variant="tertiary"
+                                    className="shrink-0"
+                                    aria-label={t('Start timer')}
+                                    onPress={() =>
+                                        router.post(
+                                            startTimer.url(),
+                                            {},
+                                            {
+                                                preserveScroll: true,
+                                                preserveState: true,
+                                            },
+                                        )
+                                    }
+                                    data-test="start-timer-button"
+                                >
+                                    <Play className="size-4" />
+                                    <span className="hidden lg:inline">
+                                        {t('Start timer')}
+                                    </span>
+                                </Button>
+                            )}
                         <Button
                             isIconOnly
                             className="hidden md:inline-flex"
@@ -412,6 +470,8 @@ export default function TimeIndex({
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
                             }
+                            timer={timerHere}
+                            onEditTimer={() => setDraft(timerDraft(false))}
                             onSelect={(start, end) =>
                                 setDraft({
                                     ...newDraft(
@@ -436,6 +496,9 @@ export default function TimeIndex({
                 isIconOnly
                 className={cn(
                     'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
+                    // Above the running timer's bar.
+                    timer &&
+                        'bottom-[calc(9.5rem+env(safe-area-inset-bottom))]',
                     view !== 'list' &&
                         canCopyPreviousPeriod &&
                         'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',

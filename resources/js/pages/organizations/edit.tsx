@@ -10,6 +10,7 @@ import {
     ListBox,
     NumberField,
     Separator,
+    Switch,
     buttonVariants,
 } from '@heroui/react';
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
@@ -75,6 +76,7 @@ export default function OrganizationEdit({
     const { t } = useTranslation();
     const getInitials = useInitials();
     const [isInviteOpen, setInviteOpen] = useState(false);
+    const [timerEnabled, setTimerEnabled] = useState(organization.timerEnabled);
     useOpenFromQuery('invite', () =>
         setInviteOpen(permissions.canCreateInvitation),
     );
@@ -282,6 +284,34 @@ export default function OrganizationEdit({
                                         </ComboBox.Popover>
                                     </ComboBox>
                                 </div>
+                                {/* A switch sends nothing when off, so the value goes in a hidden field. */}
+                                <input
+                                    type="hidden"
+                                    name="timer_enabled"
+                                    value={timerEnabled ? '1' : '0'}
+                                />
+                                <Switch
+                                    isSelected={timerEnabled}
+                                    onChange={setTimerEnabled}
+                                    className="items-start"
+                                    data-test="organization-timer-enabled"
+                                >
+                                    <Switch.Content className="items-start">
+                                        <Switch.Control className="mt-0.5">
+                                            <Switch.Thumb />
+                                        </Switch.Control>
+                                        <span className="grid gap-0.5">
+                                            <Label>
+                                                {t('Allow the timer')}
+                                            </Label>
+                                            <Description>
+                                                {t(
+                                                    'Members can start and stop a timer instead of filling in times afterwards.',
+                                                )}
+                                            </Description>
+                                        </span>
+                                    </Switch.Content>
+                                </Switch>
                                 <div>
                                     <Button
                                         type="submit"

@@ -65,6 +65,7 @@ class OrganizationController extends Controller
                 'weekStartsOn' => $organization->week_starts_on,
                 'timezone' => $organization->timezone,
                 'workdayHours' => $organization->workday_seconds / 3600,
+                'timerEnabled' => $organization->timer_enabled,
                 'logo' => $organization->logoUrl(256),
             ],
             'members' => $organization->members()->orderBy('name')->get()->map(function (User $member) use ($user, $organization) {

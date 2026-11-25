@@ -712,6 +712,27 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 - **Inget saldo** (semesterdagar kvar) och inget attestflöde i den här versionen.
 - **Kod:** `App\Actions\Absences` (`CreateAbsence`, `UpdateAbsence`, `DeleteAbsence`, gemensamma regler i `ValidatesAbsences`), `App\Support\AbsenceTime`, `AbsencePresenter` och `AbsenceController`.
 
+### Tillägg efter Fas 6: timer (2026-11-25)
+
+Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och stoppa en timer. Designen finns i Figma på sidan "Timer (förslag)".
+
+- **Data:** `running_timers` (organisation, användare, projekt som kan vara tomt, beskrivning, debiterbart, taggnamn, starttid), högst en per person i någon av ens organisationer (`RunningTimer::runningFor`). Den hålls skild från `time_entries`, som alltid har en sluttid, så rapporter, export och priser påverkas inte förrän timern stoppas.
+- **Inställning:** `organizations.timer_enabled` ("Tillåt timer" i organisationsinställningarna), på som standard. Avstängd går det inte att starta nya timers, varken i webben eller via MCP, men en timer som redan går kan stoppas eller slängas.
+- **Actions** (`app/Actions/Timers`, gemensamma regler i `ValidatesTimers`):
+  - `StartTimer`: projektet är valfritt vid start. Starttiden får inte ligga i framtiden eller mer än 24 h bakåt. En timer som redan går sparas först och slutar där den nya börjar, som när man byter uppgift. Saknar den projekt måste den stoppas eller slängas först.
+  - `UpdateTimer` ändrar projekt, beskrivning, taggar, debiterbart och starttid.
+  - `StopTimer` kräver projekt och skapar posten genom `CreateTimeEntry`, med samma regler som all annan tid. Tiderna avrundas nedåt till hel minut, och en post är minst en minut. Ingen annan avrundning görs.
+  - `DiscardTimer` slänger timern utan att spara tid.
+- **Behörighet** (`RunningTimerPolicy`): var och en hanterar bara sin egen timer.
+- **Webb:**
+  - `TimerController` (`timer.start`, `timer.update`, `timer.stop`, `timer.discard`). Den pågående timern delas till alla sidor som `timer` (`TimerPresenter`), och klockan räknas upp i webbläsaren.
+  - Kortet i sidomenyn och raden ovanför bottenmenyn på mobilen visar projekt, kund och klocka med en stoppknapp. Flikens titel visar "▶ 1:23 · Projekt". Kalendern visar den pågående posten från start till nu, streckad.
+  - Starta kan man med knappen "Starta timer" i kalenderns verktygsfält, med knappen "Starta timer" i dialogen *Rapportera tid* (från nu, eller från en ändrad starttid), med "Fortsätt med timer" på en post och med ⌘K.
+  - Dialogen *Pågående timer* (tidsdialogen i timerläge) sparar, stoppar (sluttid valfri, annars nu) eller slänger. Stoppknappen sparar direkt, men öppnar dialogen när projekt saknas eller när timern gått minst 10 timmar (`RunningTimer::LONG_SECONDS`), så att man kontrollerar sluttiden.
+- **MCP:**
+  - `start_timer`, `stop_timer` (kan ange projekt och sluttid) och `discard_timer` (destruktiv).
+  - `get_context` visar en pågående timer och `timer_enabled`.
+
 ### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
 
 Beställt i efterhand. När man kommer tillbaka till appen (fliken blir synlig eller fönstret får fokus) efter minst 30 sekunder borta laddas sidans data om i bakgrunden (`useRefreshOnReturn` i `AppLayout`). Då syns tid som rapporterats på en annan enhet eller via MCP utan att man laddar om sidan. Omladdningen behåller sidans tillstånd och scrollposition, visar ingen förloppsindikator, görs inte när man är offline och rensar förhämtade sidor (`router.flushAll()`), eftersom de kan vara lika gamla.
