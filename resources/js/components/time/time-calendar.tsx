@@ -468,7 +468,7 @@ export function TimeCalendar({
                     if (id === TIMER_EVENT_ID && timer) {
                         return (
                             <div
-                                className="time-calendar-entry relative size-full cursor-pointer overflow-hidden rounded-[inherit] border border-dashed border-accent bg-accent-soft p-2 text-xs leading-tight text-foreground"
+                                className="time-calendar-entry time-calendar-timer relative size-full cursor-pointer overflow-hidden rounded-[inherit] border border-transparent bg-accent-soft p-2 text-xs leading-tight text-foreground"
                                 data-test="calendar-timer"
                             >
                                 <div className="truncate font-semibold">
