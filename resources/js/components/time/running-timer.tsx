@@ -109,8 +109,9 @@ export function useTimerTitle() {
 }
 
 /**
- * The running timer: a card in the sidebar on desktop, a bar above the bottom navigation on mobile.
- * Pressing it opens the timer; the round button stops it.
+ * The running timer as a quiet row: a pulsing dot, the clock and the project, with a small stop
+ * button. In the sidebar it sits like the search field; on mobile it floats above the bottom
+ * navigation. Pressing the row opens the timer.
  */
 export function RunningTimerCard({
     variant,
@@ -131,22 +132,15 @@ export function RunningTimerCard({
         currentOrganization?.slug !== timer.organization.slug
             ? timer.organization.name
             : null;
-    const subtitle =
-        variant === 'bar'
-            ? [timer.project?.clientName, timer.description, elsewhere]
-                  .filter(Boolean)
-                  .join(' · ')
-            : [timer.project?.clientName, elsewhere]
-                  .filter(Boolean)
-                  .join(' · ');
+    const label = [timer.project?.name ?? t('No project'), elsewhere]
+        .filter(Boolean)
+        .join(' · ');
 
     return (
         <div
             className={cn(
-                'flex items-center gap-3',
-                variant === 'sidebar'
-                    ? 'rounded-2xl bg-accent-soft p-3'
-                    : 'rounded-2xl bg-surface p-2 ps-4 shadow-surface',
+                'flex items-center gap-1 rounded-xl border border-separator bg-background p-1 ps-0 text-sm',
+                variant === 'bar' && 'shadow-surface',
                 className,
             )}
             data-test="running-timer"
@@ -154,61 +148,34 @@ export function RunningTimerCard({
             <button
                 type="button"
                 onClick={() => openTimer(timer)}
-                className="grid min-w-0 flex-1 gap-0.5 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1 ps-3 text-left transition-colors hover:bg-default focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
                 aria-label={t('Open the running timer')}
             >
-                <span className="flex min-w-0 items-center gap-2 text-sm">
-                    <span
-                        aria-hidden="true"
-                        className="size-2 shrink-0 rounded-full"
-                        style={{
-                            backgroundColor:
-                                timer.project?.color ?? 'var(--muted)',
-                        }}
-                    />
-                    {/* The project keeps most of the room; the client gets what is left. */}
-                    <span className="max-w-[75%] shrink-0 truncate font-semibold">
-                        {timer.project?.name ?? t('No project yet')}
-                    </span>
-                    {variant === 'sidebar' && subtitle && (
-                        <span className="min-w-0 truncate text-muted">
-                            {subtitle}
-                        </span>
-                    )}
-                </span>
-                {variant === 'bar' && subtitle && (
-                    <span className="truncate text-xs text-muted">
-                        {subtitle}
-                    </span>
-                )}
-                {variant === 'sidebar' && (
-                    <span
-                        className="text-xl font-semibold tabular-nums"
-                        data-test="running-timer-clock"
-                    >
-                        {formatClock(elapsed)}
-                    </span>
-                )}
-            </button>
-            {variant === 'bar' && (
                 <span
-                    className="font-semibold tabular-nums"
+                    aria-hidden="true"
+                    className="relative flex size-3 shrink-0 items-center justify-center"
+                >
+                    <span className="absolute inset-0 rounded-full bg-danger/20 motion-safe:animate-pulse" />
+                    <span className="size-1.5 rounded-full bg-danger" />
+                </span>
+                <span
+                    className="shrink-0 font-semibold tabular-nums"
                     data-test="running-timer-clock"
                 >
                     {formatClock(elapsed)}
                 </span>
-            )}
+                <span className="min-w-0 truncate text-muted">{label}</span>
+            </button>
             <Button
                 isIconOnly
+                size="sm"
+                variant="ghost"
                 aria-label={t('Stop the timer')}
                 onPress={() => stopTimer(timer)}
-                className={cn(
-                    'shrink-0 rounded-full bg-danger text-danger-foreground',
-                    variant === 'sidebar' ? 'size-9' : 'size-10',
-                )}
+                className="size-7 min-w-7 shrink-0 rounded-lg bg-default"
                 data-test="running-timer-stop"
             >
-                <Square className="size-3.5 fill-current" />
+                <Square className="size-2.5 fill-current" />
             </Button>
         </div>
     );

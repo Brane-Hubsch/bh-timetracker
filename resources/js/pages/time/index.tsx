@@ -498,7 +498,7 @@ export default function TimeIndex({
                     'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
                     // Above the running timer's bar.
                     timer &&
-                        'bottom-[calc(9.5rem+env(safe-area-inset-bottom))]',
+                        'bottom-[calc(7.75rem+env(safe-area-inset-bottom))]',
                     view !== 'list' &&
                         canCopyPreviousPeriod &&
                         'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',
