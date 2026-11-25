@@ -1,6 +1,6 @@
 import { Label, Switch } from '@heroui/react';
 import { Head, usePage } from '@inertiajs/react';
-import { Play, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Heading from '@/components/heading';
@@ -121,22 +121,11 @@ export default function Sidebar() {
 
                 <div className={cardClass}>
                     <SidebarSetting
-                        title="Report time"
+                        title="Add"
                         icon={Plus}
                         available={Boolean(currentOrganization)}
-                        visible={isVisible('Report time')}
-                        onChange={(visible) =>
-                            setVisible('Report time', visible)
-                        }
-                    />
-                    <SidebarSetting
-                        title="Start timer"
-                        icon={Play}
-                        available={Boolean(currentOrganization?.timerEnabled)}
-                        visible={isVisible('Start timer')}
-                        onChange={(visible) =>
-                            setVisible('Start timer', visible)
-                        }
+                        visible={isVisible('Add')}
+                        onChange={(visible) => setVisible('Add', visible)}
                     />
                 </div>
             </section>
