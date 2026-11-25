@@ -1,6 +1,7 @@
 import { Pressable, Tooltip } from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
+import { ShortcutRow } from '@/components/form/shortcut-row';
 import { ProjectDot } from '@/components/project-dot';
 import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
 import { formatDecimalHours } from '@/lib/format';
@@ -43,17 +44,19 @@ function projectLabel({ name, clientName }: TimelineProject) {
 
 function ProjectLabels({ items }: { items: TimelineProject[] }) {
     return (
-        <ul className="scroll-fade-x flex h-4 min-w-0 [scrollbar-width:none] gap-4 overflow-x-auto text-xs whitespace-nowrap text-muted">
-            {items.map((project) => (
-                <li
-                    key={project.id}
-                    className="flex shrink-0 items-center gap-1.5"
-                >
-                    <ProjectDot color={project.color} />
-                    {projectLabel(project)}
-                </li>
-            ))}
-        </ul>
+        <ShortcutRow contentClassName="p-0" data-test="timeline-legend">
+            <ul className="flex h-4 gap-4 text-xs whitespace-nowrap text-muted">
+                {items.map((project) => (
+                    <li
+                        key={project.id}
+                        className="flex shrink-0 items-center gap-1.5"
+                    >
+                        <ProjectDot color={project.color} />
+                        {projectLabel(project)}
+                    </li>
+                ))}
+            </ul>
+        </ShortcutRow>
     );
 }
 
@@ -301,11 +304,7 @@ export function TimelineChart({
                 )}
             </div>
 
-            {projects && (
-                <div data-test="timeline-legend">
-                    <ProjectLabels items={projects} />
-                </div>
-            )}
+            {projects && <ProjectLabels items={projects} />}
 
             <div className={`relative pl-10 ${plotHeight}`}>
                 {gridlines.map((hours) => (
