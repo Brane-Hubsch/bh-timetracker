@@ -9,7 +9,10 @@ import {
 } from '@/components/command-palette';
 import { RunningTimerCard, startTimer } from '@/components/time/running-timer';
 import { TimeActionsMenu } from '@/components/time/time-actions-menu';
-import { useSidebarSettings } from '@/hooks/use-sidebar-settings';
+import {
+    useSidebarSettings,
+    useSyncSidebarVisibility,
+} from '@/hooks/use-sidebar-settings';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
@@ -18,6 +21,7 @@ import { index as timeIndex } from '@/routes/time';
 
 export function AppSidebar({ className }: { className?: string }) {
     const { t } = useTranslation();
+    useSyncSidebarVisibility();
     const { orderKey, isVisible } = useSidebarSettings();
     const items = useMainNavigation().filter(({ title }) => isVisible(title));
     const { currentOrganization, timer } = usePage().props;

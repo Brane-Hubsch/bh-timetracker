@@ -17,6 +17,7 @@ declare module '@inertiajs/core' {
             locale: string;
             auth: Auth;
             sidebarOpen: boolean;
+            sidebarHiddenItems: string[] | null;
             currentOrganization: Organization | null;
             organizations: Organization[];
             /** Permissions in the current organization. */

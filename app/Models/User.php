@@ -36,6 +36,7 @@ use Laravel\Passport\HasApiTokens;
  * @property string $timezone
  * @property string|null $remember_token
  * @property int|null $current_organization_id
+ * @property list<string>|null $sidebar_hidden_items
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Organization|null $currentOrganization
@@ -44,7 +45,7 @@ use Laravel\Passport\HasApiTokens;
  * @property-read Collection<int, Organization> $organizations
  */
 #[Fillable(['name', 'email', 'password', 'google_id', 'avatar_url', 'avatar_path', 'locale', 'timezone', 'current_organization_id'])]
-#[Hidden(['password', 'google_id', 'remember_token', 'avatar_path'])]
+#[Hidden(['password', 'google_id', 'remember_token', 'avatar_path', 'sidebar_hidden_items'])]
 #[Appends(['avatar'])]
 class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail, OAuthenticatable, PasskeyUser
 {
@@ -71,6 +72,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'sidebar_hidden_items' => 'array',
         ];
     }
 
