@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export function ShortcutRow({
     children,
+    contentClassName,
     label,
     'data-test': dataTest,
 }: {
     children: ReactNode;
+    contentClassName?: string;
     label?: string;
     'data-test'?: string;
 }) {
@@ -57,7 +60,10 @@ export function ShortcutRow({
             }}
             data-test={dataTest}
         >
-            <div ref={row} className="flex w-max gap-1.5 p-px">
+            <div
+                ref={row}
+                className={cn('flex w-max gap-1.5 p-px', contentClassName)}
+            >
                 {children}
             </div>
         </div>
