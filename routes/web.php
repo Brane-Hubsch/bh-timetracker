@@ -32,6 +32,7 @@ Route::prefix('{current_organization}')
         Route::get('calendar', [TimeEntryController::class, 'index'])->name('time.index');
         Route::get('list', [TimeEntryController::class, 'index'])->name('time.list');
         Route::get('time', [TimeEntryController::class, 'redirectLegacyIndex']);
+        Route::get('time/report-options', [TimeEntryController::class, 'reportOptions'])->name('time.report-options');
         Route::post('time', [TimeEntryController::class, 'store'])->name('time.store');
         Route::post('time/copy', [TimeEntryController::class, 'copy'])->name('time.copy');
         Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');

@@ -23,6 +23,7 @@ use App\Support\HolidayDates;
 use App\Support\TimeEntryPresenter;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -85,9 +86,7 @@ class TimeEntryController extends Controller
             ->orderBy('starts_on')
             ->get();
 
-        $members = $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
-            ? $this->presenter->memberOptions($organization)
-            : [];
+        $members = $this->memberOptions($organization, $user);
 
         return Inertia::render('time/index', [
             'view' => $view,
@@ -99,11 +98,7 @@ class TimeEntryController extends Controller
             'entries' => $entries->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone)),
             'absences' => $weekAbsences->where('user_id', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::absence($absence)),
             'colleaguesOff' => $weekAbsences->where('user_id', '!=', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::colleagueOff($absence)),
-            'absenceTypes' => AbsenceType::options(),
-            'recentAbsenceTypes' => AbsencePresenter::recentTypes($organization, $user),
-            'workdaySeconds' => $organization->workday_seconds,
-            // So the absence dialog can count working days in periods around the week.
-            'holidays' => HolidayDates::between($organization->id, $weekStart->subYear(), $weekStart->addYear()),
+            ...$this->absenceOptions($organization, $user, $weekStart),
             'calendarHolidays' => fn () => $view === 'list' ? [] : $organization->holidays()
                 ->whereDate('date', '>=', $periodStart->toDateString())
                 ->whereDate('date', '<', $periodEnd->toDateString())
@@ -124,6 +119,23 @@ class TimeEntryController extends Controller
                 ->orderBy('started_at')
                 ->get()
                 ->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone))),
+        ]);
+    }
+
+    public function reportOptions(#[CurrentUser] User $user): JsonResponse
+    {
+        $organization = $this->currentOrganization->getOrFail();
+        $today = CarbonImmutable::today($user->timezone);
+        $members = $this->memberOptions($organization, $user);
+
+        return response()->json([
+            'today' => $today->toDateString(),
+            'projects' => $this->presenter->projectOptions($organization, $user),
+            'tags' => $this->presenter->tagOptions($organization),
+            'recentTags' => $this->presenter->recentTags($organization),
+            'members' => $members,
+            'recentProjects' => $this->presenter->recentProjectsByMember($organization, $members),
+            'absence' => $this->absenceOptions($organization, $user, $today),
         ]);
     }
 
@@ -230,6 +242,26 @@ class TimeEntryController extends Controller
         abort_unless($member instanceof User && $user->can('manageFor', [TimeEntry::class, $organization, $member]), 403);
 
         return $member;
+    }
+
+    /** @return array<int, array{value: string, label: string, avatar: string|null}> */
+    private function memberOptions(Organization $organization, User $user): array
+    {
+        return $user->hasOrganizationPermission($organization, OrganizationPermission::ManageTeamTime)
+            ? $this->presenter->memberOptions($organization)
+            : [];
+    }
+
+    /** @return array<string, mixed> */
+    private function absenceOptions(Organization $organization, User $user, CarbonImmutable $date): array
+    {
+        return [
+            'absenceTypes' => AbsenceType::options(),
+            'recentAbsenceTypes' => AbsencePresenter::recentTypes($organization, $user),
+            'workdaySeconds' => $organization->workday_seconds,
+            // The absence dialog counts working days around the initial date.
+            'holidays' => HolidayDates::between($organization->id, $date->subYear(), $date->addYear()),
+        ];
     }
 
     private function authorizeMember(User $user, Organization $organization, int $memberId): void

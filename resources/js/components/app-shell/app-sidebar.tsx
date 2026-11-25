@@ -1,14 +1,14 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { SidebarAccountMenu } from '@/components/app-shell/sidebar-account-menu';
 import { SidebarNavigation } from '@/components/app-shell/sidebar-navigation';
+import { SidebarTimeActions } from '@/components/app-shell/sidebar-time-actions';
 import {
     CommandPaletteShortcut,
     useCommandPalette,
 } from '@/components/command-palette';
-import { RunningTimerCard, startTimer } from '@/components/time/running-timer';
-import { TimeActionsMenu } from '@/components/time/time-actions-menu';
+import { RunningTimerCard } from '@/components/time/running-timer';
 import {
     useSidebarSettings,
     useSyncSidebarVisibility,
@@ -17,20 +17,18 @@ import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
-import { index as timeIndex } from '@/routes/time';
 
 export function AppSidebar({ className }: { className?: string }) {
     const { t } = useTranslation();
     useSyncSidebarVisibility();
     const { orderKey, isVisible } = useSidebarSettings();
     const items = useMainNavigation().filter(({ title }) => isVisible(title));
-    const { currentOrganization, timer } = usePage().props;
+    const {
+        props: { currentOrganization, timer },
+        url,
+    } = usePage();
     const { open } = useCommandPalette();
-    const actionSlug = isVisible('Add') ? currentOrganization?.slug : undefined;
-    const onStartTimer =
-        actionSlug && currentOrganization?.timerEnabled
-            ? () => startTimer(actionSlug)
-            : undefined;
+    const actionOrganization = isVisible('Add') ? currentOrganization : null;
 
     return (
         <aside
@@ -67,7 +65,7 @@ export function AppSidebar({ className }: { className?: string }) {
             />
 
             <div className="mt-auto grid gap-3">
-                {(timer || actionSlug) && (
+                {(timer || actionOrganization) && (
                     <>
                         <div className="relative h-9">
                             <RunningTimerCard
@@ -79,7 +77,7 @@ export function AppSidebar({ className }: { className?: string }) {
                                         : 'pointer-events-none w-9 opacity-0',
                                 )}
                             />
-                            {actionSlug && (
+                            {actionOrganization && (
                                 <div
                                     inert={Boolean(timer)}
                                     className={cn(
@@ -88,19 +86,13 @@ export function AppSidebar({ className }: { className?: string }) {
                                             'pointer-events-none scale-0 opacity-0',
                                     )}
                                 >
-                                    <TimeActionsMenu
-                                        className="shadow-sm"
-                                        placement="top end"
-                                        testId="sidebar-time-actions"
+                                    <SidebarTimeActions
+                                        key={JSON.stringify([
+                                            actionOrganization.slug,
+                                            url,
+                                        ])}
+                                        organization={actionOrganization}
                                         isDisabled={Boolean(timer)}
-                                        onStartTimer={onStartTimer}
-                                        onReport={(mode) =>
-                                            router.visit(
-                                                timeIndex.url(actionSlug, {
-                                                    query: { new: mode },
-                                                }),
-                                            )
-                                        }
                                     />
                                 </div>
                             )}

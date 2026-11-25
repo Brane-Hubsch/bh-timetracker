@@ -729,6 +729,7 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
   - Kortet i sidomenyn och raden ovanför bottenmenyn på mobilen visar projekt, kund och klocka med en stoppknapp. Flikens titel visar "▶ 1:23 · Projekt". Kalendern visar den pågående posten från start till nu, streckad.
   - Plusknappen ovanför profilen och kalenderns plusknapp öppnar samma snabbmeny. Starta timer startar direkt. Rapportera tid och Rapportera frånvaro öppnar rapportdialogen med motsvarande flik vald. En pågående timer ersätter plusknappen i sidomenyn, och kalenderns meny erbjuder fortfarande båda rapporteringsvalen. Timern kan också startas i dialogen *Rapportera tid* (från nu, eller från en ändrad starttid), med "Fortsätt med timer" på en post och med ⌘K.
   - Dialogen *Pågående timer* (tidsdialogen i timerläge) sparar, stoppar (sluttid valfri, annars nu) eller slänger. Stoppknappen sparar direkt, men öppnar dialogen när projekt saknas eller när timern gått minst 10 timmar (`RunningTimer::LONG_SECONDS`), så att man kontrollerar sluttiden.
+  - Sidomenyns plusknapp öppnar rapportdialogen ovanpå den aktuella sidan. När timern startas eller en rapport sparas behålls sidan och dess filter.
 - **MCP:**
   - `start_timer`, `stop_timer` (kan ange projekt och sluttid) och `discard_timer` (destruktiv).
   - `get_context` visar en pågående timer och `timer_enabled`.
