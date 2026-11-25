@@ -11,7 +11,17 @@ function hiddenItems(value: string | null): Set<string> {
     try {
         const items: unknown = value && JSON.parse(value);
         if (Array.isArray(items)) {
-            return new Set(items.filter((item) => typeof item === 'string'));
+            const hidden = new Set(
+                items.filter((item) => typeof item === 'string'),
+            );
+            // Keep the shortcut hidden if both of its previous buttons were hidden.
+            const reportsHidden = hidden.delete('Report time');
+            const timerHidden = hidden.delete('Start timer');
+            if (reportsHidden && timerHidden) {
+                hidden.add('Add');
+            }
+
+            return hidden;
         }
     } catch {
         // Invalid preferences leave every item visible.

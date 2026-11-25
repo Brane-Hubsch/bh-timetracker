@@ -38,10 +38,13 @@ export type TimeEntryMemberOption = {
 /** A saved organization holiday on a calendar date (YYYY-MM-DD). */
 export type CalendarHoliday = { date: string; name: string };
 
+export type TimeReportMode = 'time' | 'absence';
+
 /** Values to start the time entry form with. */
 export type TimeEntryDraft = {
     id?: number;
     openedFrom?: 'calendar' | 'plus';
+    reportMode?: TimeReportMode;
     userId: number;
     projectId: string;
     description: string;
