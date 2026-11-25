@@ -729,7 +729,10 @@ export function TimeEntryForm({
                 <ModePanel
                     key={selectedMode}
                     id={canSwitchMode ? selectedMode : undefined}
-                    className="m-0 grid gap-5 p-0"
+                    className={cn(
+                        'm-0 grid gap-5 p-0',
+                        !isEditing && !isTimer && 'pt-1',
+                    )}
                 >
                     {isAbsence && absence ? (
                         <AbsenceForm
