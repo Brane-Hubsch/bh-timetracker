@@ -1,6 +1,23 @@
 import type { QueryParams } from '@/wayfinder';
 import { addDays, formatDate, isoWeek } from '@/lib/time';
-import type { ReportFilterValues, ReportGroupingKey } from '@/types';
+import type {
+    ReportFilterValues,
+    ReportGroupingKey,
+    ReportMemberOption,
+    User,
+} from '@/types';
+
+export function reportMemberAvatars(
+    members: ReportMemberOption[],
+    viewer: Pick<User, 'id' | 'avatar'>,
+) {
+    const avatars = new Map(
+        members.map(({ value, avatar }) => [value, avatar]),
+    );
+    avatars.set(String(viewer.id), viewer.avatar);
+
+    return avatars;
+}
 
 /**
  * Report filters as query parameters, leaving out empty values so URLs stay short. The period's

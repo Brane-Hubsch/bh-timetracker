@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { SelectField } from '@/components/form/select-field';
 import { AbsenceTable } from '@/components/reports/absence-table';
 import { ExportMenu } from '@/components/reports/export-menu';
@@ -10,7 +10,7 @@ import { ReportStats } from '@/components/reports/report-stats';
 import { TimelineChart } from '@/components/reports/timeline-chart';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useTranslation } from '@/lib/i18n';
-import { reportQuery } from '@/lib/reports';
+import { reportMemberAvatars, reportQuery } from '@/lib/reports';
 import type {
     ReportAbilities,
     ReportAbsence,
@@ -39,6 +39,10 @@ export default function ReportsSummary({
     absence,
 }: Props) {
     const { t } = useTranslation();
+    const avatars = reportMemberAvatars(
+        options.members,
+        usePage().props.auth.user,
+    );
     const byMemberAndProject =
         filters.group === 'member' && filters.subgroup === 'project';
 
@@ -132,7 +136,7 @@ export default function ReportsSummary({
                 {byMemberAndProject ? (
                     <MemberProjectTable
                         groups={summary.groups}
-                        members={options.members}
+                        avatars={avatars}
                         showAmounts={summary.totals.amount !== null}
                         currency={currency}
                     />
@@ -140,6 +144,7 @@ export default function ReportsSummary({
                     <GroupTable
                         groups={summary.groups}
                         totals={summary.totals}
+                        avatars={avatars}
                         grouping={filters.group}
                         subGrouping={filters.subgroup}
                         currency={currency}
@@ -154,7 +159,9 @@ export default function ReportsSummary({
                 )}
             </section>
 
-            {absence.members.length > 0 && <AbsenceTable absence={absence} />}
+            {absence.members.length > 0 && (
+                <AbsenceTable absence={absence} avatars={avatars} />
+            )}
         </ReportLayout>
     );
 }

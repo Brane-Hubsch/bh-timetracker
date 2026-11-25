@@ -6,19 +6,21 @@ import {
     columnOrderHeaderClassName,
     useColumnOrder,
 } from '@/components/reorderable-column-header';
+import { ReportMemberName } from '@/components/reports/report-member-name';
 import { formatDays } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import type { ReportAbsence } from '@/types';
 
 type Props = {
     absence: ReportAbsence;
+    avatars: ReadonlyMap<string, string | null>;
 };
 
 /**
  * Absence per member and type in working days (absence time ÷ the organization's working day).
  * Only types someone was absent for get a column.
  */
-export function AbsenceTable({ absence }: Props) {
+export function AbsenceTable({ absence, avatars }: Props) {
     const { t, intlLocale } = useTranslation();
     const { id: userId } = usePage().props.auth.user;
     const labels = new Map(
@@ -78,7 +80,12 @@ export function AbsenceTable({ absence }: Props) {
                             {absence.members.map((member) => (
                                 <Table.Row key={member.id} id={member.id}>
                                     <Table.Cell className="font-medium">
-                                        {member.name}
+                                        <ReportMemberName
+                                            name={member.name}
+                                            avatar={avatars.get(
+                                                String(member.id),
+                                            )}
+                                        />
                                     </Table.Cell>
                                     {order.columns.map((column) => (
                                         <Table.Cell
