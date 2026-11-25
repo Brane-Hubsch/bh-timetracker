@@ -347,6 +347,7 @@ export function ReportPeriodPicker({
             name={name}
             range={range}
             onStep={hasRange ? step : undefined}
+            enclosed
             className={className}
             testId="report-period"
         >

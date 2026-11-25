@@ -13,6 +13,8 @@ type Props = {
     label?: string;
     /** Use a single-month panel with its own header. */
     compact?: boolean;
+    /** Place the trigger and step buttons inside a shared outline. */
+    enclosed?: boolean;
     className?: string;
     testId: string;
     children: (context: {
@@ -28,6 +30,7 @@ export function PeriodPicker({
     stepLabels,
     label,
     compact = false,
+    enclosed = false,
     className,
     testId,
     children,
@@ -39,11 +42,19 @@ export function PeriodPicker({
     const [isOpen, setIsOpen] = useState(false);
     const dismiss = () => setIsOpen(false);
     const dialogLabel = label ?? t('Choose a period');
+    const stepButtonClassName = enclosed
+        ? 'h-8 w-6 shrink-0 rounded-full'
+        : undefined;
 
     const trigger = (
         <Button
-            variant="outline"
-            className="h-9 min-w-0 flex-1 justify-between gap-2 rounded-full bg-surface ps-3.5 pe-2.5 md:flex-none"
+            variant={enclosed ? 'ghost' : 'outline'}
+            className={cn(
+                'min-w-0 flex-1 rounded-full md:flex-none',
+                enclosed
+                    ? 'h-8 justify-center px-[5px]'
+                    : 'h-9 justify-between bg-surface ps-3.5 pe-2.5',
+            )}
             data-test={testId}
         >
             <span className="flex min-w-0 items-baseline gap-2">
@@ -63,21 +74,24 @@ export function PeriodPicker({
                     </span>
                 )}
             </span>
-            {!compact && (
-                <span
-                    aria-hidden="true"
-                    className="report-period-icon report-period-icon--open"
-                />
-            )}
         </Button>
     );
 
     return (
-        <div className={cn('flex items-center gap-1', className)}>
+        <div
+            className={cn(
+                'flex items-center',
+                enclosed
+                    ? 'h-9 gap-[7px] rounded-full border border-border bg-surface px-2'
+                    : 'gap-1',
+                className,
+            )}
+        >
             <Button
                 isIconOnly
                 variant="ghost"
                 size="sm"
+                className={stepButtonClassName}
                 isDisabled={!onStep}
                 aria-label={stepLabels?.[0] ?? t('Previous period')}
                 onPress={() => onStep?.(-1)}
@@ -151,6 +165,7 @@ export function PeriodPicker({
                 isIconOnly
                 variant="ghost"
                 size="sm"
+                className={stepButtonClassName}
                 isDisabled={!onStep}
                 aria-label={stepLabels?.[1] ?? t('Next period')}
                 onPress={() => onStep?.(1)}

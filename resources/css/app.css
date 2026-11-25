@@ -108,10 +108,6 @@
     --report-period-icon: url('../js/assets/report-chevron-right.svg');
 }
 
-.report-period-icon--open {
-    --report-period-icon: url('../js/assets/report-chevron-down.svg');
-}
-
 .report-period-icon--check {
     --report-period-icon: url('../js/assets/report-check.svg');
 }

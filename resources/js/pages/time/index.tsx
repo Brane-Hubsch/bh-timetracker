@@ -395,7 +395,7 @@ export default function TimeIndex({
                     <div
                         className={cn(
                             'flex max-w-full min-w-0 flex-wrap items-center',
-                            isList ? 'gap-3' : 'gap-2 md:ms-auto md:gap-x-5',
+                            isList ? 'gap-3' : 'gap-2.5 md:ms-auto',
                         )}
                     >
                         {isList ? (
