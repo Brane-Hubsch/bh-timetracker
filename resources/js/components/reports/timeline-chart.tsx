@@ -15,7 +15,6 @@ type Props = {
     title?: string;
     projects?: TimelineProject[];
     headerAction?: ReactNode;
-    tall?: boolean;
 };
 
 type ProjectHours = TimelineProject & { seconds: number };
@@ -44,18 +43,14 @@ function projectLabel({ name, clientName }: TimelineProject) {
 
 function ProjectLabels({ items }: { items: TimelineProject[] }) {
     return (
-        <ul className="flex min-w-0 flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted">
+        <ul className="flex h-4 min-w-0 [scrollbar-width:none] gap-4 overflow-x-auto text-xs whitespace-nowrap text-muted">
             {items.map((project) => (
                 <li
                     key={project.id}
-                    className="flex min-w-0 items-start gap-1.5"
+                    className="flex shrink-0 items-center gap-1.5"
                 >
-                    <span className="mt-0.5 inline-flex">
-                        <ProjectDot color={project.color} />
-                    </span>
-                    <span className="wrap-anywhere">
-                        {projectLabel(project)}
-                    </span>
+                    <ProjectDot color={project.color} />
+                    {projectLabel(project)}
                 </li>
             ))}
         </ul>
@@ -184,7 +179,6 @@ export function TimelineChart({
     title,
     projects,
     headerAction,
-    tall = false,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const axisRef = useRef<HTMLDivElement>(null);
@@ -203,11 +197,7 @@ export function TimelineChart({
     const barMaxWidth = projects
         ? 'max-w-[clamp(--spacing(6),75%,--spacing(24))]'
         : 'max-w-6';
-    const plotHeight = tall
-        ? 'h-[23.625rem]'
-        : projects
-          ? 'h-72'
-          : 'h-[14.4rem]';
+    const plotHeight = projects ? 'h-[23.625rem]' : 'h-[14.4rem]';
 
     useEffect(() => {
         const axis = axisRef.current;
@@ -275,7 +265,9 @@ export function TimelineChart({
             className="grid h-full grid-cols-1 content-between gap-3 rounded-2xl bg-surface p-4 shadow-surface"
             data-test="timeline-chart"
         >
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <div
+                className={`flex items-center justify-between ${projects ? 'min-h-11 gap-2 md:min-h-10' : 'flex-wrap gap-x-4 gap-y-1'}`}
+            >
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     <h2 className="text-sm font-semibold">{chartTitle}</h2>
                     {!projects && hasBillable && hasNonBillable && (
@@ -309,7 +301,7 @@ export function TimelineChart({
                 )}
             </div>
 
-            {projects && projects.length > 0 && (
+            {projects && (
                 <div data-test="timeline-legend">
                     <ProjectLabels items={projects} />
                 </div>
