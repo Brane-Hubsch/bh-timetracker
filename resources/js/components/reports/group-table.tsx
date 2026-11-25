@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { GripVertical } from 'lucide-react';
 import { useRef, useState, useSyncExternalStore } from 'react';
 import { ProjectDot } from '@/components/project-dot';
+import { ReportMemberName } from '@/components/reports/report-member-name';
 import { formatDecimalHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatBucket } from '@/lib/reports';
@@ -11,6 +12,7 @@ import type { ReportGroup, ReportGroupingKey, ReportTotals } from '@/types';
 type Props = {
     groups: ReportGroup[];
     totals: ReportTotals;
+    avatars: ReadonlyMap<string, string | null>;
     grouping: ReportGroupingKey;
     subGrouping: ReportGroupingKey | 'none';
     currency: string;
@@ -67,6 +69,7 @@ function parseColumnOrder(savedOrder: string | null): readonly MetricColumn[] {
 export function GroupTable({
     groups,
     totals,
+    avatars,
     grouping,
     subGrouping,
     currency,
@@ -353,7 +356,16 @@ export function GroupTable({
                                                     color={line.color}
                                                 />
                                             )}
-                                            {label(line)}
+                                            {line.type === 'member' ? (
+                                                <ReportMemberName
+                                                    name={line.label}
+                                                    avatar={avatars.get(
+                                                        line.key,
+                                                    )}
+                                                />
+                                            ) : (
+                                                label(line)
+                                            )}
                                         </span>
                                     </Table.Cell>
                                     {columns.map((column) =>

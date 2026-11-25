@@ -12,10 +12,11 @@ import { ProjectDot } from '@/components/project-dot';
 import { ExportMenu } from '@/components/reports/export-menu';
 import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
+import { ReportMemberName } from '@/components/reports/report-member-name';
 import { ReportStats } from '@/components/reports/report-stats';
 import { formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { reportQuery } from '@/lib/reports';
+import { reportMemberAvatars, reportQuery } from '@/lib/reports';
 import { formatDate, formatDuration, timeOf } from '@/lib/time';
 import type {
     Paginated,
@@ -65,9 +66,10 @@ export default function ReportsDetailed({
     totals,
 }: Props) {
     const { t, intlLocale } = useTranslation();
-    const { id: userId } = usePage().props.auth.user;
+    const { user } = usePage().props.auth;
+    const avatars = reportMemberAvatars(options.members, user);
     const order = useColumnOrder({
-        storageKey: `timereport:report-detailed-column-order:${userId}`,
+        storageKey: `timereport:report-detailed-column-order:${user.id}`,
         defaultOrder: defaultColumnOrder,
         isVisible: (column) =>
             (column !== 'member' || abilities.canViewTeam) &&
@@ -89,7 +91,12 @@ export default function ReportsDetailed({
     const renderCell = (column: DetailedColumn, entry: ReportRow) => {
         switch (column) {
             case 'member':
-                return entry.memberName;
+                return (
+                    <ReportMemberName
+                        name={entry.memberName}
+                        avatar={avatars.get(String(entry.userId))}
+                    />
+                );
             case 'project':
                 return (
                     <span className="flex items-center gap-2">

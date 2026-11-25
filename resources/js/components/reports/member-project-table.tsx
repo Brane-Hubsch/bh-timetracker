@@ -1,23 +1,23 @@
-import { Avatar, Button, Table, Tooltip } from '@heroui/react';
+import { Button, Table, Tooltip } from '@heroui/react';
 import { usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 import { useId, useState } from 'react';
 import { ProjectDot } from '@/components/project-dot';
 import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
+import { ReportMemberName } from '@/components/reports/report-member-name';
 import {
     ColumnOrderStatus,
     ReorderableColumnHeader,
     columnOrderHeaderClassName,
     useColumnOrder,
 } from '@/components/reorderable-column-header';
-import { useInitials } from '@/hooks/use-initials';
 import { formatDecimalHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import type { ReportGroup, ReportMemberOption } from '@/types';
+import type { ReportGroup } from '@/types';
 
 type Props = {
     groups: ReportGroup[];
-    members: ReportMemberOption[];
+    avatars: ReadonlyMap<string, string | null>;
     showAmounts: boolean;
     currency: string;
 };
@@ -39,7 +39,7 @@ const columnWidths: Record<MemberProjectColumn, string> = {
 
 export function MemberProjectTable({
     groups,
-    members,
+    avatars,
     showAmounts,
     currency,
 }: Props) {
@@ -52,7 +52,6 @@ export function MemberProjectTable({
     });
     const { columns } = order;
     const projectColumnIndex = columns.indexOf('Project breakdown');
-    const getInitials = useInitials();
     const tableId = useId();
     const [expandedMembers, setExpandedMembers] = useState<Set<string>>(
         () => new Set(),
@@ -61,9 +60,6 @@ export function MemberProjectTable({
         key: string;
         source: 'hover' | 'focus';
     } | null>(null);
-    const avatars = new Map(
-        members.map((member) => [member.value, member.avatar]),
-    );
     const maxSeconds = groups.reduce(
         (largest, member) => Math.max(largest, member.seconds),
         1,
@@ -149,12 +145,6 @@ export function MemberProjectTable({
                             const expanded =
                                 canExpand && expandedMembers.has(member.key);
                             const detailsId = `${tableId}-projects-${member.key}`;
-                            const avatar =
-                                avatars.get(member.key) ??
-                                (member.key === String(auth.user.id)
-                                    ? auth.user.avatar
-                                    : null);
-
                             function handleTooltipFocus(isOpen: boolean) {
                                 setActiveTooltip((current) => {
                                     if (isOpen) {
@@ -202,30 +192,12 @@ export function MemberProjectTable({
                                         }
                                     }}
                                 >
-                                    <Table.Cell>
-                                        <span className="flex items-center gap-2 font-medium">
-                                            <Avatar
-                                                size="sm"
-                                                variant="soft"
-                                                color="accent"
-                                                className="size-8 shrink-0 rounded-full"
-                                                aria-hidden="true"
-                                            >
-                                                {avatar && (
-                                                    <Avatar.Image
-                                                        src={avatar}
-                                                        alt=""
-                                                        className="object-cover"
-                                                    />
-                                                )}
-                                                <Avatar.Fallback>
-                                                    {getInitials(member.label)}
-                                                </Avatar.Fallback>
-                                            </Avatar>
-                                            <span className="min-w-0 wrap-break-word">
-                                                {member.label}
-                                            </span>
-                                        </span>
+                                    <Table.Cell className="font-medium">
+                                        <ReportMemberName
+                                            name={member.label}
+                                            avatar={avatars.get(member.key)}
+                                            size="md"
+                                        />
                                     </Table.Cell>
                                     {columns.map((column) =>
                                         column === 'Project breakdown' ? (
