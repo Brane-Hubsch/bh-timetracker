@@ -16,7 +16,8 @@ import { TimeActionsMenu } from '@/components/time/time-actions-menu';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import {
     newDraft,
-    readPlusDurationMinutes,
+    newPlusDraft,
+    plusDurationStorageKey,
     savePlusDurationMinutes,
 } from '@/components/time/drafts';
 import {
@@ -143,7 +144,10 @@ export default function TimeIndex({
                     : '',
             isBillable: timer.isBillable,
         };
-    const plusDurationKey = `time-report:plus-duration:${auth.user.id}:${currentOrganization?.id}`;
+    const plusDurationKey = plusDurationStorageKey(
+        auth.user.id,
+        currentOrganization?.id,
+    );
     const isList = view === 'list';
     const pageTitle = t(isList ? 'List' : 'Calendar');
 
@@ -162,26 +166,17 @@ export default function TimeIndex({
 
     const dates = weekDates(weekStart);
     const reportDate = dates.includes(today) ? today : date;
-    const openReport = (mode: TimeReportMode) => {
-        const base = newDraft(reportDate, entries, member.id);
+    const openReport = (mode: TimeReportMode) =>
+        setDraft(
+            newPlusDraft(
+                newDraft(reportDate, entries, member.id),
+                mode,
+                timezone,
+                plusDurationKey,
+            ),
+        );
 
-        if (mode === 'absence') {
-            setDraft({ ...base, reportMode: mode });
-            return;
-        }
-
-        const start = Temporal.Now.plainDateTimeISO(timezone).hour * 60;
-        const duration = readPlusDurationMinutes(plusDurationKey);
-
-        setDraft({
-            ...base,
-            start: minutesToTime(start),
-            end: duration ? minutesToTime(start + duration) : '',
-            openedFrom: 'plus',
-        });
-    };
-
-    // The sidebar opens a report mode. The command palette may also preselect a project.
+    // A report link can choose a mode, and the command palette may preselect a project.
     useOpenFromQuery(
         'new',
         (params) => {

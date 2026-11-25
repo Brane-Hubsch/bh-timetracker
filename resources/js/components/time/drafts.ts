@@ -1,5 +1,13 @@
-import { timeOf } from '@/lib/time';
-import type { TimeEntry, TimeEntryDraft } from '@/types';
+import { Temporal } from 'temporal-polyfill';
+import { minutesToTime, timeOf } from '@/lib/time';
+import type { TimeEntry, TimeEntryDraft, TimeReportMode } from '@/types';
+
+export function plusDurationStorageKey(
+    userId: number,
+    organizationId?: number,
+) {
+    return `time-report:plus-duration:${userId}:${organizationId}`;
+}
 
 export function readPlusDurationMinutes(key: string): number {
     try {
@@ -48,5 +56,26 @@ export function newDraft(
         start: lastEnd ?? '08:00',
         end: '',
         isBillable: null,
+    };
+}
+
+export function newPlusDraft(
+    base: TimeEntryDraft,
+    mode: TimeReportMode,
+    timezone: string,
+    storageKey: string,
+): TimeEntryDraft {
+    if (mode === 'absence') {
+        return { ...base, reportMode: mode };
+    }
+
+    const start = Temporal.Now.plainDateTimeISO(timezone).hour * 60;
+    const duration = readPlusDurationMinutes(storageKey);
+
+    return {
+        ...base,
+        start: minutesToTime(start),
+        end: duration ? minutesToTime(start + duration) : '',
+        openedFrom: 'plus',
     };
 }

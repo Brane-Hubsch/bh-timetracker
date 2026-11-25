@@ -130,6 +130,27 @@ it('preserves validation errors when an older tab submits a form', function () {
             ->has('errors.project_id'));
 });
 
+it('provides sidebar report options for the current organization and viewer', function () {
+    CarbonImmutable::setTestNow('2026-11-18 23:30:00 UTC');
+    $otherOrganization = Organization::factory()->create();
+    Project::factory()->for($otherOrganization)->create();
+    Project::factory()->for($this->organization)->private()->create();
+    Holiday::factory()->for($this->organization)->create(['date' => '2026-11-19']);
+    Holiday::factory()->for($otherOrganization)->create(['date' => '2026-11-20']);
+
+    $this->actingAs($this->member)
+        ->getJson(timeRoute('time.report-options'))
+        ->assertOk()
+        ->assertJsonPath('today', '2026-11-19')
+        ->assertJsonCount(1, 'projects')
+        ->assertJsonPath('projects.0.value', (string) $this->project->id)
+        ->assertJsonPath('members', [])
+        ->assertJsonPath('absence.holidays', ['2026-11-19']);
+
+    $this->getJson(route('time.report-options', ['current_organization' => $otherOrganization->slug]))
+        ->assertForbidden();
+});
+
 it('offers week copying only for an empty selected week with earlier entries', function (bool $selectedWeekHasEntries, bool $previousWeekHasEntries, bool $canCopy) {
     if ($selectedWeekHasEntries) {
         entryFor($this->member);
