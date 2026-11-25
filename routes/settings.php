@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('passkeys.rename');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::inertia('settings/sidebar', 'settings/sidebar')->name('sidebar.edit');
 
     Route::get('settings/ai-connections', [AiConnectionController::class, 'edit'])->name('ai-connections.edit');
     Route::delete('settings/ai-connections/{client}', [AiConnectionController::class, 'destroy'])->name('ai-connections.destroy');
