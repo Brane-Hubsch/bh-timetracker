@@ -221,7 +221,7 @@ export default function ProjectsIndex({
                                 announcement={order.announcement}
                             />
                             <div
-                                className={`${columnOrderHeaderClassName} hidden items-center gap-4 border-b border-separator px-5 py-2.5 text-sm font-medium text-muted xl:grid xl:grid-cols-(--project-columns)`}
+                                className={`${columnOrderHeaderClassName} hidden items-center gap-x-6 border-b border-separator px-5 py-2.5 text-sm font-medium text-muted xl:grid xl:grid-cols-(--project-columns)`}
                             >
                                 <span>{t('Project')}</span>
                                 {order.columns.map((column) => (
@@ -230,11 +230,6 @@ export default function ProjectsIndex({
                                         order={order}
                                         column={column}
                                         label={t(column)}
-                                        className={
-                                            column === 'Reported'
-                                                ? 'justify-end'
-                                                : 'justify-start'
-                                        }
                                     />
                                 ))}
                             </div>
@@ -374,7 +369,7 @@ function ProjectRow({
             </div>
         ),
         Reported: (
-            <div className="text-right">
+            <div className="text-right xl:text-start">
                 <span className="mb-0.5 block font-medium text-muted xl:sr-only">
                     {t('Reported')}
                 </span>
@@ -389,7 +384,7 @@ function ProjectRow({
         <li data-test="project-row">
             <Link
                 href={show({ project: project.slug })}
-                className="grid gap-2.5 p-4 transition-colors hover:bg-surface-secondary xl:grid-cols-(--project-columns) xl:items-center xl:gap-4 xl:px-5 xl:py-3"
+                className="grid gap-2.5 p-4 transition-colors hover:bg-surface-secondary xl:grid-cols-(--project-columns) xl:items-center xl:gap-x-6 xl:px-5 xl:py-3"
             >
                 <div className="flex min-w-0 items-center gap-3">
                     <ProjectDot color={project.color} />

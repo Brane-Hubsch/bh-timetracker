@@ -62,18 +62,17 @@ export function AbsenceTable({ absence, avatars }: Props) {
                                         key={column}
                                         id={column}
                                         textValue={label}
-                                        className="text-right text-sm font-medium whitespace-nowrap"
+                                        className="text-sm font-medium whitespace-nowrap"
                                     >
                                         <ReorderableColumnHeader
                                             order={order}
                                             column={column}
                                             label={label}
-                                            className="justify-end"
                                         />
                                     </Table.Column>
                                 );
                             })}
-                            <Table.Column className="text-right text-sm font-medium">
+                            <Table.Column className="text-sm font-medium">
                                 {t('Total')}
                             </Table.Column>
                         </Table.Header>
@@ -91,12 +90,12 @@ export function AbsenceTable({ absence, avatars }: Props) {
                                     {order.columns.map((column) => (
                                         <Table.Cell
                                             key={column}
-                                            className="text-right text-muted tabular-nums"
+                                            className="text-muted tabular-nums"
                                         >
                                             {days(member.types[column])}
                                         </Table.Cell>
                                     ))}
-                                    <Table.Cell className="text-right font-semibold tabular-nums">
+                                    <Table.Cell className="font-semibold tabular-nums">
                                         {days(member.seconds)}
                                     </Table.Cell>
                                 </Table.Row>
