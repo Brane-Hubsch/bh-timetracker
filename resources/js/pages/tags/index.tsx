@@ -157,7 +157,7 @@ export default function TagsIndex({ tags }: Props) {
                                     order={order}
                                     column={column}
                                     label={t(column)}
-                                    className="justify-end"
+                                    align="end"
                                 />
                             ))}
                             <span />

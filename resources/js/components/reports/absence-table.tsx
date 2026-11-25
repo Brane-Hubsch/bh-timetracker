@@ -66,7 +66,7 @@ export function AbsenceTable({ absence }: Props) {
                                             order={order}
                                             column={column}
                                             label={label}
-                                            className="justify-end"
+                                            align="end"
                                         />
                                     </Table.Column>
                                 );

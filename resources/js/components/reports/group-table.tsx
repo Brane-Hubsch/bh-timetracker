@@ -244,7 +244,7 @@ export function GroupTable({
                                     <span
                                         aria-hidden="true"
                                         draggable
-                                        className="pointer-events-none flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm opacity-0 transition-opacity duration-150 group-hover/report-header:pointer-events-auto group-hover/report-header:opacity-70 hover:bg-default active:cursor-grabbing motion-reduce:transition-none"
+                                        className={`pointer-events-none flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm opacity-0 transition-opacity duration-150 group-hover/report-header:pointer-events-auto group-hover/report-header:opacity-70 hover:bg-default active:cursor-grabbing motion-reduce:transition-none ${column === 'Share' ? '-ms-6' : ''}`}
                                         onDragStart={(event) => {
                                             event.dataTransfer.effectAllowed =
                                                 'move';
@@ -266,7 +266,7 @@ export function GroupTable({
                                             }}
                                             variant="ghost"
                                             size="sm"
-                                            className="h-7 min-w-0 px-0.5 text-inherit"
+                                            className="h-7 min-w-0 px-0 text-inherit"
                                             aria-label={t(
                                                 'Move column :column',
                                                 { column: t(column) },

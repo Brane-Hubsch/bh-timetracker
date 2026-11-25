@@ -43,16 +43,16 @@ type ReorderableColumnHeaderProps<Column extends string> = {
     order: ReturnType<typeof useColumnOrder<Column>>;
     column: Column;
     label: string;
+    align?: 'start' | 'end';
     children?: ReactNode;
-    className?: string;
 };
 
 export function ReorderableColumnHeader<Column extends string>({
     order,
     column,
     label,
+    align = 'start',
     children,
-    className,
 }: ReorderableColumnHeaderProps<Column>) {
     const { t } = useTranslation();
     const button = useRef<HTMLButtonElement>(null);
@@ -89,8 +89,8 @@ export function ReorderableColumnHeader<Column extends string>({
         <div
             data-drop-target={drag?.target === column || undefined}
             className={cn(
-                'flex min-h-7 items-center gap-1 rounded-md text-sm font-medium whitespace-nowrap data-[drop-target]:bg-accent/15 data-[drop-target]:ring-1 data-[drop-target]:ring-accent data-[drop-target]:ring-inset',
-                className,
+                'flex min-h-7 items-center rounded-md text-sm font-medium whitespace-nowrap data-[drop-target]:bg-accent/15 data-[drop-target]:ring-1 data-[drop-target]:ring-accent data-[drop-target]:ring-inset',
+                align === 'end' && 'justify-end gap-1',
             )}
             onDragOver={(event) => {
                 if (!drag || drag.source === column) {
@@ -126,7 +126,10 @@ export function ReorderableColumnHeader<Column extends string>({
         >
             {columns.length > 1 && (
                 <span
-                    className="group/column-handle flex shrink-0 cursor-grab active:cursor-grabbing"
+                    className={cn(
+                        'group/column-handle flex shrink-0 cursor-grab active:cursor-grabbing',
+                        align === 'start' && '-ms-6',
+                    )}
                     draggable
                     onClick={(event) => {
                         event.stopPropagation();

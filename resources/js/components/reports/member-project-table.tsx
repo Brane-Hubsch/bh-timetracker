@@ -121,10 +121,10 @@ export function MemberProjectTable({
                                     order={order}
                                     column={column}
                                     label={t(column)}
-                                    className={
+                                    align={
                                         column === 'Project breakdown'
-                                            ? 'justify-start'
-                                            : 'justify-end'
+                                            ? 'start'
+                                            : 'end'
                                     }
                                 />
                             </Table.Column>

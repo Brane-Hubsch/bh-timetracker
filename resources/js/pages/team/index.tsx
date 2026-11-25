@@ -116,7 +116,7 @@ export default function TeamIndex({
                     <ColumnOrderStatus announcement={order.announcement} />
                     {members.length > 0 && (
                         <div
-                            className={`${columnOrderHeaderClassName} hidden items-center gap-4 border-b border-separator px-5 py-2.5 text-sm font-medium text-muted xl:grid xl:grid-cols-(--team-columns)`}
+                            className={`${columnOrderHeaderClassName} hidden items-center gap-x-6 border-b border-separator px-5 py-2.5 text-sm font-medium text-muted xl:grid xl:grid-cols-(--team-columns)`}
                         >
                             <span>{t('Name')}</span>
                             {order.columns.map((column) => (
@@ -125,10 +125,10 @@ export default function TeamIndex({
                                     order={order}
                                     column={column}
                                     label={t(column)}
-                                    className={
+                                    align={
                                         column === 'Hourly rate'
-                                            ? 'justify-end'
-                                            : undefined
+                                            ? 'end'
+                                            : 'start'
                                     }
                                 />
                             ))}
@@ -182,7 +182,7 @@ export default function TeamIndex({
                             return (
                                 <li
                                     key={member.id}
-                                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 p-4 text-sm xl:grid-cols-(--team-columns) xl:items-center xl:px-5 xl:py-2.5"
+                                    className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 p-4 text-sm xl:grid-cols-(--team-columns) xl:items-center xl:gap-x-6 xl:px-5 xl:py-2.5"
                                     data-test="team-member-row"
                                 >
                                     <div className="flex min-w-0 items-center gap-3">

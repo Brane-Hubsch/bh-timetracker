@@ -209,10 +209,10 @@ export default function ReportsDetailed({
                                                 order={order}
                                                 column={column}
                                                 label={label}
-                                                className={
+                                                align={
                                                     column === 'amount'
-                                                        ? 'justify-end'
-                                                        : undefined
+                                                        ? 'end'
+                                                        : 'start'
                                                 }
                                             >
                                                 {sortable ? (
