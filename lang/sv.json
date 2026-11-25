@@ -729,6 +729,7 @@
     "Timer started.": "Timern är startad.",
     "Timer stopped and the time saved.": "Timern är stoppad och tiden sparad.",
     "Times are read in :timezone and dates as :format. Entries that already exist are skipped, so the same file can be imported again.": "Tiderna läses i :timezone och datumen som :format. Poster som redan finns hoppas över, så samma fil kan importeras igen.",
+    "TimeTracker": "TimeTracker",
     "To": "Till",
     "To import": "Importeras",
     "to reach 100 %": "för att nå 100 %",
