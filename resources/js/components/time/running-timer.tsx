@@ -6,11 +6,22 @@ import { useTranslation } from '@/lib/i18n';
 import { formatClock } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { index as timeIndex } from '@/routes/time';
-import { stop as stopTimerRoute } from '@/routes/timer';
+import {
+    start as startTimerRoute,
+    stop as stopTimerRoute,
+} from '@/routes/timer';
 import type { RunningTimer } from '@/types';
 
 /** A timer running this long asks for the end time when stopped (RunningTimer::LONG_SECONDS). */
 const LONG_SECONDS = 10 * 3600;
+
+export function startTimer(organization: string) {
+    router.post(
+        startTimerRoute.url(organization),
+        {},
+        { preserveScroll: true, preserveState: true },
+    );
+}
 
 /** Seconds the timer has run, updated every second while mounted. */
 export function useElapsedSeconds(timer: RunningTimer | null): number {
@@ -110,7 +121,7 @@ export function useTimerTitle() {
 
 /**
  * The running timer as a quiet row: a pulsing dot, the clock and the project, with a small stop
- * button. In the sidebar it sits like the search field; on mobile it floats above the bottom
+ * button. In the sidebar it sits with the time actions; on mobile it floats above the bottom
  * navigation. Pressing the row opens the timer.
  */
 export function RunningTimerCard({
