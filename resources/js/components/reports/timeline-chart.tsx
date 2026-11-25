@@ -366,7 +366,7 @@ export function TimelineChart({
                                 <div
                                     key={`${unit}:${bucket.key}`}
                                     role="listitem"
-                                    className={`flex h-full min-w-0 flex-1 ${isSunday(bucket.key) ? 'bg-danger/10' : ''}`}
+                                    className="flex h-full min-w-0 flex-1"
                                 >
                                     {projects ? (
                                         <ProjectTimelineBar
