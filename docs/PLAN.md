@@ -735,7 +735,7 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
 
 ### Tillägg efter Fas 6: inställningar för sidomenyn
 
-I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägen Lägg till. Reglaget Lägg till styr plusknappen i sidomenyn. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Ändringarna gäller direkt för sidomenyn på desktop och sparas i webbläsaren per användare och organisation, med den tidigare sparade menylänksordningen som utgångspunkt. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
+I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägen Lägg till. Reglaget Lägg till styr plusknappen i sidomenyn. Synligheten gäller direkt i sidomenyn på desktop och sparas på användarkontot, gemensamt för webbläsare, enheter och organisationer. Om kontot saknar sparade val förs de lokala valen för den aktiva organisationen över när de först hittas. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Menylänksordningen sparas i webbläsaren per användare och organisation. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
 
 ### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
 
