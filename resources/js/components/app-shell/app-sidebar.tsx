@@ -2,14 +2,13 @@ import { Button } from '@heroui/react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Play, Plus, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { SidebarAccountMenu } from '@/components/app-shell/sidebar-account-menu';
 import { SidebarNavigation } from '@/components/app-shell/sidebar-navigation';
 import {
     CommandPaletteShortcut,
     useCommandPalette,
 } from '@/components/command-palette';
-import { OrganizationSwitcher } from '@/components/organization-switcher';
 import { RunningTimerCard, startTimer } from '@/components/time/running-timer';
-import { UserMenu } from '@/components/user-menu';
 import { useSidebarSettings } from '@/hooks/use-sidebar-settings';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
@@ -44,8 +43,6 @@ export function AppSidebar({ className }: { className?: string }) {
             <Link href={home()} className="px-2 py-1">
                 <AppLogo />
             </Link>
-
-            <OrganizationSwitcher />
 
             {isVisible('Search') && (
                 <button
@@ -116,7 +113,7 @@ export function AppSidebar({ className }: { className?: string }) {
                         />
                     </>
                 )}
-                <UserMenu showName />
+                <SidebarAccountMenu />
             </div>
         </aside>
     );
