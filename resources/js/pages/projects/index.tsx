@@ -230,11 +230,6 @@ export default function ProjectsIndex({
                                         order={order}
                                         column={column}
                                         label={t(column)}
-                                        align={
-                                            column === 'Reported'
-                                                ? 'end'
-                                                : 'start'
-                                        }
                                     />
                                 ))}
                             </div>
@@ -374,7 +369,7 @@ function ProjectRow({
             </div>
         ),
         Reported: (
-            <div className="text-right">
+            <div className="text-right xl:text-start">
                 <span className="mb-0.5 block font-medium text-muted xl:sr-only">
                     {t('Reported')}
                 </span>

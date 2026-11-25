@@ -125,11 +125,6 @@ export default function TeamIndex({
                                     order={order}
                                     column={column}
                                     label={t(column)}
-                                    align={
-                                        column === 'Hourly rate'
-                                            ? 'end'
-                                            : 'start'
-                                    }
                                 />
                             ))}
                         </div>
@@ -163,7 +158,7 @@ export default function TeamIndex({
                                 ),
                                 'Hourly rate': canViewRates && (
                                     <span
-                                        className="text-xs text-muted tabular-nums xl:text-right xl:text-sm"
+                                        className="text-xs text-muted tabular-nums xl:text-sm"
                                         data-test="team-hourly-rate"
                                     >
                                         {member.hourlyRate == null

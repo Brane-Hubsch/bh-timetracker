@@ -5,7 +5,6 @@ import { useCallback, useRef, useState } from 'react';
 import type { StoredOrderOptions } from '@/hooks/use-stored-order';
 import { useStoredOrder } from '@/hooks/use-stored-order';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 
 const columnDragType = 'application/x-timereport-column';
 
@@ -43,7 +42,6 @@ type ReorderableColumnHeaderProps<Column extends string> = {
     order: ReturnType<typeof useColumnOrder<Column>>;
     column: Column;
     label: string;
-    align?: 'start' | 'end';
     children?: ReactNode;
 };
 
@@ -51,7 +49,6 @@ export function ReorderableColumnHeader<Column extends string>({
     order,
     column,
     label,
-    align = 'start',
     children,
 }: ReorderableColumnHeaderProps<Column>) {
     const { t } = useTranslation();
@@ -88,10 +85,7 @@ export function ReorderableColumnHeader<Column extends string>({
     return (
         <div
             data-drop-target={drag?.target === column || undefined}
-            className={cn(
-                'flex min-h-7 items-center rounded-md text-sm font-medium whitespace-nowrap data-[drop-target]:bg-accent/15 data-[drop-target]:ring-1 data-[drop-target]:ring-accent data-[drop-target]:ring-inset',
-                align === 'end' && 'justify-end gap-1',
-            )}
+            className="flex min-h-7 items-center rounded-md text-sm font-medium whitespace-nowrap data-[drop-target]:bg-accent/15 data-[drop-target]:ring-1 data-[drop-target]:ring-accent data-[drop-target]:ring-inset"
             onDragOver={(event) => {
                 if (!drag || drag.source === column) {
                     return;
@@ -126,10 +120,7 @@ export function ReorderableColumnHeader<Column extends string>({
         >
             {columns.length > 1 && (
                 <span
-                    className={cn(
-                        'group/column-handle flex shrink-0 cursor-grab active:cursor-grabbing',
-                        align === 'start' && '-ms-6',
-                    )}
+                    className="group/column-handle -ms-6 flex shrink-0 cursor-grab active:cursor-grabbing"
                     draggable
                     onClick={(event) => {
                         event.stopPropagation();

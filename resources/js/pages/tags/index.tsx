@@ -57,7 +57,7 @@ const lastUsedDateFormat: Intl.DateTimeFormatOptions = {
     year: 'numeric',
 };
 
-const COLUMNS = 'lg:grid-cols-(--tag-grid-columns) lg:items-center lg:gap-4';
+const COLUMNS = 'lg:grid-cols-(--tag-grid-columns) lg:items-center lg:gap-x-6';
 
 const RENAME_FORM = 'rename-tag-form';
 
@@ -157,7 +157,6 @@ export default function TagsIndex({ tags }: Props) {
                                     order={order}
                                     column={column}
                                     label={t(column)}
-                                    align="end"
                                 />
                             ))}
                             <span />
@@ -202,7 +201,7 @@ export default function TagsIndex({ tags }: Props) {
                                 {order.columns.map((column) => (
                                     <span
                                         key={column}
-                                        className={`hidden text-right text-sm tabular-nums lg:block ${column === 'Last used' ? 'text-muted' : ''}`}
+                                        className={`hidden text-sm tabular-nums lg:block ${column === 'Last used' ? 'text-muted' : ''}`}
                                     >
                                         {usageValue(column, tag)}
                                     </span>

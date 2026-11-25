@@ -200,7 +200,7 @@ export function GroupTable({
                                     data-drop-target={
                                         drag?.target === column || undefined
                                     }
-                                    className={`flex min-h-7 items-center rounded-md data-[drop-target]:bg-accent/15 data-[drop-target]:ring-1 data-[drop-target]:ring-accent data-[drop-target]:ring-inset ${column === 'Share' ? 'justify-start' : 'justify-end'}`}
+                                    className="flex min-h-7 items-center rounded-md data-[drop-target]:bg-accent/15 data-[drop-target]:ring-1 data-[drop-target]:ring-accent data-[drop-target]:ring-inset"
                                     onDragOver={(event) => {
                                         if (!drag || drag.source === column) {
                                             return;
@@ -244,7 +244,7 @@ export function GroupTable({
                                     <span
                                         aria-hidden="true"
                                         draggable
-                                        className={`pointer-events-none flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm opacity-0 transition-opacity duration-150 group-hover/report-header:pointer-events-auto group-hover/report-header:opacity-70 hover:bg-default active:cursor-grabbing motion-reduce:transition-none ${column === 'Share' ? '-ms-6' : ''}`}
+                                        className="pointer-events-none -ms-6 flex size-6 shrink-0 cursor-grab items-center justify-center rounded-sm opacity-0 transition-opacity duration-150 group-hover/report-header:pointer-events-auto group-hover/report-header:opacity-70 hover:bg-default active:cursor-grabbing motion-reduce:transition-none"
                                         onDragStart={(event) => {
                                             event.dataTransfer.effectAllowed =
                                                 'move';
@@ -382,7 +382,7 @@ export function GroupTable({
                                         ) : (
                                             <Table.Cell
                                                 key={column}
-                                                className="text-right whitespace-nowrap tabular-nums"
+                                                className="whitespace-nowrap tabular-nums"
                                             >
                                                 {metricValue(column, line)}
                                             </Table.Cell>
@@ -405,7 +405,7 @@ export function GroupTable({
                                           {columns.map((column) => (
                                               <Table.Cell
                                                   key={column}
-                                                  className="text-right font-semibold whitespace-nowrap tabular-nums"
+                                                  className="font-semibold whitespace-nowrap tabular-nums"
                                               >
                                                   {metricValue(column, totals)}
                                               </Table.Cell>
