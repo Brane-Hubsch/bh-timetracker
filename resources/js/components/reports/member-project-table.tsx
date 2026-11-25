@@ -121,11 +121,6 @@ export function MemberProjectTable({
                                     order={order}
                                     column={column}
                                     label={t(column)}
-                                    className={
-                                        column === 'Project breakdown'
-                                            ? 'justify-start'
-                                            : 'justify-end'
-                                    }
                                 />
                             </Table.Column>
                         ))}
@@ -249,7 +244,7 @@ export function MemberProjectTable({
                                         ) : (
                                             <Table.Cell
                                                 key={column}
-                                                className={`text-right whitespace-nowrap tabular-nums ${column === 'Total' ? 'font-semibold' : ''}`}
+                                                className={`whitespace-nowrap tabular-nums ${column === 'Total' ? 'font-semibold' : ''}`}
                                             >
                                                 {metricValue(column, member)}
                                             </Table.Cell>

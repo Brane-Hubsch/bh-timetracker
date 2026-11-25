@@ -209,11 +209,6 @@ export default function ReportsDetailed({
                                                 order={order}
                                                 column={column}
                                                 label={label}
-                                                className={
-                                                    column === 'amount'
-                                                        ? 'justify-end'
-                                                        : undefined
-                                                }
                                             >
                                                 {sortable ? (
                                                     <Button
@@ -267,11 +262,10 @@ export default function ReportsDetailed({
                                         <Table.Cell
                                             key={column}
                                             className={
-                                                column === 'amount'
-                                                    ? 'text-right tabular-nums'
-                                                    : column === 'duration'
-                                                      ? 'tabular-nums'
-                                                      : undefined
+                                                column === 'amount' ||
+                                                column === 'duration'
+                                                    ? 'tabular-nums'
+                                                    : undefined
                                             }
                                         >
                                             {renderCell(column, entry)}
