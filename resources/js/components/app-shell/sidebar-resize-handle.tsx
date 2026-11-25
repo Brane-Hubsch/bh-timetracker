@@ -56,7 +56,7 @@ export function SidebarResizeHandle({
             aria-valuenow={width}
             aria-valuetext={`${width} px`}
             data-resizing={isResizing || undefined}
-            className="fixed inset-y-0 left-(--sidebar-width) z-20 hidden w-3 -translate-x-1/2 cursor-col-resize touch-none outline-none select-none before:absolute before:inset-y-0 before:left-1 before:w-0.5 hover:before:bg-focus focus-visible:before:bg-focus data-resizing:before:bg-focus md:block"
+            className="sidebar-resize-handle fixed inset-y-0 left-(--sidebar-width) z-20 hidden w-3 -translate-x-1/2 cursor-col-resize touch-none outline-none select-none before:absolute before:inset-y-0 before:right-1.5 before:w-px md:block"
             onKeyDown={resizeWithKeyboard}
             onPointerDown={(event) => {
                 if (event.button !== 0 || drag.current) return;
