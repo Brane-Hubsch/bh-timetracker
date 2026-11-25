@@ -727,7 +727,7 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
 - **Webb:**
   - `TimerController` (`timer.start`, `timer.update`, `timer.stop`, `timer.discard`). Den pågående timern delas till alla sidor som `timer` (`TimerPresenter`), och klockan räknas upp i webbläsaren.
   - Kortet i sidomenyn och raden ovanför bottenmenyn på mobilen visar projekt, kund och klocka med en stoppknapp. Flikens titel visar "▶ 1:23 · Projekt". Kalendern visar den pågående posten från start till nu, streckad.
-  - Starta kan man med knappen "Starta timer" i kalenderns verktygsfält, med knappen "Starta timer" i dialogen *Rapportera tid* (från nu, eller från en ändrad starttid), med "Fortsätt med timer" på en post och med ⌘K.
+  - Plusknappen ovanför profilen och kalenderns plusknapp öppnar samma snabbmeny. Starta timer startar direkt. Rapportera tid och Rapportera frånvaro öppnar rapportdialogen med motsvarande flik vald. En pågående timer ersätter plusknappen i sidomenyn, och kalenderns meny erbjuder fortfarande båda rapporteringsvalen. Timern kan också startas i dialogen *Rapportera tid* (från nu, eller från en ändrad starttid), med "Fortsätt med timer" på en post och med ⌘K.
   - Dialogen *Pågående timer* (tidsdialogen i timerläge) sparar, stoppar (sluttid valfri, annars nu) eller slänger. Stoppknappen sparar direkt, men öppnar dialogen när projekt saknas eller när timern gått minst 10 timmar (`RunningTimer::LONG_SECONDS`), så att man kontrollerar sluttiden.
 - **MCP:**
   - `start_timer`, `stop_timer` (kan ange projekt och sluttid) och `discard_timer` (destruktiv).
@@ -735,7 +735,7 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
 
 ### Tillägg efter Fas 6: inställningar för sidomenyn
 
-I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägarna Rapportera tid och Starta timer. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Ändringarna gäller direkt för sidomenyn på desktop och sparas i webbläsaren per användare och organisation, med den tidigare sparade menylänksordningen som utgångspunkt. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
+I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägen Lägg till. Reglaget Lägg till styr plusknappen i sidomenyn. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Ändringarna gäller direkt för sidomenyn på desktop och sparas i webbläsaren per användare och organisation, med den tidigare sparade menylänksordningen som utgångspunkt. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
 
 ### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
 

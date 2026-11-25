@@ -1,6 +1,6 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Copy, Play, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
@@ -11,6 +11,8 @@ import {
 } from '@/components/time/absence-dialog';
 import { CalendarPicker } from '@/components/time/calendar-picker';
 import { CopyPeriodDialog } from '@/components/time/copy-period-dialog';
+import { startTimer } from '@/components/time/running-timer';
+import { TimeActionsMenu } from '@/components/time/time-actions-menu';
 import { TimeCalendar } from '@/components/time/time-calendar';
 import {
     newDraft,
@@ -36,7 +38,6 @@ import {
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { index, list, update } from '@/routes/time';
-import { start as startTimer } from '@/routes/timer';
 import type {
     Absence,
     AbsenceDraft,
@@ -48,6 +49,7 @@ import type {
     TimeEntry,
     TimeEntryDraft,
     TimeEntryMemberOption,
+    TimeReportMode,
 } from '@/types';
 
 type View = 'list' | 'week' | 'day';
@@ -106,7 +108,15 @@ export default function TimeIndex({
     const { t } = useTranslation();
     const getInitials = useInitials();
     const { auth, currentOrganization, timer } = usePage().props;
-    const timerEnabled = currentOrganization?.timerEnabled ?? false;
+    const startOrganization =
+        currentOrganization?.timerEnabled &&
+        !timer &&
+        member.id === auth.user.id
+            ? currentOrganization.slug
+            : undefined;
+    const onStartTimer = startOrganization
+        ? () => startTimer(startOrganization)
+        : undefined;
     // The viewer's running timer, when it runs in this organization and their own time is shown.
     const timerHere =
         timer &&
@@ -150,18 +160,41 @@ export default function TimeIndex({
             note: '',
         });
 
-    // Opened from the command palette ("Report time", "Report time on …", "Copy previous week").
+    const dates = weekDates(weekStart);
+    const reportDate = dates.includes(today) ? today : date;
+    const openReport = (mode: TimeReportMode) => {
+        const base = newDraft(reportDate, entries, member.id);
+
+        if (mode === 'absence') {
+            setDraft({ ...base, reportMode: mode });
+            return;
+        }
+
+        const start = Temporal.Now.plainDateTimeISO(timezone).hour * 60;
+        const duration = readPlusDurationMinutes(plusDurationKey);
+
+        setDraft({
+            ...base,
+            start: minutesToTime(start),
+            end: duration ? minutesToTime(start + duration) : '',
+            openedFrom: 'plus',
+        });
+    };
+
+    // The sidebar opens a report mode. The command palette may also preselect a project.
     useOpenFromQuery(
         'new',
         (params) => {
+            const mode = params.get('new');
+            if (mode === 'time' || mode === 'absence') {
+                openReport(mode);
+                return;
+            }
+
             const project = projects.find(
                 (option) => option.value === params.get('project'),
             );
-            const base = newDraft(
-                dates.includes(today) ? today : date,
-                entries,
-                member.id,
-            );
+            const base = newDraft(reportDate, entries, member.id);
 
             setDraft(
                 project
@@ -180,26 +213,7 @@ export default function TimeIndex({
     useOpenFromQuery('timer', (params) =>
         setDraft(timerDraft(params.get('timer') === 'stop')),
     );
-    useOpenFromQuery('absence', () =>
-        newAbsence(dates.includes(today) ? today : date),
-    );
-
-    const dates = weekDates(weekStart);
-    const openNewTime = () => {
-        const start = Temporal.Now.plainDateTimeISO(timezone).hour * 60;
-        const duration = readPlusDurationMinutes(plusDurationKey);
-
-        setDraft({
-            ...newDraft(
-                dates.includes(today) ? today : date,
-                entries,
-                member.id,
-            ),
-            start: minutesToTime(start),
-            end: duration ? minutesToTime(start + duration) : '',
-            openedFrom: 'plus',
-        });
-    };
+    useOpenFromQuery('absence', () => newAbsence(reportDate));
     const weekTotal = entries.reduce(
         (sum, entry) => sum + entry.durationSeconds,
         0,
@@ -394,40 +408,13 @@ export default function TimeIndex({
                             />
                         )}
                         {view === 'list' && copyPeriodButton}
-                        {timerEnabled &&
-                            !timer &&
-                            member.id === auth.user.id && (
-                                <Button
-                                    variant="tertiary"
-                                    className="shrink-0"
-                                    aria-label={t('Start timer')}
-                                    onPress={() =>
-                                        router.post(
-                                            startTimer.url(),
-                                            {},
-                                            {
-                                                preserveScroll: true,
-                                                preserveState: true,
-                                            },
-                                        )
-                                    }
-                                    data-test="start-timer-button"
-                                >
-                                    <Play className="size-4" />
-                                    <span className="hidden lg:inline">
-                                        {t('Start timer')}
-                                    </span>
-                                </Button>
-                            )}
-                        <Button
-                            isIconOnly
+                        <TimeActionsMenu
                             className="hidden md:inline-flex"
-                            aria-label={t('Report time')}
-                            onPress={openNewTime}
-                            data-test="new-time-button"
-                        >
-                            <Plus className="size-4" />
-                        </Button>
+                            placement="bottom end"
+                            onStartTimer={onStartTimer}
+                            onReport={openReport}
+                            testId="new-time-button"
+                        />
                     </div>
                 </div>
 
@@ -492,8 +479,9 @@ export default function TimeIndex({
             </div>
 
             {/* Big "+" on mobile. */}
-            <Button
-                isIconOnly
+            <TimeActionsMenu
+                large
+                placement="top end"
                 className={cn(
                     'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
                     // Above the running timer's bar.
@@ -503,12 +491,10 @@ export default function TimeIndex({
                         canCopyPreviousPeriod &&
                         'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',
                 )}
-                aria-label={t('Report time')}
-                onPress={openNewTime}
-                data-test="new-time-fab"
-            >
-                <Plus className="size-6" />
-            </Button>
+                onStartTimer={onStartTimer}
+                onReport={openReport}
+                testId="new-time-fab"
+            />
 
             <TimeEntryForm
                 draft={draft}

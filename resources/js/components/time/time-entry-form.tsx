@@ -48,6 +48,7 @@ import type {
     TimeEntry,
     TimeEntryDraft,
     TimeEntryMemberOption,
+    TimeReportMode,
 } from '@/types';
 
 type Props = {
@@ -69,8 +70,7 @@ type Props = {
 
 const FORM_ID = 'time-entry-form';
 const MEMBER_ERROR_ID = 'time-entry-member-error';
-const reportModes = ['time', 'absence'] as const;
-type ReportMode = (typeof reportModes)[number];
+const reportModes: TimeReportMode[] = ['time', 'absence'];
 
 function durationOf(draft: TimeEntryDraft): string {
     return draft.end
@@ -142,7 +142,9 @@ export function TimeEntryForm({
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-    const [mode, setMode] = useState<ReportMode | null>(null);
+    const [mode, setMode] = useState<TimeReportMode | null>(
+        draft?.reportMode ?? null,
+    );
     const modeIndicator = useRef<HTMLSpanElement>(null);
     const observeSelectedTab = useCallback((tab: HTMLDivElement | null) => {
         const tabList = tab?.parentElement;
@@ -177,7 +179,7 @@ export function TimeEntryForm({
         setErrors({});
         setIsMemberPickerOpen(false);
         setIsActionsMenuOpen(false);
-        setMode(null);
+        setMode(draft.reportMode ?? null);
     }
 
     const current = values ?? draft;

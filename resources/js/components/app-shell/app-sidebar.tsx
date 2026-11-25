@@ -1,6 +1,5 @@
-import { Button } from '@heroui/react';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Play, Plus, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { SidebarNavigation } from '@/components/app-shell/sidebar-navigation';
 import {
@@ -9,6 +8,7 @@ import {
 } from '@/components/command-palette';
 import { OrganizationSwitcher } from '@/components/organization-switcher';
 import { RunningTimerCard, startTimer } from '@/components/time/running-timer';
+import { TimeActionsMenu } from '@/components/time/time-actions-menu';
 import { UserMenu } from '@/components/user-menu';
 import { useSidebarSettings } from '@/hooks/use-sidebar-settings';
 import { useTranslation } from '@/lib/i18n';
@@ -23,14 +23,10 @@ export function AppSidebar({ className }: { className?: string }) {
     const items = useMainNavigation().filter(({ title }) => isVisible(title));
     const { currentOrganization, timer } = usePage().props;
     const { open } = useCommandPalette();
-    const slug = currentOrganization?.slug;
-    const startOrganization =
-        !timer && currentOrganization?.timerEnabled && isVisible('Start timer')
-            ? slug
-            : undefined;
-    const reportUrl =
-        slug && isVisible('Report time')
-            ? timeIndex.url(slug, { query: { new: 1 } })
+    const actionSlug = isVisible('Add') ? currentOrganization?.slug : undefined;
+    const onStartTimer =
+        actionSlug && currentOrganization?.timerEnabled
+            ? () => startTimer(actionSlug)
             : undefined;
 
     return (
@@ -70,44 +66,42 @@ export function AppSidebar({ className }: { className?: string }) {
             />
 
             <div className="mt-auto grid gap-3">
-                {(timer || startOrganization || reportUrl) && (
+                {(timer || actionSlug) && (
                     <>
-                        <div className="flex items-center justify-end gap-2">
-                            {timer && (
-                                <RunningTimerCard
-                                    variant="sidebar"
-                                    className="min-w-0 flex-1"
-                                />
-                            )}
-                            {startOrganization && (
-                                <Button
-                                    variant="tertiary"
-                                    className="min-w-0 flex-1 bg-surface"
-                                    onPress={() =>
-                                        startTimer(startOrganization)
-                                    }
-                                    data-test="sidebar-start-timer"
+                        <div className="relative h-9">
+                            <RunningTimerCard
+                                variant="sidebar"
+                                className={cn(
+                                    'absolute inset-y-0 end-0 overflow-hidden motion-safe:transition-[width,opacity] motion-safe:duration-240 motion-safe:ease-out-soft',
+                                    timer
+                                        ? 'w-full'
+                                        : 'pointer-events-none w-9 opacity-0',
+                                )}
+                            />
+                            {actionSlug && (
+                                <div
+                                    inert={Boolean(timer)}
+                                    className={cn(
+                                        'absolute end-0 top-0 motion-safe:transition-[scale,opacity] motion-safe:duration-240 motion-safe:ease-out-soft',
+                                        timer &&
+                                            'pointer-events-none scale-0 opacity-0',
+                                    )}
                                 >
-                                    <Play
-                                        aria-hidden="true"
-                                        className="size-4 shrink-0"
+                                    <TimeActionsMenu
+                                        className="shadow-sm"
+                                        placement="top end"
+                                        testId="sidebar-time-actions"
+                                        isDisabled={Boolean(timer)}
+                                        onStartTimer={onStartTimer}
+                                        onReport={(mode) =>
+                                            router.visit(
+                                                timeIndex.url(actionSlug, {
+                                                    query: { new: mode },
+                                                }),
+                                            )
+                                        }
                                     />
-                                    {t('Start timer')}
-                                </Button>
-                            )}
-                            {reportUrl && (
-                                <Button
-                                    isIconOnly
-                                    className="shrink-0"
-                                    aria-label={t('Report time')}
-                                    onPress={() => router.visit(reportUrl)}
-                                    data-test="sidebar-report-time"
-                                >
-                                    <Plus
-                                        aria-hidden="true"
-                                        className="size-4"
-                                    />
-                                </Button>
+                                </div>
                             )}
                         </div>
                         <div
