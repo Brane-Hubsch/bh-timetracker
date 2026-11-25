@@ -12,6 +12,7 @@ use App\Mcp\Tools\CreateTimeEntriesTool;
 use App\Mcp\Tools\DeleteAbsenceTool;
 use App\Mcp\Tools\DeleteTagTool;
 use App\Mcp\Tools\DeleteTimeEntryTool;
+use App\Mcp\Tools\DiscardTimerTool;
 use App\Mcp\Tools\ExportReportTool;
 use App\Mcp\Tools\GetContextTool;
 use App\Mcp\Tools\GetProjectStatusTool;
@@ -24,6 +25,8 @@ use App\Mcp\Tools\ListProjectsTool;
 use App\Mcp\Tools\ListTimeEntriesTool;
 use App\Mcp\Tools\RemoveMemberTool;
 use App\Mcp\Tools\RenameTagTool;
+use App\Mcp\Tools\StartTimerTool;
+use App\Mcp\Tools\StopTimerTool;
 use App\Mcp\Tools\UpdateAbsenceTool;
 use App\Mcp\Tools\UpdateClientTool;
 use App\Mcp\Tools\UpdateMemberTool;
@@ -58,6 +61,8 @@ amounts; owners and admins can see and report time for others and manage clients
 - Absence (vacation, care of a sick child "VAB", sick leave, parental leave, leave of absence) is kept
   apart from time entries: register it with create_absence, never as time on a project. Full days count
   as the organization's working day (get_context); weekends and holidays don't count.
+- The user may run a timer instead of entering times afterwards: start_timer, then stop_timer saves it
+  as an entry (get_context shows a running one). A timer needs a project before it can be stopped.
 - export_report gives a download link to a PDF, Excel or CSV file for the user to open in their browser;
   use get_report when you need the numbers yourself.
 - Answer in the user's language (often Swedish). Hours are decimals; amounts are in the organization's
@@ -99,5 +104,8 @@ class TimetrackerServer extends Server
         CreateAbsenceTool::class,
         UpdateAbsenceTool::class,
         DeleteAbsenceTool::class,
+        StartTimerTool::class,
+        StopTimerTool::class,
+        DiscardTimerTool::class,
     ];
 }

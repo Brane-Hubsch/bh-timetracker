@@ -6,6 +6,7 @@ use App\Enums\AbsenceType;
 use App\Enums\OrganizationPermission;
 use App\Mcp\Support\McpContext;
 use App\Models\Organization;
+use App\Models\RunningTimer;
 use App\Models\Tag;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -47,6 +48,7 @@ class GetContextTool extends TimetrackerTool
                 'week_starts_on' => self::WEEKDAYS[$context->organization->week_starts_on - 1] ?? 'Monday',
                 // A full day of absence counts as this many hours.
                 'workday_hours' => $this->hours($context->organization->workday_seconds),
+                'timer_enabled' => $context->organization->timer_enabled,
                 'role' => $context->role?->value,
                 'permissions' => [
                     'report_time_for_others' => $context->can(OrganizationPermission::ManageTeamTime),
@@ -55,8 +57,10 @@ class GetContextTool extends TimetrackerTool
                     'see_rates_and_amounts' => $context->can(OrganizationPermission::ViewRates),
                 ],
             ],
-            // Existing tags, to reuse instead of creating near-duplicates.
             'absence_types' => array_column(AbsenceType::cases(), 'value'),
+            // The user's running timer (in any of their organizations), or null.
+            'timer' => ($timer = RunningTimer::runningFor($user)) ? $this->timer($timer, $context) : null,
+            // Existing tags, to reuse instead of creating near-duplicates.
             'tags' => Tag::query()->forOrganization($context->organization)->orderBy('name')->pluck('name')->all(),
             'organizations' => $user->organizations()->orderBy('name')->get()
                 ->map(fn (Organization $organization) => ['slug' => $organization->slug, 'name' => $organization->name])

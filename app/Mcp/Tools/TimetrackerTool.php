@@ -6,6 +6,7 @@ use App\Enums\OrganizationPermission;
 use App\Enums\ReportPeriod;
 use App\Mcp\Support\McpContext;
 use App\Models\Absence;
+use App\Models\RunningTimer;
 use App\Models\TimeEntry;
 use App\Support\AbsenceTime;
 use App\Support\DurationParser;
@@ -193,6 +194,27 @@ abstract class TimetrackerTool extends Tool
             'working_days' => $time['days'],
             'hours' => $this->hours($time['seconds']),
             'note' => $absence->note,
+        ], fn (mixed $value) => $value !== null);
+    }
+
+    /**
+     * The running timer, with its start in the user's time zone and how long it has run.
+     *
+     * @return array<string, mixed>
+     */
+    protected function timer(RunningTimer $timer, McpContext $context): array
+    {
+        $project = $timer->project;
+
+        return array_filter([
+            'organization' => $timer->organization->slug,
+            'project' => $project ? ['id' => $project->id, 'name' => $project->name] : null,
+            'client' => $project?->client?->name,
+            'description' => $timer->description,
+            'tags' => $timer->tags ?: null,
+            'billable' => $timer->is_billable,
+            'started' => $timer->started_at->setTimezone($context->timezone())->format('Y-m-d H:i'),
+            'running_hours' => $this->hours((int) $timer->started_at->diffInSeconds(CarbonImmutable::now())),
         ], fn (mixed $value) => $value !== null);
     }
 
