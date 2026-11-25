@@ -11,6 +11,7 @@ export default defineConfig({
     plugins: lazyPlugins(() => [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
+            assets: ['public/favicon.ico'],
             refresh: true,
             fonts: [
                 bunny('Inter', {

@@ -34,8 +34,8 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
+        <link rel="icon" href="{{ Vite::asset('public/favicon.ico') }}" sizes="16x16 32x32 48x48">
+        <link rel="icon" href="{{ Vite::asset('public/favicon.svg') }}" type="image/svg+xml" sizes="any">
         <link rel="apple-touch-icon" href="/apple-touch-icon-120x120.png" sizes="120x120">
         <link rel="apple-touch-icon" href="/apple-touch-icon-152x152.png" sizes="152x152">
         <link rel="apple-touch-icon" href="/apple-touch-icon-167x167.png" sizes="167x167">

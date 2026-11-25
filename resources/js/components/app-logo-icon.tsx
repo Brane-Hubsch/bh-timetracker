@@ -1,7 +1,9 @@
+import appLogo from '../../../public/favicon.svg';
+
 export default function AppLogoIcon({ size }: { size: number }) {
     return (
         <img
-            src="/favicon.svg"
+            src={appLogo}
             alt=""
             width={size}
             height={size}
