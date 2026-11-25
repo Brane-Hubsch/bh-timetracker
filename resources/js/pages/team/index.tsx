@@ -105,7 +105,8 @@ export default function TeamIndex({
                                 { value: 'all', label: t('All roles') },
                                 ...roles,
                             ]}
-                            className="w-full sm:w-44"
+                            className="w-full gap-0 sm:w-44"
+                            triggerClassName="h-9 items-center py-0"
                         />
                     )}
                 </ListFilters>
