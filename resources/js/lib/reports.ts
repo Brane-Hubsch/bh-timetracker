@@ -90,7 +90,7 @@ function daysBetween(from: string, to: string): number {
 }
 
 /** Whether the range covers whole calendar months (e.g. 1 Nov – 31 Dec). */
-function isWholeMonths(from: string, to: string): boolean {
+export function isWholeMonths(from: string, to: string): boolean {
     return from === monthStart(from) && to === monthEnd(to);
 }
 

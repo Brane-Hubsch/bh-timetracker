@@ -5,7 +5,7 @@ import { ProjectDot } from '@/components/project-dot';
 import { BreakdownTooltip } from '@/components/reports/breakdown-tooltip';
 import { formatDecimalHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { formatBucket } from '@/lib/reports';
+import { formatBucket, isWholeMonths } from '@/lib/reports';
 import { formatDate, isoWeek } from '@/lib/time';
 import type { TimelineBucket, TimelineProject } from '@/types';
 
@@ -21,6 +21,8 @@ type ProjectHours = TimelineProject & { seconds: number };
 type TooltipSource = 'hover' | 'focus' | 'touch';
 
 const STEPS = [1, 2, 4, 5, 8, 10, 20, 25, 40, 50, 100, 200, 250, 500];
+const DAY_COLUMN_WIDTH_REM = 1.25;
+const HOURS_AXIS_WIDTH_REM = 2.5;
 const TIMELINE_TITLES = {
     day: 'Hours per day',
     week: 'Hours per week',
@@ -198,6 +200,17 @@ export function TimelineChart({
         ? 'max-w-[clamp(--spacing(6),75%,--spacing(24))]'
         : 'max-w-6';
     const plotHeight = projects ? 'h-[23.625rem]' : 'h-[14.4rem]';
+    const isDailyReport = Boolean(projects) && unit === 'day';
+    const firstDay = buckets[0]?.key;
+    const lastDay = buckets.at(-1)?.key;
+    // The report uses daily buckets for at most 31 days, so this identifies a single full month.
+    const showDayNumbers =
+        isDailyReport &&
+        !!firstDay &&
+        !!lastDay &&
+        isWholeMonths(firstDay, lastDay);
+    const isSunday = (key: string) =>
+        isDailyReport && new Date(`${key}T00:00:00Z`).getUTCDay() === 0;
 
     useEffect(() => {
         const axis = axisRef.current;
@@ -250,6 +263,8 @@ export function TimelineChart({
 
     const tick = (bucket: TimelineBucket) => {
         if (unit === 'week') return isoWeek(bucket.key);
+        if (showDayNumbers)
+            return formatDate(bucket.key, intlLocale, { day: 'numeric' });
 
         return formatDate(
             bucket.key,
@@ -307,118 +322,137 @@ export function TimelineChart({
                 </div>
             )}
 
-            <div className={`relative pl-10 ${plotHeight}`}>
-                {gridlines.map((hours) => (
+            <div
+                className={
+                    showDayNumbers
+                        ? '-mt-2 grid min-w-0 gap-3 overflow-x-auto pt-2'
+                        : 'contents'
+                }
+                style={
+                    showDayNumbers
+                        ? {
+                              gridTemplateColumns: `minmax(${HOURS_AXIS_WIDTH_REM + buckets.length * DAY_COLUMN_WIDTH_REM}rem, 1fr)`,
+                          }
+                        : undefined
+                }
+            >
+                <div className={`relative pl-10 ${plotHeight}`}>
+                    {gridlines.map((hours) => (
+                        <div
+                            key={hours}
+                            // Start each line at its tick coordinate, including the plot's bottom edge at zero.
+                            className={`pointer-events-none absolute right-0 left-10 after:absolute after:inset-x-0 after:top-0 after:h-px after:bg-separator ${hours === 0 ? 'z-10' : ''}`}
+                            style={{ bottom: `${(hours / max) * 100}%` }}
+                        >
+                            <span className="absolute -top-2 -left-10 w-9 text-right text-xs whitespace-nowrap text-muted tabular-nums">
+                                {hours} h
+                            </span>
+                        </div>
+                    ))}
+
                     <div
-                        key={hours}
-                        // Start each line at its tick coordinate, including the plot's bottom edge at zero.
-                        className={`pointer-events-none absolute right-0 left-10 after:absolute after:inset-x-0 after:top-0 after:h-px after:bg-separator ${hours === 0 ? 'z-10' : ''}`}
-                        style={{ bottom: `${(hours / max) * 100}%` }}
+                        className="relative flex h-full items-end gap-0.5 overflow-clip"
+                        role="list"
+                        aria-label={chartTitle}
                     >
-                        <span className="absolute -top-2 -left-10 w-9 text-right text-xs whitespace-nowrap text-muted tabular-nums">
-                            {hours} h
-                        </span>
+                        {buckets.map((bucket, index) => {
+                            const barStyle = {
+                                height: `${(bucket.seconds / 3600 / max) * 100}%`,
+                                animationDelay: `${Math.min(index * 12, 360)}ms`,
+                            };
+                            const barClassName = `flex w-full ${barMaxWidth} origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
+
+                            return (
+                                <div
+                                    key={`${unit}:${bucket.key}`}
+                                    role="listitem"
+                                    className={`flex h-full min-w-0 flex-1 ${isSunday(bucket.key) ? 'bg-danger/10' : ''}`}
+                                >
+                                    {projects ? (
+                                        <ProjectTimelineBar
+                                            title={`${period(bucket)} · ${hours(bucket.seconds)}`}
+                                            segments={projectHours(bucket)}
+                                            className={barClassName}
+                                            style={barStyle}
+                                            source={
+                                                projectBar?.key === bucket.key
+                                                    ? projectBar.source
+                                                    : null
+                                            }
+                                            onChange={(source) =>
+                                                setActiveProjectBar(
+                                                    (current) =>
+                                                        source
+                                                            ? {
+                                                                  unit,
+                                                                  key: bucket.key,
+                                                                  source,
+                                                              }
+                                                            : current?.unit ===
+                                                                    unit &&
+                                                                current.key ===
+                                                                    bucket.key
+                                                              ? null
+                                                              : current,
+                                                )
+                                            }
+                                        />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            aria-label={describe(bucket)}
+                                            className={buttonClassName}
+                                            onMouseEnter={() =>
+                                                setSelectedKey(bucket.key)
+                                            }
+                                            onFocus={() =>
+                                                setSelectedKey(bucket.key)
+                                            }
+                                            onClick={() =>
+                                                setSelectedKey(bucket.key)
+                                            }
+                                        >
+                                            <span
+                                                className={`${barClassName} flex-col justify-end gap-0.5`}
+                                                style={barStyle}
+                                            >
+                                                {bucket.seconds >
+                                                    bucket.billableSeconds && (
+                                                    <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
+                                                )}
+                                                {bucket.billableSeconds > 0 && (
+                                                    <span
+                                                        className="min-h-px bg-accent first:rounded-t-[4px]"
+                                                        style={{
+                                                            height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
+                                                        }}
+                                                    />
+                                                )}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
-                ))}
+                </div>
 
                 <div
-                    className="relative flex h-full items-end gap-0.5 overflow-clip"
-                    role="list"
-                    aria-label={chartTitle}
+                    ref={axisRef}
+                    className="flex gap-0.5 pl-10"
+                    aria-hidden="true"
                 >
-                    {buckets.map((bucket, index) => {
-                        const barStyle = {
-                            height: `${(bucket.seconds / 3600 / max) * 100}%`,
-                            animationDelay: `${Math.min(index * 12, 360)}ms`,
-                        };
-                        const barClassName = `flex w-full ${barMaxWidth} origin-bottom animate-grow-y transition-[height,opacity] duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
-
-                        return (
-                            <div
-                                key={`${unit}:${bucket.key}`}
-                                role="listitem"
-                                className="flex h-full min-w-0 flex-1"
-                            >
-                                {projects ? (
-                                    <ProjectTimelineBar
-                                        title={`${period(bucket)} · ${hours(bucket.seconds)}`}
-                                        segments={projectHours(bucket)}
-                                        className={barClassName}
-                                        style={barStyle}
-                                        source={
-                                            projectBar?.key === bucket.key
-                                                ? projectBar.source
-                                                : null
-                                        }
-                                        onChange={(source) =>
-                                            setActiveProjectBar((current) =>
-                                                source
-                                                    ? {
-                                                          unit,
-                                                          key: bucket.key,
-                                                          source,
-                                                      }
-                                                    : current?.unit === unit &&
-                                                        current.key ===
-                                                            bucket.key
-                                                      ? null
-                                                      : current,
-                                            )
-                                        }
-                                    />
-                                ) : (
-                                    <button
-                                        type="button"
-                                        aria-label={describe(bucket)}
-                                        className={buttonClassName}
-                                        onMouseEnter={() =>
-                                            setSelectedKey(bucket.key)
-                                        }
-                                        onFocus={() =>
-                                            setSelectedKey(bucket.key)
-                                        }
-                                        onClick={() =>
-                                            setSelectedKey(bucket.key)
-                                        }
-                                    >
-                                        <span
-                                            className={`${barClassName} flex-col justify-end gap-0.5`}
-                                            style={barStyle}
-                                        >
-                                            {bucket.seconds >
-                                                bucket.billableSeconds && (
-                                                <span className="min-h-px flex-1 rounded-t-[4px] bg-accent/35" />
-                                            )}
-                                            {bucket.billableSeconds > 0 && (
-                                                <span
-                                                    className="min-h-px bg-accent first:rounded-t-[4px]"
-                                                    style={{
-                                                        height: `${(bucket.billableSeconds / bucket.seconds) * 100}%`,
-                                                    }}
-                                                />
-                                            )}
-                                        </span>
-                                    </button>
-                                )}
-                            </div>
-                        );
-                    })}
+                    {buckets.map((bucket, index) => (
+                        <span
+                            key={bucket.key}
+                            className={`min-w-0 flex-1 overflow-visible text-center text-xs whitespace-nowrap tabular-nums ${isSunday(bucket.key) ? 'text-danger-soft-foreground' : 'text-muted'}`}
+                        >
+                            {showDayNumbers || index % labelEvery === 0
+                                ? tick(bucket)
+                                : ''}
+                        </span>
+                    ))}
                 </div>
-            </div>
-
-            <div
-                ref={axisRef}
-                className="flex gap-0.5 pl-10"
-                aria-hidden="true"
-            >
-                {buckets.map((bucket, index) => (
-                    <span
-                        key={bucket.key}
-                        className="min-w-0 flex-1 overflow-visible text-center text-xs whitespace-nowrap text-muted tabular-nums"
-                    >
-                        {index % labelEvery === 0 ? tick(bucket) : ''}
-                    </span>
-                ))}
             </div>
         </section>
     );
