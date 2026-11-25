@@ -35,6 +35,7 @@ export function AppSidebar({ className }: { className?: string }) {
 
     return (
         <aside
+            id="desktop-sidebar"
             className={cn(
                 'flex-col gap-4 overflow-y-auto border-r border-separator bg-background-secondary p-3',
                 className,

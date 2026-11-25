@@ -1,11 +1,13 @@
 import { Breadcrumbs } from '@heroui/react';
 import { AppSidebar } from '@/components/app-shell/app-sidebar';
+import { SidebarResizeHandle } from '@/components/app-shell/sidebar-resize-handle';
 import { CommandPaletteProvider } from '@/components/command-palette';
 import {
     MobileBottomNav,
     MobileTopBar,
 } from '@/components/app-shell/mobile-navigation';
 import { usePage } from '@inertiajs/react';
+import { useState, type CSSProperties } from 'react';
 import {
     RunningTimerCard,
     useTimerTitle,
@@ -32,6 +34,7 @@ export default function AppLayout({
     children,
 }: AppLayoutProps) {
     const { t } = useTranslation();
+    const [sidebarWidth, setSidebarWidth] = useState(256);
     // Show time reported elsewhere when the user comes back to the app.
     useRefreshOnReturn();
     useTimerTitle();
@@ -39,10 +42,19 @@ export default function AppLayout({
 
     return (
         <CommandPaletteProvider>
-            <div className="min-h-svh bg-background">
-                <AppSidebar className="fixed inset-y-0 left-0 z-20 hidden w-64 md:flex" />
+            <div
+                className="min-h-svh bg-background"
+                style={
+                    { '--sidebar-width': `${sidebarWidth}px` } as CSSProperties
+                }
+            >
+                <AppSidebar className="fixed inset-y-0 left-0 z-20 hidden w-(--sidebar-width) md:flex" />
+                <SidebarResizeHandle
+                    width={sidebarWidth}
+                    onResize={setSidebarWidth}
+                />
 
-                <div className="md:pl-64">
+                <div className="md:pl-(--sidebar-width)">
                     <MobileTopBar className="md:hidden" />
 
                     <main

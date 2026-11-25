@@ -66,6 +66,28 @@
     --muted: oklch(0.72 0.012 286);
 }
 
+@media (hover: hover) {
+    .sidebar-resize-handle:hover::before {
+        background-color: color-mix(
+            in srgb,
+            var(--separator),
+            var(--foreground) 5%
+        );
+    }
+}
+
+.sidebar-resize-handle:focus-visible::before {
+    background-color: var(--muted);
+}
+
+.sidebar-resize-handle[data-resizing]::before {
+    background-color: color-mix(
+        in srgb,
+        var(--separator),
+        var(--foreground) 10%
+    );
+}
+
 .report-period-icon {
     @apply block size-4 shrink-0 bg-current;
     mask: var(--report-period-icon) center no-repeat;
