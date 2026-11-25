@@ -151,6 +151,7 @@ trait HasOrganizations
             isCurrent: $this->isCurrentOrganization($organization),
             logo: $organization->logoUrl(),
             hasTeam: $organization->team_enabled,
+            timerEnabled: $organization->timer_enabled,
         );
     }
 

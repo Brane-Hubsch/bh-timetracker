@@ -5,6 +5,11 @@ import {
     MobileBottomNav,
     MobileTopBar,
 } from '@/components/app-shell/mobile-navigation';
+import { usePage } from '@inertiajs/react';
+import {
+    RunningTimerCard,
+    useTimerTitle,
+} from '@/components/time/running-timer';
 import { useRefreshOnReturn } from '@/hooks/use-refresh-on-return';
 import { useTranslation } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
@@ -29,6 +34,8 @@ export default function AppLayout({
     const { t } = useTranslation();
     // Show time reported elsewhere when the user comes back to the app.
     useRefreshOnReturn();
+    useTimerTitle();
+    const hasTimer = Boolean(usePage().props.timer);
 
     return (
         <CommandPaletteProvider>
@@ -39,7 +46,7 @@ export default function AppLayout({
                     <MobileTopBar className="md:hidden" />
 
                     <main
-                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-4 pb-28 md:px-8 ${compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12'}`}
+                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-4 ${hasTimer ? 'pb-44' : 'pb-28'} md:px-8 ${compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12'}`}
                     >
                         {breadcrumbs.length > 1 && (
                             <Breadcrumbs className="mb-6 hidden md:flex">
@@ -61,6 +68,11 @@ export default function AppLayout({
                     </main>
                 </div>
 
+                {/* Above the bottom navigation on mobile; the sidebar shows it on desktop. */}
+                <RunningTimerCard
+                    variant="bar"
+                    className="fixed inset-x-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 md:hidden"
+                />
                 <MobileBottomNav className="md:hidden" />
             </div>
         </CommandPaletteProvider>

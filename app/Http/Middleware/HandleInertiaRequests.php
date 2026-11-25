@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\RunningTimer;
 use App\Support\CurrentOrganization;
+use App\Support\TimerPresenter;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -49,6 +51,8 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'currentOrganization' => fn () => $user && ($organization = $currentOrganization->get()) ? $user->toUserOrganization($organization) : null,
             'organizations' => fn () => $user?->toUserOrganizations(includeCurrent: true) ?? [],
+            // The person's running timer, in any of their organizations.
+            'timer' => fn () => $user && ($timer = RunningTimer::runningFor($user)) ? TimerPresenter::present($timer, $user) : null,
             'can' => fn () => $user && ($organization = $currentOrganization->get()) ? $user->toOrganizationPermissions($organization) : null,
         ];
     }

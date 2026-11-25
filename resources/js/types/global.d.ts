@@ -21,6 +21,8 @@ declare module '@inertiajs/core' {
             organizations: Organization[];
             /** Permissions in the current organization. */
             can: OrganizationPermissions | null;
+            /** The signed-in person's running timer, in any of their organizations. */
+            timer: import('@/types/time').RunningTimer | null;
             [key: string]: unknown;
         };
         flashDataType: {

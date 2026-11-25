@@ -12,7 +12,7 @@ import {
 } from '@heroui/react';
 import { router, usePage } from '@inertiajs/react';
 import { today } from '@internationalized/date';
-import { Copy, EllipsisVertical, Trash2, UserRound } from 'lucide-react';
+import { Copy, EllipsisVertical, Play, Trash2, UserRound } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
@@ -37,6 +37,12 @@ import {
 import { cn } from '@/lib/utils';
 import { index as projectsIndex } from '@/routes/projects';
 import { destroy, store, update } from '@/routes/time';
+import {
+    discard as discardTimer,
+    start as startTimer,
+    stop as stopTimer,
+    update as updateTimer,
+} from '@/routes/timer';
 import type {
     ProjectOption,
     TimeEntry,
@@ -125,7 +131,8 @@ export function TimeEntryForm({
     absence,
 }: Props) {
     const { t } = useTranslation();
-    const { auth, can } = usePage().props;
+    const { auth, can, currentOrganization } = usePage().props;
+    const timerEnabled = currentOrganization?.timerEnabled ?? false;
     // The last opened draft: kept while the dialog animates out.
     const [source, setSource] = useState(draft);
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
@@ -175,7 +182,9 @@ export function TimeEntryForm({
 
     const current = values ?? draft;
     const isEditing = Boolean(source?.id);
-    const canSwitchMode = Boolean(absence) && !isEditing;
+    // Editing the running timer: saved, stopped or discarded instead of being an entry.
+    const isTimer = Boolean(source?.timer);
+    const canSwitchMode = Boolean(absence) && !isEditing && !isTimer;
     const isAbsence = canSwitchMode && mode === 'absence';
     const [beforeType, afterType] = t('Report :type').split(':type');
     const selectedMode = isAbsence ? 'absence' : 'time';
@@ -282,6 +291,12 @@ export function TimeEntryForm({
             return;
         }
 
+        if (isTimer) {
+            router.patch(updateTimer.url(), timerData() ?? {}, withErrors);
+
+            return;
+        }
+
         const data = {
             user_id: current.userId,
             project_id:
@@ -316,6 +331,73 @@ export function TimeEntryForm({
         }
     };
 
+    const timerData = () =>
+        current && {
+            project_id:
+                current.projectId === '' ? null : Number(current.projectId),
+            description: current.description,
+            tags: current.tags,
+            is_billable: current.isBillable,
+            date: current.date,
+            start: current.start,
+        };
+    const withErrors = {
+        ...requestOptions,
+        onError: (errorBag: Record<string, string>) => setErrors(errorBag),
+    };
+
+    // Start the timer from the form instead of entering an end. It runs from now, unless the
+    // start (or date) was changed, e.g. to say "I started at 9".
+    const startTimerFromForm = () => {
+        const data = timerData();
+        const keepsSuggestedStart =
+            current?.start === source?.start && current?.date === source?.date;
+
+        router.post(
+            startTimer.url(),
+            keepsSuggestedStart
+                ? { ...data, date: null, start: null }
+                : (data ?? {}),
+            withErrors,
+        );
+    };
+
+    // Start a new timer with the same project, description and tags as this entry.
+    const continueEntry = () =>
+        current &&
+        router.post(
+            startTimer.url(),
+            {
+                project_id: Number(current.projectId),
+                description: current.description,
+                tags: current.tags,
+                is_billable: current.isBillable,
+            },
+            withErrors,
+        );
+
+    const stopTimerFromForm = () => {
+        if (!current) {
+            return;
+        }
+
+        // An end at or before the start is on the next day, as for entries.
+        const end = current.end
+            ? {
+                  end_date:
+                      current.end <= current.start
+                          ? addDays(current.date, 1)
+                          : current.date,
+                  end: current.end,
+              }
+            : {};
+
+        router.post(stopTimer.url(), { ...timerData(), ...end }, withErrors);
+    };
+
+    const discardTimerFromForm = () =>
+        router.delete(discardTimer.url(), requestOptions);
+
     const remove = () => {
         if (source?.id) {
             router.delete(
@@ -332,7 +414,15 @@ export function TimeEntryForm({
     const isSelf = current?.userId === auth.user.id;
     const memberName = isSelf ? auth.user.name : member?.label;
     const memberAvatar = isSelf ? auth.user.avatar : member?.avatar;
-    const canChangeMember = members.length > 1;
+    const canChangeMember = members.length > 1 && !isTimer;
+    const canStartTimer =
+        timerEnabled &&
+        !isEditing &&
+        !isTimer &&
+        !isAbsence &&
+        isSelf &&
+        !current?.end &&
+        !duration;
     const memberLabel = memberName
         ? t('Reporting for :name', { name: memberName })
         : t('Member');
@@ -426,9 +516,11 @@ export function TimeEntryForm({
                     : undefined
             }
             title={
-                isEditing
-                    ? t('Edit time')
-                    : t('Report :type', { type: t(selectedMode) })
+                isTimer
+                    ? t('Running timer')
+                    : isEditing
+                      ? t('Edit time')
+                      : t('Report :type', { type: t(selectedMode) })
             }
             headerContent={
                 canSwitchMode && (
@@ -518,6 +610,22 @@ export function TimeEntryForm({
                                     aria-label={t('Time entry actions')}
                                     className="gap-0"
                                 >
+                                    {timerEnabled && isSelf && (
+                                        <Dropdown.Item
+                                            id="continue"
+                                            textValue={t(
+                                                'Continue with a timer',
+                                            )}
+                                            onAction={continueEntry}
+                                            className="px-3"
+                                            data-test="time-entry-continue"
+                                        >
+                                            <Play className="size-4 shrink-0" />
+                                            <Label>
+                                                {t('Continue with a timer')}
+                                            </Label>
+                                        </Dropdown.Item>
+                                    )}
                                     {onDuplicate && current && (
                                         <Dropdown.Item
                                             id="duplicate"
@@ -550,20 +658,69 @@ export function TimeEntryForm({
                             </Dropdown.Popover>
                         </Dropdown>
                     )}
-                    <div className="ml-auto flex gap-2">
-                        <Button slot="close" variant="tertiary">
-                            {t('Cancel')}
-                        </Button>
+                    {isTimer && (
                         <Button
-                            type="submit"
-                            form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
-                            isPending={processing}
-                            data-test={
-                                isAbsence ? 'absence-save' : 'time-entry-save'
-                            }
+                            isIconOnly
+                            variant="danger-soft"
+                            aria-label={t('Discard the timer')}
+                            onPress={discardTimerFromForm}
+                            data-test="timer-discard"
                         >
-                            {t('Save')}
+                            <Trash2 className="size-4" />
                         </Button>
+                    )}
+                    <div className="ml-auto flex gap-2">
+                        {isTimer ? (
+                            <>
+                                <Button
+                                    type="submit"
+                                    form={FORM_ID}
+                                    variant="tertiary"
+                                    isPending={processing}
+                                    data-test="timer-save"
+                                >
+                                    {t('Save')}
+                                </Button>
+                                <Button
+                                    onPress={stopTimerFromForm}
+                                    isPending={processing}
+                                    data-test="timer-stop"
+                                >
+                                    {t('Stop')}
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button slot="close" variant="tertiary">
+                                    {t('Cancel')}
+                                </Button>
+                                {canStartTimer && (
+                                    <Button
+                                        variant="tertiary"
+                                        onPress={startTimerFromForm}
+                                        isPending={processing}
+                                        data-test="time-entry-start-timer"
+                                    >
+                                        <Play className="size-4" />
+                                        {t('Start timer')}
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                        {!isTimer && (
+                            <Button
+                                type="submit"
+                                form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
+                                isPending={processing}
+                                data-test={
+                                    isAbsence
+                                        ? 'absence-save'
+                                        : 'time-entry-save'
+                                }
+                            >
+                                {t('Save')}
+                            </Button>
+                        )}
                     </div>
                 </div>
             }
@@ -596,6 +753,15 @@ export function TimeEntryForm({
                             className="time-entry-form grid gap-5"
                             data-test="time-entry-form"
                         >
+                            {errors.timer && (
+                                <p
+                                    role="alert"
+                                    className="text-sm text-danger"
+                                    data-test="timer-error"
+                                >
+                                    {errors.timer}
+                                </p>
+                            )}
                             {errors.user_id && (
                                 <p
                                     id={MEMBER_ERROR_ID}
@@ -769,6 +935,23 @@ export function TimeEntryForm({
                                 {timeError ? (
                                     <p className="text-sm text-danger">
                                         {timeError}
+                                    </p>
+                                ) : isTimer ? (
+                                    <p
+                                        className="text-xs text-muted"
+                                        data-test="timer-help"
+                                    >
+                                        {source?.stopTimer && source.end
+                                            ? t(
+                                                  'The timer has run a long time. Check the end before stopping.',
+                                              )
+                                            : source?.stopTimer
+                                              ? t(
+                                                    'Choose a project to stop the timer.',
+                                                )
+                                              : t(
+                                                    'The timer is running. Change the start if you started earlier; leave the end empty to stop it now.',
+                                                )}
                                     </p>
                                 ) : (
                                     <p className="text-xs text-muted">

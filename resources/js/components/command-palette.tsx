@@ -30,8 +30,10 @@ import {
     Monitor,
     Moon,
     Palette,
+    Play,
     Plus,
     Sparkles,
+    Square,
     Sun,
     Tags,
     Target,
@@ -43,6 +45,7 @@ import type { ReactNode } from 'react';
 import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { LogoImage } from '@/components/logo-image';
 import { ProjectDot } from '@/components/project-dot';
+import { stopTimer } from '@/components/time/running-timer';
 import { logoutAndFlush } from '@/components/user-menu';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
@@ -64,6 +67,7 @@ import { edit as editSecurity } from '@/routes/security';
 import { index as tagsIndex } from '@/routes/tags';
 import { index as teamIndex } from '@/routes/team';
 import { index as timeIndex, list as timeList } from '@/routes/time';
+import { start as startTimer } from '@/routes/timer';
 
 type PaletteData = {
     projects: {
@@ -293,7 +297,7 @@ function CommandPalette({
  */
 function useCommandSections(isOpen: boolean, query: string): Section[] {
     const { t } = useTranslation();
-    const { currentOrganization, organizations, can } = usePage().props;
+    const { currentOrganization, organizations, can, timer } = usePage().props;
     const { updateAppearance } = useAppearance();
     const switchOrganization = useSwitchOrganization();
     const [data, setData] = useState<PaletteData | null>(null);
@@ -338,6 +342,36 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     icon: Plus,
                     perform: go(time({ new: 1 })),
                 },
+                // A running timer can always be stopped, even where the timer is turned off.
+                ...(timer
+                    ? [
+                          {
+                              id: 'stop-timer',
+                              label: t('Stop timer'),
+                              keywords: t('timer clock'),
+                              icon: Square,
+                              perform: () => stopTimer(timer),
+                          },
+                      ]
+                    : currentOrganization?.timerEnabled
+                      ? [
+                            {
+                                id: 'start-timer',
+                                label: t('Start timer'),
+                                keywords: t('timer clock'),
+                                icon: Play,
+                                perform: () =>
+                                    router.post(
+                                        startTimer.url(slug),
+                                        {},
+                                        {
+                                            preserveScroll: true,
+                                            preserveState: true,
+                                        },
+                                    ),
+                            },
+                        ]
+                      : []),
                 {
                     id: 'copy-week',
                     label: t('Copy previous week'),

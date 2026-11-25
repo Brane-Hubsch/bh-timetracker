@@ -14,6 +14,7 @@ use App\Http\Controllers\Projects\ProjectMemberController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Tags\TagController;
 use App\Http\Controllers\TimeEntries\TimeEntryController;
+use App\Http\Controllers\Timers\TimerController;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,10 @@ Route::prefix('{current_organization}')
         Route::post('time/{timeEntry}/restore', [TimeEntryController::class, 'restore'])->withTrashed()->name('time.restore');
 
         Route::post('absences', [AbsenceController::class, 'store'])->name('absences.store');
+        Route::post('timer', [TimerController::class, 'store'])->name('timer.start');
+        Route::patch('timer', [TimerController::class, 'update'])->name('timer.update');
+        Route::post('timer/stop', [TimerController::class, 'stop'])->name('timer.stop');
+        Route::delete('timer', [TimerController::class, 'destroy'])->name('timer.discard');
         Route::patch('absences/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
         Route::delete('absences/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
 

@@ -7,6 +7,7 @@ import {
     useCommandPalette,
 } from '@/components/command-palette';
 import { OrganizationSwitcher } from '@/components/organization-switcher';
+import { RunningTimerCard } from '@/components/time/running-timer';
 import { UserMenu } from '@/components/user-menu';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
@@ -45,6 +46,8 @@ export function AppSidebar({ className }: { className?: string }) {
                 {t('Search…')}
                 <CommandPaletteShortcut className="ms-auto" />
             </button>
+
+            <RunningTimerCard variant="sidebar" />
 
             {currentOrganization && (
                 <SidebarNavigation
