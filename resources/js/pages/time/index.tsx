@@ -1,6 +1,6 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Copy } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import { useState } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
@@ -28,7 +28,6 @@ import { useInitials } from '@/hooks/use-initials';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
 import {
-    addDays,
     formatDuration,
     minutesToTime,
     secondsBetween,
@@ -145,7 +144,8 @@ export default function TimeIndex({
             isBillable: timer.isBillable,
         };
     const plusDurationKey = `time-report:plus-duration:${auth.user.id}:${currentOrganization?.id}`;
-    const pageTitle = t(view === 'list' ? 'List' : 'Calendar');
+    const isList = view === 'list';
+    const pageTitle = t(isList ? 'List' : 'Calendar');
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
@@ -269,8 +269,6 @@ export default function TimeIndex({
         );
     };
 
-    const step = view === 'day' ? 1 : 7;
-
     const move = (
         entry: TimeEntry,
         start: string,
@@ -295,119 +293,125 @@ export default function TimeIndex({
             },
         );
 
+    const memberPicker = members.length > 1 && (
+        <SelectField
+            name="user"
+            label={<span className="sr-only">{t('Member')}</span>}
+            value={String(member.id)}
+            onChange={(value) => visit({ user: Number(value) })}
+            options={members}
+            renderOption={({ label, avatar }) => (
+                <span className="flex min-w-0 items-center gap-3 font-medium in-data-[slot=select-value]:gap-2">
+                    <Avatar
+                        size="sm"
+                        variant="soft"
+                        color="accent"
+                        className="size-9 rounded-full in-data-[slot=select-value]:size-6"
+                        aria-hidden="true"
+                    >
+                        {avatar && (
+                            <Avatar.Image
+                                src={avatar}
+                                alt=""
+                                className="object-cover"
+                            />
+                        )}
+                        <Avatar.Fallback>{getInitials(label)}</Avatar.Fallback>
+                    </Avatar>
+                    <span className="truncate">{label}</span>
+                </span>
+            )}
+            className={cn('w-fit max-w-full min-w-0', !isList && 'gap-0')}
+            triggerClassName={cn(
+                'h-9 items-center rounded-full py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] shadow-none',
+                isList ? 'bg-transparent pe-4' : 'bg-surface pe-3',
+            )}
+            hideIndicator
+            data-test="member-select"
+        />
+    );
+    const periodPicker = (
+        <CalendarPicker
+            view={view}
+            date={date}
+            weekStart={weekStart}
+            weekStartsOn={weekStartsOn}
+            today={today}
+            timezone={timezone}
+            onChange={(date) => visit({ date })}
+            onViewChange={(view) => visit({ view })}
+        />
+    );
+
     return (
         <>
             <Head title={pageTitle} />
 
-            <div className="grid grid-cols-1 gap-5 md:gap-4">
-                <Heading
-                    className="items-center gap-y-1"
-                    title={pageTitle}
-                    actions={
-                        <p
-                            className="flex items-baseline gap-2 tabular-nums"
-                            data-test="week-total"
-                        >
-                            <span className="text-xs font-medium text-muted">
-                                {view === 'day'
-                                    ? t('Day total')
-                                    : t('Week total')}
-                            </span>
-                            <span className="text-sm font-semibold">
-                                {formatDuration(
-                                    view === 'day' ? dayTotal : weekTotal,
-                                )}
-                            </span>
-                        </p>
-                    }
-                />
-
-                {/* Two rows on mobile (period, then filters and actions); one on desktop. */}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
-                    <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                            isIconOnly
-                            variant="ghost"
-                            size="sm"
-                            aria-label={t(
-                                view === 'day'
-                                    ? 'Previous day'
-                                    : 'Previous week',
-                            )}
-                            onPress={() =>
-                                visit({ date: addDays(date, -step) })
-                            }
-                        >
-                            <ChevronLeft className="size-4" />
-                        </Button>
-                        <CalendarPicker
-                            view={view}
-                            date={date}
-                            weekStart={weekStart}
-                            weekStartsOn={weekStartsOn}
-                            today={today}
-                            timezone={timezone}
-                            onChange={(date) => visit({ date })}
-                            onViewChange={(view) => visit({ view })}
-                        />
-                        <Button
-                            isIconOnly
-                            variant="ghost"
-                            size="sm"
-                            aria-label={t(
-                                view === 'day' ? 'Next day' : 'Next week',
-                            )}
-                            onPress={() => visit({ date: addDays(date, step) })}
-                        >
-                            <ChevronRight className="size-4" />
-                        </Button>
-                    </div>
-                    <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ml-auto md:w-auto md:justify-end">
-                        {members.length > 1 && (
-                            <SelectField
-                                name="user"
-                                label={
-                                    <span className="sr-only">
-                                        {t('Member')}
-                                    </span>
-                                }
-                                value={String(member.id)}
-                                onChange={(value) =>
-                                    visit({ user: Number(value) })
-                                }
-                                options={members}
-                                renderOption={({ label, avatar }) => (
-                                    <span className="flex min-w-0 items-center gap-3 font-medium in-data-[slot=select-value]:gap-2">
-                                        <Avatar
-                                            size="sm"
-                                            variant="soft"
-                                            color="accent"
-                                            className="size-9 rounded-full in-data-[slot=select-value]:size-6"
-                                            aria-hidden="true"
-                                        >
-                                            {avatar && (
-                                                <Avatar.Image
-                                                    src={avatar}
-                                                    alt=""
-                                                    className="object-cover"
-                                                />
-                                            )}
-                                            <Avatar.Fallback>
-                                                {getInitials(label)}
-                                            </Avatar.Fallback>
-                                        </Avatar>
-                                        <span className="truncate">
-                                            {label}
-                                        </span>
-                                    </span>
-                                )}
-                                className="w-fit max-w-full min-w-0"
-                                triggerClassName="h-9 items-center rounded-full bg-transparent py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-4 shadow-none"
-                                hideIndicator
-                                data-test="member-select"
-                            />
+            <div
+                className={cn(
+                    'grid grid-cols-1',
+                    isList ? 'gap-5 md:gap-4' : 'gap-3',
+                )}
+            >
+                <div
+                    className={cn(
+                        isList
+                            ? 'grid gap-5 md:gap-4'
+                            : 'flex flex-wrap items-center justify-between gap-x-5 gap-y-3',
+                    )}
+                >
+                    <Heading
+                        className={cn(
+                            'items-center',
+                            isList
+                                ? 'gap-y-1'
+                                : 'justify-start gap-x-3 gap-y-1',
                         )}
-                        {view === 'list' && copyPeriodButton}
+                        title={pageTitle}
+                        actions={
+                            <p
+                                className="flex items-baseline gap-1.5 text-xs tabular-nums"
+                                data-test="week-total"
+                            >
+                                <span className="font-medium text-muted">
+                                    {view === 'day'
+                                        ? t('Day total')
+                                        : t('Week total')}
+                                </span>
+                                <span
+                                    className={cn(
+                                        'font-semibold',
+                                        isList && 'text-sm',
+                                    )}
+                                >
+                                    {formatDuration(
+                                        view === 'day' ? dayTotal : weekTotal,
+                                    )}
+                                </span>
+                            </p>
+                        }
+                    />
+
+                    <div
+                        className={cn(
+                            'flex max-w-full min-w-0 flex-wrap items-center',
+                            isList ? 'gap-3' : 'gap-2 md:ms-auto md:gap-x-5',
+                        )}
+                    >
+                        {isList ? (
+                            <>
+                                {periodPicker}
+                                <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ms-auto md:w-auto">
+                                    {memberPicker}
+                                    {copyPeriodButton}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {memberPicker}
+                                {periodPicker}
+                            </>
+                        )}
                         <TimeActionsMenu
                             className="hidden md:inline-flex"
                             placement="bottom end"

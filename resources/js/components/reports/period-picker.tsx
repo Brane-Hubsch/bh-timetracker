@@ -1,11 +1,4 @@
-import {
-    Button,
-    Drawer,
-    Label,
-    ListBox,
-    Popover,
-    RangeCalendar,
-} from '@heroui/react';
+import { Label, ListBox, RangeCalendar } from '@heroui/react';
 import type { Selection } from '@heroui/react';
 import {
     parseDate,
@@ -15,10 +8,9 @@ import {
 } from '@internationalized/date';
 import type { CalendarDate } from '@internationalized/date';
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { SelectOption } from '@/components/form/select-field';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { PeriodPicker } from '@/components/period-picker';
 import { useTranslation } from '@/lib/i18n';
 import { customPeriodName, shiftPeriod } from '@/lib/reports';
 import { formatDate, formatDateRange } from '@/lib/time';
@@ -313,7 +305,7 @@ function PeriodPanel({
 }
 
 /** The report period can be stepped, chosen from a preset or selected on the calendar. */
-export function PeriodPicker({
+export function ReportPeriodPicker({
     period,
     from,
     to,
@@ -324,9 +316,6 @@ export function PeriodPicker({
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const { timezone } = usePage().props.auth.user;
-    // Leave room for both months plus the popover's viewport padding.
-    const isDesktop = useMediaQuery('(min-width: 800px)');
-    const [isOpen, setIsOpen] = useState(false);
     const presets = periods.filter((option) => option.value !== 'custom');
     const preset = presets.find((option) => option.value === period);
     const hasRange = from !== '' && to !== '';
@@ -353,130 +342,30 @@ export function PeriodPicker({
     const step = (direction: -1 | 1) =>
         onChange({ period: 'custom', ...shiftPeriod(from, to, direction) });
 
-    const panel = (
-        <PeriodPanel
-            from={from}
-            to={to}
-            weekStartsOn={weekStartsOn}
-            presets={presets}
-            preset={preset}
-            isDesktop={isDesktop}
-            timezone={timezone}
-            onApply={(changes) => {
-                setIsOpen(false);
-                onChange(changes);
-            }}
-            onDismiss={() => setIsOpen(false)}
-        />
-    );
-
-    const trigger = (
-        <Button
-            variant="outline"
-            className="h-9 min-w-0 flex-1 justify-between gap-2 rounded-full bg-surface ps-3.5 pe-2.5 md:flex-none"
-            data-test="report-period"
-        >
-            <span className="flex min-w-0 items-baseline gap-2">
-                {name && (
-                    <span className="truncate font-semibold first-letter:uppercase">
-                        {name}
-                    </span>
-                )}
-                {range && (
-                    <span
-                        className={cn(
-                            'truncate tabular-nums',
-                            name ? 'font-normal text-muted' : 'font-medium',
-                        )}
-                    >
-                        {range}
-                    </span>
-                )}
-            </span>
-            <span
-                aria-hidden="true"
-                className="report-period-icon report-period-icon--open"
-            />
-        </Button>
-    );
-
     return (
-        <div className={cn('flex items-center gap-1', className)}>
-            <Button
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                isDisabled={!hasRange}
-                aria-label={t('Previous period')}
-                onPress={() => step(-1)}
-                data-test="report-period-previous"
-            >
-                <span
-                    aria-hidden="true"
-                    className="report-period-icon report-period-icon--previous"
+        <PeriodPicker
+            name={name}
+            range={range}
+            onStep={hasRange ? step : undefined}
+            className={className}
+            testId="report-period"
+        >
+            {({ isDesktop, dismiss }) => (
+                <PeriodPanel
+                    from={from}
+                    to={to}
+                    weekStartsOn={weekStartsOn}
+                    presets={presets}
+                    preset={preset}
+                    isDesktop={isDesktop}
+                    timezone={timezone}
+                    onApply={(changes) => {
+                        dismiss();
+                        onChange(changes);
+                    }}
+                    onDismiss={dismiss}
                 />
-            </Button>
-            {isDesktop ? (
-                <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-                    {trigger}
-                    <Popover.Content
-                        placement="bottom start"
-                        offset={8}
-                        className="w-[758px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-separator bg-surface p-0"
-                    >
-                        <Popover.Dialog
-                            aria-label={t('Choose a period')}
-                            className="p-0"
-                        >
-                            {panel}
-                        </Popover.Dialog>
-                    </Popover.Content>
-                </Popover>
-            ) : (
-                <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
-                    {trigger}
-                    <Drawer.Backdrop variant="opaque">
-                        <Drawer.Content placement="bottom">
-                            <Drawer.Dialog className="max-h-[92svh] bg-surface p-0">
-                                <Drawer.Handle className="pt-2 pb-0" />
-                                <Drawer.Header className="flex-row items-center justify-between border-b border-separator px-5 py-1.5">
-                                    <Drawer.Heading className="font-semibold">
-                                        {t('Choose a period')}
-                                    </Drawer.Heading>
-                                    <Drawer.CloseTrigger
-                                        aria-label={t('Close')}
-                                        className="static size-10 rounded-full bg-transparent hover:bg-transparent"
-                                    >
-                                        <span className="grid size-6 place-items-center rounded-full bg-default">
-                                            <span
-                                                aria-hidden="true"
-                                                className="report-period-icon report-period-icon--close"
-                                            />
-                                        </span>
-                                    </Drawer.CloseTrigger>
-                                </Drawer.Header>
-                                <Drawer.Body className="m-0! p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                                    {panel}
-                                </Drawer.Body>
-                            </Drawer.Dialog>
-                        </Drawer.Content>
-                    </Drawer.Backdrop>
-                </Drawer>
             )}
-            <Button
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                isDisabled={!hasRange}
-                aria-label={t('Next period')}
-                onPress={() => step(1)}
-                data-test="report-period-next"
-            >
-                <span
-                    aria-hidden="true"
-                    className="report-period-icon report-period-icon--next"
-                />
-            </Button>
-        </div>
+        </PeriodPicker>
     );
 }
