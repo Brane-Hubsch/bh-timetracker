@@ -369,7 +369,7 @@ export function CalendarPicker({
             }
             label={label}
             compact
-            enclosed={!isList}
+            enclosed
             className="min-w-0"
             testId="calendar-period-picker"
         >
@@ -378,7 +378,7 @@ export function CalendarPicker({
                     dismiss();
                     onChange(day);
                 };
-                const compactRange = !isDesktop && !isList;
+                const compactRange = !isDesktop;
 
                 return (
                     <>

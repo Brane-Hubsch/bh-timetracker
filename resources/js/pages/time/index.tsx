@@ -321,11 +321,8 @@ export default function TimeIndex({
                     <span className="truncate">{label}</span>
                 </span>
             )}
-            className={cn('w-fit max-w-full min-w-0', !isList && 'gap-0')}
-            triggerClassName={cn(
-                'h-9 items-center rounded-full py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] shadow-none',
-                isList ? 'bg-transparent pe-4' : 'bg-surface pe-3',
-            )}
+            className="w-fit max-w-full min-w-0 gap-0"
+            triggerClassName="h-9 items-center rounded-full bg-surface py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-3 shadow-none"
             hideIndicator
             data-test="member-select"
         />
@@ -347,26 +344,10 @@ export default function TimeIndex({
         <>
             <Head title={pageTitle} />
 
-            <div
-                className={cn(
-                    'grid grid-cols-1',
-                    isList ? 'gap-5 md:gap-4' : 'gap-3',
-                )}
-            >
-                <div
-                    className={cn(
-                        isList
-                            ? 'grid gap-5 md:gap-4'
-                            : 'flex flex-wrap items-center justify-between gap-x-5 gap-y-3',
-                    )}
-                >
+            <div className="grid grid-cols-1 gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
                     <Heading
-                        className={cn(
-                            'items-center',
-                            isList
-                                ? 'gap-y-1'
-                                : 'justify-start gap-x-3 gap-y-1',
-                        )}
+                        className="items-center justify-start gap-x-3 gap-y-1"
                         title={pageTitle}
                         actions={
                             <p
@@ -378,12 +359,7 @@ export default function TimeIndex({
                                         ? t('Day total')
                                         : t('Week total')}
                                 </span>
-                                <span
-                                    className={cn(
-                                        'font-semibold',
-                                        isList && 'text-sm',
-                                    )}
-                                >
+                                <span className="font-semibold">
                                     {formatDuration(
                                         view === 'day' ? dayTotal : weekTotal,
                                     )}
@@ -392,26 +368,10 @@ export default function TimeIndex({
                         }
                     />
 
-                    <div
-                        className={cn(
-                            'flex max-w-full min-w-0 flex-wrap items-center',
-                            isList ? 'gap-3' : 'gap-2.5 md:ms-auto',
-                        )}
-                    >
-                        {isList ? (
-                            <>
-                                {periodPicker}
-                                <div className="flex w-full min-w-0 flex-wrap items-center gap-2 md:ms-auto md:w-auto">
-                                    {memberPicker}
-                                    {copyPeriodButton}
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                {memberPicker}
-                                {periodPicker}
-                            </>
-                        )}
+                    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2.5 md:ms-auto">
+                        {isList && copyPeriodButton}
+                        {memberPicker}
+                        {periodPicker}
                         <TimeActionsMenu
                             className="hidden md:inline-flex"
                             placement="bottom end"
