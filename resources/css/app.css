@@ -333,6 +333,34 @@
     container: time-calendar-entry / size;
 }
 
+.time-calendar-timer {
+    --timer-dash-stops: var(--accent) 0 7px, transparent 7px 12px;
+    --timer-dash-horizontal: repeating-linear-gradient(
+        to right,
+        var(--timer-dash-stops)
+    );
+    --timer-dash-vertical: repeating-linear-gradient(
+        to bottom,
+        var(--timer-dash-stops)
+    );
+
+    background-image:
+        var(--timer-dash-horizontal), var(--timer-dash-horizontal),
+        var(--timer-dash-vertical), var(--timer-dash-vertical);
+    background-position: top, bottom, left, right;
+    background-size:
+        100% 1px,
+        100% 1px,
+        1px 100%,
+        1px 100%;
+    background-origin: border-box;
+    background-repeat: no-repeat;
+
+    @media (forced-colors: active) {
+        border: 1px dashed CanvasText;
+    }
+}
+
 /* Account for the SVG's built-in whitespace so the visible strokes are equally inset. */
 .time-calendar-entry-icon {
     bottom: 2.67px;
