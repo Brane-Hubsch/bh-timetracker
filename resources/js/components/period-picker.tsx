@@ -43,7 +43,7 @@ export function PeriodPicker({
     const dismiss = () => setIsOpen(false);
     const dialogLabel = label ?? t('Choose a period');
     const stepButtonClassName = enclosed
-        ? 'h-8 w-6 shrink-0 rounded-full'
+        ? 'size-8 shrink-0 rounded-full'
         : undefined;
 
     const trigger = (
@@ -52,7 +52,7 @@ export function PeriodPicker({
             className={cn(
                 'min-w-0 flex-1 rounded-full md:flex-none',
                 enclosed
-                    ? 'h-8 justify-center px-[5px]'
+                    ? 'h-8 justify-center px-3'
                     : 'h-9 justify-between bg-surface ps-3.5 pe-2.5',
             )}
             data-test={testId}
@@ -82,7 +82,7 @@ export function PeriodPicker({
             className={cn(
                 'flex items-center',
                 enclosed
-                    ? 'h-9 gap-[7px] rounded-full border border-border bg-surface px-2'
+                    ? 'h-9 gap-1 rounded-full border border-border bg-surface p-px'
                     : 'gap-1',
                 className,
             )}
