@@ -6,3 +6,7 @@ the application code.
 
 Start each new task on its own branch and work through a pull request. Follow the
 [pull request workflow](.ai/guidelines/project.md#pull-request-workflow) for opening and merging it.
+
+Run pull request verification locally. Run `composer ci:check` and run the test suite against both
+SQLite and PostgreSQL. Use the local results to verify the pull request before marking it ready for
+review or merging it.
