@@ -43,7 +43,7 @@ function projectLabel({ name, clientName }: TimelineProject) {
 
 function ProjectLabels({ items }: { items: TimelineProject[] }) {
     return (
-        <ul className="flex h-4 min-w-0 [scrollbar-width:none] gap-4 overflow-x-auto text-xs whitespace-nowrap text-muted">
+        <ul className="scroll-fade-x flex h-4 min-w-0 [scrollbar-width:none] gap-4 overflow-x-auto text-xs whitespace-nowrap text-muted">
             {items.map((project) => (
                 <li
                     key={project.id}
