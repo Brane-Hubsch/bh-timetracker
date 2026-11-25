@@ -33,13 +33,15 @@ class UpdateOrganizationRequest extends FormRequest
             'timezone' => ['required', 'string', 'timezone:all'],
             // Full absence days count as this many hours.
             'workday_hours' => ['sometimes', 'numeric', 'min:1', 'max:24'],
+            // Whether members may start and stop a timer.
+            'timer_enabled' => ['sometimes', 'boolean'],
         ];
     }
 
     /**
      * The validated attributes for UpdateOrganization.
      *
-     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string, workday_seconds?: int}
+     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string, workday_seconds?: int, timer_enabled?: bool}
      */
     public function settings(): array
     {
@@ -53,6 +55,10 @@ class UpdateOrganizationRequest extends FormRequest
 
         if ($this->has('workday_hours')) {
             $settings['workday_seconds'] = (int) round($this->float('workday_hours') * 3600);
+        }
+
+        if ($this->has('timer_enabled')) {
+            $settings['timer_enabled'] = $this->boolean('timer_enabled');
         }
 
         return $settings;

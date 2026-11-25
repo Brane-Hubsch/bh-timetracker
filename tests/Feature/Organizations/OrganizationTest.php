@@ -121,6 +121,7 @@ class OrganizationTest extends TestCase
                 'week_starts_on' => 7,
                 'timezone' => 'Europe/Helsinki',
                 'workday_hours' => '7.5',
+                'timer_enabled' => false,
             ]);
 
         $response->assertRedirect(route('organizations.edit', $organization->fresh()));
@@ -133,6 +134,7 @@ class OrganizationTest extends TestCase
             'week_starts_on' => 7,
             'timezone' => 'Europe/Helsinki',
             'workday_seconds' => 27000,
+            'timer_enabled' => false,
         ]);
     }
 
