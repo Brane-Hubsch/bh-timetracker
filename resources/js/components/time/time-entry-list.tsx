@@ -3,6 +3,7 @@ import { ProjectDot } from '@/components/project-dot';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatDate, formatDuration, timeOf } from '@/lib/time';
+import { cn } from '@/lib/utils';
 import type { Absence, ColleagueOff, TimeEntry } from '@/types';
 
 type Props = {
@@ -146,22 +147,33 @@ export function TimeEntryList({
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="truncate text-sm text-muted">
-                                                {entry.description ||
-                                                    t('No description')}
+                                            <div className="flex items-start gap-2">
+                                                <span
+                                                    className={cn(
+                                                        'truncate text-sm',
+                                                        entry.description
+                                                            ? 'text-muted'
+                                                            : 'text-muted/85 dark:text-muted/80',
+                                                    )}
+                                                >
+                                                    {entry.description ||
+                                                        t('No description')}
+                                                </span>
+                                                {entry.tags.length > 0 && (
+                                                    <div className="flex max-w-[60%] shrink-0 flex-wrap gap-1">
+                                                        {entry.tags.map(
+                                                            (tag) => (
+                                                                <span
+                                                                    key={tag}
+                                                                    className="max-w-full truncate rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
+                                                                >
+                                                                    {tag}
+                                                                </span>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                            {entry.tags.length > 0 && (
-                                                <div className="mt-1.5 flex flex-wrap gap-1">
-                                                    {entry.tags.map((tag) => (
-                                                        <span
-                                                            key={tag}
-                                                            className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
-                                                        >
-                                                            {tag}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
                                         <div className="shrink-0 text-right text-sm tabular-nums">
                                             <div className="font-medium">
@@ -170,7 +182,8 @@ export function TimeEntryList({
                                                 )}
                                             </div>
                                             <div className="text-muted">
-                                                {timeOf(entry.start)}–
+                                                {timeOf(entry.start)}
+                                                {' – '}
                                                 {timeOf(entry.end)}
                                             </div>
                                         </div>
