@@ -4,7 +4,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
-const hoverDelay = 300;
+const hoverDelay = 600;
 const reorderDuration = 180;
 
 type Drag = {
