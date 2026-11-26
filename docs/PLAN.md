@@ -712,6 +712,10 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 - **Inget saldo** (semesterdagar kvar) och inget attestflöde i den här versionen.
 - **Kod:** `App\Actions\Absences` (`CreateAbsence`, `UpdateAbsence`, `DeleteAbsence`, gemensamma regler i `ValidatesAbsences`), `App\Support\AbsenceTime`, `AbsencePresenter` och `AbsenceController`.
 
+### Tillägg efter Fas 6: spara med ⌘↵ (2026-11-26)
+
+Beställt i efterhand. I dialogerna *Rapportera tid* (även i läget för frånvaro och för den pågående timern) och *Registrera frånvaro* sparar ⌘+Enter (Ctrl+Enter utanför Mac) formuläret, var fokus än är. `ResponsiveDialog` tar emot formulärets id (`submitFormId`). Spara-knappen har `aria-keyshortcuts` och, på dator, en liten hint ("⌘↵" eller "Ctrl ↵", `SubmitShortcutHint`).
+
 ### Tillägg efter Fas 6: timer (2026-11-25)
 
 Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och stoppa en timer. Designen finns i Figma på sidan "Timer (förslag)".
