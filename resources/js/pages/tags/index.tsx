@@ -24,6 +24,7 @@ import {
     SideDrawerFooter,
     sideDrawerFormClass,
 } from '@/components/side-drawer';
+import { useOverlayData } from '@/hooks/use-overlay-data';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatDate } from '@/lib/time';
@@ -87,6 +88,8 @@ export default function TagsIndex({ tags }: Props) {
         : tags;
     const [renaming, setRenaming] = useState<OrganizationTag | null>(null);
     const [deleting, setDeleting] = useState<OrganizationTag | null>(null);
+    const renameTag = useOverlayData(renaming);
+    const deleteTag = useOverlayData(deleting);
     const [isDeletePending, setDeletePending] = useState(false);
 
     const formatLastUsed = (date: string) =>
@@ -323,9 +326,9 @@ export default function TagsIndex({ tags }: Props) {
                     </>
                 }
             >
-                {renaming && (
+                {renameTag && (
                     <Form
-                        {...update.form({ tag: renaming.id })}
+                        {...update.form({ tag: renameTag.id })}
                         id={RENAME_FORM}
                         options={{ preserveScroll: true }}
                         onSuccess={() => setRenaming(null)}
@@ -334,7 +337,7 @@ export default function TagsIndex({ tags }: Props) {
                             <TextInputField
                                 name="name"
                                 label={t('Name')}
-                                defaultValue={renaming.name}
+                                defaultValue={renameTag.name}
                                 error={errors.name}
                                 autoFocus
                                 data-test="rename-tag-name"
@@ -363,11 +366,11 @@ export default function TagsIndex({ tags }: Props) {
                     });
                 }}
             >
-                {deleting &&
+                {deleteTag &&
                     tc(
                         'The tag ":name" is removed from :count entry. The entry is kept.|The tag ":name" is removed from :count entries. The entries are kept.',
-                        deleting.entryCount,
-                        { name: deleting.name, count: deleting.entryCount },
+                        deleteTag.entryCount,
+                        { name: deleteTag.name, count: deleteTag.entryCount },
                     )}
             </ConfirmDialog>
         </>

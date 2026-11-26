@@ -170,6 +170,11 @@ function CommandPalette({
     const { t } = useTranslation();
     const { contains } = useFilter({ sensitivity: 'base' });
     const [query, setQuery] = useState('');
+    const [wasOpen, setWasOpen] = useState(isOpen);
+    if (isOpen !== wasOpen) {
+        setWasOpen(isOpen);
+        if (isOpen) setQuery('');
+    }
     const sections = useCommandSections(isOpen, query);
     const commands = new Map(
         sections.flatMap((section) =>
@@ -181,20 +186,13 @@ function CommandPalette({
         const command = commands.get(id);
 
         onOpenChange(false);
-        setQuery('');
         command?.perform();
     };
 
     return (
         <Modal.Backdrop
             isOpen={isOpen}
-            onOpenChange={(next) => {
-                onOpenChange(next);
-
-                if (!next) {
-                    setQuery('');
-                }
-            }}
+            onOpenChange={onOpenChange}
             isDismissable
         >
             <Modal.Container placement="top" className="pt-[10vh]">

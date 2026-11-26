@@ -47,6 +47,7 @@ const DAYS = [
 ] as const;
 
 type Props = {
+    isOpen: boolean;
     member: TeamMember & { schedule: TeamSchedule };
     organization: TeamOrganization;
     roles: RoleOption[];
@@ -56,6 +57,7 @@ type Props = {
 };
 
 export function MemberDrawer({
+    isOpen,
     member,
     organization,
     roles,
@@ -111,7 +113,7 @@ export function MemberDrawer({
     return (
         <>
             <SideDrawer
-                isOpen
+                isOpen={isOpen}
                 onOpenChange={(open) => {
                     if (!open) onClose();
                 }}
