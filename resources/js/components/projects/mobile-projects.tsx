@@ -1,5 +1,5 @@
 import { Button, ListBox, SearchField } from '@heroui/react';
-import { Link, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import {
     FolderKanban,
     ListFilter,
@@ -9,9 +9,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { MobilePageHeader } from '@/components/app-shell/mobile-page-header';
-import { EstimateProgress } from '@/components/estimate-progress';
 import { LogoImage } from '@/components/logo-image';
-import { ProjectDot } from '@/components/project-dot';
+import { MobileProjectRow } from '@/components/projects/mobile-project-row';
 import { SegmentedControl } from '@/components/segmented-control';
 import {
     SideDrawer,
@@ -21,7 +20,7 @@ import {
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { index, show } from '@/routes/projects';
+import { index } from '@/routes/projects';
 import type { ProjectListItem } from '@/types';
 
 export type ProjectListFilters = {
@@ -226,7 +225,7 @@ export function MobileProjects({
                 {projects.length > 0 ? (
                     <ul>
                         {projects.map((project) => (
-                            <MobileProjectRow
+                            <ProjectListRow
                                 key={project.id}
                                 project={project}
                             />
@@ -439,58 +438,33 @@ export function MobileProjects({
     );
 }
 
-function MobileProjectRow({ project }: { project: ProjectListItem }) {
+function ProjectListRow({ project }: { project: ProjectListItem }) {
     const { t, intlLocale } = useTranslation();
 
     return (
-        <li
-            className="relative not-last:after:pointer-events-none not-last:after:absolute not-last:after:right-0 not-last:after:bottom-0 not-last:after:left-9 not-last:after:border-b not-last:after:border-separator not-last:after:content-['']"
-            data-test="project-row"
-        >
-            <Link
-                href={show({ project: project.slug })}
-                className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2.5 px-4 py-3 transition-colors active:bg-default"
-            >
-                <span className="flex h-5 items-center">
-                    <ProjectDot color={project.color} size="compact" />
+        <MobileProjectRow
+            project={project}
+            testId="project-row"
+            subtitle={[project.client?.name ?? t('No client'), project.code]
+                .filter(Boolean)
+                .join(' · ')}
+            nameAccessory={
+                project.isPrivate && (
+                    <>
+                        <Lock
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0 text-muted"
+                        />
+                        <span className="sr-only">{t('Private')}</span>
+                    </>
+                )
+            }
+            trailing={
+                <span className="shrink-0 whitespace-nowrap tabular-nums">
+                    <span className="sr-only">{t('Reported')} </span>
+                    {formatHours(project.consumedSeconds, intlLocale)}
                 </span>
-                <div className="min-w-0">
-                    <div className="flex justify-between gap-3 text-[15px]/5 font-medium">
-                        <p className="flex min-w-0 items-center gap-1.5">
-                            <span className="truncate">{project.name}</span>
-                            {project.isPrivate && (
-                                <>
-                                    <Lock
-                                        aria-hidden="true"
-                                        className="size-3.5 shrink-0 text-muted"
-                                    />
-                                    <span className="sr-only">
-                                        {t('Private')}
-                                    </span>
-                                </>
-                            )}
-                        </p>
-                        <span className="shrink-0 whitespace-nowrap tabular-nums">
-                            <span className="sr-only">{t('Reported')} </span>
-                            {formatHours(project.consumedSeconds, intlLocale)}
-                        </span>
-                    </div>
-                    <p className="mt-0.5 truncate text-[13px]/[18px] text-muted">
-                        {[project.client?.name ?? t('No client'), project.code]
-                            .filter(Boolean)
-                            .join(' · ')}
-                    </p>
-                    {project.estimateSeconds ? (
-                        <div className="mt-1">
-                            <EstimateProgress
-                                consumedSeconds={project.consumedSeconds}
-                                estimateSeconds={project.estimateSeconds}
-                                display="inline-budget"
-                            />
-                        </div>
-                    ) : null}
-                </div>
-            </Link>
-        </li>
+            }
+        />
     );
 }

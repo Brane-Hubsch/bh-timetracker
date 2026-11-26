@@ -50,6 +50,7 @@ class ReportController extends Controller
                 $request->subGrouping(),
                 includeTimelineProjects: true,
                 timelineScale: $request->timelineScale($filters),
+                includeReportedDays: true,
             ),
             'absence' => $this->reports->absences($filters),
         ]);
@@ -65,7 +66,7 @@ class ReportController extends Controller
             'entries' => $this->reports
                 ->detailed($filters, $request->sort(), $request->direction())
                 ->through(fn (TimeEntry $entry) => $this->reports->row($entry, $filters)),
-            'totals' => $this->reports->totalsFor($filters),
+            'totals' => $this->reports->totalsFor($filters, includeReportedDays: true),
         ]);
     }
 

@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\DB;
  * month is done in PHP so the SQL stays database-agnostic. Amounts are billable time × the rate
  * snapshotted on each entry, rounded per entry, and null for viewers without ViewRates.
  *
- * @phpstan-type ReportTotals array{seconds: int, billableSeconds: int, amount: int|null}
+ * @phpstan-type ReportTotals array{seconds: int, billableSeconds: int, amount: int|null, reportedDays?: int}
  * @phpstan-type ReportSubGroup array{key: string, label: string, color: string|null, seconds: int, billableSeconds: int, amount: int|null, children: array<int, mixed>}
  * @phpstan-type ReportGroup array{key: string, label: string, color: string|null, seconds: int, billableSeconds: int, amount: int|null, children: array<int, ReportSubGroup>}
  * @phpstan-type TimelineBucket array{key: string, seconds: int, billableSeconds: int, projectSeconds?: array<int, int>}
@@ -87,6 +87,7 @@ class ReportBuilder
         ?ReportGrouping $subGrouping = null,
         bool $includeTimelineProjects = false,
         ?ReportGrouping $timelineScale = null,
+        bool $includeReportedDays = false,
     ): array {
         $usesTags = in_array(ReportGrouping::Tag, [$grouping, $subGrouping], true);
         $entries = $this->query($filters)
@@ -94,7 +95,7 @@ class ReportBuilder
             ->get(['id', 'user_id', 'project_id', 'started_at', 'duration_seconds', 'is_billable', 'hourly_rate']);
 
         return [
-            'totals' => $this->totals($entries, $filters),
+            'totals' => $this->totals($entries, $filters, $includeReportedDays),
             'groups' => $this->group($entries, $filters, $grouping, $subGrouping === $grouping ? null : $subGrouping),
             'timeline' => $this->timeline($entries, $filters, $includeTimelineProjects, $timelineScale),
             'projects' => $this->projectShares($entries, $filters),
@@ -104,11 +105,12 @@ class ReportBuilder
     /**
      * @return ReportTotals
      */
-    public function totalsFor(ReportFilters $filters): array
+    public function totalsFor(ReportFilters $filters, bool $includeReportedDays = false): array
     {
         return $this->totals(
-            $this->query($filters)->get(['id', 'duration_seconds', 'is_billable', 'hourly_rate']),
+            $this->query($filters)->get(['id', 'duration_seconds', 'is_billable', 'hourly_rate', ...($includeReportedDays ? ['started_at'] : [])]),
             $filters,
+            $includeReportedDays,
         );
     }
 
@@ -282,13 +284,19 @@ class ReportBuilder
      * @param  Collection<int, TimeEntry>  $entries
      * @return ReportTotals
      */
-    private function totals(Collection $entries, ReportFilters $filters): array
+    private function totals(Collection $entries, ReportFilters $filters, bool $includeReportedDays = false): array
     {
         $seconds = 0;
         $billableSeconds = 0;
         $amount = 0;
+        $days = [];
+        $timezone = $includeReportedDays ? $filters->timezone() : null;
 
         foreach ($entries as $entry) {
+            if ($timezone !== null) {
+                $days[$entry->started_at->setTimezone($timezone)->toDateString()] = true;
+            }
+
             $seconds += $entry->duration_seconds;
 
             if ($entry->is_billable) {
@@ -301,6 +309,7 @@ class ReportBuilder
             'seconds' => $seconds,
             'billableSeconds' => $billableSeconds,
             'amount' => $filters->canViewAmounts() ? $amount : null,
+            ...($includeReportedDays ? ['reportedDays' => count($days)] : []),
         ];
     }
 

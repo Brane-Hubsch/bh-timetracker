@@ -47,11 +47,34 @@ it('shows owners the whole team with amounts', function () {
             ->where('filters.period', 'this_month')
             ->where('filters.from', '2026-11-01')
             ->where('filters.to', '2026-11-30')
-            ->where('summary.totals', ['seconds' => 9000, 'billableSeconds' => 9000, 'amount' => 250000])
+            ->where('summary.totals', ['seconds' => 9000, 'billableSeconds' => 9000, 'amount' => 250000, 'reportedDays' => 2])
             ->has('summary.groups', 2)
             ->has('options.members', 2)
             ->where('abilities', ['canViewTeam' => true, 'canViewAmounts' => true]));
 });
+
+it('counts distinct local reporting days for both views after applying filters', function (string $view, string $totalsPath) {
+    $this->member->update(['timezone' => 'Europe/Stockholm']);
+    $start = CarbonImmutable::parse('2026-11-15 23:30', 'UTC');
+
+    TimeEntry::factory()->by($this->member, $this->project)
+        ->between($start, $start->addMinutes(30))
+        ->create(['is_billable' => true]);
+
+    TimeEntry::factory()->by($this->member, $this->project)
+        ->between($start->addDays(2), $start->addDays(2)->addMinutes(30))
+        ->create(['is_billable' => false]);
+
+    $this->actingAs($this->member)
+        ->get(reportRoute('reports.'.$view, ['period' => 'this_year', 'billable' => '1']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where($totalsPath.'.reportedDays', 1)
+            ->where($totalsPath.'.seconds', 7200)
+            ->where($totalsPath.'.amount', null));
+})->with([
+    'summary' => ['summary', 'summary.totals'],
+    'detailed' => ['detailed', 'totals'],
+]);
 
 it('resolves quick date presets in the viewer’s time zone', function (string $period, string $from, string $to) {
     CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-01-01 23:30:00', 'UTC'));
@@ -206,7 +229,7 @@ it('shows members only their own time and no amounts', function () {
     $this->actingAs($this->member)
         ->get(reportRoute('reports.summary', ['members' => [$this->owner->id]]))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('summary.totals', ['seconds' => 5400, 'billableSeconds' => 5400, 'amount' => null])
+            ->where('summary.totals', ['seconds' => 5400, 'billableSeconds' => 5400, 'amount' => null, 'reportedDays' => 1])
             ->where('summary.groups.0.amount', null)
             ->where('options.members', [])
             ->where('abilities', ['canViewTeam' => false, 'canViewAmounts' => false]));

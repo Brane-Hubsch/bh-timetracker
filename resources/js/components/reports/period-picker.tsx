@@ -30,6 +30,8 @@ type Props = {
     weekStartsOn: number;
     onChange: (changes: PeriodChange) => void;
     className?: string;
+    mobile?: boolean;
+    onStep?: (direction: -1 | 1) => void;
 };
 
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
@@ -313,6 +315,8 @@ export function ReportPeriodPicker({
     weekStartsOn,
     onChange,
     className,
+    mobile = false,
+    onStep,
 }: Props) {
     const { t, intlLocale } = useTranslation();
     const { timezone } = usePage().props.auth.user;
@@ -333,7 +337,7 @@ export function ReportPeriodPicker({
         : null;
     const name =
         preset?.label ??
-        (hasRange
+        (hasRange && !mobile
             ? customPeriodName(from, to, weekStartsOn, intlLocale, (week) =>
                   t('Week :number', { number: week }),
               )
@@ -346,13 +350,16 @@ export function ReportPeriodPicker({
         <PeriodPicker
             name={name}
             range={range}
-            onStep={hasRange ? step : undefined}
+            onStep={hasRange ? (onStep ?? step) : undefined}
+            label={mobile ? t('Period') : undefined}
+            mobileStepInPanel={mobile}
             enclosed
             className={className}
-            testId="report-period"
+            testId={mobile ? 'mobile-report-period' : 'report-period'}
         >
             {({ isDesktop, dismiss }) => (
                 <PeriodPanel
+                    key={mobile ? from : undefined}
                     from={from}
                     to={to}
                     weekStartsOn={weekStartsOn}
