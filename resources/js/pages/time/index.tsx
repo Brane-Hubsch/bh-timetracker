@@ -680,7 +680,7 @@ export default function TimeIndex({
                 </div>
             </div>
 
-            {/* Big "+" on mobile. */}
+            {/* Floating time-report button on mobile. */}
             <div
                 className={cn(
                     'fixed right-4 z-30 flex flex-col items-center gap-3 md:hidden',
@@ -694,7 +694,7 @@ export default function TimeIndex({
                 <Button
                     isIconOnly
                     aria-label={t('Report time')}
-                    className="size-14 rounded-full shadow-lg"
+                    className="size-12 rounded-full shadow-lg"
                     onPress={() => openReport('time')}
                     data-test="new-time-fab"
                 >
