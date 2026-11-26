@@ -145,6 +145,8 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 
+- På mobil delar Lista kalenderns fasta sidhuvud med veckosumma, periodväljare och personavatar. Listan går kant till kant och dagrubrikerna ligger kvar under sidhuvudet när man scrollar genom dagen. Tidsposten visar projekt och varaktighet överst, följt av beskrivning, taggar och klockslag med kundnamn.
+
 **Kalendervy** (veckovy är standard)
 - Plusknappen förifyller starttiden med början av den aktuella timmen i användarens tidszon. Varaktigheten hämtas från den senaste tidsposten som användaren sparade via plusknappen i den aktuella organisationen och webbläsaren. Sluttiden räknas ut från starttiden och varaktigheten. Samma förval gäller på dator och mobil.
 - På breda skärmar delar kalenderrubriken och periodens totalsumma rad med personväljaren, periodväljaren och plusknappen. Periodväljaren använder samma komponent som i rapporterna och visar periodens namn bredvid datumen. Pilarna stegar en dag eller vecka enligt vald vy.
@@ -369,7 +371,7 @@ Klar. Byggt:
 - Tidposter (`time_entries`) med actions, policy och durationsparser ("1,5", "1:30", "90m", "1h 30m").
 - Formulär: modal på desktop, drawer på mobil. Projektväljaren visar senast använda först och starttiden föreslås smart.
 - Listvy med dags- och veckosummor, och kalendervy med FullCalendar 7 (vecka/dag). I kalendern kan man dra för att skapa, flytta och ändra längd. Poster färgas efter projekt och dagssummor står i kolumnhuvudet.
-- Kopiera föregående period som utkast med kryssrutor. Dagsvyn kopierar föregående dag. Vecko- och listvyn kopierar föregående vecka. Ikonknappen visas när den valda perioden är tom och föregående period har tidsposter för den valda personen. I kalendern ligger den ovanpå det nedre högra hörnet och i listvyn i verktygsraden. En tooltip beskriver åtgärden.
+- Kopiera föregående period som utkast med kryssrutor. Dagsvyn kopierar föregående dag. Vecko- och listvyn kopierar föregående vecka. Ikonknappen visas när den valda perioden är tom och föregående period har tidsposter för den valda personen. På mobil ligger den ovanför plusknappen i båda vyerna. På desktop visas den i kalenderns nedre högra hörn och i listans verktygsrad. En tooltip beskriver åtgärden.
 - Ägare/admin kan se och rapportera åt andra medlemmar: via personväljaren i kalendern och via medlemmens avatar längst ner till vänster i formuläret (även snabbinmatningen på startsidan). Avataren visar profilbilden eller medlemmens initialer.
 - Duplicera post, och ta bort med ångra i toasten.
 - Startsida: min tid idag och denna vecka, senaste poster och snabbinmatning. För ägare/admin även teamets vecka och projekt som närmar sig estimatet (≥ 80 %).
