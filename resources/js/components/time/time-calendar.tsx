@@ -444,7 +444,14 @@ export function TimeCalendar({
 
                     return (
                         <span className="flex flex-col items-center gap-1 py-1.5">
-                            <span className="text-xs font-medium text-muted first-letter:uppercase">
+                            <span
+                                className={cn(
+                                    'text-xs font-medium first-letter:uppercase',
+                                    info.dow === 0
+                                        ? 'text-danger-soft-foreground'
+                                        : 'text-muted',
+                                )}
+                            >
                                 {formatDate(day, intlLocale, {
                                     weekday: 'short',
                                 })}
