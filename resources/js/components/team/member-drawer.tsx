@@ -9,7 +9,8 @@ import {
     ToggleButtonGroup,
 } from '@heroui/react';
 import { router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { FileTrigger } from 'react-aria-components';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { ACCEPTED_IMAGE_TYPES } from '@/components/form/image-upload-field';
@@ -73,6 +74,12 @@ export function MemberDrawer({
     const [changingStatus, setChangingStatus] = useState(false);
     const [changingAvatar, setChangingAvatar] = useState(false);
     const [avatarError, setAvatarError] = useState<string>();
+    const [focusedNumberField, setFocusedNumberField] = useState<
+        'workday' | 'rate' | null
+    >(null);
+    const workdayInput = useRef<HTMLInputElement>(null);
+    const rateInput = useRef<HTMLInputElement>(null);
+    const isRateFocused = focusedNumberField === 'rate';
     const target = [organization.slug, member.id] as const;
     const canChangeRole = member.role !== 'owner' && !isSelf;
     const canDeactivate = canChangeRole;
@@ -124,6 +131,39 @@ export function MemberDrawer({
                     member.isDeactivated
                         ? t('Member details')
                         : t('Edit member')
+                }
+                headerActions={
+                    canViewRates &&
+                    !member.isDeactivated &&
+                    focusedNumberField && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            isIconOnly
+                            preventFocusOnPress
+                            aria-label={t(isRateFocused ? 'Previous' : 'Next')}
+                            className="hidden max-md:in-data-keyboard-open:inline-flex"
+                            onPress={() =>
+                                (isRateFocused
+                                    ? workdayInput
+                                    : rateInput
+                                ).current?.focus({ preventScroll: true })
+                            }
+                        >
+                            {isRateFocused ? (
+                                <ChevronUp
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                            ) : (
+                                <ChevronDown
+                                    aria-hidden="true"
+                                    className="size-4"
+                                />
+                            )}
+                        </Button>
+                    )
                 }
                 mobileClassName="[&_.drawer__footer]:gap-3"
             >
@@ -368,6 +408,12 @@ export function MemberDrawer({
                                             </Label>
                                             <NumberField.Group>
                                                 <NumberField.Input
+                                                    ref={workdayInput}
+                                                    onFocus={() =>
+                                                        setFocusedNumberField(
+                                                            'workday',
+                                                        )
+                                                    }
                                                     placeholder={String(
                                                         organization.workdayHours,
                                                     )}
@@ -496,6 +542,12 @@ export function MemberDrawer({
                                                 </Label>
                                                 <NumberField.Group>
                                                     <NumberField.Input
+                                                        ref={rateInput}
+                                                        onFocus={() =>
+                                                            setFocusedNumberField(
+                                                                'rate',
+                                                            )
+                                                        }
                                                         placeholder={t(
                                                             'Default',
                                                         )}
