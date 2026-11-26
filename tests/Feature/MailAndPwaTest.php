@@ -48,3 +48,11 @@ it('ships a web app manifest with its icons', function () {
 
     $this->get('/login')->assertSee('rel="manifest"', false)->assertSee('name="theme-color"', false);
 });
+
+it('renders the startup splash in the initial HTML', function () {
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('id="splash"', false)
+        ->assertSee('window.hideSplash', false)
+        ->assertSee('aria-label="Laddar…"', false);
+});

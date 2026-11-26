@@ -55,6 +55,7 @@
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">
+        @include('splash')
         <x-inertia::app />
     </body>
 </html>

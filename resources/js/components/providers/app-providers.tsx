@@ -21,6 +21,8 @@ type AppProvidersProps = {
 export function AppProviders({ locale, children }: AppProvidersProps) {
     useFlashToast();
     useEffect(observeOverlayHeights, []);
+    // The splash (resources/views/splash.blade.php) covers cold starts until the app has rendered.
+    useEffect(() => window.hideSplash?.(), []);
 
     return (
         <RouterProvider
