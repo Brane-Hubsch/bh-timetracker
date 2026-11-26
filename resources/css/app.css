@@ -634,7 +634,12 @@
 @layer base {
     :root {
         --mobile-bottom-inset: max(1.25rem, env(safe-area-inset-bottom));
-        --mobile-tab-bar-height: calc(3.5625rem + var(--mobile-bottom-inset));
+        --mobile-tab-height: 3.5rem;
+        --mobile-tab-bar-inset: var(--mobile-bottom-inset);
+        --mobile-tab-bar-height: calc(
+            1px + var(--mobile-tab-height) + var(--mobile-tab-bar-inset)
+        );
+        --mobile-page-header-height: calc(3.125rem + env(safe-area-inset-top));
         --mobile-timer-space: 3.0625rem;
     }
 
@@ -643,7 +648,20 @@
     }
 }
 
+@media (width < 48rem) and (display-mode: browser) {
+    :root {
+        --mobile-tab-height: 3rem;
+        --mobile-tab-bar-inset: env(safe-area-inset-bottom);
+    }
+}
+
 @media (width < 48rem) {
+    /* Safari uses the page background to extend the surface into its system bars. */
+    :root:has(.mobile-tab-bar),
+    :root:has(.mobile-tab-bar) body {
+        background-color: var(--surface);
+    }
+
     .keyboard-aware-sheet {
         /* Keep the page dimmed behind Safari's floating keyboard toolbar. */
         height: max(100dvh, var(--visual-viewport-height));
@@ -659,6 +677,25 @@
                 var(--sheet-height-limit, 92svh),
                 calc(100% - 1rem)
             );
+
+            /* Extend the background under the keyboard without moving the footer. */
+            &::after {
+                position: absolute;
+                inset: 100% 0 auto;
+                height: max(
+                    0px,
+                    calc(
+                        100dvh - var(--sheet-viewport-top, 0px) -
+                            var(
+                                --sheet-viewport-height,
+                                var(--visual-viewport-height)
+                            )
+                    )
+                );
+                pointer-events: none;
+                background-color: inherit;
+                content: '';
+            }
         }
 
         & .drawer__handle,
