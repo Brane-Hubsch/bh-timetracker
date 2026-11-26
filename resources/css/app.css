@@ -694,6 +694,13 @@
     animation-duration: 160ms;
 }
 
+@media (width < 48rem) {
+    /* Keep the page transition from painting over the fixed mobile tab bar. */
+    :root:has(.mobile-tab-bar)::view-transition {
+        clip-path: inset(0 0 var(--mobile-tab-bar-height) 0);
+    }
+}
+
 ::view-transition-group(page) {
     animation-duration: 240ms;
     animation-timing-function: var(--ease-out-soft);
