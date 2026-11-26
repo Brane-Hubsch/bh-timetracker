@@ -8,6 +8,7 @@ type Props = {
     onOpenChange: (isOpen: boolean) => void;
     title: ReactNode;
     headerActions?: ReactNode;
+    mobileClassName?: string;
     /** `SideDrawerBody` and `SideDrawerFooter`, optionally wrapped in a form with `sideDrawerFormClass`. */
     children: ReactNode;
 };
@@ -24,6 +25,7 @@ export function SideDrawer({
     onOpenChange,
     title,
     headerActions,
+    mobileClassName,
     children,
 }: Props) {
     const isDesktop = useIsDesktop();
@@ -35,7 +37,9 @@ export function SideDrawer({
             <Drawer.Content placement={isDesktop ? 'right' : 'bottom'}>
                 <Drawer.Dialog
                     className={
-                        isDesktop ? 'w-full max-w-xl sm:w-[36rem]' : undefined
+                        isDesktop
+                            ? 'w-full max-w-xl sm:w-[36rem]'
+                            : mobileClassName
                     }
                 >
                     {isDesktop ? <Drawer.CloseTrigger /> : <Drawer.Handle />}

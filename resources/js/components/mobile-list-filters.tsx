@@ -12,13 +12,16 @@ import { useTranslation } from '@/lib/i18n';
 type Props = {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
+    title?: string;
     hasFilters: boolean;
     onClear: () => void;
     searchLabel: string;
     search: string;
     onSearchChange: (search: string) => void;
-    status: SearchStatusFilters['status'];
-    onStatusChange: (status: SearchStatusFilters['status']) => void;
+    autoFocusSearch?: boolean;
+    onSearchSubmit?: () => void;
+    status?: SearchStatusFilters['status'];
+    onStatusChange?: (status: SearchStatusFilters['status']) => void;
     doneLabel: string;
     children?: ReactNode;
 };
@@ -30,16 +33,29 @@ export function MobileFilterSearch({
     label,
     value,
     onChange,
+    autoFocus,
+    onSubmit,
 }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
+    autoFocus?: boolean;
+    onSubmit?: () => void;
 }) {
     return (
-        <SearchField aria-label={label} value={value} onChange={onChange}>
+        <SearchField
+            aria-label={label}
+            value={value}
+            onChange={onChange}
+            autoFocus={autoFocus}
+            onSubmit={onSubmit}
+        >
             <SearchField.Group className="h-10 border-transparent bg-background shadow-[inset_0_1px_3px_#0000000d]">
                 <SearchField.SearchIcon />
-                <SearchField.Input placeholder={label} />
+                <SearchField.Input
+                    placeholder={label}
+                    enterKeyHint={onSubmit ? 'search' : undefined}
+                />
                 <SearchField.ClearButton />
             </SearchField.Group>
         </SearchField>
@@ -49,11 +65,14 @@ export function MobileFilterSearch({
 export function MobileListFilters({
     isOpen,
     onOpenChange,
+    title,
     hasFilters,
     onClear,
     searchLabel,
     search,
     onSearchChange,
+    autoFocusSearch,
+    onSearchSubmit,
     status,
     onStatusChange,
     doneLabel,
@@ -63,9 +82,12 @@ export function MobileListFilters({
 
     return (
         <SideDrawer
-            title={t('Filters')}
+            title={title ?? t('Filters')}
             isOpen={isOpen}
             onOpenChange={onOpenChange}
+            mobileClassName={
+                autoFocusSearch ? 'in-data-keyboard-open:pb-2' : undefined
+            }
             headerActions={
                 hasFilters && (
                     <Button
@@ -84,25 +106,32 @@ export function MobileListFilters({
                         label={searchLabel}
                         value={search}
                         onChange={onSearchChange}
+                        autoFocus={autoFocusSearch}
+                        onSubmit={onSearchSubmit}
                     />
-                    <div className="grid gap-1.5">
-                        <span className="text-[13px] text-muted">
-                            {t('Status')}
-                        </span>
-                        <SegmentedControl
-                            aria-label={t('Status')}
-                            className={mobileFilterSegmentsClass}
-                            value={status}
-                            onChange={onStatusChange}
-                            options={[
-                                { id: 'active', label: t('Active (plural)') },
-                                {
-                                    id: 'archived',
-                                    label: t('Archived (plural)'),
-                                },
-                            ]}
-                        />
-                    </div>
+                    {status && onStatusChange && (
+                        <div className="grid gap-1.5">
+                            <span className="text-[13px] text-muted">
+                                {t('Status')}
+                            </span>
+                            <SegmentedControl
+                                aria-label={t('Status')}
+                                className={mobileFilterSegmentsClass}
+                                value={status}
+                                onChange={onStatusChange}
+                                options={[
+                                    {
+                                        id: 'active',
+                                        label: t('Active (plural)'),
+                                    },
+                                    {
+                                        id: 'archived',
+                                        label: t('Archived (plural)'),
+                                    },
+                                ]}
+                            />
+                        </div>
+                    )}
                     {children}
                 </div>
             </SideDrawerBody>
