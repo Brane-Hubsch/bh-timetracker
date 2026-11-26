@@ -4,6 +4,13 @@ import type {
     OrganizationPermissions,
 } from '@/types/organizations';
 
+declare global {
+    interface Window {
+        /** Fades out the startup splash once it has shown for its minimum time (splash.blade.php). */
+        hideSplash?: () => void;
+    }
+}
+
 declare module 'react' {
     interface InputHTMLAttributes<T> {
         passwordrules?: string;
