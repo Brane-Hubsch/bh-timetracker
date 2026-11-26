@@ -181,6 +181,7 @@ Se avsnitt 6.
 
 - Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
 - Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
+- Under 768 px följer bottenarket den synliga skärmytan i Safari och i webbappen från hemskärmen. När tangentbordet visas ligger sidan bakom stilla, handtag och rubrik ligger överst och eventuella åtgärder ligger ovanför tangentbordet. Innehållet scrollar och visar fältet med fokus även vid Nästa/Föregående. Arket återtar sin vanliga höjd när tangentbordet stängs.
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
 

@@ -11,6 +11,8 @@ Use `t()`/`tc()` from `@/lib/i18n` with the English source string as key and add
 ## Forms in dialogs are responsive
 Open quick data-entry forms (time entries) with `ResponsiveDialog` (`@/components/responsive-dialog`): a HeroUI Modal on desktop and a bottom Drawer on mobile. Use `useIsDesktop()` from `@/hooks/use-media-query` instead of CSS-only hiding when the behaviour differs, and keep mobile actions reachable without hover.
 
+Bottom sheets with editable fields use `BottomSheetBackdrop`, which runs the shared `useKeyboardInset` hook, and put their scrollable content in `Drawer.Body`.
+
 ## Create/edit forms for records open in a side drawer
 Create/edit forms for clients and projects use `SideDrawer` (`@/components/side-drawer`): a right-hand panel on desktop and a bottom sheet on mobile. Compose it from `SideDrawerBody` and `SideDrawerFooter` (actions pinned at the bottom) and wrap both in the form element with `sideDrawerFormClass`. Open it on the page the record belongs to (create on the list, edit on the detail page) and link to it from elsewhere with `?new=1` via `useOpenFromQuery`; do not add separate create/edit pages. Quick data entry (time entries) and confirmations stay in `ResponsiveDialog`/`Modal`.
 

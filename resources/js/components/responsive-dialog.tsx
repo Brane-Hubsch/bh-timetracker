@@ -1,5 +1,6 @@
 import { Drawer, Modal } from '@heroui/react';
 import type { ComponentPropsWithRef, KeyboardEvent, ReactNode } from 'react';
+import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 
@@ -138,7 +139,7 @@ export function ResponsiveDialog({
     }
 
     return (
-        <Drawer.Backdrop
+        <BottomSheetBackdrop
             isOpen={isOpen}
             onOpenChange={onOpenChange}
             isKeyboardDismissDisabled={dismissOnEscape === false}
@@ -168,6 +169,6 @@ export function ResponsiveDialog({
                     )}
                 </Drawer.Dialog>
             </Drawer.Content>
-        </Drawer.Backdrop>
+        </BottomSheetBackdrop>
     );
 }

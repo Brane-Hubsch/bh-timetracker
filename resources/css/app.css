@@ -625,6 +625,32 @@
     }
 }
 
+@media (width < 48rem) {
+    .keyboard-aware-sheet {
+        /* Keep the page dimmed behind Safari's floating keyboard toolbar. */
+        height: max(100dvh, var(--visual-viewport-height));
+    }
+
+    .keyboard-aware-sheet > .drawer__content {
+        top: var(--sheet-viewport-top, 0px);
+        height: var(--sheet-viewport-height, var(--visual-viewport-height));
+
+        & .drawer__dialog {
+            /* Keep the regular height cap and leave room above the sheet when the keyboard opens. */
+            max-block-size: min(
+                var(--sheet-height-limit, 92svh),
+                calc(100% - 1rem)
+            );
+        }
+
+        & .drawer__handle,
+        & .drawer__header,
+        & .drawer__footer {
+            flex-shrink: 0;
+        }
+    }
+}
+
 /*
  * Page transitions (View Transitions API, enabled for page visits in app.tsx). Only the page content
  * moves: it fades out quickly and the new page fades in with a small rise. Navigation stays put.

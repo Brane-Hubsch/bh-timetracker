@@ -1,5 +1,6 @@
 import { Drawer } from '@heroui/react';
 import type { ReactNode } from 'react';
+import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useIsDesktop } from '@/hooks/use-media-query';
 
 type Props = {
@@ -20,8 +21,10 @@ export const sideDrawerFormClass = 'flex min-h-0 flex-1 flex-col';
 export function SideDrawer({ isOpen, onOpenChange, title, children }: Props) {
     const isDesktop = useIsDesktop();
 
+    const Backdrop = isDesktop ? Drawer.Backdrop : BottomSheetBackdrop;
+
     return (
-        <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
             <Drawer.Content placement={isDesktop ? 'right' : 'bottom'}>
                 <Drawer.Dialog
                     className={
@@ -39,7 +42,7 @@ export function SideDrawer({ isOpen, onOpenChange, title, children }: Props) {
                     {children}
                 </Drawer.Dialog>
             </Drawer.Content>
-        </Drawer.Backdrop>
+        </Backdrop>
     );
 }
 
