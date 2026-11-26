@@ -95,7 +95,7 @@ export function ReportStats({ totals, currency }: Props) {
             {tiles.map((tile) => (
                 <div
                     key={tile.label}
-                    className="grid min-w-0 content-start max-md:px-2.5 md:gap-1 md:rounded-2xl md:bg-surface md:p-4 md:shadow-surface"
+                    className="grid min-w-0 content-start max-md:ps-2.5 max-md:pe-0.5 md:gap-1 md:rounded-2xl md:bg-surface md:p-4 md:shadow-surface"
                 >
                     <dt className="text-xs font-medium text-muted max-md:truncate md:text-sm md:font-normal">
                         {tile.mobileLabel ? (

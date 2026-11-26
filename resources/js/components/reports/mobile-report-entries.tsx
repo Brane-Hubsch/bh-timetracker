@@ -181,7 +181,7 @@ export function MobileReportEntries({
                                             size="compact"
                                         />
                                     </span>
-                                    <div className="grid min-w-0 gap-1">
+                                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
                                         <div className="flex items-start justify-between gap-2 text-[15px]/5 font-medium">
                                             <span className="truncate">
                                                 {row.project.name}
@@ -202,7 +202,7 @@ export function MobileReportEntries({
                                             mobile
                                         />
                                         <div className="flex items-center justify-between gap-2 text-[13px]/[18px] text-muted">
-                                            <div className="flex min-w-0 items-center gap-1.5">
+                                            <div className="flex min-w-0 flex-1 items-center gap-1.5">
                                                 {abilities.canViewTeam && (
                                                     <MemberAvatar
                                                         name={row.memberName}

@@ -57,14 +57,14 @@ function projectLabel({ name, clientName }: TimelineProject) {
 
 function ProjectLabels({
     items,
-    report,
+    mobile,
 }: {
     items: TimelineProject[];
-    report?: boolean;
+    mobile?: boolean;
 }) {
     return (
         <ShortcutRow
-            contentClassName={cn('p-0', report && 'max-md:px-4')}
+            contentClassName={cn('p-0', mobile && 'px-4')}
             data-test="timeline-legend"
         >
             <ul className="flex h-4 gap-4 text-xs whitespace-nowrap text-muted">
@@ -75,7 +75,7 @@ function ProjectLabels({
                     >
                         <ProjectDot
                             color={project.color}
-                            size={report ? 'sm' : 'md'}
+                            size={mobile ? 'sm' : 'md'}
                         />
                         {projectLabel(project)}
                     </li>
@@ -709,7 +709,9 @@ export function TimelineChart({
                     </div>
                 </div>
             </div>
-            {projects && report && <ProjectLabels items={projects} report />}
+            {projects && report && (
+                <ProjectLabels items={projects} mobile={mobile} />
+            )}
         </section>
     );
 }

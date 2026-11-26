@@ -167,7 +167,7 @@ export default function ReportsDetailed({
                 onSort={visit}
             />
 
-            <Table className="hidden md:block">
+            <Table className="max-md:hidden">
                 <ColumnOrderStatus announcement={order.announcement} />
                 <Table.ScrollContainer>
                     <Table.Content

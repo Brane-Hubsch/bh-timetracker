@@ -138,7 +138,7 @@ export function ReportLayout({
                     onSelectionChange={(key) => open(key as ReportKind)}
                     className="grid min-w-0 grid-cols-1 md:gap-6"
                 >
-                    <Tabs.ListContainer className="hidden overflow-x-auto md:block md:w-fit">
+                    <Tabs.ListContainer className="overflow-x-auto max-md:hidden sm:w-fit">
                         <Tabs.List aria-label={t('Reports')}>
                             {(Object.keys(titles) as ReportKind[]).map(
                                 (kind) => (
