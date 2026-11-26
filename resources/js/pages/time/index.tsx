@@ -4,6 +4,7 @@ import { Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { Temporal } from 'temporal-polyfill';
+import { MobilePageHeader } from '@/components/app-shell/mobile-page-header';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
 import {
@@ -163,6 +164,7 @@ export default function TimeIndex({
         currentOrganization?.id,
     );
     const isList = view === 'list';
+    const PageHeader = isList ? 'div' : MobilePageHeader;
     const periodUrl = new URL(url, 'http://localhost');
     const needsMobileDay =
         isMobile && view === 'week' && !periodUrl.searchParams.has('view');
@@ -567,13 +569,9 @@ export default function TimeIndex({
                     !isList && 'max-md:gap-0',
                 )}
             >
-                <div
+                <PageHeader
                     ref={calendarHeader}
-                    className={cn(
-                        'flex flex-wrap items-center justify-between gap-x-5 gap-y-3',
-                        !isList &&
-                            'mobile-calendar-header max-md:sticky max-md:top-0 max-md:z-20 max-md:min-h-[calc(3.125rem+env(safe-area-inset-top))] max-md:flex-nowrap max-md:gap-2 max-md:border-b max-md:border-separator max-md:bg-surface/95 max-md:px-4 max-md:pt-[calc(0.25rem+env(safe-area-inset-top))] max-md:pb-2 max-md:shadow-sm max-md:backdrop-blur',
-                    )}
+                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3"
                 >
                     <Heading
                         className={cn(
@@ -618,7 +616,7 @@ export default function TimeIndex({
                             testId="new-time-button"
                         />
                     </div>
-                </div>
+                </PageHeader>
 
                 {/* Fades in when the week, day or view changes (not after saving an entry). */}
                 <div
@@ -689,10 +687,11 @@ export default function TimeIndex({
             {/* Big "+" on mobile. */}
             <div
                 className={cn(
-                    'fixed right-4 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-center gap-3 md:hidden',
-                    isList && 'bottom-[calc(5rem+env(safe-area-inset-bottom))]',
+                    'fixed right-4 z-30 flex flex-col items-center gap-3 md:hidden',
                     timer &&
-                        'bottom-[calc(7.75rem+env(safe-area-inset-bottom))]',
+                        'bottom-[calc(var(--mobile-tab-bar-height)+4.1875rem)]',
+                    !timer &&
+                        'bottom-[calc(var(--mobile-tab-bar-height)+1rem)]',
                 )}
             >
                 {!isList && copyPeriodButton}

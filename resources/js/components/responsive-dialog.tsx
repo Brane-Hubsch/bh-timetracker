@@ -144,7 +144,7 @@ export function ResponsiveDialog({
             isKeyboardDismissDisabled={dismissOnEscape === false}
         >
             <Drawer.Content placement="bottom" className={containerClassName}>
-                <Drawer.Dialog className="max-h-[92svh]" render={renderDialog}>
+                <Drawer.Dialog render={renderDialog}>
                     <Drawer.Handle />
                     {wrapContent(
                         <>

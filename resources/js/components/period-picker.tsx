@@ -178,7 +178,7 @@ export function PeriodPicker({
                                         </Drawer.CloseTrigger>
                                     </Drawer.Header>
                                 )}
-                                <Drawer.Body className="m-0! p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                                <Drawer.Body className="m-0! p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:pb-(--mobile-bottom-inset)">
                                     {children({ isDesktop, dismiss })}
                                 </Drawer.Body>
                             </Drawer.Dialog>

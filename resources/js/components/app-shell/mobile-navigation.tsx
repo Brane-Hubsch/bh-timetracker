@@ -28,13 +28,13 @@ import { edit as editProfile } from '@/routes/profile';
 import { index as timeCalendar } from '@/routes/time';
 
 const tabClass =
-    'flex min-w-0 flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-xs font-medium focus-visible:outline-focus';
+    'flex h-14 min-w-0 flex-1 flex-col items-center gap-0.5 px-0.5 py-2 text-xs font-medium focus-visible:outline-focus';
 const rowClass =
     'flex min-h-11 w-full items-center justify-start gap-3 rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-default focus-visible:outline-focus';
 const iconClass = 'size-4 shrink-0 text-muted';
 const drawerClass = 'max-h-[90svh] rounded-t-3xl bg-surface p-0';
 const drawerBodyClass =
-    'm-0! flex flex-col px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]';
+    'm-0! flex flex-col px-4 pt-2 pb-(--mobile-bottom-inset)';
 
 export function MobileBottomNav({ className }: { className?: string }) {
     const { t } = useTranslation();
@@ -81,7 +81,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                 <nav
                     aria-label={t('Main')}
                     className={cn(
-                        'fixed inset-x-0 bottom-0 z-30 flex border-t border-separator bg-surface/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_8px_#0000000a] backdrop-blur',
+                        'fixed inset-x-0 bottom-0 z-30 flex border-t border-separator bg-surface/95 px-4 pb-(--mobile-bottom-inset) shadow-[0_-2px_8px_#0000000a] backdrop-blur',
                         className,
                     )}
                 >

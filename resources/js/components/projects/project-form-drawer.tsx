@@ -21,6 +21,7 @@ import {
     SideDrawerFooter,
     sideDrawerFormClass,
 } from '@/components/side-drawer';
+import { useIsDesktop } from '@/hooks/use-media-query';
 import { toMinorUnits } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { store, update } from '@/routes/projects';
@@ -82,6 +83,7 @@ export function ProjectFormDrawer({
     onOpenChange,
 }: Props) {
     const { t } = useTranslation();
+    const isDesktop = useIsDesktop();
     const form = useForm(initialValues(project, defaultClientId, colors));
     const visibilityLabel = t('Visibility');
     const visibilityDescriptionId = useId();
@@ -124,7 +126,10 @@ export function ProjectFormDrawer({
             onOpenChange={onOpenChange}
             title={project ? t('Edit project') : t('New project')}
         >
-            <form onSubmit={submit} className={sideDrawerFormClass}>
+            <form
+                onSubmit={submit}
+                className={`${sideDrawerFormClass} max-md:[--field-background:var(--surface)] max-md:[--field-shadow:0_0_0_transparent]`}
+            >
                 <SideDrawerBody>
                     <div className="grid gap-4">
                         <TextInputField
@@ -134,10 +139,10 @@ export function ProjectFormDrawer({
                             onChange={(value) => form.setData('name', value)}
                             error={form.errors.name}
                             isRequired
-                            autoFocus={!project}
+                            autoFocus={isDesktop && !project}
                             data-test="project-name"
                         />
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4 md:grid-cols-2">
                             <SelectField
                                 name="client_id"
                                 label={t('Client')}
@@ -256,7 +261,7 @@ export function ProjectFormDrawer({
                     </div>
 
                     <div className="grid gap-4 border-t border-separator pt-6">
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-4 md:grid-cols-2">
                             <DatePickerField
                                 label={t('Starts on')}
                                 value={form.data.starts_on}
@@ -333,12 +338,17 @@ export function ProjectFormDrawer({
                     </div>
                 </SideDrawerBody>
                 <SideDrawerFooter>
-                    <Button slot="close" variant="tertiary">
+                    <Button
+                        slot="close"
+                        variant="tertiary"
+                        className="max-md:flex-1"
+                    >
                         {t('Cancel')}
                     </Button>
                     <Button
                         type="submit"
                         isPending={form.processing}
+                        className="max-md:flex-1"
                         data-test="project-save"
                     >
                         {t('Save')}

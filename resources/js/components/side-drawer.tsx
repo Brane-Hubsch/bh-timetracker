@@ -6,6 +6,7 @@ type Props = {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     title: ReactNode;
+    headerActions?: ReactNode;
     /** `SideDrawerBody` and `SideDrawerFooter`, optionally wrapped in a form with `sideDrawerFormClass`. */
     children: ReactNode;
 };
@@ -17,7 +18,13 @@ export const sideDrawerFormClass = 'flex min-h-0 flex-1 flex-col';
  * A panel that slides in from the right on desktop and up from the bottom on mobile, for create/edit
  * forms that open on the page they belong to.
  */
-export function SideDrawer({ isOpen, onOpenChange, title, children }: Props) {
+export function SideDrawer({
+    isOpen,
+    onOpenChange,
+    title,
+    headerActions,
+    children,
+}: Props) {
     const isDesktop = useIsDesktop();
 
     return (
@@ -25,16 +32,15 @@ export function SideDrawer({ isOpen, onOpenChange, title, children }: Props) {
             <Drawer.Content placement={isDesktop ? 'right' : 'bottom'}>
                 <Drawer.Dialog
                     className={
-                        isDesktop
-                            ? 'w-full max-w-xl sm:w-[36rem]'
-                            : 'max-h-[92svh]'
+                        isDesktop ? 'w-full max-w-xl sm:w-[36rem]' : undefined
                     }
                 >
                     {isDesktop ? <Drawer.CloseTrigger /> : <Drawer.Handle />}
-                    <Drawer.Header className="pb-3">
-                        <Drawer.Heading className="text-lg font-semibold">
+                    <Drawer.Header className="flex-row items-center justify-between pb-3">
+                        <Drawer.Heading className="font-semibold max-md:text-[17px]/[21px] md:text-lg">
                             {title}
                         </Drawer.Heading>
+                        {headerActions}
                     </Drawer.Header>
                     {children}
                 </Drawer.Dialog>
