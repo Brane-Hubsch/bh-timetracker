@@ -1,5 +1,6 @@
 import { Button } from '@heroui/react';
 import { Plus, Search, SlidersHorizontal } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { MobilePageHeader } from '@/components/app-shell/mobile-page-header';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -12,7 +13,12 @@ type Props = {
     onOpenFilters: () => void;
     filterTestId: string;
     searchLabel?: string;
-    createAction?: { label: string; onPress: () => void; testId: string };
+    createAction?: {
+        label: string;
+        onPress: () => void;
+        testId: string;
+        icon?: LucideIcon;
+    };
 };
 
 const buttonClass =
@@ -30,6 +36,7 @@ export function MobileListHeader({
 }: Props) {
     const { t, tc } = useTranslation();
     const FilterIcon = searchLabel ? Search : SlidersHorizontal;
+    const CreateIcon = createAction?.icon ?? Plus;
     const filterLabel = searchLabel
         ? filterCount
             ? t(':search, :count selected', {
@@ -87,7 +94,10 @@ export function MobileListHeader({
                         onPress={createAction.onPress}
                         data-test={createAction.testId}
                     >
-                        <Plus aria-hidden="true" className="size-[18px]" />
+                        <CreateIcon
+                            aria-hidden="true"
+                            className="size-[18px]"
+                        />
                     </Button>
                 )}
             </div>
