@@ -33,15 +33,18 @@ export default function ClientsIndex({
 }: Props) {
     const { t, tc } = useTranslation();
     const isDesktop = useIsDesktop();
-    const { timer } = usePage().props;
+    const { currentOrganization, timer } = usePage().props;
     const [isCreateOpen, setCreateOpen] = useState(false);
     useOpenFromQuery('new', () => setCreateOpen(true));
     const { current, search, isOpen, changeOpen, apply, changeSearch } =
-        useMobileListFilters(index.url(), filters, defaultSearchStatus);
-    const filterLabels = [
-        current.status === 'archived' ? t('Archived (plural)') : '',
-        current.search ? `“${current.search}”` : '',
-    ].filter(Boolean);
+        useMobileListFilters(
+            index.url(currentOrganization?.slug),
+            filters,
+            defaultSearchStatus,
+        );
+    const filterLabels = current.search ? [`“${current.search}”`] : [];
+    const filterCount =
+        filterLabels.length + Number(current.status === 'archived');
     const clearFilters = () => apply(defaultSearchStatus);
     const openCreate = () => setCreateOpen(true);
     const emptyLabel = filters.search
@@ -82,6 +85,7 @@ export default function ClientsIndex({
                     <MobileListHeader
                         title={t('Clients')}
                         filterLabels={filterLabels}
+                        filterCount={filterCount}
                         filtersOpen={isOpen}
                         onOpenFilters={() => changeOpen(true)}
                         filterTestId="mobile-client-filters"
@@ -178,7 +182,7 @@ export default function ClientsIndex({
                 <MobileListFilters
                     isOpen={isOpen}
                     onOpenChange={changeOpen}
-                    hasFilters={filterLabels.length > 0}
+                    hasFilters={filterCount > 0}
                     onClear={clearFilters}
                     searchLabel={t('Search clients')}
                     search={search}
