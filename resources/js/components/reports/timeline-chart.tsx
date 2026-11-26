@@ -425,7 +425,8 @@ export function TimelineChart({
             className={cn(
                 'grid h-full min-w-0 grid-cols-1 content-between gap-3 rounded-2xl bg-surface p-4 shadow-surface',
                 report &&
-                    'max-md:gap-2 max-md:rounded-none max-md:bg-transparent max-md:p-0 max-md:pt-6 max-md:pb-3 max-md:shadow-none',
+                    'max-md:gap-2 max-md:rounded-none max-md:bg-transparent max-md:p-0 max-md:pb-3 max-md:shadow-none',
+                report && (headerAction ? 'max-md:pt-3' : 'max-md:pt-6'),
             )}
             data-test="timeline-chart"
         >
@@ -435,15 +436,15 @@ export function TimelineChart({
                     projects
                         ? 'min-h-11 gap-2 md:min-h-10'
                         : 'flex-wrap gap-x-4 gap-y-1',
-                    report &&
-                        (headerAction
-                            ? 'min-h-0 justify-end max-md:px-4'
-                            : 'sr-only'),
+                    report && (headerAction ? 'max-md:px-4' : 'sr-only'),
                 )}
             >
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     <h2
-                        className={report ? 'sr-only' : 'text-sm font-semibold'}
+                        className={cn(
+                            'text-sm font-semibold',
+                            report && 'max-md:text-[15px]/5',
+                        )}
                     >
                         {chartTitle}
                     </h2>

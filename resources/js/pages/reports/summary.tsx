@@ -1,4 +1,6 @@
+import { Button, Dropdown, Label } from '@heroui/react';
 import { router, usePage } from '@inertiajs/react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { SelectField } from '@/components/form/select-field';
 import { AbsenceTable } from '@/components/reports/absence-table';
@@ -11,7 +13,6 @@ import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
 import { ReportStats } from '@/components/reports/report-stats';
 import { TimelineChart } from '@/components/reports/timeline-chart';
-import { SegmentedControl } from '@/components/segmented-control';
 import { useReportNavigation } from '@/hooks/use-report-navigation';
 import { useTranslation } from '@/lib/i18n';
 import { reportMemberAvatars } from '@/lib/reports';
@@ -49,6 +50,8 @@ export default function ReportsSummary({
     );
     const byMemberAndProject =
         filters.group === 'member' && filters.subgroup === 'project';
+    const scale = filters.scale;
+    const scaleLabels = { week: t('Week'), month: t('Month') };
 
     const navigation = useReportNavigation('summary', filters);
     const { apply: regroup, adjacentUrl } = navigation;
@@ -93,6 +96,7 @@ export default function ReportsSummary({
             <TimelineChart
                 unit={summary.timeline.unit}
                 buckets={summary.timeline.buckets}
+                title={scale ? t('Hours over time') : undefined}
                 projects={summary.timeline.projects}
                 report={{
                     weekStartsOn,
@@ -106,17 +110,50 @@ export default function ReportsSummary({
                     },
                 }}
                 headerAction={
-                    filters.scale && (
-                        <SegmentedControl
-                            aria-label={t('Chart scale')}
-                            options={[
-                                { id: 'week', label: t('Week') },
-                                { id: 'month', label: t('Month') },
-                            ]}
-                            value={filters.scale}
-                            onChange={(scale) => regroup({ scale })}
-                            className="shrink-0"
-                        />
+                    scale && (
+                        <Dropdown>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="shrink-0 gap-1 px-3 max-md:h-11"
+                                aria-label={`${t('Chart scale')}: ${scaleLabels[scale]}`}
+                            >
+                                {scaleLabels[scale]}
+                                <ChevronDown size={16} aria-hidden="true" />
+                            </Button>
+                            <Dropdown.Popover
+                                placement="bottom end"
+                                className="min-w-32"
+                            >
+                                <Dropdown.Menu
+                                    aria-label={t('Chart scale')}
+                                    selectionMode="single"
+                                    disallowEmptySelection
+                                    selectedKeys={[scale]}
+                                    onSelectionChange={(keys) => {
+                                        if (keys === 'all') return;
+
+                                        const [nextScale] = keys;
+                                        if (
+                                            nextScale === 'week' ||
+                                            nextScale === 'month'
+                                        ) {
+                                            regroup({ scale: nextScale });
+                                        }
+                                    }}
+                                >
+                                    <Dropdown.Item id="week">
+                                        <Label>{scaleLabels.week}</Label>
+                                        <Dropdown.ItemIndicator />
+                                    </Dropdown.Item>
+                                    <Dropdown.Item id="month">
+                                        <Label>{scaleLabels.month}</Label>
+                                        <Dropdown.ItemIndicator />
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown.Popover>
+                        </Dropdown>
                     )
                 }
             />
