@@ -13,6 +13,7 @@ type Gesture = {
 };
 
 type Options = {
+    followFinger?: boolean;
     canStart?: (target: Element) => boolean;
     canContinue?: (viewport: HTMLDivElement) => boolean;
     onSwipeIntent?: (direction: Direction) => void;
@@ -20,6 +21,7 @@ type Options = {
 };
 
 export function useSwipeNavigation({
+    followFinger = true,
     canStart = () => true,
     canContinue = () => true,
     onSwipeIntent,
@@ -60,12 +62,12 @@ export function useSwipeNavigation({
             }
         };
 
-        if (reducedMotion()) {
+        if (reducedMotion() || (!followFinger && !direction)) {
             finish();
             return;
         }
 
-        const from = slider.style.translate;
+        const from = slider.style.translate || '0px';
         const to = direction ? `${-direction * viewport.clientWidth}px` : '0px';
         slider.style.translate = to;
         animation.current = slider.animate(
@@ -151,7 +153,7 @@ export function useSwipeNavigation({
             onSwipeIntent?.(direction);
         }
 
-        if (!reducedMotion()) {
+        if (followFinger && !reducedMotion()) {
             const width = viewport.clientWidth;
             setAdjacent(direction);
             track.current.style.translate = `${Math.max(-width, Math.min(width, x))}px`;

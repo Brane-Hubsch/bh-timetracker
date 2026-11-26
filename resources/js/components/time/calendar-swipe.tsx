@@ -10,7 +10,7 @@ type Props = {
     onSwipe: (direction: Direction, onFinish: () => void) => void;
 };
 
-export function CalendarDaySwipe({
+export function CalendarSwipe({
     children,
     renderAdjacent,
     onSwipeIntent,

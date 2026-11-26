@@ -1,11 +1,13 @@
 import { Button, Dropdown, Label } from '@heroui/react';
 import { ArrowDownWideNarrow, Check, ChevronDown } from 'lucide-react';
-import { ProjectDot } from '@/components/project-dot';
-import { ReportEntryTags } from '@/components/reports/report-entry-tags';
 import { MemberAvatar } from '@/components/reports/report-filter-options';
+import {
+    MobileTimeEntryRow,
+    mobileTimeEntryDivider,
+} from '@/components/time/mobile-time-entry-row';
 import { formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { formatDate, formatDuration, timeOf } from '@/lib/time';
+import { formatDate, formatDuration } from '@/lib/time';
 import type {
     Paginated,
     ReportAbilities,
@@ -173,75 +175,46 @@ export function MobileReportEntries({
                             {rows.map((row) => (
                                 <li
                                     key={row.id}
-                                    className="relative grid grid-cols-[auto_minmax(0,1fr)] gap-2.5 px-4 py-3 not-last:after:pointer-events-none not-last:after:absolute not-last:after:inset-x-0 not-last:after:bottom-0 not-last:after:ms-9 not-last:after:border-b not-last:after:border-separator"
+                                    className={mobileTimeEntryDivider}
                                 >
-                                    <span className="flex h-5 items-center">
-                                        <ProjectDot
-                                            color={row.project.color}
-                                            size="compact"
-                                        />
-                                    </span>
-                                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
-                                        <div className="flex items-start justify-between gap-2 text-[15px]/5 font-medium">
-                                            <span className="truncate">
-                                                {row.project.name}
-                                            </span>
-                                            <span className="shrink-0 tabular-nums">
-                                                {formatDuration(
-                                                    row.durationSeconds,
-                                                )}
-                                            </span>
-                                        </div>
-                                        {row.description && (
-                                            <p className="line-clamp-2 text-sm">
-                                                {row.description}
-                                            </p>
-                                        )}
-                                        <ReportEntryTags
-                                            tags={row.tags}
-                                            mobile
-                                        />
-                                        <div className="flex items-center justify-between gap-2 text-[13px]/[18px] text-muted">
-                                            <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                {abilities.canViewTeam && (
-                                                    <MemberAvatar
-                                                        name={row.memberName}
-                                                        src={
-                                                            avatars.get(
-                                                                String(
-                                                                    row.userId,
-                                                                ),
-                                                            ) ?? null
-                                                        }
-                                                        size="xs"
-                                                    />
-                                                )}
-                                                <span className="truncate">
-                                                    {[
-                                                        abilities.canViewTeam &&
-                                                            row.memberName,
-                                                        `${timeOf(row.start)}–${timeOf(row.end)}`,
-                                                        row.project.clientName,
-                                                    ]
-                                                        .filter(Boolean)
-                                                        .join(' · ')}
-                                                </span>
-                                            </div>
-                                            <span className="shrink-0 tabular-nums">
-                                                {!row.isBillable
-                                                    ? t('Non-billable')
-                                                    : abilities.canViewAmounts &&
-                                                        row.amount !== null &&
-                                                        row.amount > 0
-                                                      ? formatMoney(
-                                                            row.amount,
-                                                            currency,
-                                                            intlLocale,
-                                                        )
-                                                      : null}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <MobileTimeEntryRow
+                                        entry={row}
+                                        member={
+                                            abilities.canViewTeam
+                                                ? {
+                                                      name: row.memberName,
+                                                      avatar: (
+                                                          <MemberAvatar
+                                                              name={
+                                                                  row.memberName
+                                                              }
+                                                              src={
+                                                                  avatars.get(
+                                                                      String(
+                                                                          row.userId,
+                                                                      ),
+                                                                  ) ?? null
+                                                              }
+                                                              size="xs"
+                                                          />
+                                                      ),
+                                                  }
+                                                : undefined
+                                        }
+                                        amount={
+                                            !row.isBillable
+                                                ? t('Non-billable')
+                                                : abilities.canViewAmounts &&
+                                                    row.amount !== null &&
+                                                    row.amount > 0
+                                                  ? formatMoney(
+                                                        row.amount,
+                                                        currency,
+                                                        intlLocale,
+                                                    )
+                                                  : null
+                                        }
+                                    />
                                 </li>
                             ))}
                         </ul>

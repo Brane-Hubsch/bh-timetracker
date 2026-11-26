@@ -10,7 +10,6 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useState } from 'react';
 import { PeriodPicker } from '@/components/period-picker';
 import { SegmentedControl } from '@/components/segmented-control';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { useSwipeNavigation } from '@/hooks/use-swipe-navigation';
 import { useTranslation } from '@/lib/i18n';
 import { addDays, formatDate, formatDateRange, isoWeek } from '@/lib/time';
@@ -338,7 +337,6 @@ export function CalendarPicker({
     const { t, intlLocale } = useTranslation();
     const isDay = view === 'day';
     const isList = view === 'list';
-    const isMobile = useMediaQuery('(width < 768px)');
     const value = isDay ? date : weekStart;
     const currentPeriod = isDay
         ? today
@@ -423,12 +421,12 @@ export function CalendarPicker({
 
                 return (
                     <>
-                        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 min-[390px]:px-5">
+                        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 max-[359px]:flex-wrap min-[390px]:px-5">
                             <p
                                 className={cn(
                                     'min-w-0 font-semibold first-letter:uppercase',
                                     compactRange
-                                        ? 'text-xs wrap-anywhere min-[360px]:text-sm'
+                                        ? 'text-xs wrap-anywhere text-foreground min-[360px]:text-sm'
                                         : 'text-base',
                                 )}
                                 aria-live="polite"
@@ -453,12 +451,13 @@ export function CalendarPicker({
                                 >
                                     {t('Today')}
                                 </Button>
-                                {(!isList || isMobile) && (
-                                    <SegmentedControl
+                                {(!isList || !isDesktop) && (
+                                    <SegmentedControl<CalendarView>
                                         aria-label={t('View')}
+                                        className="max-md:gap-0 max-md:p-[3px] max-md:[&>button]:px-2.5 max-md:[&>button[data-selected=true]]:bg-accent-soft max-md:[&>button[data-selected=true]]:shadow-none"
                                         value={view}
                                         onChange={(view) => {
-                                            if (isMobile) {
+                                            if (!isDesktop) {
                                                 dismiss();
                                             }
                                             onViewChange(view);
@@ -466,6 +465,14 @@ export function CalendarPicker({
                                         options={[
                                             { id: 'day', label: t('Day') },
                                             { id: 'week', label: t('Week') },
+                                            ...(!isDesktop
+                                                ? [
+                                                      {
+                                                          id: 'list' as const,
+                                                          label: t('List'),
+                                                      },
+                                                  ]
+                                                : []),
                                         ]}
                                         data-test="calendar-picker-view"
                                     />
