@@ -61,6 +61,10 @@ it('counts distinct local reporting days for both views after applying filters',
         ->between($start, $start->addMinutes(30))
         ->create(['is_billable' => true]);
 
+    TimeEntry::factory()->by($this->member, $this->project)
+        ->between($start->addDays(2), $start->addDays(2)->addMinutes(30))
+        ->create(['is_billable' => false]);
+
     $this->actingAs($this->member)
         ->get(reportRoute('reports.'.$view, ['period' => 'this_year', 'billable' => '1']))
         ->assertInertia(fn (Assert $page) => $page

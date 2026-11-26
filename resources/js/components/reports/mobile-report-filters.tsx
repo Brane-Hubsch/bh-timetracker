@@ -357,7 +357,7 @@ export function MobileReportFilters({
                             )}
                         </Drawer.Body>
 
-                        <Drawer.Footer className="px-6 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                        <Drawer.Footer className="px-6 pb-(--mobile-bottom-inset)">
                             <Button
                                 className="h-10 w-full rounded-full"
                                 onPress={() => close(false)}

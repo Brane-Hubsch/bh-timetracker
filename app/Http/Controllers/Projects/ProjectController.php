@@ -71,10 +71,15 @@ class ProjectController extends Controller
             ]),
             'canViewRates' => $canViewRates,
             'currency' => $organization->currency,
-            'clients' => Client::query()->active()->orderBy('name')->get(['id', 'name'])
+            'clients' => Client::query()->active()->orderBy('name')->get(['id', 'name', 'logo_path'])
                 ->when(! $user->can('viewAny', Client::class), fn ($clients) => $clients
                     ->whereIn('id', $projects->pluck('client_id')->filter()->all())
-                    ->values()),
+                    ->values())
+                ->map(fn (Client $client) => [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'logo' => $client->logoUrl(48),
+                ]),
             'filters' => ['search' => $search, 'status' => $status, 'client' => $clientId, 'billable' => $billable === null ? null : ($billable ? '1' : '0')],
             'projectForm' => $user->can('create', Project::class) ? $formOptions->for($organization) : null,
         ]);

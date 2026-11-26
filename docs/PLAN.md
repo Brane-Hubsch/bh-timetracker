@@ -134,7 +134,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.4 Projekt
 
-- Lista med sök och filter (kund, aktiva/arkiverade), skapa/redigera/arkivera.
+- Lista med sök och filter (kund, debitering, aktiva/arkiverade), skapa/redigera/arkivera. På mobil ligger filtren i ett bottenark. Valda filter visas i den fasta rubrikraden, där ägare och administratörer också kan skapa projekt med en rund plusknapp.
 - Fält: namn, kund (valfri), kod, färg, debiterbart, timpris, **estimat i timmar**, synlighet, start/slut (valfritt), medlemmar (+ ev. pris per medlem).
 - Projektsida: förbrukat vs estimat (progress, varning vid 80 % och 100 %), tid per medlem, tid per vecka, debiterbart belopp.
 
@@ -182,6 +182,7 @@ Se avsnitt 6.
 ### 4.9 Mobil och desktop
 
 - Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
+- Bottennavigeringen har 16 px luft på sidorna och minst 20 px under flikarna, med safe area inräknad. Bottenark har samma nederkant och knapparna i footern ligger 24 px från skärmens sidor.
 - Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
 - Under 768 px följer bottenarket den synliga skärmytan i Safari och i webbappen från hemskärmen. När tangentbordet visas ligger sidan bakom stilla, handtag och rubrik ligger överst och eventuella åtgärder ligger ovanför tangentbordet. Innehållet scrollar och visar fältet med fokus även vid Nästa/Föregående. Arket återtar sin vanliga höjd när tangentbordet stängs.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
@@ -394,7 +395,7 @@ Klar. Byggt:
 - **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
 - **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
-- **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet, budget i timmar och rapporterad tid, med en sammanfattning överst. Budget och rapporterad tid har varsin kolumn, med **Rapporterat** längst till höger. Budgeten visar även förbrukad andel och ett streck om estimat saknas. Listan filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade. Filtren ligger i URL:en. MCP-verktyget `list_projects` tar samma filter (`billable`).
+- **Projektlistan** visar på desktop kod, kund, debitering, timpris (bara för den som får se priser), synlighet, budget i timmar och rapporterad tid. Budgeten visar också förbrukad andel och ett streck om estimat saknas. På mobil ligger listan kant i kant direkt under rubrikraden. Varje rad visar projektnamn med lås för privata projekt, kund och kod, rapporterad tid och en budgetstapel när det finns ett estimat. Listan filtreras på sök, kund, debitering (`billable=1/0`) och aktiva/arkiverade. Filtren ligger i URL:en. MCP-verktyget `list_projects` tar samma filter (`billable`).
 - **Projektsidan** visar debiterbara timmar och belopp, tid per medlem och timmar per vecka för de senaste 12 veckorna. **Kundsidan** visar tid och belopp per projekt för en vald period. Båda har en länk till rapporten.
 - "Rapporter" finns i sidomenyn. På mobil avgör sidomenyns ordning och synlighet om Rapporter visas som flik eller i Mer-panelen.
 

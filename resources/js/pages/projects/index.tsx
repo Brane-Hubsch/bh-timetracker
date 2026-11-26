@@ -8,6 +8,11 @@ import { ListFilters } from '@/components/list-filters';
 import { LogoImage } from '@/components/logo-image';
 import { EstimateProgress } from '@/components/estimate-progress';
 import { ProjectDot } from '@/components/project-dot';
+import {
+    MobileProjects,
+    type ProjectFilterClient,
+    type ProjectListFilters,
+} from '@/components/projects/mobile-projects';
 import { ProjectFormDrawer } from '@/components/projects/project-form-drawer';
 import {
     ColumnOrderStatus,
@@ -15,7 +20,7 @@ import {
     columnOrderHeaderClassName,
     useColumnOrder,
 } from '@/components/reorderable-column-header';
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useIsDesktop, useMediaQuery } from '@/hooks/use-media-query';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { formatHours, formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -29,14 +34,8 @@ type Props = {
     /** Whether the viewer may see rates (owners and admins). */
     canViewRates: boolean;
     currency: string;
-    clients: { id: number; name: string }[];
-    filters: {
-        search: string;
-        status: 'active' | 'archived';
-        client: number | null;
-        /** '1' billable, '0' non-billable, null both. */
-        billable: '1' | '0' | null;
-    };
+    clients: ProjectFilterClient[];
+    filters: ProjectListFilters;
     /** Null when the viewer may not create projects. */
     projectForm: ProjectFormOptions | null;
 };
@@ -71,195 +70,37 @@ export default function ProjectsIndex({
     filters,
     projectForm,
 }: Props) {
-    const { t, intlLocale } = useTranslation();
+    const { t } = useTranslation();
     const [isCreateOpen, setCreateOpen] = useState(false);
-    const { id: userId } = usePage().props.auth.user;
-    const isDesktop = useMediaQuery('(min-width: 80rem)');
-    const order = useColumnOrder({
-        storageKey: `timereport:project-list-column-order:${userId}`,
-        defaultOrder: defaultColumnOrder,
-        isVisible: (column) => canViewRates || column !== 'Hourly rate',
-    });
-    const gridStyle = {
-        '--project-columns': [
-            'minmax(0, 2.4fr)',
-            ...order.columns.map((column) => columnTracks[column]),
-        ].join(' '),
-    } as CSSProperties;
-    const billableCount = projects.filter(
-        (project) => project.isBillable,
-    ).length;
-    const reportedSeconds = projects.reduce(
-        (sum, project) => sum + project.consumedSeconds,
-        0,
-    );
-
+    const { timer } = usePage().props;
+    const isMobile = !useIsDesktop();
     // ?new=1 from the command palette and links on other pages.
     useOpenFromQuery('new', () => setCreateOpen(projectForm !== null));
+
+    const onCreate = projectForm ? () => setCreateOpen(true) : undefined;
 
     return (
         <>
             <Head title={t('Projects')} />
 
-            <div className="grid gap-6">
-                <Heading
-                    title={t('Projects')}
-                    actions={
-                        projectForm && (
-                            <Button
-                                onPress={() => setCreateOpen(true)}
-                                data-test="new-project-button"
-                            >
-                                <Plus className="size-4" />
-                                {t('New project')}
-                            </Button>
-                        )
-                    }
-                />
-
-                <ListFilters
+            {isMobile ? (
+                <MobileProjects
+                    projects={projects}
                     filters={filters}
-                    className="sm:flex-wrap xl:flex-nowrap"
-                >
-                    {(apply) => (
-                        <>
-                            {clients.length > 0 && (
-                                <SelectField
-                                    name="client"
-                                    label={
-                                        <span className="sr-only">
-                                            {t('Client')}
-                                        </span>
-                                    }
-                                    value={
-                                        filters.client
-                                            ? String(filters.client)
-                                            : ALL
-                                    }
-                                    onChange={(value) =>
-                                        apply({
-                                            client:
-                                                value === ALL ? null : value,
-                                        })
-                                    }
-                                    options={[
-                                        { value: ALL, label: t('All clients') },
-                                        ...clients.map((client) => ({
-                                            value: String(client.id),
-                                            label: client.name,
-                                        })),
-                                    ]}
-                                    className="w-full sm:w-56"
-                                />
-                            )}
-                            <SelectField
-                                name="billable"
-                                label={
-                                    <span className="sr-only">
-                                        {t('Billing')}
-                                    </span>
-                                }
-                                value={filters.billable ?? ALL}
-                                onChange={(value) =>
-                                    apply({
-                                        billable: value === ALL ? null : value,
-                                    })
-                                }
-                                options={[
-                                    { value: ALL, label: t('All projects') },
-                                    {
-                                        value: '1',
-                                        label: t('Billable projects'),
-                                    },
-                                    {
-                                        value: '0',
-                                        label: t('Non-billable projects'),
-                                    },
-                                ]}
-                                className="w-full sm:w-56"
-                                data-test="project-billable-filter"
-                            />
-                        </>
-                    )}
-                </ListFilters>
-
-                {projects.length > 0 && (
-                    <dl
-                        className="grid grid-cols-3 gap-2 sm:max-w-xl sm:gap-3"
-                        data-test="project-summary"
-                    >
-                        {[
-                            [t('Projects'), String(projects.length)],
-                            [t('Billable'), String(billableCount)],
-                            [
-                                t('Reported'),
-                                formatHours(reportedSeconds, intlLocale),
-                            ],
-                        ].map(([label, value]) => (
-                            <div
-                                key={label}
-                                className="grid gap-0.5 rounded-2xl bg-surface px-4 py-3 shadow-surface"
-                            >
-                                <dt className="text-xs text-muted sm:text-sm">
-                                    {label}
-                                </dt>
-                                <dd className="text-lg font-semibold tabular-nums">
-                                    {value}
-                                </dd>
-                            </div>
-                        ))}
-                    </dl>
-                )}
-
-                <div
-                    className="overflow-hidden rounded-2xl bg-surface shadow-surface"
-                    style={gridStyle}
-                >
-                    {projects.length > 0 && (
-                        <>
-                            <ColumnOrderStatus
-                                announcement={order.announcement}
-                            />
-                            <div
-                                className={`${columnOrderHeaderClassName} hidden items-center gap-x-6 border-b border-separator px-5 py-2.5 text-sm font-medium text-muted xl:grid xl:grid-cols-(--project-columns)`}
-                            >
-                                <span>{t('Project')}</span>
-                                {order.columns.map((column) => (
-                                    <ReorderableColumnHeader
-                                        key={column}
-                                        order={order}
-                                        column={column}
-                                        label={t(column)}
-                                    />
-                                ))}
-                            </div>
-                        </>
-                    )}
-                    <ul className="divide-y divide-separator">
-                        {projects.map((project) => (
-                            <ProjectRow
-                                key={project.id}
-                                project={project}
-                                currency={currency}
-                                canViewRates={canViewRates}
-                                columns={isDesktop ? order.columns : null}
-                            />
-                        ))}
-                        {projects.length === 0 && (
-                            <li className="grid justify-items-center gap-2 p-10 text-center">
-                                <FolderKanban className="size-6 text-muted" />
-                                <p className="text-sm text-muted">
-                                    {filters.search
-                                        ? t('No projects match your search.')
-                                        : filters.status === 'archived'
-                                          ? t('No archived projects.')
-                                          : t('No projects yet.')}
-                                </p>
-                            </li>
-                        )}
-                    </ul>
-                </div>
-            </div>
+                    clients={clients}
+                    onCreate={onCreate}
+                    hasTimer={Boolean(timer)}
+                />
+            ) : (
+                <DesktopProjects
+                    projects={projects}
+                    filters={filters}
+                    clients={clients}
+                    onCreate={onCreate}
+                    currency={currency}
+                    canViewRates={canViewRates}
+                />
+            )}
 
             {projectForm && (
                 <ProjectFormDrawer
@@ -270,6 +111,158 @@ export default function ProjectsIndex({
                 />
             )}
         </>
+    );
+}
+
+function DesktopProjects({
+    projects,
+    filters,
+    clients,
+    onCreate,
+    currency,
+    canViewRates,
+}: Omit<Props, 'projectForm'> & { onCreate?: () => void }) {
+    const { t } = useTranslation();
+    const { auth } = usePage().props;
+    const isDesktop = useMediaQuery('(min-width: 80rem)');
+    const order = useColumnOrder({
+        storageKey: `timereport:project-list-column-order:${auth.user.id}`,
+        defaultOrder: defaultColumnOrder,
+        isVisible: (column) => canViewRates || column !== 'Hourly rate',
+    });
+    const gridStyle = {
+        '--project-columns': [
+            'minmax(0, 2.4fr)',
+            ...order.columns.map((column) => columnTracks[column]),
+        ].join(' '),
+    } as CSSProperties;
+    return (
+        <div className="grid gap-6">
+            <Heading
+                title={t('Projects')}
+                actions={
+                    onCreate && (
+                        <Button
+                            onPress={onCreate}
+                            data-test="new-project-button"
+                        >
+                            <Plus className="size-4" />
+                            {t('New project')}
+                        </Button>
+                    )
+                }
+            />
+
+            <ListFilters
+                filters={filters}
+                className="sm:flex-wrap xl:flex-nowrap"
+            >
+                {(apply) => (
+                    <>
+                        {clients.length > 0 && (
+                            <SelectField
+                                name="client"
+                                label={
+                                    <span className="sr-only">
+                                        {t('Client')}
+                                    </span>
+                                }
+                                value={
+                                    filters.client
+                                        ? String(filters.client)
+                                        : ALL
+                                }
+                                onChange={(value) =>
+                                    apply({
+                                        client: value === ALL ? null : value,
+                                    })
+                                }
+                                options={[
+                                    { value: ALL, label: t('All clients') },
+                                    ...clients.map((client) => ({
+                                        value: String(client.id),
+                                        label: client.name,
+                                    })),
+                                ]}
+                                className="w-full sm:w-56"
+                            />
+                        )}
+                        <SelectField
+                            name="billable"
+                            label={
+                                <span className="sr-only">{t('Billing')}</span>
+                            }
+                            value={filters.billable ?? ALL}
+                            onChange={(value) =>
+                                apply({
+                                    billable: value === ALL ? null : value,
+                                })
+                            }
+                            options={[
+                                { value: ALL, label: t('All projects') },
+                                {
+                                    value: '1',
+                                    label: t('Billable projects'),
+                                },
+                                {
+                                    value: '0',
+                                    label: t('Non-billable projects'),
+                                },
+                            ]}
+                            className="w-full sm:w-56"
+                            data-test="project-billable-filter"
+                        />
+                    </>
+                )}
+            </ListFilters>
+
+            <div
+                className="overflow-hidden rounded-2xl bg-surface shadow-surface"
+                style={gridStyle}
+            >
+                {projects.length > 0 && (
+                    <>
+                        <ColumnOrderStatus announcement={order.announcement} />
+                        <div
+                            className={`${columnOrderHeaderClassName} hidden items-center gap-x-6 border-b border-separator px-5 py-2.5 text-sm font-medium text-muted xl:grid xl:grid-cols-(--project-columns)`}
+                        >
+                            <span>{t('Project')}</span>
+                            {order.columns.map((column) => (
+                                <ReorderableColumnHeader
+                                    key={column}
+                                    order={order}
+                                    column={column}
+                                    label={t(column)}
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
+                <ul className="divide-y divide-separator">
+                    {projects.map((project) => (
+                        <ProjectRow
+                            key={project.id}
+                            project={project}
+                            currency={currency}
+                            canViewRates={canViewRates}
+                            columns={isDesktop ? order.columns : null}
+                        />
+                    ))}
+                    {projects.length === 0 && (
+                        <li className="grid justify-items-center gap-2 p-10 text-center">
+                            <FolderKanban className="size-6 text-muted" />
+                            <p className="text-sm text-muted">
+                                {filters.search
+                                    ? t('No projects match your search.')
+                                    : filters.status === 'archived'
+                                      ? t('No archived projects.')
+                                      : t('No projects yet.')}
+                            </p>
+                        </li>
+                    )}
+                </ul>
+            </div>
+        </div>
     );
 }
 
