@@ -12,7 +12,7 @@ import {
     draftFromAbsence,
 } from '@/components/time/absence-dialog';
 import { CalendarPicker } from '@/components/time/calendar-picker';
-import { CalendarDaySwipe } from '@/components/time/calendar-day-swipe';
+import { CalendarSwipe } from '@/components/time/calendar-swipe';
 import { CopyPeriodDialog } from '@/components/time/copy-period-dialog';
 import { startTimer } from '@/components/time/running-timer';
 import { TimeActionsMenu } from '@/components/time/time-actions-menu';
@@ -87,7 +87,7 @@ type Props = {
     previousPeriodEntries?: TimeEntry[];
 };
 
-type AdjacentDay = Pick<
+type CalendarPreview = Pick<
     Props,
     'date' | 'entries' | 'absences' | 'colleaguesOff' | 'calendarHolidays'
 >;
@@ -172,9 +172,9 @@ export default function TimeIndex({
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
     const [absenceDraft, setAbsenceDraft] = useState<AbsenceDraft | null>(null);
-    const [preview, setPreview] = useState<{
+    const [previews, setPreviews] = useState<{
         from: string;
-        day: AdjacentDay;
+        periods: Partial<Record<-1 | 1, CalendarPreview>>;
     } | null>(null);
     const newAbsence = (startsOn: string, endsOn = startsOn) =>
         setAbsenceDraft({
@@ -383,38 +383,49 @@ export default function TimeIndex({
         });
     };
 
-    function prefetchDay(direction: -1 | 1) {
-        const nextDate = addDays(date, direction);
+    const step = view === 'day' ? 1 : 7;
+    const adjacentDate = (direction: -1 | 1) => addDays(date, step * direction);
+    const swipeToPeriod = (direction: -1 | 1, onFinish: () => void) =>
+        visit({ date: adjacentDate(direction) }, onFinish);
+
+    function prefetchPeriod(direction: -1 | 1) {
+        const nextDate = adjacentDate(direction);
         const { href, data } = pageData({ date: nextDate });
 
         router.prefetch(
             href,
             {
                 data,
-                onPrefetched: (response) => {
-                    const { props } = JSON.parse(response.data) as {
-                        props: AdjacentDay;
-                    };
-                    if (props.date === nextDate) {
-                        const {
-                            date,
-                            entries,
-                            absences,
-                            colleaguesOff,
-                            calendarHolidays,
-                        } = props;
-                        setPreview({
-                            from: url,
-                            day: {
-                                date,
-                                entries,
-                                absences,
-                                colleaguesOff,
-                                calendarHolidays,
-                            },
-                        });
-                    }
-                },
+                onPrefetched: isList
+                    ? undefined
+                    : (response) => {
+                          const { props } = JSON.parse(response.data) as {
+                              props: CalendarPreview;
+                          };
+                          if (props.date === nextDate) {
+                              const {
+                                  date,
+                                  entries,
+                                  absences,
+                                  colleaguesOff,
+                                  calendarHolidays,
+                              } = props;
+                              setPreviews((previous) => ({
+                                  from: url,
+                                  periods: {
+                                      ...(previous?.from === url &&
+                                          previous.periods),
+                                      [direction]: {
+                                          date,
+                                          entries,
+                                          absences,
+                                          colleaguesOff,
+                                          calendarHolidays,
+                                      },
+                                  },
+                              }));
+                          }
+                      },
             },
             // Start the request while the finger is down and reuse it on release.
             { cacheFor: '5s' },
@@ -504,7 +515,6 @@ export default function TimeIndex({
     );
     // Keyboard: N reports time, arrows step the period, I goes to today, L/V/D switch the view.
     // Quick presses step from where the previous one went, before its page has loaded.
-    const step = view === 'day' ? 1 : 7;
     const stepTarget = useRef<{ from: string; to: string } | null>(null);
     const stepBy = (days: number) => {
         const from =
@@ -620,7 +630,8 @@ export default function TimeIndex({
                     ref={calendarGrid}
                     className={cn(
                         'md:animate-fade-in',
-                        view === 'list' && 'mx-auto w-full max-w-[76rem]',
+                        isList &&
+                            'mx-auto w-full max-md:motion-safe:animate-fade-in md:max-w-[76rem]',
                     )}
                 >
                     {view === 'list' ? (
@@ -630,6 +641,11 @@ export default function TimeIndex({
                             entries={entries}
                             absences={absences}
                             colleaguesOff={colleaguesOff}
+                            holidays={calendarHolidays}
+                            isMobile={isMobile}
+                            hasTimer={Boolean(timer)}
+                            onSwipe={swipeToPeriod}
+                            onSwipeIntent={prefetchPeriod}
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
@@ -638,34 +654,37 @@ export default function TimeIndex({
                                 setDraft(newDraft(day, entries, member.id))
                             }
                         />
-                    ) : isMobile && view === 'day' ? (
-                        <CalendarDaySwipe
-                            onSwipeIntent={prefetchDay}
-                            onSwipe={(direction, onFinish) =>
-                                visit(
-                                    { date: addDays(date, direction) },
-                                    onFinish,
-                                )
-                            }
+                    ) : isMobile ? (
+                        <CalendarSwipe
+                            onSwipeIntent={prefetchPeriod}
+                            onSwipe={swipeToPeriod}
                             renderAdjacent={(direction) => {
-                                const nextDate = addDays(date, direction);
-                                const day =
-                                    preview?.from === url &&
-                                    preview.day.date === nextDate
-                                        ? preview.day
-                                        : null;
+                                const nextDate = adjacentDate(direction);
+                                const preview =
+                                    previews?.from === url
+                                        ? previews.periods[direction]
+                                        : undefined;
+                                const adjacent =
+                                    preview?.date === nextDate
+                                        ? preview
+                                        : undefined;
 
                                 return (
                                     <TimeCalendar
                                         {...calendarProps}
-                                        view="day"
+                                        view={view}
                                         date={nextDate}
-                                        entries={day?.entries ?? entries}
-                                        absences={day?.absences ?? absences}
-                                        colleaguesOff={
-                                            day?.colleaguesOff ?? colleaguesOff
+                                        entries={adjacent?.entries ?? entries}
+                                        absences={
+                                            adjacent?.absences ?? absences
                                         }
-                                        holidays={day?.calendarHolidays ?? []}
+                                        colleaguesOff={
+                                            adjacent?.colleaguesOff ??
+                                            colleaguesOff
+                                        }
+                                        holidays={
+                                            adjacent?.calendarHolidays ?? []
+                                        }
                                         floatingAction={undefined}
                                         isPreview
                                     />
@@ -673,14 +692,14 @@ export default function TimeIndex({
                             }}
                         >
                             <TimeCalendar {...calendarProps} view={view} />
-                        </CalendarDaySwipe>
+                        </CalendarSwipe>
                     ) : (
                         <TimeCalendar {...calendarProps} view={view} />
                     )}
                 </div>
             </div>
 
-            {/* Big "+" on mobile. */}
+            {/* Floating time-report button on mobile. */}
             <div
                 className={cn(
                     'fixed right-4 z-30 flex flex-col items-center gap-3 md:hidden',
@@ -694,7 +713,7 @@ export default function TimeIndex({
                 <Button
                     isIconOnly
                     aria-label={t('Report time')}
-                    className="size-14 rounded-full shadow-lg"
+                    className="size-12 rounded-full shadow-lg"
                     onPress={() => openReport('time')}
                     data-test="new-time-fab"
                 >

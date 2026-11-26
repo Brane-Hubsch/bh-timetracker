@@ -1,4 +1,4 @@
-export function ReportEntryTags({
+export function TimeEntryTags({
     tags,
     mobile = false,
 }: {
@@ -11,7 +11,7 @@ export function ReportEntryTags({
                 {tags.map((tag) => (
                     <span
                         key={tag}
-                        className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
+                        className="max-w-full truncate rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
                     >
                         {tag}
                     </span>

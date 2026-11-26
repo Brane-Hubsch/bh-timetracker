@@ -77,7 +77,7 @@ it('shows the week of the signed-in user in their time zone', function (string $
     'list' => ['list', 'list'],
 ]);
 
-it('sends saved holidays from the current organization for the visible calendar dates', function (string $path, array $expected) {
+it('sends saved holidays from the current organization for the visible dates', function (string $path, array $expected) {
     foreach ([
         '2026-11-15' => 'Previous week',
         '2026-11-16' => 'First day',
@@ -105,7 +105,11 @@ it('sends saved holidays from the current organization for the visible calendar 
         ['date' => '2026-11-18', 'name' => 'Gemensam ledighet'],
     ]],
     'ordinary day' => ['calendar?date=2026-11-19&view=day', []],
-    'list' => ['list?date=2026-11-18', []],
+    'list' => ['list?date=2026-11-18', [
+        ['date' => '2026-11-16', 'name' => 'First day'],
+        ['date' => '2026-11-18', 'name' => 'Gemensam ledighet'],
+        ['date' => '2026-11-22', 'name' => 'Last day'],
+    ]],
 ]);
 
 it('redirects older time links and preserves the selected week, member and dialog', function (string $oldView, string $path, string $newView) {
