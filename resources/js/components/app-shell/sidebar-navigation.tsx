@@ -6,16 +6,10 @@ import { useTranslation } from '@/lib/i18n';
 import type { MainNavItem } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
 
-export function SidebarNavigation({
-    items,
-    storageKey,
-}: {
-    items: MainNavItem[];
-    storageKey: string;
-}) {
+export function SidebarNavigation({ items }: { items: MainNavItem[] }) {
     const { t } = useTranslation();
     const { isCurrentOrParentUrl } = useCurrentUrl();
-    const { order, byTitle, move } = useSidebarOrder(storageKey, items);
+    const { order, byTitle, move } = useSidebarOrder(items);
 
     if (order.length === 0) {
         return null;

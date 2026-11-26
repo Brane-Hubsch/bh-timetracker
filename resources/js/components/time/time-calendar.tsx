@@ -12,6 +12,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -82,6 +83,7 @@ type Props = {
     /** Colleagues' absence, shown as "Off · name". */
     colleaguesOff: ColleagueOff[];
     floatingAction?: ReactNode;
+    isPreview?: boolean;
     hasSelectionDraft: boolean;
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
@@ -103,18 +105,19 @@ type Props = {
 
 /**
  * Fills the viewport below the calendar's top edge, so it uses all available height whatever the
- * toolbar above it wraps to. It stops at the content area's bottom padding, which on mobile also
- * keeps it clear of the bottom navigation, so the page itself never scrolls. The returned height is
- * for the calendar inside the element, so the element's own border is left out of it.
+ * toolbar above it wraps to. On mobile the calendar uses its natural height and the page scrolls.
  */
-function useFillHeight(): [
-    React.RefObject<HTMLDivElement | null>,
-    number | string,
-] {
+function useFillHeight(
+    isMobile: boolean,
+): [React.RefObject<HTMLDivElement | null>, number | string] {
     const ref = useRef<HTMLDivElement>(null);
     const [height, setHeight] = useState<number | null>(null);
 
     useLayoutEffect(() => {
+        if (isMobile) {
+            return;
+        }
+
         const measure = () => {
             const element = ref.current;
 
@@ -164,9 +167,9 @@ function useFillHeight(): [
             listeners.abort();
             observer.disconnect();
         };
-    }, []);
+    }, [isMobile]);
 
-    return [ref, height ?? 'calc(100svh - 13rem)'];
+    return [ref, isMobile ? 'auto' : (height ?? 'calc(100svh - 13rem)')];
 }
 
 /**
@@ -183,6 +186,7 @@ export function TimeCalendar({
     absences,
     colleaguesOff,
     floatingAction,
+    isPreview = false,
     hasSelectionDraft,
     onSelect,
     onSelectDays,
@@ -193,20 +197,33 @@ export function TimeCalendar({
     onChange,
 }: Props) {
     const { t, locale, intlLocale } = useTranslation();
+    const isMobile = useMediaQuery('(width < 768px)');
     const timerEnd = useTimerEnd(timer ?? null, timezone);
-    const [containerRef, height] = useFillHeight();
+    const [containerRef, height] = useFillHeight(isMobile);
     const calendarRef = useRef<CalendarRef>(null);
     const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
+    const isSwiping = () =>
+        Boolean(containerRef.current?.closest('[data-swiping]'));
+    const setEditing = (editing: boolean) =>
+        containerRef.current?.toggleAttribute('data-calendar-editing', editing);
 
     useLayoutEffect(() => {
+        if (isPreview) {
+            return;
+        }
+
         if (!hasSelectionDraft) {
             calendarRef.current?.getApi().unselect();
         }
-    }, [hasSelectionDraft]);
+    }, [hasSelectionDraft, isPreview]);
 
     useLayoutEffect(() => {
+        if (isPreview) {
+            return;
+        }
+
         const cancelSelection = (event: KeyboardEvent) => {
             if (event.key !== 'Escape' || selection.current !== 'selecting') {
                 return;
@@ -220,6 +237,9 @@ export function TimeCalendar({
 
         // FullCalendar commits on mouseup or touchend before the event reaches window.
         const finishSelection = () => {
+            if (selection.current !== 'idle') {
+                containerRef.current?.removeAttribute('data-calendar-editing');
+            }
             selection.current = 'idle';
         };
 
@@ -234,7 +254,7 @@ export function TimeCalendar({
         window.addEventListener('touchcancel', finishSelection, { signal });
 
         return () => listeners.abort();
-    }, []);
+    }, [containerRef, isPreview]);
 
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
     const holidayByDate = new Map(
@@ -261,7 +281,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            className="time-calendar relative overflow-hidden rounded-2xl border border-separator bg-surface"
+            className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-background"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
         >
@@ -319,20 +339,22 @@ export function TimeCalendar({
                     minute: '2-digit',
                     hour12: false,
                 }}
-                selectable
+                selectable={!isPreview}
                 selectMirror
                 // The dialog owns the selection until it closes.
                 unselectAuto={false}
                 selectAllow={() => {
-                    if (selection.current === 'cancelled') {
+                    if (selection.current === 'cancelled' || isSwiping()) {
                         return false;
                     }
 
                     selection.current = 'selecting';
+                    setEditing(true);
 
                     return true;
                 }}
-                editable
+                editable={!isPreview}
+                eventAllow={() => !isSwiping()}
                 eventMinHeight={0}
                 eventResizableFromStart
                 events={[
@@ -405,6 +427,8 @@ export function TimeCalendar({
                 slotLaneClass={(info) =>
                     cn(
                         info.isMinor && 'time-calendar-slot-minor',
+                        info.time?.milliseconds === 7 * 60 * 60 * 1000 &&
+                            'time-calendar-morning',
                         holidays.length > 0 &&
                             info.time?.milliseconds === 0 &&
                             'time-calendar-slot-midnight',
@@ -545,7 +569,7 @@ export function TimeCalendar({
                             className="time-calendar-entry relative size-full overflow-hidden border-l-3 text-xs leading-tight text-foreground"
                             style={{
                                 borderLeftColor: color,
-                                backgroundColor: `color-mix(in oklab, ${color} 14%, var(--surface))`,
+                                backgroundColor: `color-mix(in oklab, ${color} 14%, var(--fc-classic-background))`,
                             }}
                         >
                             <div className="time-calendar-entry-layout flex size-full flex-col p-2">
@@ -617,7 +641,7 @@ export function TimeCalendar({
                 }}
                 select={(info) => {
                     // FullCalendar can still report the last range when released without moving.
-                    if (selection.current === 'cancelled') {
+                    if (selection.current === 'cancelled' || isSwiping()) {
                         return;
                     }
 
@@ -640,6 +664,10 @@ export function TimeCalendar({
                     );
                 }}
                 eventClick={(info) => {
+                    if (isSwiping()) {
+                        return;
+                    }
+
                     if (info.event.id === TIMER_EVENT_ID) {
                         onEditTimer?.();
 
@@ -661,6 +689,9 @@ export function TimeCalendar({
                     }
                 }}
                 eventDragStart={({ el }) => {
+                    if (!isSwiping()) {
+                        setEditing(true);
+                    }
                     const lane = el.closest('.time-calendar-event-lane');
                     const calendar = containerRef.current;
 
@@ -689,6 +720,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventDragStop={({ el }) => {
+                    setEditing(false);
                     const style = containerRef.current?.style;
                     style?.removeProperty('--move-origin-left');
                     style?.removeProperty('--move-origin-width');
@@ -708,6 +740,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventResizeStart={({ el }) => {
+                    setEditing(true);
                     const wrapper = el.parentElement;
                     const lane = el.closest<HTMLElement>('[data-date]');
 
@@ -725,6 +758,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventResizeStop={() => {
+                    setEditing(false);
                     resizeLane.current?.style.removeProperty(
                         '--resize-origin-top',
                     );
@@ -767,7 +801,7 @@ export function TimeCalendar({
                     : null;
             })}
             {floatingAction && (
-                <div className="absolute end-4 bottom-4 z-10 flex">
+                <div className="absolute end-4 bottom-4 z-10 hidden md:flex">
                     {floatingAction}
                 </div>
             )}

@@ -74,8 +74,8 @@ export default function Sidebar() {
     const { t } = useTranslation();
     const { currentOrganization } = usePage().props;
     const items = useMainNavigation();
-    const { orderKey, isVisible, setVisible } = useSidebarSettings();
-    const { order, byTitle, move } = useSidebarOrder(orderKey, items);
+    const { isVisible, setVisible } = useSidebarSettings();
+    const { order, byTitle, move } = useSidebarOrder(items);
 
     return (
         <>
@@ -96,7 +96,7 @@ export default function Sidebar() {
                 {order.length > 0 && (
                     <ReorderableList
                         key={JSON.stringify([
-                            orderKey,
+                            currentOrganization?.id,
                             items.map(({ title }) => title),
                         ])}
                         items={order}

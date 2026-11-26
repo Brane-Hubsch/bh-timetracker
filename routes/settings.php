@@ -10,6 +10,7 @@ use App\Http\Controllers\Settings\AiConnectionController;
 use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\SidebarOrderController;
 use App\Http\Controllers\Settings\SidebarVisibilityController;
 use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
     Route::inertia('settings/sidebar', 'settings/sidebar')->name('sidebar.edit');
     Route::patch('settings/sidebar/visibility', SidebarVisibilityController::class)->name('sidebar.visibility.update');
+    Route::patch('settings/sidebar/order', SidebarOrderController::class)->name('sidebar.order.update');
 
     Route::get('settings/ai-connections', [AiConnectionController::class, 'edit'])->name('ai-connections.edit');
     Route::delete('settings/ai-connections/{client}', [AiConnectionController::class, 'destroy'])->name('ai-connections.destroy');

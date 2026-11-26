@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'sidebarHiddenItems' => $user?->sidebar_hidden_items,
+            'sidebarOrder' => $user?->sidebar_order,
             'currentOrganization' => fn () => $user && ($organization = $currentOrganization->get()) ? $user->toUserOrganization($organization) : null,
             'organizations' => fn () => $user?->toUserOrganizations(includeCurrent: true) ?? [],
             // The person's running timer, in any of their organizations.

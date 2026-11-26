@@ -99,3 +99,57 @@ it('validates the sidebar item and its visibility', function () {
             'legacy_hidden_items' => ['Profile'],
         ])->assertUnprocessable()->assertJsonValidationErrors(['item', 'visible', 'legacy_hidden_items.0']);
 });
+
+it('shares the signed-in account sidebar order across organizations', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+    $first = app(CreateOrganization::class)->handle($user, 'First organization');
+    $second = app(CreateOrganization::class)->handle($user, 'Second organization');
+    $order = ['Reports', 'Calendar', 'List'];
+
+    $this->actingAs($user)->from(route('sidebar.edit'))
+        ->patch(route('sidebar.order.update'), ['order' => $order, 'user_id' => $other->id])
+        ->assertRedirect(route('sidebar.edit'));
+
+    expect($user->fresh()->sidebar_order)->toBe($order)
+        ->and($other->fresh()->sidebar_order)->toBeNull();
+
+    $this->actingAs($user->fresh());
+    foreach ([$first, $second] as $organization) {
+        $this->get(route('time.index', $organization->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('currentOrganization.id', $organization->id)
+                ->where('sidebarOrder', $order)
+                ->missing('auth.user.sidebar_order'));
+    }
+});
+
+it('imports the browser sidebar order only if the account has no order', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user)->from(route('sidebar.edit'));
+    $url = route('sidebar.order.update');
+
+    $this->patch($url, ['order' => ['List'], 'import' => true])->assertRedirect(route('sidebar.edit'));
+    $this->patch($url, ['order' => ['Calendar'], 'import' => true])->assertRedirect(route('sidebar.edit'));
+    expect($user->fresh()->sidebar_order)->toBe(['List']);
+
+    $this->patch($url, ['order' => []])->assertRedirect(route('sidebar.edit'));
+    $this->patch($url, ['order' => ['Calendar'], 'import' => true])->assertRedirect(route('sidebar.edit'));
+    expect($user->fresh()->sidebar_order)->toBe([]);
+});
+
+it('validates sidebar order entries and excludes shortcuts', function () {
+    $this->actingAs(User::factory()->create())
+        ->patchJson(route('sidebar.order.update'), [
+            'order' => ['Projects', 'Projects', 'Profile', 'Search', 'Add'],
+        ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['order.0', 'order.1', 'order.2', 'order.3', 'order.4']);
+});
+
+it('requires a verified account to update sidebar order', function () {
+    $url = route('sidebar.order.update');
+
+    $this->patchJson($url, ['order' => []])->assertUnauthorized();
+    $this->actingAs(User::factory()->unverified()->create())
+        ->patchJson($url, ['order' => []])->assertForbidden();
+});

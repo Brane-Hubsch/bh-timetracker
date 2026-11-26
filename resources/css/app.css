@@ -230,6 +230,18 @@
     --fc-classic-ring-color: var(--focus);
 }
 
+@media (width < 768px) {
+    .time-calendar {
+        /* Hold space for the 48 half-hour rows while a new day is measured. */
+        min-height: calc(48 * 1.8125rem);
+        overflow-anchor: none;
+    }
+
+    .dark .time-calendar {
+        --fc-classic-background: var(--background);
+    }
+}
+
 /* Entries are drawn as soft cards by eventContent; keep FullCalendar's own box out of the way. */
 .time-calendar-event {
     border: 0 !important;
@@ -447,6 +459,10 @@
     /* With FullCalendar's own 4px: 12px from the edge, 14px to the first day. */
     padding-inline: 0.5rem 0.625rem;
     text-align: left;
+
+    @media (width < 768px) {
+        padding-inline-end: 0.25rem;
+    }
 }
 
 /* Required fields in the time entry form are marked with a plain "*", as in the design. */
@@ -611,8 +627,8 @@
 
 /*
  * Page transitions (View Transitions API, enabled for page visits in app.tsx). Only the page content
- * moves: it fades out quickly and the new page fades in with a small rise. The sidebar, top bar and
- * bottom navigation stay put. Browsers without the API simply switch pages.
+ * moves: it fades out quickly and the new page fades in with a small rise. Navigation stays put.
+ * Browsers without the API simply switch pages.
  */
 .page-transition {
     view-transition-name: page;
