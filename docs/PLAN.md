@@ -171,7 +171,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - I tabeller med flyttbara kolumner kan användaren dra i handtagen eller använda flyttmenyn med tangentbord eller pekskärm. Ordningen sparas lokalt per tabell och användare. Identitets- och åtgärdskolumner ligger fast där de behövs.
 - Medlemmar ser endast sin egen tid. Belopp visas endast för ägare/admin.
 - På mobil ligger diagrammet först och går kant i kant. Svep på staplarna eller välj period i rubrikraden. Summorna visas i en rad med snitt per rapportdag. Uppdelning, frånvaro, detaljer och projektuppföljning visas som listor. Filter öppnas som bottenark och export ligger sist på sidan.
-- Sammanfattningens diagram har teckenförklaringen under staplarna och en diagramrubrik för skärmläsare.
+- Sammanfattningens diagram har teckenförklaringen under staplarna. För hela kalenderår visas rubriken ”Timmar över tid” med en meny för vecka och månad. För övriga perioder finns diagramrubriken för skärmläsare.
 
 ### 4.7 Startsida (dashboard)
 
