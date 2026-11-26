@@ -164,7 +164,7 @@ export function ResponsiveDialog({
                                     {title}
                                 </Drawer.Heading>
                                 {headerContent}
-                                {closeInHeader && !fullScreenOnMobile && (
+                                {closeInHeader && (
                                     <Drawer.CloseTrigger
                                         className={headerCloseClassName}
                                         aria-label={t('Close')}
