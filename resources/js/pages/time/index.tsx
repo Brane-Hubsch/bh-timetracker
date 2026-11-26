@@ -1,6 +1,6 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Copy } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { Temporal } from 'temporal-polyfill';
@@ -679,13 +679,15 @@ export default function TimeIndex({
                 )}
             >
                 {!copyInToolbar && copyPeriodButton}
-                <TimeActionsMenu
-                    large
-                    placement="top end"
+                <Button
+                    isIconOnly
+                    aria-label={t('Report time')}
                     className="size-14 rounded-full shadow-lg"
-                    onReport={openReport}
-                    testId="new-time-fab"
-                />
+                    onPress={() => openReport('time')}
+                    data-test="new-time-fab"
+                >
+                    <Plus aria-hidden="true" className="size-6" />
+                </Button>
             </div>
 
             <TimeEntryForm

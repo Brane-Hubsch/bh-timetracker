@@ -352,22 +352,6 @@ export function TimeEntryForm({
         onError: (errorBag: Record<string, string>) => setErrors(errorBag),
     };
 
-    // Start the timer from the form instead of entering an end. It runs from now, unless the
-    // start (or date) was changed, e.g. to say "I started at 9".
-    const startTimerFromForm = () => {
-        const data = timerData();
-        const keepsSuggestedStart =
-            current?.start === source?.start && current?.date === source?.date;
-
-        router.post(
-            startTimer.url(),
-            keepsSuggestedStart
-                ? { ...data, date: null, start: null }
-                : (data ?? {}),
-            withErrors,
-        );
-    };
-
     // Start a new timer with the same project, description and tags as this entry.
     const continueEntry = () =>
         current &&
@@ -421,14 +405,6 @@ export function TimeEntryForm({
     const memberName = isSelf ? auth.user.name : member?.label;
     const memberAvatar = isSelf ? auth.user.avatar : member?.avatar;
     const canChangeMember = members.length > 1 && !isTimer;
-    const canStartTimer =
-        timerEnabled &&
-        !isEditing &&
-        !isTimer &&
-        !isAbsence &&
-        isSelf &&
-        !current?.end &&
-        !duration;
     const memberLabel = memberName
         ? t('Reporting for :name', { name: memberName })
         : t('Member');
@@ -707,34 +683,21 @@ export function TimeEntryForm({
                                 <Button slot="close" variant="tertiary">
                                     {t('Cancel')}
                                 </Button>
-                                {canStartTimer && (
-                                    <Button
-                                        variant="tertiary"
-                                        onPress={startTimerFromForm}
-                                        isPending={processing}
-                                        data-test="time-entry-start-timer"
-                                    >
-                                        <Play className="size-4" />
-                                        {t('Start timer')}
-                                    </Button>
-                                )}
+                                <Button
+                                    type="submit"
+                                    form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
+                                    isPending={processing}
+                                    aria-keyshortcuts={SUBMIT_SHORTCUT}
+                                    data-test={
+                                        isAbsence
+                                            ? 'absence-save'
+                                            : 'time-entry-save'
+                                    }
+                                >
+                                    {t('Save')}
+                                    <SubmitShortcutHint />
+                                </Button>
                             </>
-                        )}
-                        {!isTimer && (
-                            <Button
-                                type="submit"
-                                form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
-                                isPending={processing}
-                                aria-keyshortcuts={SUBMIT_SHORTCUT}
-                                data-test={
-                                    isAbsence
-                                        ? 'absence-save'
-                                        : 'time-entry-save'
-                                }
-                            >
-                                {t('Save')}
-                                <SubmitShortcutHint />
-                            </Button>
                         )}
                     </div>
                 </div>
