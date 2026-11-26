@@ -56,5 +56,6 @@
     <body class="font-sans antialiased">
         @include('splash')
         <x-inertia::app />
+        <div class="mobile-status-bar-tint" aria-hidden="true"></div>
     </body>
 </html>
