@@ -28,6 +28,7 @@ import InviteMemberModal from '@/components/invite-member-modal';
 import { RateField } from '@/components/rate-field';
 import { useInitials } from '@/hooks/use-initials';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
+import { useOverlayData } from '@/hooks/use-overlay-data';
 import { useTranslation } from '@/lib/i18n';
 import { index, update } from '@/routes/organizations';
 import { create as createImport } from '@/routes/organizations/import';
@@ -85,6 +86,8 @@ export default function OrganizationEdit({
         useState<OrganizationMember | null>(null);
     const [invitationToCancel, setInvitationToCancel] =
         useState<OrganizationInvitation | null>(null);
+    const removeTarget = useOverlayData(memberToRemove);
+    const cancelTarget = useOverlayData(invitationToCancel);
     const [isProcessing, setProcessing] = useState(false);
     const [isUploadingLogo, setUploadingLogo] = useState(false);
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
@@ -711,7 +714,7 @@ export default function OrganizationEdit({
             >
                 <p className="text-sm">
                     {t(':name will lose access to this organization.', {
-                        name: memberToRemove?.name ?? '',
+                        name: removeTarget?.name ?? '',
                     })}
                 </p>
             </ConfirmDialog>
@@ -738,7 +741,7 @@ export default function OrganizationEdit({
             >
                 <p className="text-sm">
                     {t('The invitation to :email will no longer work.', {
-                        email: invitationToCancel?.email ?? '',
+                        email: cancelTarget?.email ?? '',
                     })}
                 </p>
             </ConfirmDialog>

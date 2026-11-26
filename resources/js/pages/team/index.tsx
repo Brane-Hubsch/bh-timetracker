@@ -52,10 +52,20 @@ export default function TeamIndex({
     const { t, intlLocale } = useTranslation();
     const { auth } = usePage().props;
     const [isInviteOpen, setInviteOpen] = useState(false);
-    const [memberId, setMemberId] = useState<number | null>(null);
+    const [selection, setSelection] = useState<{
+        id: number;
+        isOpen: boolean;
+        formKey: number;
+    } | null>(null);
     const editing = members.find(
-        (member) => member.id === memberId && member.canEdit,
+        (member) => member.id === selection?.id && member.canEdit,
     );
+    const openMember = (id: number) =>
+        setSelection((previous) => ({
+            id,
+            isOpen: true,
+            formKey: (previous?.formKey ?? 0) + 1,
+        }));
     const showActions = members.some((member) => member.canEdit);
     const order = useColumnOrder({
         storageKey: `timereport:team-column-order:${auth.user.id}`,
@@ -229,7 +239,7 @@ export default function TeamIndex({
                                                         },
                                                     )}
                                                     onPress={() =>
-                                                        setMemberId(member.id)
+                                                        openMember(member.id)
                                                     }
                                                     data-test="edit-team-member"
                                                 >
@@ -261,15 +271,22 @@ export default function TeamIndex({
                     onOpenChange={setInviteOpen}
                 />
             )}
-            {editing?.schedule && (
+            {selection && editing?.schedule && (
                 <MemberDrawer
-                    key={editing.id}
+                    key={selection.formKey}
+                    isOpen={selection.isOpen}
                     member={{ ...editing, schedule: editing.schedule }}
                     organization={organization}
                     roles={roles}
                     canViewRates={canViewRates}
                     isSelf={editing.id === auth.user.id}
-                    onClose={() => setMemberId(null)}
+                    onClose={() =>
+                        setSelection((current) =>
+                            current?.formKey === selection.formKey
+                                ? { ...current, isOpen: false }
+                                : current,
+                        )
+                    }
                 />
             )}
         </>

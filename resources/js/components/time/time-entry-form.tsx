@@ -572,11 +572,7 @@ export function TimeEntryForm({
             closeInHeader
             fullScreenOnMobile={isNewEntry}
             desktopClassName="sm:max-w-xl"
-            containerClassName={
-                isEditing
-                    ? 'data-[entering=true]:animate-fade-in! motion-reduce:data-[entering=true]:animate-none!'
-                    : undefined
-            }
+            containerClassName={isEditing ? 'overlay-fade' : undefined}
             footer={
                 <div className="flex w-full items-center gap-2">
                     {memberPicker}

@@ -21,6 +21,7 @@ import {
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ScrubLabel, TimeScrubLabel } from '@/components/time/time-scrub-label';
+import { useOverlayData } from '@/hooks/use-overlay-data';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { formatDuration, parseDuration, workingDays } from '@/lib/time';
@@ -112,18 +113,21 @@ export function draftFromAbsence(absence: Absence): AbsenceDraft {
  */
 export function AbsenceDialog(props: Props) {
     const { t } = useTranslation();
+    const draft = useOverlayData(props.draft);
 
     return (
         <ResponsiveDialog
             isOpen={props.draft !== null}
             onOpenChange={(isOpen) => !isOpen && props.onClose()}
-            title={props.draft?.id ? t('Edit absence') : t('Register absence')}
+            title={draft?.id ? t('Edit absence') : t('Register absence')}
             closeInHeader
             desktopClassName="sm:max-w-[40rem]"
             submitFormId={FORM_ID}
-            footer={<AbsenceDialogFooter {...props} />}
+            footer={
+                <AbsenceDialogFooter draft={draft} onClose={props.onClose} />
+            }
         >
-            {props.draft && <AbsenceForm {...props} draft={props.draft} />}
+            {draft && <AbsenceForm {...props} draft={draft} />}
         </ResponsiveDialog>
     );
 }

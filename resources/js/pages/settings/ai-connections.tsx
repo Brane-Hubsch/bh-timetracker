@@ -4,6 +4,7 @@ import { Bot, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import Heading from '@/components/heading';
+import { useOverlayData } from '@/hooks/use-overlay-data';
 import { useTranslation } from '@/lib/i18n';
 import { formatDate } from '@/lib/time';
 import { destroy, edit } from '@/routes/ai-connections';
@@ -27,6 +28,7 @@ type Props = {
 export default function AiConnections({ mcpUrl, connections }: Props) {
     const { t, intlLocale } = useTranslation();
     const [disconnecting, setDisconnecting] = useState<Connection | null>(null);
+    const disconnectTarget = useOverlayData(disconnecting);
     const [isPending, setPending] = useState(false);
     const claudeCodeCommand = `claude mcp add --transport http bh-timetracker ${mcpUrl}`;
 
@@ -204,7 +206,7 @@ export default function AiConnections({ mcpUrl, connections }: Props) {
                 isOpen={disconnecting !== null}
                 onOpenChange={(isOpen) => !isOpen && setDisconnecting(null)}
                 title={t('Disconnect :name?', {
-                    name: disconnecting?.name ?? '',
+                    name: disconnectTarget?.name ?? '',
                 })}
                 confirmLabel={t('Disconnect')}
                 onConfirm={disconnect}

@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import CreateOrganizationModal from '@/components/create-organization-modal';
 import Heading from '@/components/heading';
 import { LogoImage } from '@/components/logo-image';
+import { useOverlayData } from '@/hooks/use-overlay-data';
 import { useTranslation } from '@/lib/i18n';
 import { edit, index, leave } from '@/routes/organizations';
 import type { Organization } from '@/types';
@@ -18,6 +19,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
     const { t } = useTranslation();
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [leaving, setLeaving] = useState<Organization | null>(null);
+    const leaveTarget = useOverlayData(leaving);
     const [isProcessing, setProcessing] = useState(false);
 
     const leaveOrganization = () => {
@@ -140,7 +142,7 @@ export default function OrganizationsIndex({ organizations }: Props) {
                 <p className="text-sm">
                     {t(
                         'You will lose access to ":name" until someone invites you again.',
-                        { name: leaving?.name ?? '' },
+                        { name: leaveTarget?.name ?? '' },
                     )}
                 </p>
             </ConfirmDialog>
