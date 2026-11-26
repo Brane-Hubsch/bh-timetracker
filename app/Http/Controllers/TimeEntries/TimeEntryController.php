@@ -99,7 +99,7 @@ class TimeEntryController extends Controller
             'absences' => $weekAbsences->where('user_id', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::absence($absence)),
             'colleaguesOff' => $weekAbsences->where('user_id', '!=', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::colleagueOff($absence)),
             ...$this->absenceOptions($organization, $user, $weekStart),
-            'calendarHolidays' => fn () => $view === 'list' ? [] : $organization->holidays()
+            'calendarHolidays' => fn () => $organization->holidays()
                 ->whereDate('date', '>=', $periodStart->toDateString())
                 ->whereDate('date', '<', $periodEnd->toDateString())
                 ->orderBy('date')

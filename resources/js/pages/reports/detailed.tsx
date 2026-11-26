@@ -11,7 +11,7 @@ import {
 import { ProjectDot } from '@/components/project-dot';
 import { ExportMenu } from '@/components/reports/export-menu';
 import { MobileReportEntries } from '@/components/reports/mobile-report-entries';
-import { ReportEntryTags } from '@/components/reports/report-entry-tags';
+import { TimeEntryTags } from '@/components/time/time-entry-tags';
 import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
 import { ReportMemberName } from '@/components/reports/report-member-name';
@@ -116,7 +116,7 @@ export default function ReportsDetailed({
                         <span className="line-clamp-2">
                             {entry.description}
                         </span>
-                        <ReportEntryTags tags={entry.tags} />
+                        <TimeEntryTags tags={entry.tags} />
                     </>
                 );
             case 'duration':

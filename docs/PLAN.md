@@ -145,13 +145,15 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 
-- På mobil delar Lista kalenderns fasta sidhuvud med veckosumma, periodväljare och personavatar. Listan går kant till kant och dagrubrikerna ligger kvar under sidhuvudet när man scrollar genom dagen. Tidsposten visar projekt och varaktighet överst, följt av beskrivning, taggar och klockslag med kundnamn.
+- På mobil delar Lista kalenderns fasta sidhuvud med veckosumma, periodväljare och personavatar. Listan går kant till kant och dagrubrikerna ligger kvar under sidhuvudet när man scrollar genom dagen. Tidsposterna delar radlayout med den detaljerade rapporten och visar projekt och varaktighet överst, följt av beskrivning, taggar och klockslag med kundnamn. Svep i sidled för att byta vecka. Plusknappen och, när den är tillgänglig, Kopiera föregående vecka ligger nere till höger.
+- Helgdagar visas direkt under dagrubriken på både mobil och desktop, även när dagen saknar tidsposter och frånvaro.
 
 **Kalendervy** (veckovy är standard)
 - Plusknappen förifyller starttiden med början av den aktuella timmen i användarens tidszon. Varaktigheten hämtas från den senaste tidsposten som användaren sparade via plusknappen i den aktuella organisationen och webbläsaren. Sluttiden räknas ut från starttiden och varaktigheten. Samma förval gäller på dator och mobil.
 - På breda skärmar delar kalenderrubriken och periodens totalsumma rad med personväljaren, periodväljaren och plusknappen. Periodväljaren använder samma komponent som i rapporterna och visar periodens namn bredvid datumen. Pilarna stegar en dag eller vecka enligt vald vy.
 - Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare.
 - På mobil ligger Igår, Idag och I morgon på en rad i dagväljaren. Svep åt vänster över månadsrutnätet för nästa månad och åt höger för föregående, eller använd månadspilarna.
+- Ett sidledes svep över kalendern på mobil byter dag i dagvyn och vecka i veckovyn.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - På pekskärm skapar ett långtryck i tom tidsyta ett entimmesblock. Flytta blocket i 15-minuterssteg och släpp för att öppna Rapportera tid med vald dag, start- och sluttid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
@@ -189,6 +191,7 @@ Se avsnitt 6.
 - Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
 - Bottennavigeringen har 16 px luft på sidorna och minst 20 px under flikarna, med safe area inräknad. Bottenark har samma nederkant och knapparna i footern ligger 24 px från skärmens sidor.
 - Stor "+"-knapp för ny post på mobil. Rapportdialogen fyller skärmen med rubriken och stängkrysset högst upp och Avbryt och Spara längst ned. Datum ligger på en egen rad, följt av Start, Slut och Tid på samma rad. När tangentbordet visas minskar avståndet under knapparna. Kalenderns bakgrund i mörkt läge fortsätter bakom innehållet vid överskrollning.
+- Tidrapporteringens listvy följer kalenderns mobilmönster med fast sidhuvud, periodväljare, flytande knappar och sidledes svep mellan veckor.
 - Kund- och projektlistorna använder samma mobilmönster med fast rubrikrad, lista kant i kant, runda ikonknappar och filter i bottenark.
 - Under 768 px följer bottenarket den synliga skärmytan i Safari och i webbappen från hemskärmen. När tangentbordet visas ligger sidan bakom stilla, handtag och rubrik ligger överst och eventuella åtgärder ligger ovanför tangentbordet. Innehållet scrollar och visar fältet med fokus även vid Nästa/Föregående. Arket återtar sin vanliga höjd när tangentbordet stängs.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
@@ -373,7 +376,7 @@ Klar. Byggt:
 - Tidposter (`time_entries`) med actions, policy och durationsparser ("1,5", "1:30", "90m", "1h 30m").
 - Formulär: modal på desktop, drawer på mobil. Projektväljaren visar senast använda först och starttiden föreslås smart.
 - Listvy med dags- och veckosummor, och kalendervy med FullCalendar 7 (vecka/dag). I kalendern kan man dra för att skapa, flytta och ändra längd. Poster färgas efter projekt och dagssummor står i kolumnhuvudet.
-- Kopiera föregående period som utkast med kryssrutor. Dagsvyn kopierar föregående dag. Vecko- och listvyn kopierar föregående vecka. Ikonknappen visas när den valda perioden är tom och föregående period har tidsposter för den valda personen. På mobil ligger den ovanför plusknappen i båda vyerna. På desktop visas den i kalenderns nedre högra hörn och i listans verktygsrad. En tooltip beskriver åtgärden.
+- Kopiera föregående period som utkast med kryssrutor. Dagsvyn kopierar föregående dag. Vecko- och listvyn kopierar föregående vecka. Ikonknappen visas när den valda perioden är tom och föregående period har tidsposter för den valda personen. På mobil ligger den ovanför plusknappen i kalendern och listan. På desktop visas den i kalenderns nedre högra hörn och i listans verktygsrad. En tooltip beskriver åtgärden.
 - Ägare/admin kan se och rapportera åt andra medlemmar: via personväljaren i kalendern och via medlemmens avatar längst ner till vänster i formuläret (även snabbinmatningen på startsidan). Avataren visar profilbilden eller medlemmens initialer.
 - Duplicera post, och ta bort med ångra i toasten.
 - Startsida: min tid idag och denna vecka, senaste poster och snabbinmatning. För ägare/admin även teamets vecka och projekt som närmar sig estimatet (≥ 80 %).
@@ -382,7 +385,7 @@ Klar. Byggt:
 Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
-- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag vid sidledes svep, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i periodväljaren. Lista öppnas via Mer på mobil.
+- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag eller vecka vid sidledes svep, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag, Vecka och Lista kan väljas i periodväljaren. Lista öppnas även via Mer på mobil.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
