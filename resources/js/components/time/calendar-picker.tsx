@@ -252,8 +252,10 @@ function PickerBody({
                         variant="ghost"
                         aria-pressed={preset.value === value}
                         className={cn(
-                            'h-9 w-full justify-start px-3 text-foreground aria-pressed:bg-accent/15',
-                            isDay && 'max-md:px-2',
+                            'h-9 w-full px-3 text-foreground aria-pressed:bg-accent/15',
+                            isDay
+                                ? 'justify-center max-md:px-2 md:justify-start'
+                                : 'justify-start',
                         )}
                         onPress={() => onChange(preset.date)}
                     >
