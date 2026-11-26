@@ -60,6 +60,27 @@ it('keeps rates and editing rights out of member responses and rejects writes', 
     $this->patch($this->update, $this->schedule)->assertForbidden();
 });
 
+it('distinguishes an unfiltered team of one from filtered results for the invite hint', function () {
+    $this->actingAs($this->owner)
+        ->get($this->team)
+        ->assertInertia(fn (Assert $page) => $page->has('members', 2));
+
+    $this->from($this->team)
+        ->post(route('organizations.members.deactivate', [$this->organization, $this->member]))
+        ->assertRedirect($this->team);
+
+    $this->get($this->team)->assertInertia(fn (Assert $page) => $page
+        ->has('members', 1)
+        ->where('members.0.id', $this->owner->id)
+        ->where('canInvite', true)
+        ->where('filters', ['search' => '', 'role' => null, 'status' => 'active']));
+
+    $this->get($this->team.'?role=owner&search=Amanda')->assertInertia(fn (Assert $page) => $page
+        ->has('members', 1)
+        ->where('members.0.id', $this->owner->id)
+        ->where('filters', ['search' => 'Amanda', 'role' => 'owner', 'status' => 'active']));
+});
+
 it('saves the schedule, role and rate together for the targeted membership', function () {
     $otherOrg = User::factory()->create()->currentOrganization;
     $otherOrg->members()->attach($this->member, ['role' => OrganizationRole::Member, 'hourly_rate' => 20000]);

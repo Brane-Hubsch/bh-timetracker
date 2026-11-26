@@ -46,6 +46,9 @@ const DAYS = [
     ['Sunday', 'Sun'],
 ] as const;
 
+const footerButtonClassName =
+    'max-md:min-w-0 max-md:flex-1 max-md:px-1 max-md:leading-tight max-md:whitespace-normal';
+
 type Props = {
     isOpen: boolean;
     member: TeamMember & { schedule: TeamSchedule };
@@ -122,6 +125,7 @@ export function MemberDrawer({
                         ? t('Member details')
                         : t('Edit member')
                 }
+                mobileClassName="[&_.drawer__footer]:gap-3"
             >
                 <form
                     className={sideDrawerFormClass}
@@ -170,7 +174,7 @@ export function MemberDrawer({
                                         {t('Deactivated')}
                                     </Chip>
                                 ) : (
-                                    <div className="flex flex-wrap items-center gap-1">
+                                    <div className="flex flex-wrap items-center gap-1 max-md:basis-full">
                                         <FileTrigger
                                             acceptedFileTypes={
                                                 ACCEPTED_IMAGE_TYPES
@@ -398,14 +402,14 @@ export function MemberDrawer({
                                             }
                                             isDetached
                                             size="sm"
-                                            className="flex-wrap gap-2"
+                                            className="gap-2 max-md:grid max-md:grid-cols-7 max-md:gap-1.5 md:flex-wrap"
                                         >
                                             {weekdays.map((day) => (
                                                 <ToggleButton
                                                     key={day.value}
                                                     id={day.value}
                                                     aria-label={day.label}
-                                                    className="rounded-full px-3 data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent-soft-foreground"
+                                                    className="rounded-full px-3 data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent-soft-foreground max-md:h-9 max-md:min-w-0 max-md:px-0"
                                                 >
                                                     {day.shortLabel}
                                                 </ToggleButton>
@@ -533,7 +537,12 @@ export function MemberDrawer({
                         )}
                     </SideDrawerBody>
                     <SideDrawerFooter>
-                        <Button type="button" slot="close" variant="tertiary">
+                        <Button
+                            type="button"
+                            slot="close"
+                            variant="tertiary"
+                            className={footerButtonClassName}
+                        >
                             {member.isDeactivated ? t('Close') : t('Cancel')}
                         </Button>
                         {member.isDeactivated ? (
@@ -541,6 +550,7 @@ export function MemberDrawer({
                                 type="button"
                                 isPending={changingStatus}
                                 onPress={changeStatus}
+                                className={footerButtonClassName}
                             >
                                 {t('Reactivate member')}
                             </Button>
@@ -549,6 +559,7 @@ export function MemberDrawer({
                                 type="submit"
                                 isPending={form.processing}
                                 isDisabled={!form.isDirty || changingAvatar}
+                                className={footerButtonClassName}
                             >
                                 {t('Save changes')}
                             </Button>

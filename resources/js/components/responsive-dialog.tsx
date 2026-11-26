@@ -12,6 +12,8 @@ type Props = {
     headerContent?: ReactNode;
     wrapContent?: (content: ReactNode) => ReactNode;
     closeInHeader?: boolean;
+    showDesktopClose?: boolean;
+    headingClassName?: string;
     fullScreenOnMobile?: boolean;
     children: ReactNode;
     footer?: ReactNode;
@@ -26,7 +28,6 @@ type Props = {
 };
 
 /** Dialog title and a plain close button, as in the TimeReport design. */
-const headingClassName = 'text-xl/7 font-semibold';
 const closeClassName =
     'size-8 rounded-lg bg-transparent text-foreground hover:bg-default';
 
@@ -40,6 +41,8 @@ export function ResponsiveDialog({
     headerContent,
     wrapContent = (content) => content,
     closeInHeader,
+    showDesktopClose = true,
+    headingClassName = 'text-xl/7 font-semibold',
     fullScreenOnMobile = false,
     children,
     footer,
@@ -114,7 +117,7 @@ export function ResponsiveDialog({
                         className={desktopClassName}
                         render={renderDialog}
                     >
-                        {!closeInHeader && (
+                        {showDesktopClose && !closeInHeader && (
                             <Modal.CloseTrigger className={closeClassName} />
                         )}
                         {wrapContent(
@@ -124,7 +127,7 @@ export function ResponsiveDialog({
                                         {title}
                                     </Modal.Heading>
                                     {headerContent}
-                                    {closeInHeader && (
+                                    {showDesktopClose && closeInHeader && (
                                         <Modal.CloseTrigger
                                             className={headerCloseClassName}
                                             aria-label={t('Close')}

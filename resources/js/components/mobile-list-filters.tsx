@@ -21,6 +21,7 @@ type Props = {
     autoFocusSearch?: boolean;
     onSearchSubmit?: () => void;
     status?: SearchStatusFilters['status'];
+    archivedLabel?: string;
     onStatusChange?: (status: SearchStatusFilters['status']) => void;
     doneLabel: string;
     children?: ReactNode;
@@ -74,6 +75,7 @@ export function MobileListFilters({
     autoFocusSearch,
     onSearchSubmit,
     status,
+    archivedLabel,
     onStatusChange,
     doneLabel,
     children,
@@ -126,7 +128,9 @@ export function MobileListFilters({
                                     },
                                     {
                                         id: 'archived',
-                                        label: t('Archived (plural)'),
+                                        label:
+                                            archivedLabel ??
+                                            t('Archived (plural)'),
                                     },
                                 ]}
                             />
