@@ -72,7 +72,12 @@ function ClientNameField({
                 </Label>
                 <FieldError className="min-w-0 text-end">{error}</FieldError>
             </div>
-            <Input autoFocus autoComplete="off" data-test="client-name" />
+            <Input
+                autoFocus
+                autoComplete="off"
+                className="max-md:aria-invalid:status-invalid-field"
+                data-test="client-name"
+            />
             <ComboBox.Popover offset={4}>
                 <ListBox
                     items={options}
@@ -326,7 +331,13 @@ export function ClientFormDrawer({
                                     error={lookupError ?? errors.logo}
                                     data-test="client-logo"
                                 />
-                                <div className="grid gap-4 sm:grid-cols-2">
+                                <div
+                                    className={
+                                        client
+                                            ? 'grid gap-4 sm:grid-cols-2'
+                                            : 'grid gap-4 md:grid-cols-2'
+                                    }
+                                >
                                     <TextInputField
                                         name="organization_number"
                                         label={t('Organization number')}
@@ -364,6 +375,7 @@ export function ClientFormDrawer({
                                 type="button"
                                 slot="close"
                                 variant="tertiary"
+                                className={client ? undefined : 'max-md:flex-1'}
                             >
                                 {t('Cancel')}
                             </Button>
@@ -371,6 +383,7 @@ export function ClientFormDrawer({
                                 type="submit"
                                 isPending={processing}
                                 isDisabled={findingLogo || duplicate}
+                                className={client ? undefined : 'max-md:flex-1'}
                                 data-test="client-save"
                             >
                                 {t('Save')}
