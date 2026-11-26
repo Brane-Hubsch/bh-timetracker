@@ -1,9 +1,16 @@
 {
     "Active (plural)": "Active",
+    "All": "All",
     "Archived (plural)": "Archived",
+    "Billable (plural)": "Billable",
+    "Create the first one with +.": "Create the first one with +.",
+    "Filters, :count selected": "Filters, :count selected",
     "Inactive (plural)": "Inactive",
+    "Non-billable (plural)": "Non-billable",
     "Organization settings": "Organization settings",
     "Profile settings": "Profile settings",
+    "Search clients": "Search clients",
+    "Show :count project|Show :count projects": "Show :count project|Show :count projects",
     "Switch organization": "Switch organization",
     "TimeTracker": "TimeTracker"
 }
