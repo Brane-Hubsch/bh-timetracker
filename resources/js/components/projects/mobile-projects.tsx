@@ -1,31 +1,27 @@
-import { Button, ListBox, SearchField } from '@heroui/react';
-import { router } from '@inertiajs/react';
-import {
-    FolderKanban,
-    ListFilter,
-    Lock,
-    Plus,
-    SlidersHorizontal,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { MobilePageHeader } from '@/components/app-shell/mobile-page-header';
+import { Button, ListBox } from '@heroui/react';
+import { FolderKanban, ListFilter, Lock } from 'lucide-react';
+import { useState } from 'react';
 import { LogoImage } from '@/components/logo-image';
+import {
+    MobileFilterSearch,
+    MobileListFilters,
+    mobileFilterSegmentsClass,
+} from '@/components/mobile-list-filters';
+import { MobileListHeader } from '@/components/mobile-list-header';
 import { MobileProjectRow } from '@/components/projects/mobile-project-row';
 import { SegmentedControl } from '@/components/segmented-control';
 import {
-    SideDrawer,
-    SideDrawerBody,
-    SideDrawerFooter,
-} from '@/components/side-drawer';
+    defaultSearchStatus,
+    useMobileListFilters,
+    type SearchStatusFilters,
+} from '@/hooks/use-mobile-list-filters';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/projects';
 import type { ProjectListItem } from '@/types';
 
-export type ProjectListFilters = {
-    search: string;
-    status: 'active' | 'archived';
+export type ProjectListFilters = SearchStatusFilters & {
     client: number | null;
     billable: '1' | '0' | null;
 };
@@ -45,8 +41,7 @@ type Props = {
 };
 
 const defaultFilters: ProjectListFilters = {
-    search: '',
-    status: 'active',
+    ...defaultSearchStatus,
     client: null,
     billable: null,
 };
@@ -57,13 +52,6 @@ const billingLabels = {
     '0': 'Non-billable (plural)',
 } as const;
 
-const headerButtonClass =
-    'relative grid size-[34px] min-w-0 shrink-0 place-items-center overflow-visible rounded-full p-0 before:absolute before:-inset-y-1.5 before:-inset-x-[5px] before:content-[""]';
-const searchGroupClass =
-    'h-10 border-transparent bg-background shadow-[inset_0_1px_3px_#0000000d]';
-const segmentsClass =
-    'w-full p-[3px] [&>button]:h-8 [&>button]:min-w-0 [&>button]:flex-1 [&>button]:px-1 [&>button]:font-normal [&>button]:text-muted [&>button[data-selected=true]]:font-medium [&>button[data-selected=true]]:text-foreground';
-
 export function MobileProjects({
     projects,
     filters,
@@ -72,55 +60,13 @@ export function MobileProjects({
     hasTimer,
 }: Props) {
     const { t, tc } = useTranslation();
-    const [isOpen, setIsOpen] = useState(false);
     const [clientSearch, setClientSearch] = useState('');
-    const [draftSearch, setDraftSearch] = useState<string | null>(null);
-    const [pending, setPending] = useState<ProjectListFilters | null>(null);
-    const searchTimer = useRef<number | undefined>(undefined);
-    const current = pending ?? filters;
-    const search = draftSearch ?? current.search;
-
-    useEffect(() => () => window.clearTimeout(searchTimer.current), []);
-
-    const apply = (changes: Partial<ProjectListFilters>) => {
-        window.clearTimeout(searchTimer.current);
-        setDraftSearch(null);
-        const next = { ...current, search, ...changes };
-        const query = Object.fromEntries(
-            Object.entries(next).filter(
-                ([key, value]) =>
-                    value !== defaultFilters[key as keyof ProjectListFilters],
-            ),
-        );
-
-        setPending(next);
-        router.get(index.url(), query, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            onFinish: () =>
-                setPending((value) => (value === next ? null : value)),
-        });
-    };
-
-    const changeSearch = (value: string) => {
-        setDraftSearch(value);
-        window.clearTimeout(searchTimer.current);
-        searchTimer.current = window.setTimeout(
-            () => apply({ search: value.trim() }),
-            300,
-        );
-    };
+    const { current, search, isOpen, changeOpen, apply, changeSearch } =
+        useMobileListFilters(index.url(), filters, defaultFilters);
 
     const closeFilters = (open: boolean) => {
-        if (!open) {
-            setClientSearch('');
-            if (draftSearch !== null) {
-                apply({ search: draftSearch.trim() });
-            }
-        }
-
-        setIsOpen(open);
+        if (!open) setClientSearch('');
+        changeOpen(open);
     };
 
     const activeLabels = [
@@ -130,8 +76,7 @@ export function MobileProjects({
                 t('Client')),
         current.billable !== null && t(billingLabels[current.billable]),
         current.search && `“${current.search}”`,
-    ].filter(Boolean);
-    const activeCount = activeLabels.length;
+    ].filter((label): label is string => Boolean(label));
     const isNarrowed = Boolean(
         current.search || current.client !== null || current.billable !== null,
     );
@@ -156,71 +101,20 @@ export function MobileProjects({
                     } as React.CSSProperties
                 }
             >
-                <MobilePageHeader className="flex items-center justify-between">
-                    <div className="min-w-0">
-                        <h1 className="text-[17px]/[21px] font-semibold">
-                            {t('Projects')}
-                        </h1>
-                        {activeCount > 0 && (
-                            <p className="truncate text-xs text-muted">
-                                {activeLabels.join(' · ')}
-                            </p>
-                        )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                        <Button
-                            isIconOnly
-                            variant="outline"
-                            aria-label={
-                                activeCount
-                                    ? tc(
-                                          'Filters, :count selected',
-                                          activeCount,
-                                      )
-                                    : t('Filters')
-                            }
-                            aria-haspopup="dialog"
-                            aria-expanded={isOpen}
-                            className={cn(
-                                headerButtonClass,
-                                activeCount
-                                    ? 'border-accent/35 bg-accent/10 text-accent'
-                                    : 'border-border bg-surface text-foreground',
-                            )}
-                            onPress={() => setIsOpen(true)}
-                            data-test="mobile-project-filters"
-                        >
-                            <SlidersHorizontal
-                                aria-hidden="true"
-                                className="size-[18px]"
-                            />
-                            {activeCount > 0 && (
-                                <span
-                                    aria-hidden="true"
-                                    className="absolute -top-0.5 -right-0.5 size-3 rounded-full border-2 border-surface bg-accent"
-                                />
-                            )}
-                        </Button>
-                        {onCreate && (
-                            <Button
-                                isIconOnly
-                                aria-label={t('New project')}
-                                aria-haspopup="dialog"
-                                className={cn(
-                                    headerButtonClass,
-                                    'bg-accent text-accent-foreground shadow-sm',
-                                )}
-                                onPress={onCreate}
-                                data-test="new-project-button"
-                            >
-                                <Plus
-                                    aria-hidden="true"
-                                    className="size-[18px]"
-                                />
-                            </Button>
-                        )}
-                    </div>
-                </MobilePageHeader>
+                <MobileListHeader
+                    title={t('Projects')}
+                    filterLabels={activeLabels}
+                    filtersOpen={isOpen}
+                    onOpenFilters={() => changeOpen(true)}
+                    filterTestId="mobile-project-filters"
+                    createAction={
+                        onCreate && {
+                            label: t('New project'),
+                            onPress: onCreate,
+                            testId: 'new-project-button',
+                        }
+                    }
+                />
 
                 {projects.length > 0 ? (
                     <ul>
@@ -266,174 +160,112 @@ export function MobileProjects({
                 )}
             </div>
 
-            <SideDrawer
-                title={t('Filters')}
+            <MobileListFilters
                 isOpen={isOpen}
                 onOpenChange={closeFilters}
-                headerActions={
-                    activeCount > 0 && (
-                        <Button
-                            variant="ghost"
-                            className="h-8 px-0 text-accent"
-                            onPress={clearFilters}
-                        >
-                            {t('Clear')}
-                        </Button>
-                    )
-                }
+                hasFilters={activeLabels.length > 0}
+                onClear={clearFilters}
+                searchLabel={t('Search projects')}
+                search={search}
+                onSearchChange={changeSearch}
+                status={current.status}
+                onStatusChange={(status) => apply({ status })}
+                doneLabel={tc(
+                    'Show :count project|Show :count projects',
+                    projects.length,
+                )}
             >
-                <SideDrawerBody>
-                    <div className="grid gap-4">
-                        <SearchField
-                            aria-label={t('Search projects')}
-                            value={search}
-                            onChange={changeSearch}
-                        >
-                            <SearchField.Group className={searchGroupClass}>
-                                <SearchField.SearchIcon />
-                                <SearchField.Input
-                                    placeholder={t('Search projects')}
-                                />
-                                <SearchField.ClearButton />
-                            </SearchField.Group>
-                        </SearchField>
-                        <div className="grid gap-1.5">
-                            <span className="text-[13px] text-muted">
-                                {t('Status')}
-                            </span>
-                            <SegmentedControl
-                                aria-label={t('Status')}
-                                className={segmentsClass}
-                                value={current.status}
-                                onChange={(status) => apply({ status })}
-                                options={[
-                                    {
-                                        id: 'active',
-                                        label: t('Active (plural)'),
-                                    },
-                                    {
-                                        id: 'archived',
-                                        label: t('Archived (plural)'),
-                                    },
-                                ]}
+                <div className="grid gap-1.5">
+                    <span className="text-[13px] text-muted">
+                        {t('Billing')}
+                    </span>
+                    <SegmentedControl
+                        aria-label={t('Billing')}
+                        className={mobileFilterSegmentsClass}
+                        value={current.billable ?? 'all'}
+                        onChange={(value) =>
+                            apply({
+                                billable: value === 'all' ? null : value,
+                            })
+                        }
+                        options={[
+                            { id: 'all', label: t(billingLabels.all) },
+                            { id: '1', label: t(billingLabels['1']) },
+                            { id: '0', label: t(billingLabels['0']) },
+                        ]}
+                    />
+                </div>
+                {clients.length > 0 && (
+                    <div className="grid gap-1.5">
+                        <span className="text-[13px] text-muted">
+                            {t('Client')}
+                        </span>
+                        {clients.length > 7 && (
+                            <MobileFilterSearch
+                                label={t('Search clients')}
+                                value={clientSearch}
+                                onChange={setClientSearch}
                             />
-                        </div>
-                        <div className="grid gap-1.5">
-                            <span className="text-[13px] text-muted">
-                                {t('Billing')}
-                            </span>
-                            <SegmentedControl
-                                aria-label={t('Billing')}
-                                className={segmentsClass}
-                                value={current.billable ?? 'all'}
-                                onChange={(value) =>
+                        )}
+                        <ListBox
+                            aria-label={t('Client')}
+                            className={cn(
+                                'gap-0 p-0',
+                                clients.length > 7 &&
+                                    'scroll-fade-y max-h-56 overflow-y-auto',
+                            )}
+                            selectionMode="single"
+                            disallowEmptySelection
+                            selectedKeys={[current.client ?? 'all']}
+                            onSelectionChange={(keys) => {
+                                if (keys === 'all') return;
+                                const [id] = keys;
+                                if (id !== undefined)
                                     apply({
-                                        billable:
-                                            value === 'all' ? null : value,
-                                    })
-                                }
-                                options={[
-                                    { id: 'all', label: t(billingLabels.all) },
-                                    { id: '1', label: t(billingLabels['1']) },
-                                    { id: '0', label: t(billingLabels['0']) },
-                                ]}
-                            />
-                        </div>
-                        {clients.length > 0 && (
-                            <div className="grid gap-1.5">
-                                <span className="text-[13px] text-muted">
-                                    {t('Client')}
+                                        client:
+                                            id === 'all' ? null : Number(id),
+                                    });
+                            }}
+                        >
+                            <ListBox.Item
+                                id="all"
+                                textValue={t('All clients')}
+                                className="min-h-11 gap-3 px-0 text-[15px] data-[selected=true]:font-medium"
+                            >
+                                <span className="grid size-6 place-items-center text-muted">
+                                    <ListFilter
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
                                 </span>
-                                {clients.length > 7 && (
-                                    <SearchField
-                                        aria-label={t('Search clients')}
-                                        value={clientSearch}
-                                        onChange={setClientSearch}
-                                    >
-                                        <SearchField.Group
-                                            className={searchGroupClass}
-                                        >
-                                            <SearchField.SearchIcon />
-                                            <SearchField.Input
-                                                placeholder={t(
-                                                    'Search clients',
-                                                )}
-                                            />
-                                            <SearchField.ClearButton />
-                                        </SearchField.Group>
-                                    </SearchField>
-                                )}
-                                <ListBox
-                                    aria-label={t('Client')}
-                                    className={cn(
-                                        'gap-0 p-0',
-                                        clients.length > 7 &&
-                                            'scroll-fade-y max-h-56 overflow-y-auto',
-                                    )}
-                                    selectionMode="single"
-                                    disallowEmptySelection
-                                    selectedKeys={[current.client ?? 'all']}
-                                    onSelectionChange={(keys) => {
-                                        if (keys === 'all') return;
-                                        const [id] = keys;
-                                        if (id !== undefined)
-                                            apply({
-                                                client:
-                                                    id === 'all'
-                                                        ? null
-                                                        : Number(id),
-                                            });
-                                    }}
+                                <span className="min-w-0 flex-1 truncate">
+                                    {t('All clients')}
+                                </span>
+                                <ListBox.ItemIndicator className="text-accent" />
+                            </ListBox.Item>
+                            {visibleClients.map((client) => (
+                                <ListBox.Item
+                                    key={client.id}
+                                    id={client.id}
+                                    textValue={client.name}
+                                    className="min-h-11 gap-3 px-0 text-[15px] data-[selected=true]:font-medium"
                                 >
-                                    <ListBox.Item
-                                        id="all"
-                                        textValue={t('All clients')}
-                                        className="min-h-11 gap-3 px-0 text-[15px] data-[selected=true]:font-medium"
-                                    >
-                                        <span className="grid size-6 place-items-center text-muted">
-                                            <ListFilter
-                                                aria-hidden="true"
-                                                className="size-4"
-                                            />
-                                        </span>
-                                        <span className="min-w-0 flex-1 truncate">
-                                            {t('All clients')}
-                                        </span>
-                                        <ListBox.ItemIndicator className="text-accent" />
-                                    </ListBox.Item>
-                                    {visibleClients.map((client) => (
-                                        <ListBox.Item
-                                            key={client.id}
-                                            id={client.id}
-                                            textValue={client.name}
-                                            className="min-h-11 gap-3 px-0 text-[15px] data-[selected=true]:font-medium"
-                                        >
-                                            <LogoImage
-                                                src={client.logo}
-                                                name={client.name}
-                                                size={24}
-                                                className="rounded-md"
-                                            />
-                                            <span className="min-w-0 flex-1 truncate">
-                                                {client.name}
-                                            </span>
-                                            <ListBox.ItemIndicator className="text-accent" />
-                                        </ListBox.Item>
-                                    ))}
-                                </ListBox>
-                            </div>
-                        )}
+                                    <LogoImage
+                                        src={client.logo}
+                                        name={client.name}
+                                        size={24}
+                                        className="rounded-md"
+                                    />
+                                    <span className="min-w-0 flex-1 truncate">
+                                        {client.name}
+                                    </span>
+                                    <ListBox.ItemIndicator className="text-accent" />
+                                </ListBox.Item>
+                            ))}
+                        </ListBox>
                     </div>
-                </SideDrawerBody>
-                <SideDrawerFooter>
-                    <Button slot="close" className="w-full">
-                        {tc(
-                            'Show :count project|Show :count projects',
-                            projects.length,
-                        )}
-                    </Button>
-                </SideDrawerFooter>
-            </SideDrawer>
+                )}
+            </MobileListFilters>
         </>
     );
 }

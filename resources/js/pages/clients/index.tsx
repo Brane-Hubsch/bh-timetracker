@@ -1,20 +1,29 @@
 import { Button, Chip } from '@heroui/react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Briefcase, ChevronRight, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { LogoImage } from '@/components/logo-image';
 import { ClientFormDrawer } from '@/components/client-form-drawer';
 import Heading from '@/components/heading';
 import { ListFilters } from '@/components/list-filters';
+import { LogoImage } from '@/components/logo-image';
+import { MobileListFilters } from '@/components/mobile-list-filters';
+import { MobileListHeader } from '@/components/mobile-list-header';
+import { useIsDesktop } from '@/hooks/use-media-query';
+import {
+    defaultSearchStatus,
+    useMobileListFilters,
+    type SearchStatusFilters,
+} from '@/hooks/use-mobile-list-filters';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
-import { show } from '@/routes/clients';
+import { cn } from '@/lib/utils';
+import { index, show } from '@/routes/clients';
 import type { ClientListItem, ClientNameOption } from '@/types';
 
 type Props = {
     clients: ClientListItem[];
     clientNameOptions: ClientNameOption[];
-    filters: { search: string; status: 'active' | 'archived' };
+    filters: SearchStatusFilters;
 };
 
 export default function ClientsIndex({
@@ -23,53 +32,95 @@ export default function ClientsIndex({
     filters,
 }: Props) {
     const { t, tc } = useTranslation();
+    const isDesktop = useIsDesktop();
+    const { timer } = usePage().props;
     const [isCreateOpen, setCreateOpen] = useState(false);
     useOpenFromQuery('new', () => setCreateOpen(true));
+    const { current, search, isOpen, changeOpen, apply, changeSearch } =
+        useMobileListFilters(index.url(), filters, defaultSearchStatus);
+    const filterLabels = [
+        current.status === 'archived' ? t('Archived (plural)') : '',
+        current.search ? `“${current.search}”` : '',
+    ].filter(Boolean);
+    const clearFilters = () => apply(defaultSearchStatus);
+    const openCreate = () => setCreateOpen(true);
+    const emptyLabel = filters.search
+        ? t('No clients match your search.')
+        : filters.status === 'archived'
+          ? t('No archived clients.')
+          : t('No clients yet.');
 
     return (
         <>
             <Head title={t('Clients')} />
 
-            <div className="grid gap-6">
-                <Heading
-                    title={t('Clients')}
-                    actions={
-                        <Button
-                            onPress={() => setCreateOpen(true)}
-                            data-test="new-client-button"
-                        >
-                            <Plus className="size-4" />
-                            {t('New client')}
-                        </Button>
-                    }
-                />
+            <div
+                className={cn(
+                    'flex flex-col md:grid md:gap-6',
+                    timer
+                        ? 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height)-var(--mobile-timer-space))]'
+                        : 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height))]',
+                )}
+            >
+                {isDesktop ? (
+                    <>
+                        <Heading
+                            title={t('Clients')}
+                            actions={
+                                <Button
+                                    onPress={openCreate}
+                                    data-test="new-client-button"
+                                >
+                                    <Plus className="size-4" />
+                                    {t('New client')}
+                                </Button>
+                            }
+                        />
+                        <ListFilters filters={filters} />
+                    </>
+                ) : (
+                    <MobileListHeader
+                        title={t('Clients')}
+                        filterLabels={filterLabels}
+                        filtersOpen={isOpen}
+                        onOpenFilters={() => changeOpen(true)}
+                        filterTestId="mobile-client-filters"
+                        createAction={{
+                            label: t('New client'),
+                            onPress: openCreate,
+                            testId: 'new-client-button',
+                        }}
+                    />
+                )}
 
-                <ListFilters filters={filters} />
-
-                <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
+                <ul className="max-md:flex max-md:flex-1 max-md:flex-col md:divide-y md:divide-separator md:overflow-hidden md:rounded-2xl md:bg-surface md:shadow-surface">
                     {clients.map((client) => (
-                        <li key={client.id} data-test="client-row">
+                        <li
+                            key={client.id}
+                            className="max-md:relative max-md:not-last:after:pointer-events-none max-md:not-last:after:absolute max-md:not-last:after:inset-s-[68px] max-md:not-last:after:inset-e-0 max-md:not-last:after:bottom-0 max-md:not-last:after:border-b max-md:not-last:after:border-separator max-md:not-last:after:content-['']"
+                            data-test="client-row"
+                        >
                             <Link
                                 href={show({ client: client.slug })}
-                                className="flex items-center justify-between gap-4 p-4 transition-colors hover:bg-surface-secondary"
+                                className="flex items-center justify-between gap-3 px-4 py-3 transition-colors max-md:active:bg-default md:gap-4 md:py-4 md:hover:bg-surface-secondary"
                             >
                                 <LogoImage
                                     src={client.logo}
                                     name={client.name}
                                     size={40}
                                 />
-                                <div className="min-w-0 flex-1 space-y-1">
+                                <div className="min-w-0 flex-1 space-y-0.5 md:space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="truncate font-medium">
+                                        <span className="truncate font-medium max-md:text-[15px]/5">
                                             {client.name}
                                         </span>
-                                        {client.isArchived && (
+                                        {isDesktop && client.isArchived && (
                                             <Chip size="sm" variant="soft">
                                                 {t('Archived')}
                                             </Chip>
                                         )}
                                     </div>
-                                    <p className="text-sm text-muted">
+                                    <p className="text-muted max-md:text-[13px]/[18px] md:text-sm">
                                         {client.organizationNumber &&
                                             `${client.organizationNumber} · `}
                                         <span className="inline-block">
@@ -85,24 +136,61 @@ export default function ClientsIndex({
                                         </span>
                                     </p>
                                 </div>
-                                <ChevronRight className="size-4 shrink-0 text-muted" />
+                                <ChevronRight className="hidden size-4 shrink-0 text-muted md:block" />
                             </Link>
                         </li>
                     ))}
                     {clients.length === 0 && (
-                        <li className="grid justify-items-center gap-2 p-10 text-center">
-                            <Briefcase className="size-6 text-muted" />
-                            <p className="text-sm text-muted">
-                                {filters.search
-                                    ? t('No clients match your search.')
-                                    : filters.status === 'archived'
-                                      ? t('No archived clients.')
-                                      : t('No clients yet.')}
+                        <li className="grid justify-items-center py-10 text-center max-md:flex-1 max-md:place-content-center max-md:px-4 md:gap-2 md:px-10">
+                            <span className="grid place-items-center text-muted max-md:mb-4 max-md:size-[52px] max-md:rounded-full max-md:bg-default">
+                                <Briefcase
+                                    aria-hidden="true"
+                                    className="size-6"
+                                />
+                            </span>
+                            <p className="text-[15px] font-medium md:text-sm md:font-normal md:text-muted">
+                                {emptyLabel}
                             </p>
+                            {!isDesktop &&
+                                (filters.search ? (
+                                    <Button
+                                        variant="ghost"
+                                        className="text-accent"
+                                        onPress={clearFilters}
+                                    >
+                                        {t('Clear filters')}
+                                    </Button>
+                                ) : (
+                                    filters.status === 'active' && (
+                                        <p className="mt-1.5 text-[13px] text-muted">
+                                            {t(
+                                                'Create the first client with +.',
+                                            )}
+                                        </p>
+                                    )
+                                ))}
                         </li>
                     )}
                 </ul>
             </div>
+
+            {!isDesktop && (
+                <MobileListFilters
+                    isOpen={isOpen}
+                    onOpenChange={changeOpen}
+                    hasFilters={filterLabels.length > 0}
+                    onClear={clearFilters}
+                    searchLabel={t('Search clients')}
+                    search={search}
+                    onSearchChange={changeSearch}
+                    status={current.status}
+                    onStatusChange={(status) => apply({ status })}
+                    doneLabel={tc(
+                        'Show :count client|Show :count clients',
+                        clients.length,
+                    )}
+                />
+            )}
 
             <ClientFormDrawer
                 client={null}

@@ -130,6 +130,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 ### 4.3 Kunder
 
 - Lista med sök, skapa/redigera/arkivera. Fält: namn, hemsida, org.nr, e-post, anteckning. Hemsidan är valfri och kan användas för att hämta en logga till formuläret.
+- På mobil går kundlistan kant i kant. Sökning och status finns i ett bottenark, och valda filter visas i den fasta rubrikraden. Den runda plusknappen i rubrikraden öppnar formuläret för ny kund.
 - Kundsida: kundens projekt + summerad tid för vald period, inklusive sedan start.
 
 ### 4.4 Projekt
@@ -184,6 +185,7 @@ Se avsnitt 6.
 - Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
 - Bottennavigeringen har 16 px luft på sidorna och minst 20 px under flikarna, med safe area inräknad. Bottenark har samma nederkant och knapparna i footern ligger 24 px från skärmens sidor.
 - Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
+- Kund- och projektlistorna använder samma mobilmönster med fast rubrikrad, lista kant i kant, runda ikonknappar och filter i bottenark.
 - Under 768 px följer bottenarket den synliga skärmytan i Safari och i webbappen från hemskärmen. När tangentbordet visas ligger sidan bakom stilla, handtag och rubrik ligger överst och eventuella åtgärder ligger ovanför tangentbordet. Innehållet scrollar och visar fältet med fokus även vid Nästa/Föregående. Arket återtar sin vanliga höjd när tangentbordet stängs.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
