@@ -8,6 +8,7 @@ import type { ReportFilterValues } from '@/types';
 type Props = {
     type: 'summary' | 'detailed';
     filters: ReportFilterValues;
+    mobile?: boolean;
 };
 
 type Format = 'csv' | 'xlsx' | 'pdf';
@@ -15,7 +16,7 @@ type Format = 'csv' | 'xlsx' | 'pdf';
 /**
  * Download the current report (same filters) as PDF, XLSX or CSV.
  */
-export function ExportMenu({ type, filters }: Props) {
+export function ExportMenu({ type, filters, mobile = false }: Props) {
     const { t } = useTranslation();
     const url = (format: Format) =>
         exportMethod.url(undefined, {
@@ -24,11 +25,22 @@ export function ExportMenu({ type, filters }: Props) {
 
     return (
         <Dropdown>
-            <Button variant="secondary" data-test="report-export">
+            <Button
+                variant={mobile ? 'outline' : 'secondary'}
+                className={
+                    mobile
+                        ? 'h-10 w-full rounded-full border-border bg-surface'
+                        : undefined
+                }
+                data-test={mobile ? 'mobile-report-export' : 'report-export'}
+            >
                 <Download className="size-4" />
                 {t('Export')}
             </Button>
-            <Dropdown.Popover placement="bottom end" className="min-w-48">
+            <Dropdown.Popover
+                placement={mobile ? 'top' : 'bottom end'}
+                className="min-w-48"
+            >
                 <Dropdown.Menu
                     onAction={(key) => {
                         window.location.href = url(key as Format);

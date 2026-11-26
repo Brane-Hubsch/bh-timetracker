@@ -1,6 +1,6 @@
 import { Button, Table } from '@heroui/react';
 import type { SortDescriptor } from '@heroui/react';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
     ColumnOrderStatus,
@@ -10,13 +10,16 @@ import {
 } from '@/components/reorderable-column-header';
 import { ProjectDot } from '@/components/project-dot';
 import { ExportMenu } from '@/components/reports/export-menu';
+import { MobileReportEntries } from '@/components/reports/mobile-report-entries';
+import { ReportEntryTags } from '@/components/reports/report-entry-tags';
 import { ReportFilterBar } from '@/components/reports/report-filter-bar';
 import { ReportLayout } from '@/components/reports/report-layout';
 import { ReportMemberName } from '@/components/reports/report-member-name';
 import { ReportStats } from '@/components/reports/report-stats';
+import { useReportNavigation } from '@/hooks/use-report-navigation';
 import { formatMoney } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import { reportMemberAvatars, reportQuery } from '@/lib/reports';
+import { reportMemberAvatars } from '@/lib/reports';
 import { formatDate, formatDuration, timeOf } from '@/lib/time';
 import type {
     Paginated,
@@ -76,12 +79,8 @@ export default function ReportsDetailed({
             (column !== 'amount' || abilities.canViewAmounts),
     });
 
-    const visit = (changes: Partial<ReportFilterValues>, page?: number) =>
-        router.get(
-            window.location.pathname,
-            { ...reportQuery(filters, changes), page },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+    const navigation = useReportNavigation('detailed', filters);
+    const visit = navigation.apply;
 
     const sortDescriptor: SortDescriptor = {
         column: filters.sort,
@@ -117,18 +116,7 @@ export default function ReportsDetailed({
                         <span className="line-clamp-2">
                             {entry.description}
                         </span>
-                        {entry.tags.length > 0 && (
-                            <span className="mt-1 flex flex-wrap gap-1">
-                                {entry.tags.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="rounded-full bg-default px-2 py-0.5 text-xs text-default-foreground"
-                                    >
-                                        {tag}
-                                    </span>
-                                ))}
-                            </span>
-                        )}
+                        <ReportEntryTags tags={entry.tags} />
                     </>
                 );
             case 'duration':
@@ -154,16 +142,32 @@ export default function ReportsDetailed({
             current="detailed"
             filters={filters}
             actions={<ExportMenu type="detailed" filters={filters} />}
+            mobileControls={{
+                navigation,
+                options,
+                weekStartsOn,
+                seconds: totals.seconds,
+            }}
         >
             <ReportFilterBar
                 filters={filters}
                 options={options}
                 weekStartsOn={weekStartsOn}
+                apply={visit}
             />
 
             <ReportStats totals={totals} currency={currency} />
 
-            <Table>
+            <MobileReportEntries
+                filters={filters}
+                entries={entries}
+                abilities={abilities}
+                avatars={avatars}
+                currency={currency}
+                onSort={visit}
+            />
+
+            <Table className="hidden md:block">
                 <ColumnOrderStatus announcement={order.announcement} />
                 <Table.ScrollContainer>
                     <Table.Content
@@ -287,7 +291,7 @@ export default function ReportsDetailed({
 
             {entries.last_page > 1 && (
                 <nav
-                    className="flex items-center justify-between gap-3 text-sm"
+                    className="flex items-center justify-between gap-3 text-sm max-md:px-4 max-md:pt-4"
                     aria-label={t('Pagination')}
                 >
                     <span className="text-muted">
@@ -321,6 +325,9 @@ export default function ReportsDetailed({
                     </div>
                 </nav>
             )}
+            <div className="px-4 pt-6 pb-6 md:hidden">
+                <ExportMenu type="detailed" filters={filters} mobile />
+            </div>
         </ReportLayout>
     );
 }

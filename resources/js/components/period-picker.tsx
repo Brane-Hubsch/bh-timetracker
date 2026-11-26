@@ -1,6 +1,7 @@
 import { Button, Drawer, Popover } from '@heroui/react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,8 @@ type Props = {
     enclosed?: boolean;
     /** On phones, show the period as a single outlined button. */
     mobileLabelOnly?: boolean;
+    /** Move the step buttons into the mobile panel header. */
+    mobileStepInPanel?: boolean;
     className?: string;
     testId: string;
     children: (context: {
@@ -34,13 +37,15 @@ export function PeriodPicker({
     compact = false,
     enclosed = false,
     mobileLabelOnly = false,
+    mobileStepInPanel = false,
     className,
     testId,
     children,
 }: Props) {
     const { t } = useTranslation();
+    const labelOnly = mobileLabelOnly || mobileStepInPanel;
     const isDesktop = useMediaQuery(
-        mobileLabelOnly
+        labelOnly
             ? '(min-width: 768px)'
             : compact
               ? '(min-width: 640px)'
@@ -61,22 +66,24 @@ export function PeriodPicker({
                 enclosed
                     ? 'h-8 justify-center px-3'
                     : 'h-9 justify-between bg-surface ps-3.5 pe-2.5',
-                mobileLabelOnly &&
+                labelOnly &&
                     'max-md:h-[34px] max-md:border max-md:border-border max-md:bg-surface max-md:text-xs',
+                mobileStepInPanel && 'max-md:min-h-0 max-md:px-3',
             )}
             data-test={testId}
         >
             <span
                 className={cn(
                     'flex min-w-0 items-baseline gap-2',
-                    mobileLabelOnly && 'max-md:gap-1.5',
+                    labelOnly && 'max-md:gap-1.5',
                 )}
             >
                 {name && (
                     <span
                         className={cn(
                             'truncate font-semibold first-letter:uppercase',
-                            mobileLabelOnly && 'max-md:text-[13px]',
+                            labelOnly && 'max-md:text-[13px]',
+                            mobileStepInPanel && 'max-md:shrink-0',
                         )}
                     >
                         {name}
@@ -86,8 +93,12 @@ export function PeriodPicker({
                     <span
                         className={cn(
                             'truncate tabular-nums',
-                            name ? 'font-normal text-muted' : 'font-medium',
-                            mobileLabelOnly && 'max-md:text-[11px]',
+                            name
+                                ? 'font-normal text-muted'
+                                : mobileStepInPanel
+                                  ? 'font-semibold'
+                                  : 'font-medium',
+                            labelOnly && 'max-md:text-[11px]',
                         )}
                     >
                         {range}
@@ -97,6 +108,33 @@ export function PeriodPicker({
         </Button>
     );
 
+    const stepButton = (direction: -1 | 1, inPanel = false) => (
+        <Button
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            className={cn(
+                stepButtonClassName,
+                !inPanel && labelOnly && 'max-md:hidden',
+            )}
+            isDisabled={!onStep}
+            aria-label={
+                direction === -1
+                    ? (stepLabels?.[0] ?? t('Previous period'))
+                    : (stepLabels?.[1] ?? t('Next period'))
+            }
+            onPress={() => onStep?.(direction)}
+            data-test={`${testId}-${direction === -1 ? 'previous' : 'next'}`}
+        >
+            <span
+                aria-hidden="true"
+                className={`report-period-icon report-period-icon--${direction === -1 ? 'previous' : 'next'}`}
+            />
+        </Button>
+    );
+
+    const Backdrop = mobileStepInPanel ? BottomSheetBackdrop : Drawer.Backdrop;
+
     return (
         <div
             className={cn(
@@ -104,29 +142,12 @@ export function PeriodPicker({
                 enclosed
                     ? 'h-9 gap-1 rounded-full border border-border bg-surface p-px'
                     : 'gap-1',
-                mobileLabelOnly &&
+                labelOnly &&
                     'max-md:h-auto max-md:border-0 max-md:bg-transparent max-md:p-0',
                 className,
             )}
         >
-            <Button
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                className={cn(
-                    stepButtonClassName,
-                    mobileLabelOnly && 'max-md:hidden',
-                )}
-                isDisabled={!onStep}
-                aria-label={stepLabels?.[0] ?? t('Previous period')}
-                onPress={() => onStep?.(-1)}
-                data-test={`${testId}-previous`}
-            >
-                <span
-                    aria-hidden="true"
-                    className="report-period-icon report-period-icon--previous"
-                />
-            </Button>
+            {(!mobileStepInPanel || isDesktop) && stepButton(-1)}
             {isDesktop ? (
                 <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
                     {trigger}
@@ -149,7 +170,7 @@ export function PeriodPicker({
             ) : (
                 <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
                     {trigger}
-                    <Drawer.Backdrop variant="opaque">
+                    <Backdrop variant="opaque">
                         <Drawer.Content
                             placement="bottom"
                             className={compact ? 'max-w-dvw' : undefined}
@@ -162,20 +183,33 @@ export function PeriodPicker({
                                     </Drawer.Heading>
                                 ) : (
                                     <Drawer.Header className="flex-row items-center justify-between border-b border-separator px-5 py-1.5">
-                                        <Drawer.Heading className="font-semibold">
+                                        <Drawer.Heading
+                                            className={cn(
+                                                'font-semibold',
+                                                mobileStepInPanel &&
+                                                    'text-[17px]/[21px]',
+                                            )}
+                                        >
                                             {dialogLabel}
                                         </Drawer.Heading>
-                                        <Drawer.CloseTrigger
-                                            aria-label={t('Close')}
-                                            className="static size-10 rounded-full bg-transparent hover:bg-transparent"
-                                        >
-                                            <span className="grid size-6 place-items-center rounded-full bg-default">
-                                                <span
-                                                    aria-hidden="true"
-                                                    className="report-period-icon report-period-icon--close"
-                                                />
-                                            </span>
-                                        </Drawer.CloseTrigger>
+                                        {mobileStepInPanel ? (
+                                            <div className="flex h-9 items-center gap-0.5 rounded-full border border-border bg-surface p-px">
+                                                {stepButton(-1, true)}
+                                                {stepButton(1, true)}
+                                            </div>
+                                        ) : (
+                                            <Drawer.CloseTrigger
+                                                aria-label={t('Close')}
+                                                className="static size-10 rounded-full bg-transparent hover:bg-transparent"
+                                            >
+                                                <span className="grid size-6 place-items-center rounded-full bg-default">
+                                                    <span
+                                                        aria-hidden="true"
+                                                        className="report-period-icon report-period-icon--close"
+                                                    />
+                                                </span>
+                                            </Drawer.CloseTrigger>
+                                        )}
                                     </Drawer.Header>
                                 )}
                                 <Drawer.Body className="m-0! p-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -183,27 +217,10 @@ export function PeriodPicker({
                                 </Drawer.Body>
                             </Drawer.Dialog>
                         </Drawer.Content>
-                    </Drawer.Backdrop>
+                    </Backdrop>
                 </Drawer>
             )}
-            <Button
-                isIconOnly
-                variant="ghost"
-                size="sm"
-                className={cn(
-                    stepButtonClassName,
-                    mobileLabelOnly && 'max-md:hidden',
-                )}
-                isDisabled={!onStep}
-                aria-label={stepLabels?.[1] ?? t('Next period')}
-                onPress={() => onStep?.(1)}
-                data-test={`${testId}-next`}
-            >
-                <span
-                    aria-hidden="true"
-                    className="report-period-icon report-period-icon--next"
-                />
-            </Button>
+            {(!mobileStepInPanel || isDesktop) && stepButton(1)}
         </div>
     );
 }

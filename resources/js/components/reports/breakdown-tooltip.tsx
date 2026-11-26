@@ -1,7 +1,8 @@
 import { Tooltip } from '@heroui/react';
-import type { RefObject } from 'react';
+import type { CSSProperties, RefObject } from 'react';
 import { formatDecimalHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 type BreakdownItem = {
     key: string | number;
@@ -16,10 +17,12 @@ export function BreakdownTooltip({
     items,
     placement,
     triggerRef,
+    width,
 }: {
     title: string;
     items: BreakdownItem[];
-    placement: 'bottom' | 'right';
+    placement: 'bottom' | 'right' | 'left';
+    width?: number;
     triggerRef?: RefObject<Element | null>;
 }) {
     const { intlLocale } = useTranslation();
@@ -29,11 +32,20 @@ export function BreakdownTooltip({
             showArrow
             placement={placement}
             triggerRef={triggerRef}
-            className={`w-max px-3 py-2.5 break-normal ${
-                placement === 'right'
-                    ? 'max-w-[min(20rem,calc(50dvw-1.5rem))] min-w-[min(16rem,calc(50dvw-1.5rem))]'
-                    : 'max-w-[calc(100vw-1.5rem)] min-w-[min(16rem,calc(100vw-1.5rem))]'
-            }`}
+            containerPadding={width !== undefined ? 8 : undefined}
+            style={
+                width !== undefined
+                    ? ({ '--breakdown-width': `${width}px` } as CSSProperties)
+                    : undefined
+            }
+            className={cn(
+                'w-max px-3 py-2.5 break-normal',
+                width !== undefined
+                    ? 'max-w-(--breakdown-width)'
+                    : placement === 'right'
+                      ? 'max-w-[min(20rem,calc(50dvw-1.5rem))] min-w-[min(16rem,calc(50dvw-1.5rem))]'
+                      : 'max-w-[calc(100vw-1.5rem)] min-w-[min(16rem,calc(100vw-1.5rem))]',
+            )}
         >
             <Tooltip.Arrow className="pointer-events-none" />
             <p className="text-[13px] leading-[18px] font-semibold wrap-anywhere">

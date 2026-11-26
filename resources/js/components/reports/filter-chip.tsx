@@ -45,12 +45,40 @@ type Props = {
 };
 
 /** "Alex Lind, Sam Ek", or "Alex Lind +2" when more are chosen. */
-function summarize(chosen: FilterOption[]): string {
+export function summarizeFilter(chosen: FilterOption[]): string {
     if (chosen.length <= 2) {
         return chosen.map((option) => option.label).join(', ');
     }
 
     return `${chosen[0].label} +${chosen.length - 1}`;
+}
+
+export function filterOptionSections(
+    options: FilterOption[],
+    search: string,
+    statusSections?: Props['statusSections'],
+) {
+    const query = search.trim().toLocaleLowerCase();
+    const visible = query
+        ? options.filter((option) =>
+              `${option.label} ${option.detail ?? ''}`
+                  .toLocaleLowerCase()
+                  .includes(query),
+          )
+        : options;
+    if (!statusSections)
+        return visible.length ? [{ label: undefined, options: visible }] : [];
+
+    return [
+        {
+            label: statusSections.active,
+            options: visible.filter((option) => !option.isInactive),
+        },
+        {
+            label: statusSections.inactive,
+            options: visible.filter((option) => option.isInactive),
+        },
+    ].filter((section) => section.options.length > 0);
 }
 
 /**
@@ -78,26 +106,7 @@ export function FilterChip({
     const chosen = options.filter((option) => value.includes(option.value));
     const active = isActive ?? chosen.length > 0;
     const isSearchable = options.length > 7;
-    const query = search.trim().toLocaleLowerCase();
-    const visible = query
-        ? options.filter((option) =>
-              `${option.label} ${option.detail ?? ''}`
-                  .toLocaleLowerCase()
-                  .includes(query),
-          )
-        : options;
-    const sections =
-        statusSections &&
-        [
-            {
-                label: statusSections.active,
-                options: visible.filter((option) => !option.isInactive),
-            },
-            {
-                label: statusSections.inactive,
-                options: visible.filter((option) => option.isInactive),
-            },
-        ].filter((section) => section.options.length > 0);
+    const sections = filterOptionSections(options, search, statusSections);
 
     const renderOption = (option: FilterOption) => (
         <ListBox.Item
@@ -164,7 +173,7 @@ export function FilterChip({
                 {renderPreview?.(active ? chosen : options.slice(0, 3))}
                 {icon}
                 <span className="max-w-52 truncate">
-                    {active ? (activeLabel ?? summarize(chosen)) : label}
+                    {active ? (activeLabel ?? summarizeFilter(chosen)) : label}
                 </span>
                 <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
             </Button>
@@ -237,7 +246,7 @@ export function FilterChip({
                             </p>
                         )}
                     >
-                        {sections
+                        {statusSections
                             ? sections.map((section) => (
                                   <ListBox.Section key={section.label}>
                                       <Header className="px-2 py-1 text-xs font-medium text-muted">
@@ -246,7 +255,9 @@ export function FilterChip({
                                       {section.options.map(renderOption)}
                                   </ListBox.Section>
                               ))
-                            : visible.map(renderOption)}
+                            : sections.flatMap((section) =>
+                                  section.options.map(renderOption),
+                              )}
                     </ListBox>
                     {selectionMode === 'multiple' && (
                         <div className="flex items-center justify-between border-t border-separator ps-2 pt-1">

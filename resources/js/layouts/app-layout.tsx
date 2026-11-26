@@ -65,9 +65,10 @@ export default function AppLayout({
                             WIDTHS[width],
                             compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12',
                             'max-md:has-[.mobile-calendar-header]:animate-none max-md:has-[.mobile-calendar-header]:bg-surface max-md:has-[.mobile-calendar-header]:px-0 max-md:has-[.mobile-calendar-header]:pt-0 dark:max-md:has-[.mobile-calendar-header]:bg-background',
+                            'max-md:has-[.report-mobile-header]:animate-none max-md:has-[.report-mobile-header]:bg-surface max-md:has-[.report-mobile-header]:px-0 max-md:has-[.report-mobile-header]:pt-0 dark:max-md:has-[.report-mobile-header]:bg-background',
                             hasTimer
-                                ? 'pb-[calc(10rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(6.625rem+env(safe-area-inset-bottom))]'
-                                : 'pb-[calc(7rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(3.5625rem+env(safe-area-inset-bottom))]',
+                                ? 'pb-[calc(10rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(6.625rem+env(safe-area-inset-bottom))] max-md:has-[.report-mobile-header]:pb-[calc(6.625rem+env(safe-area-inset-bottom))]'
+                                : 'pb-[calc(7rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(3.5625rem+env(safe-area-inset-bottom))] max-md:has-[.report-mobile-header]:pb-[calc(3.5625rem+env(safe-area-inset-bottom))]',
                         )}
                     >
                         {breadcrumbs.length > 1 && (

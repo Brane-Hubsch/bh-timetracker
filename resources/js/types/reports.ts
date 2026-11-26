@@ -63,6 +63,7 @@ export type ReportTotals = {
     seconds: number;
     billableSeconds: number;
     amount: number | null;
+    reportedDays?: number;
 };
 
 export type ReportGroup = ReportTotals & {

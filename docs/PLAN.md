@@ -157,7 +157,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.6 Rapporter
 
-- **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, sedan start, anpassad), filter (medlemmar, kunder, projekt, debiterbar), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt. För hela kalenderår kan diagrammet växla mellan vecka och månad.
+- **Sammanfattning**: period (förval: denna vecka, förra veckan, denna månad, förra månaden, i år, sedan start, anpassad), filter (medlemmar, kunder, projekt, taggar, debitering), gruppering i två nivåer (t.ex. Kund → Projekt, Projekt → Medlem, Medlem → Dag). Visar timmar, debiterbara timmar och belopp. Stapeldiagram per dag/vecka och fördelning per projekt. För hela kalenderår kan diagrammet växla mellan vecka och månad.
   I uppdelningstabellen med andelsstaplar kan användaren flytta måttkolumner med drag och släpp eller via kolumnrubrikens meny. Ordningen sparas per användare i webbläsaren.
 - **Detaljerad**: lista med alla poster enligt filter, sortering, summering.
 - **Projektuppföljning**: alla aktiva projekt med estimat, förbrukat, kvar och procent.
@@ -165,6 +165,8 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - Rapportens filter ligger i URL:en så att den går att bokmärka och dela internt.
 - I tabeller med flyttbara kolumner kan användaren dra i handtagen eller använda flyttmenyn med tangentbord eller pekskärm. Ordningen sparas lokalt per tabell och användare. Identitets- och åtgärdskolumner ligger fast där de behövs.
 - Medlemmar ser endast sin egen tid. Belopp visas endast för ägare/admin.
+- På mobil ligger diagrammet först och går kant i kant. Svep på staplarna eller välj period i rubrikraden. Summorna visas i en rad med snitt per rapportdag. Uppdelning, frånvaro, detaljer och projektuppföljning visas som listor. Filter öppnas som bottenark och export ligger sist på sidan.
+- Sammanfattningens diagram har teckenförklaringen under staplarna och en diagramrubrik för skärmläsare.
 
 ### 4.7 Startsida (dashboard)
 
@@ -182,6 +184,7 @@ Se avsnitt 6.
 - Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
 - Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
 - Under 768 px följer bottenarket den synliga skärmytan i Safari och i webbappen från hemskärmen. När tangentbordet visas ligger sidan bakom stilla, handtag och rubrik ligger överst och eventuella åtgärder ligger ovanför tangentbordet. Innehållet scrollar och visar fältet med fokus även vid Nästa/Föregående. Arket återtar sin vanliga höjd när tangentbordet stängs.
+- Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
 
@@ -387,7 +390,7 @@ Avvikelser och förtydliganden:
 Klar. Byggt:
 
 - `ReportBuilder` (`app/Services/Reports`) med filter (period, medlemmar, kunder, projekt, debiterbar) och gruppering i två nivåer: kund, projekt, medlem, dag, vecka eller månad. Samma builder ska användas av MCP-verktyget `get_report` i Fas 5.
-- **Sammanfattning** visar summakort (timmar, debiterbara timmar, belopp), stapeldiagram per dag eller vecka och en grupperad tabell med andelsstaplar. Vid gruppering per projekt visas varje projekts andel av tiden i projektets färg.
+- **Sammanfattning** visar först stapeldiagram per dag, vecka eller månad, med teckenförklaringen under, sedan timmar, debiterbara timmar och belopp. Summorna visas som kort på desktop och i en rad på mobil. Uppdelningen med andelsstaplar visas som tabell på desktop och som lista på mobil. Vid gruppering per projekt visas varje projekts andel av tiden i projektets färg.
 - **Detaljerad** rapport är sorterbar på datum, tid, projekt och medlem, med 50 poster per sida och summor.
 - **Projektuppföljning** visar alla aktiva projekt med estimat, förbrukat, kvar och procent.
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
