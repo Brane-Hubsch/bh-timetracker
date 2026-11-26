@@ -699,7 +699,6 @@ export default function TimeIndex({
                     large
                     placement="top end"
                     className="size-14 rounded-full shadow-lg"
-                    onStartTimer={onStartTimer}
                     onReport={openReport}
                     testId="new-time-fab"
                 />
