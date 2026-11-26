@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 type Props = {
     title: string;
     filterLabels: string[];
+    filterCount?: number;
     filtersOpen: boolean;
     onOpenFilters: () => void;
     filterTestId: string;
@@ -19,19 +20,18 @@ const buttonClass =
 export function MobileListHeader({
     title,
     filterLabels,
+    filterCount = filterLabels.length,
     filtersOpen,
     onOpenFilters,
     filterTestId,
     createAction,
 }: Props) {
     const { t, tc } = useTranslation();
-    const count = filterLabels.length;
-
     return (
         <MobilePageHeader className="flex items-center justify-between">
             <div className="min-w-0">
                 <h1 className="text-[17px]/[21px] font-semibold">{title}</h1>
-                {count > 0 && (
+                {filterLabels.length > 0 && (
                     <p className="truncate text-xs text-muted">
                         {filterLabels.join(' · ')}
                     </p>
@@ -42,15 +42,15 @@ export function MobileListHeader({
                     isIconOnly
                     variant="outline"
                     aria-label={
-                        count
-                            ? tc('Filters, :count selected', count)
+                        filterCount
+                            ? tc('Filters, :count selected', filterCount)
                             : t('Filters')
                     }
                     aria-haspopup="dialog"
                     aria-expanded={filtersOpen}
                     className={cn(
                         buttonClass,
-                        count
+                        filterCount
                             ? 'border-accent/35 bg-accent/10 text-accent'
                             : 'border-border bg-surface text-foreground',
                     )}
@@ -61,7 +61,7 @@ export function MobileListHeader({
                         aria-hidden="true"
                         className="size-[18px]"
                     />
-                    {count > 0 && (
+                    {filterCount > 0 && (
                         <span
                             aria-hidden="true"
                             className="absolute -top-0.5 -right-0.5 size-3 rounded-full border-2 border-surface bg-accent"
