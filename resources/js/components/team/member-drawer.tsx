@@ -402,14 +402,14 @@ export function MemberDrawer({
                                             }
                                             isDetached
                                             size="sm"
-                                            className="gap-2 max-md:grid max-md:grid-cols-7 max-md:gap-1.5 md:flex-wrap"
+                                            className="gap-2 max-md:grid max-md:w-full max-md:grid-cols-7 max-md:gap-1.5 md:flex-wrap"
                                         >
                                             {weekdays.map((day) => (
                                                 <ToggleButton
                                                     key={day.value}
                                                     id={day.value}
                                                     aria-label={day.label}
-                                                    className="rounded-full px-3 data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent-soft-foreground max-md:h-9 max-md:min-w-0 max-md:px-0"
+                                                    className="rounded-full px-3 data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent-soft-foreground max-md:h-9 max-md:w-full max-md:min-w-0 max-md:px-0"
                                                 >
                                                     {day.shortLabel}
                                                 </ToggleButton>
