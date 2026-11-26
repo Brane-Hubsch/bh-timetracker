@@ -769,7 +769,7 @@ I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menyl�
 
 ### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
 
-Beställt i efterhand. När man kommer tillbaka till appen (fliken blir synlig eller fönstret får fokus) efter minst 30 sekunder borta laddas sidans data om i bakgrunden (`useRefreshOnReturn` i `AppLayout`). Då syns tid som rapporterats på en annan enhet eller via MCP utan att man laddar om sidan. Omladdningen behåller sidans tillstånd och scrollposition, visar ingen förloppsindikator, görs inte när man är offline och rensar förhämtade sidor (`router.flushAll()`), eftersom de kan vara lika gamla.
+Beställt i efterhand. När man kommer tillbaka till appen (fliken blir synlig eller fönstret får fokus) efter minst 30 sekunder borta laddas sidans data om i bakgrunden (`useRefreshOnReturn` i `AppLayout`). Då syns tid som rapporterats på en annan enhet eller via MCP utan att man laddar om sidan. Uppdateringen behåller sidans tillstånd och scrollposition, inklusive den period som visas i kalendern och listan. Den visar ingen förloppsindikator och rensar förhämtade sidor (`router.flushAll()`). Om fliken är offline väntar uppdateringen tills anslutningen är tillbaka och appen är aktiv.
 
 ### Tillägg efter Fas 6: Coolify (2026-11-20)
 
