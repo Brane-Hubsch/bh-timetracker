@@ -257,6 +257,7 @@ export default function TimeIndex({
     }, [needsMobileDay, url]);
 
     const calendarHeader = useRef<HTMLDivElement>(null);
+    const calendarGrid = useRef<HTMLDivElement>(null);
     const didSetMobileScroll = useRef(false);
     useEffect(() => {
         if (isList) {
@@ -272,18 +273,18 @@ export default function TimeIndex({
             return;
         }
 
-        const header = calendarHeader.current;
-        const grid = header?.nextElementSibling;
-        if (!header || !grid) {
+        const grid = calendarGrid.current;
+        if (!grid) {
             return;
         }
 
         // FullCalendar measures the slots after mount. Wait for their full height
         // before setting the page scroll, and keep an existing scroll position.
         const observer = new ResizeObserver(() => {
+            const header = calendarHeader.current;
             const morning = grid.querySelector('.time-calendar-morning');
             const slot = morning?.getBoundingClientRect();
-            if (!slot || slot.height < 20) {
+            if (!header || !slot || slot.height < 20) {
                 return;
             }
 
@@ -562,10 +563,10 @@ export default function TimeIndex({
         <>
             <Head title={pageTitle} />
 
-            <div className="grid grid-cols-1 max-md:pt-(--mobile-page-header-height) md:gap-3">
+            <div className="grid grid-cols-1 md:gap-3">
                 <MobilePageHeader
                     ref={calendarHeader}
-                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 max-md:fixed max-md:inset-x-0"
+                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3"
                 >
                     <Heading
                         className="items-center justify-start gap-x-3 gap-y-1 max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[17px]/[21px]"
@@ -606,6 +607,7 @@ export default function TimeIndex({
                 {/* Fades in when the week, day or view changes (not after saving an entry). */}
                 <div
                     key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
+                    ref={calendarGrid}
                     className={cn(
                         'md:animate-fade-in',
                         view === 'list' && 'mx-auto w-full max-w-[76rem]',

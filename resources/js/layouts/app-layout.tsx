@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '@heroui/react';
 import { AppSidebar } from '@/components/app-shell/app-sidebar';
+import { MobilePageHeaderHost } from '@/components/app-shell/mobile-page-header';
 import { SidebarResizeHandle } from '@/components/app-shell/sidebar-resize-handle';
 import { CommandPaletteProvider } from '@/components/command-palette';
 import { MobileBottomNav } from '@/components/app-shell/mobile-navigation';
@@ -37,6 +38,8 @@ export default function AppLayout({
 }: AppLayoutProps) {
     const { t } = useTranslation();
     const [sidebarWidth, setSidebarWidth] = useState(256);
+    const [mobileHeaderHost, setMobileHeaderHost] =
+        useState<HTMLDivElement | null>(null);
     // Show time reported elsewhere when the user comes back to the app.
     useRefreshOnReturn();
     useSyncSidebarSettings();
@@ -59,15 +62,19 @@ export default function AppLayout({
                 />
 
                 <div className="md:pl-(--sidebar-width)">
+                    <div
+                        ref={setMobileHeaderHost}
+                        className="fixed inset-x-0 top-0 z-20 bg-surface md:hidden"
+                    />
                     <main
                         className={cn(
                             'page-transition mx-auto w-full animate-enter px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8',
                             WIDTHS[width],
                             compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12',
-                            'max-md:has-[.mobile-page-header]:min-h-svh max-md:has-[.mobile-page-header]:animate-none max-md:has-[.mobile-page-header]:bg-surface max-md:has-[.mobile-page-header]:px-0 max-md:has-[.mobile-page-header]:pt-0 dark:max-md:has-[.mobile-page-header]:bg-background',
+                            'max-md:has-[.mobile-page-header-spacer]:min-h-svh max-md:has-[.mobile-page-header-spacer]:animate-none max-md:has-[.mobile-page-header-spacer]:bg-surface max-md:has-[.mobile-page-header-spacer]:px-0 max-md:has-[.mobile-page-header-spacer]:pt-0 dark:max-md:has-[.mobile-page-header-spacer]:bg-background',
                             hasTimer
-                                ? 'pb-[calc(var(--mobile-tab-bar-height)+6.4375rem)] max-md:has-[.mobile-page-header]:pb-[calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space))]'
-                                : 'pb-[calc(var(--mobile-tab-bar-height)+3.4375rem)] max-md:has-[.mobile-page-header]:pb-(--mobile-tab-bar-height)',
+                                ? 'pb-[calc(var(--mobile-tab-bar-height)+6.4375rem)] max-md:has-[.mobile-page-header-spacer]:pb-[calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space))]'
+                                : 'pb-[calc(var(--mobile-tab-bar-height)+3.4375rem)] max-md:has-[.mobile-page-header-spacer]:pb-(--mobile-tab-bar-height)',
                         )}
                     >
                         {breadcrumbs.length > 1 && (
@@ -86,7 +93,9 @@ export default function AppLayout({
                                 ))}
                             </Breadcrumbs>
                         )}
-                        {children}
+                        <MobilePageHeaderHost value={mobileHeaderHost}>
+                            {children}
+                        </MobilePageHeaderHost>
                     </main>
                 </div>
 
