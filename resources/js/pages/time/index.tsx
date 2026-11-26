@@ -1,7 +1,7 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
@@ -27,8 +27,10 @@ import {
 import { TimeEntryList } from '@/components/time/time-entry-list';
 import { useInitials } from '@/hooks/use-initials';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
+import { useShortcut } from '@/lib/shortcuts';
 import { useTranslation } from '@/lib/i18n';
 import {
+    addDays,
     formatDuration,
     minutesToTime,
     secondsBetween,
@@ -322,6 +324,25 @@ export default function TimeIndex({
             data-test="member-select"
         />
     );
+    // Keyboard: N reports time, arrows step the period, I goes to today, L/V/D switch the view.
+    // Quick presses step from where the previous one went, before its page has loaded.
+    const step = view === 'day' ? 1 : 7;
+    const stepTarget = useRef<{ from: string; to: string } | null>(null);
+    const stepBy = (days: number) => {
+        const from =
+            stepTarget.current?.from === date ? stepTarget.current.to : date;
+        const to = addDays(from, days);
+        stepTarget.current = { from: date, to };
+        visit({ date: to });
+    };
+    useShortcut('new', () => openReport('time'));
+    useShortcut('previous', () => stepBy(-step));
+    useShortcut('next', () => stepBy(step));
+    useShortcut('today', () => visit({ date: today }));
+    useShortcut('view-list', () => visit({ view: 'list' }));
+    useShortcut('view-week', () => visit({ view: 'week' }));
+    useShortcut('view-day', () => visit({ view: 'day' }));
+
     const periodPicker = (
         <CalendarPicker
             view={view}

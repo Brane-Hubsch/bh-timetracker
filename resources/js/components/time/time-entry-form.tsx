@@ -514,7 +514,11 @@ export function TimeEntryForm({
         <ResponsiveDialog
             isOpen={draft !== null}
             onOpenChange={(isOpen) => !isOpen && onClose()}
-            submitFormId={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
+            // ⌘/Ctrl+Enter saves; for the running timer it stops it.
+            submitFormId={
+                isTimer ? undefined : isAbsence ? ABSENCE_FORM_ID : FORM_ID
+            }
+            onSubmitShortcut={isTimer ? stopTimerFromForm : undefined}
             dismissOnEscape={
                 draft?.openedFrom === 'calendar' &&
                 !isMemberPickerOpen &&
@@ -691,9 +695,11 @@ export function TimeEntryForm({
                                 <Button
                                     onPress={stopTimerFromForm}
                                     isPending={processing}
+                                    aria-keyshortcuts={SUBMIT_SHORTCUT}
                                     data-test="timer-stop"
                                 >
                                     {t('Stop')}
+                                    <SubmitShortcutHint />
                                 </Button>
                             </>
                         ) : (

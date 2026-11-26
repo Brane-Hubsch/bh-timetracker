@@ -714,7 +714,17 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 
 ### Tillägg efter Fas 6: spara med ⌘↵ (2026-11-26)
 
-Beställt i efterhand. I dialogerna *Rapportera tid* (även i läget för frånvaro och för den pågående timern) och *Registrera frånvaro* sparar ⌘+Enter (Ctrl+Enter utanför Mac) formuläret, var fokus än är. `ResponsiveDialog` tar emot formulärets id (`submitFormId`). Spara-knappen har `aria-keyshortcuts` och, på dator, en liten hint ("⌘↵" eller "Ctrl ↵", `SubmitShortcutHint`).
+Beställt i efterhand. I dialogerna *Rapportera tid* (även i läget för frånvaro och för den pågående timern) och *Registrera frånvaro* sparar ⌘+Enter (Ctrl+Enter utanför Mac) formuläret, var fokus än är. `ResponsiveDialog` tar emot formulärets id (`submitFormId`). Spara-knappen (och Stoppa i den pågående timern, där ⌘↵ stoppar timern) har `aria-keyshortcuts` och, på dator, en liten hint ("⌘↵" eller "Ctrl ↵", `SubmitShortcutHint`).
+
+### Tillägg efter Fas 6: kortkommandon (2026-11-26)
+
+Beställt i efterhand, i samma omgång som ⌘↵. Enkla tangenter för det man gör ofta, på dator:
+
+- **Överallt:** N rapporterar tid (öppnar dialogen i kalendern, från andra sidor går den dit), T startar timern eller stoppar den som går, ⌘K söker och ? visar listan över kortkommandon.
+- **Kalender och rapporter:** ← och → stegar till föregående eller nästa period (vecka eller dag i kalendern, samma längd i rapporterna), I går till idag eller motsvarande period som innehåller idag. L, V och D byter vy i kalendern (lista, vecka, dag).
+- **Regler:** tangenterna gäller inte när man skriver i ett fält, när en dialog eller meny är öppen (toasts räknas inte) eller med ⌘/Ctrl/Alt nedtryckt. Pilarna lämnas åt komponenter som själva använder dem (listor, menyer, rutnät). ? läses som tecken, så den fungerar på svenskt tangentbord (Shift + +).
+- **Hittbarhet:** listan öppnas med ?, från användarmenyn ("Kortkommandon") och från ⌘K. ⌘K visar tangenten bredvid kommandon som har en.
+- **Kod:** `@/lib/shortcuts` (tangenter och `useShortcut`, som sidorna använder för sina egna åtgärder) och `components/keyboard-shortcuts.tsx` (den globala lyssnaren och listan). Designen finns i Figma på sidan "Kortkommandon".
 
 ### Tillägg efter Fas 6: timer (2026-11-25)
 

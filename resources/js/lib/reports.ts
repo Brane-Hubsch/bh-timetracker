@@ -140,6 +140,28 @@ export function shiftPeriod(
 }
 
 /**
+ * The current preset period closest in length to the given range, for jumping back to today: a
+ * day, a week, a month (also for unbounded ranges) or a year.
+ */
+export function currentPeriodLike(from: string, to: string): string {
+    if (from === '' || to === '') {
+        return 'this_month';
+    }
+
+    const days = daysBetween(from, to);
+
+    if (days <= 1) {
+        return 'today';
+    }
+
+    if (days <= 7) {
+        return 'this_week';
+    }
+
+    return days > 92 ? 'this_year' : 'this_month';
+}
+
+/**
  * A short name for a custom period when it is a recognisable one: a month ("November 2026"), a week
  * starting on the organization's first weekday ("Vecka 47") or a year ("2026"). Null otherwise.
  */

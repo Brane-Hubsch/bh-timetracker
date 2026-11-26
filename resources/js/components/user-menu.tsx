@@ -1,8 +1,9 @@
 import { Avatar, Button, Dropdown, Label, Separator } from '@heroui/react';
 import { router, usePage } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { Keyboard, LogOut, Settings } from 'lucide-react';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
+import { triggerShortcut } from '@/lib/shortcuts';
 import { logout } from '@/routes';
 import { edit as editProfile } from '@/routes/profile';
 import type { User } from '@/types/auth';
@@ -45,7 +46,13 @@ export function UserMenu() {
             </Button>
             <Dropdown.Popover placement="top start" className="min-w-56">
                 <Dropdown.Menu
-                    onAction={(key) => key === 'logout' && logoutAndFlush()}
+                    onAction={(key) => {
+                        if (key === 'logout') {
+                            logoutAndFlush();
+                        } else if (key === 'shortcuts') {
+                            triggerShortcut('help');
+                        }
+                    }}
                 >
                     <Dropdown.Item
                         id="settings"
@@ -54,6 +61,15 @@ export function UserMenu() {
                     >
                         <Settings className="size-4" />
                         <Label>{t('Settings')}</Label>
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                        id="shortcuts"
+                        textValue={t('Keyboard shortcuts')}
+                        className="hidden md:flex"
+                        data-test="keyboard-shortcuts-menu-item"
+                    >
+                        <Keyboard className="size-4" />
+                        <Label>{t('Keyboard shortcuts')}</Label>
                     </Dropdown.Item>
                     <Separator />
                     <Dropdown.Item

@@ -24,6 +24,7 @@ import {
     CopyPlus,
     FolderKanban,
     FolderPlus,
+    Keyboard,
     KeyRound,
     List,
     LogOut,
@@ -44,6 +45,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createContext, use, useCallback, useEffect, useState } from 'react';
+import { ShortcutKey } from '@/components/keyboard-shortcuts';
 import { LogoImage } from '@/components/logo-image';
 import { ProjectDot } from '@/components/project-dot';
 import { startTimer, stopTimer } from '@/components/time/running-timer';
@@ -51,6 +53,7 @@ import { logoutAndFlush } from '@/components/user-menu';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
+import { triggerShortcut } from '@/lib/shortcuts';
 import { commandPalette } from '@/routes';
 import { edit as editAiConnections } from '@/routes/ai-connections';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -93,6 +96,8 @@ type Command = {
     color?: string;
     /** An organization's logo (or initial) instead of an icon. */
     logo?: { src: string | null | undefined; name: string };
+    /** A single-key shortcut that does the same, shown at the end of the row. */
+    shortcut?: string;
     perform: () => void;
 };
 
@@ -274,6 +279,13 @@ function CommandPalette({
                                                     </Description>
                                                 )}
                                             </div>
+                                            {command.shortcut && (
+                                                <span className="ms-auto hidden shrink-0 md:inline-flex">
+                                                    <ShortcutKey>
+                                                        {command.shortcut}
+                                                    </ShortcutKey>
+                                                </span>
+                                            )}
                                         </ListBox.Item>
                                     ))}
                                 </ListBox.Section>
@@ -341,6 +353,7 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                     label: t('Report time'),
                     keywords: t('new entry add hours'),
                     icon: Plus,
+                    shortcut: 'N',
                     perform: go(time({ new: 1 })),
                 },
                 // A running timer can always be stopped, even where the timer is turned off.
@@ -351,6 +364,7 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                               label: t('Stop timer'),
                               keywords: t('timer clock'),
                               icon: Square,
+                              shortcut: 'T',
                               perform: () => stopTimer(timer),
                           },
                       ]
@@ -361,10 +375,21 @@ function useCommandSections(isOpen: boolean, query: string): Section[] {
                                 label: t('Start timer'),
                                 keywords: t('timer clock'),
                                 icon: Play,
+                                shortcut: 'T',
                                 perform: () => startTimer(slug),
                             },
                         ]
                       : []),
+                {
+                    id: 'keyboard-shortcuts',
+                    label: t('Keyboard shortcuts'),
+                    keywords: t('keys help'),
+                    icon: Keyboard,
+                    shortcut: '?',
+                    // After the palette has closed, so the list can open.
+                    perform: () =>
+                        window.setTimeout(() => triggerShortcut('help'), 0),
+                },
                 {
                     id: 'copy-week',
                     label: t('Copy previous week'),

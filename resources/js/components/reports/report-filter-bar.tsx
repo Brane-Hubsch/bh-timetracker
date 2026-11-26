@@ -8,7 +8,8 @@ import type { FilterOption } from '@/components/reports/filter-chip';
 import { ReportPeriodPicker } from '@/components/reports/period-picker';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
-import { reportQuery } from '@/lib/reports';
+import { currentPeriodLike, reportQuery, shiftPeriod } from '@/lib/reports';
+import { useShortcut } from '@/lib/shortcuts';
 import { cn } from '@/lib/utils';
 import type { ReportFilterValues, ReportOptions } from '@/types';
 
@@ -93,6 +94,32 @@ export function ReportFilterBar({ filters, options, weekStartsOn }: Props) {
             preserveScroll: true,
             replace: true,
         });
+
+    // Keyboard: arrows step the period, I goes back to the current one of about the same length.
+    const hasRange = filters.from !== '' && filters.to !== '';
+    useShortcut(
+        'previous',
+        hasRange
+            ? () =>
+                  apply({
+                      period: 'custom',
+                      ...shiftPeriod(filters.from, filters.to, -1),
+                  })
+            : undefined,
+    );
+    useShortcut(
+        'next',
+        hasRange
+            ? () =>
+                  apply({
+                      period: 'custom',
+                      ...shiftPeriod(filters.from, filters.to, 1),
+                  })
+            : undefined,
+    );
+    useShortcut('today', () =>
+        apply({ period: currentPeriodLike(filters.from, filters.to) }),
+    );
 
     const activeFilters =
         [

@@ -15,6 +15,8 @@ type Props = {
     dismissOnEscape?: boolean;
     /** The form ⌘/Ctrl+Enter submits from anywhere in the dialog. */
     submitFormId?: string;
+    /** What ⌘/Ctrl+Enter does instead of submitting a form (e.g. stop the timer). */
+    onSubmitShortcut?: () => void;
     desktopClassName?: string;
     containerClassName?: string;
 };
@@ -38,6 +40,7 @@ export function ResponsiveDialog({
     footer,
     dismissOnEscape,
     submitFormId,
+    onSubmitShortcut,
     desktopClassName = 'sm:max-w-lg',
     containerClassName,
 }: Props) {
@@ -53,12 +56,20 @@ export function ResponsiveDialog({
         // ⌘/Ctrl+Enter saves, wherever the focus is (also in a field popover).
         if (
             isOpen &&
-            submitFormId &&
+            (submitFormId || onSubmitShortcut) &&
             event.key === 'Enter' &&
             (event.metaKey || event.ctrlKey) &&
             !event.nativeEvent.isComposing
         ) {
-            const form = document.getElementById(submitFormId);
+            if (onSubmitShortcut) {
+                event.preventDefault();
+                event.stopPropagation();
+                onSubmitShortcut();
+
+                return;
+            }
+
+            const form = document.getElementById(submitFormId ?? '');
 
             if (form instanceof HTMLFormElement) {
                 event.preventDefault();
