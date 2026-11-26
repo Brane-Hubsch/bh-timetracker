@@ -416,12 +416,12 @@ export function TimeCalendar({
                 eventInnerClass="time-calendar-event-inner"
                 eventBeforeClass={(info) =>
                     info.isStartResizable &&
-                    !info.isSelected &&
+                    (isMobile || !info.isSelected) &&
                     'time-calendar-resizer time-calendar-resizer-start'
                 }
                 eventAfterClass={(info) =>
                     info.isEndResizable &&
-                    !info.isSelected &&
+                    (isMobile || !info.isSelected) &&
                     'time-calendar-resizer time-calendar-resizer-end'
                 }
                 slotLaneClass={(info) =>

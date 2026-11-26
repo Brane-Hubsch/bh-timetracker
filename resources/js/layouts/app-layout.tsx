@@ -16,7 +16,7 @@ import {
 import { useRefreshOnReturn } from '@/hooks/use-refresh-on-return';
 import { useSyncSidebarSettings } from '@/hooks/use-sidebar-settings';
 import { useTranslation } from '@/lib/i18n';
-import { toUrl } from '@/lib/utils';
+import { cn, toUrl } from '@/lib/utils';
 import type { AppLayoutProps, ContentWidth } from '@/types';
 
 const WIDTHS: Record<ContentWidth, string> = {
@@ -60,7 +60,15 @@ export default function AppLayout({
 
                 <div className="md:pl-(--sidebar-width)">
                     <main
-                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-[calc(1rem+env(safe-area-inset-top))] ${hasTimer ? 'pb-[calc(10rem+env(safe-area-inset-bottom))]' : 'pb-[calc(7rem+env(safe-area-inset-bottom))]'} max-md:has-[.mobile-calendar-header]:animate-none max-md:has-[.mobile-calendar-header]:px-0 max-md:has-[.mobile-calendar-header]:pt-0 md:px-8 ${compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12'}`}
+                        className={cn(
+                            'page-transition mx-auto w-full animate-enter px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8',
+                            WIDTHS[width],
+                            compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12',
+                            'max-md:has-[.mobile-calendar-header]:animate-none max-md:has-[.mobile-calendar-header]:bg-surface max-md:has-[.mobile-calendar-header]:px-0 max-md:has-[.mobile-calendar-header]:pt-0 dark:max-md:has-[.mobile-calendar-header]:bg-background',
+                            hasTimer
+                                ? 'pb-[calc(10rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(6.625rem+env(safe-area-inset-bottom))]'
+                                : 'pb-[calc(7rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(3.5625rem+env(safe-area-inset-bottom))]',
+                        )}
                     >
                         {breadcrumbs.length > 1 && (
                             <Breadcrumbs className="mb-6 hidden md:flex">

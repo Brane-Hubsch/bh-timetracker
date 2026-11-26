@@ -86,6 +86,11 @@ type Props = {
     previousPeriodEntries?: TimeEntry[];
 };
 
+type AdjacentDay = Pick<
+    Props,
+    'date' | 'entries' | 'absences' | 'colleaguesOff' | 'calendarHolidays'
+>;
+
 export default function TimeIndex({
     view,
     date,
@@ -166,6 +171,10 @@ export default function TimeIndex({
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
     const [absenceDraft, setAbsenceDraft] = useState<AbsenceDraft | null>(null);
+    const [preview, setPreview] = useState<{
+        from: string;
+        day: AdjacentDay;
+    } | null>(null);
     const newAbsence = (startsOn: string, endsOn = startsOn) =>
         setAbsenceDraft({
             userId: member.id,
@@ -189,6 +198,7 @@ export default function TimeIndex({
             ),
         );
 
+    const queryOptions = { enabled: !needsMobileDay };
     // A report link can choose a mode, and the command palette may preselect a project.
     useOpenFromQuery(
         'new',
@@ -214,14 +224,16 @@ export default function TimeIndex({
                     : base,
             );
         },
-        ['project'],
+        { ...queryOptions, alsoRemove: ['project'] },
     );
-    useOpenFromQuery('copy', () => setCopyOpen(true));
+    useOpenFromQuery('copy', () => setCopyOpen(true), queryOptions);
     // Opened from the running timer ("?timer=edit" or "?timer=stop").
-    useOpenFromQuery('timer', (params) =>
-        setDraft(timerDraft(params.get('timer') === 'stop')),
+    useOpenFromQuery(
+        'timer',
+        (params) => setDraft(timerDraft(params.get('timer') === 'stop')),
+        queryOptions,
     );
-    useOpenFromQuery('absence', () => newAbsence(reportDate));
+    useOpenFromQuery('absence', () => newAbsence(reportDate), queryOptions);
 
     useEffect(() => {
         if (!needsMobileDay) {
@@ -368,6 +380,44 @@ export default function TimeIndex({
             onFinish,
         });
     };
+
+    function prefetchDay(direction: -1 | 1) {
+        const nextDate = addDays(date, direction);
+        const { href, data } = pageData({ date: nextDate });
+
+        router.prefetch(
+            href,
+            {
+                data,
+                onPrefetched: (response) => {
+                    const { props } = JSON.parse(response.data) as {
+                        props: AdjacentDay;
+                    };
+                    if (props.date === nextDate) {
+                        const {
+                            date,
+                            entries,
+                            absences,
+                            colleaguesOff,
+                            calendarHolidays,
+                        } = props;
+                        setPreview({
+                            from: url,
+                            day: {
+                                date,
+                                entries,
+                                absences,
+                                colleaguesOff,
+                                calendarHolidays,
+                            },
+                        });
+                    }
+                },
+            },
+            // Start the request while the finger is down and reuse it on release.
+            { cacheFor: '5s' },
+        );
+    }
 
     const move = (
         entry: TimeEntry,
@@ -574,7 +624,7 @@ export default function TimeIndex({
                 <div
                     key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
                     className={cn(
-                        'motion-safe:animate-fade-in',
+                        'animate-fade-in',
                         !isList && 'max-md:animate-none',
                         view === 'list' && 'mx-auto w-full max-w-[76rem]',
                     )}
@@ -596,22 +646,37 @@ export default function TimeIndex({
                         />
                     ) : isMobile && view === 'day' ? (
                         <CalendarDaySwipe
+                            onSwipeIntent={prefetchDay}
                             onSwipe={(direction, onFinish) =>
                                 visit(
                                     { date: addDays(date, direction) },
                                     onFinish,
                                 )
                             }
-                            renderAdjacent={(direction) => (
-                                <TimeCalendar
-                                    {...calendarProps}
-                                    view="day"
-                                    date={addDays(date, direction)}
-                                    holidays={[]}
-                                    floatingAction={undefined}
-                                    isPreview
-                                />
-                            )}
+                            renderAdjacent={(direction) => {
+                                const nextDate = addDays(date, direction);
+                                const day =
+                                    preview?.from === url &&
+                                    preview.day.date === nextDate
+                                        ? preview.day
+                                        : null;
+
+                                return (
+                                    <TimeCalendar
+                                        {...calendarProps}
+                                        view="day"
+                                        date={nextDate}
+                                        entries={day?.entries ?? entries}
+                                        absences={day?.absences ?? absences}
+                                        colleaguesOff={
+                                            day?.colleaguesOff ?? colleaguesOff
+                                        }
+                                        holidays={day?.calendarHolidays ?? []}
+                                        floatingAction={undefined}
+                                        isPreview
+                                    />
+                                );
+                            }}
                         >
                             <TimeCalendar {...calendarProps} view={view} />
                         </CalendarDaySwipe>

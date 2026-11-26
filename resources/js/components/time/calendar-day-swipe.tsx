@@ -9,15 +9,22 @@ type Gesture = {
     y: number;
     startedAt: number;
     horizontal: boolean;
+    direction?: Direction;
 };
 
 type Props = {
     children: ReactNode;
     renderAdjacent: (direction: Direction) => ReactNode;
+    onSwipeIntent: (direction: Direction) => void;
     onSwipe: (direction: Direction, onFinish: () => void) => void;
 };
 
-export function CalendarDaySwipe({ children, renderAdjacent, onSwipe }: Props) {
+export function CalendarDaySwipe({
+    children,
+    renderAdjacent,
+    onSwipeIntent,
+    onSwipe,
+}: Props) {
     const frame = useRef<HTMLDivElement>(null);
     const track = useRef<HTMLDivElement>(null);
     const gesture = useRef<Gesture | null>(null);
@@ -137,9 +144,15 @@ export function CalendarDaySwipe({ children, renderAdjacent, onSwipe }: Props) {
             viewport.dataset.swiping = 'true';
         }
 
+        const direction = x <= 0 ? 1 : -1;
+        if (current.direction !== direction) {
+            current.direction = direction;
+            onSwipeIntent(direction);
+        }
+
         if (!reducedMotion()) {
             const width = viewport.clientWidth;
-            setAdjacent(x <= 0 ? 1 : -1);
+            setAdjacent(direction);
             track.current.style.translate = `${Math.max(-width, Math.min(width, x))}px`;
         }
     }
