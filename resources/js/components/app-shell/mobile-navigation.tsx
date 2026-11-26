@@ -10,6 +10,7 @@ import {
     User,
 } from 'lucide-react';
 import { useState } from 'react';
+import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useCommandPalette } from '@/components/command-palette';
 import CreateOrganizationModal from '@/components/create-organization-modal';
 import { LogoImage } from '@/components/logo-image';
@@ -117,8 +118,11 @@ export function MobileBottomNav({ className }: { className?: string }) {
                     </Drawer.Trigger>
                 </nav>
 
-                <Drawer.Backdrop>
-                    <Drawer.Content placement="bottom">
+                <BottomSheetBackdrop>
+                    <Drawer.Content
+                        placement="bottom"
+                        className="[--sheet-height-limit:90svh]"
+                    >
                         <Drawer.Dialog
                             aria-label={t('More')}
                             className={drawerClass}
@@ -234,7 +238,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                             </Drawer.Body>
                         </Drawer.Dialog>
                     </Drawer.Content>
-                </Drawer.Backdrop>
+                </BottomSheetBackdrop>
             </Drawer>
             <CreateOrganizationModal
                 isOpen={isCreateOpen}
