@@ -3,6 +3,7 @@ import type { ComponentPropsWithRef, KeyboardEvent, ReactNode } from 'react';
 import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 type Props = {
     isOpen: boolean;
@@ -20,6 +21,7 @@ type Props = {
     /** What ⌘/Ctrl+Enter does instead of submitting a form (e.g. stop the timer). */
     onSubmitShortcut?: () => void;
     desktopClassName?: string;
+    mobileClassName?: string;
     containerClassName?: string;
 };
 
@@ -45,6 +47,7 @@ export function ResponsiveDialog({
     submitFormId,
     onSubmitShortcut,
     desktopClassName = 'sm:max-w-lg',
+    mobileClassName,
     containerClassName,
 }: Props) {
     const isDesktop = useIsDesktop();
@@ -149,11 +152,10 @@ export function ResponsiveDialog({
         >
             <Drawer.Content placement="bottom" className={containerClassName}>
                 <Drawer.Dialog
-                    className={
-                        fullScreenOnMobile
-                            ? 'drawer__dialog--fullscreen'
-                            : undefined
-                    }
+                    className={cn(
+                        fullScreenOnMobile && 'drawer__dialog--fullscreen',
+                        mobileClassName,
+                    )}
                     render={renderDialog}
                 >
                     {!fullScreenOnMobile && <Drawer.Handle />}

@@ -13,6 +13,7 @@ import addTagIcon from '@/assets/tag-add.svg';
 import removeTagIcon from '@/assets/tag-remove.svg';
 import { ShortcutRow } from '@/components/form/shortcut-row';
 import { useTranslation } from '@/lib/i18n';
+import { normalizeTagName } from '@/lib/tags';
 
 type Props = {
     /** Selected tag names. */
@@ -26,10 +27,6 @@ type Props = {
 };
 
 const CREATE = '__create__';
-
-function normalize(name: string): string {
-    return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-}
 
 function TagIcon({ src }: { src: string }) {
     return (
@@ -82,25 +79,27 @@ export function TagInput({
 }: Props) {
     const { t } = useTranslation();
     const [input, setInput] = useState('');
-    const selected = new Set(value.map(normalize));
-    const query = normalize(input);
+    const selected = new Set(value.map(normalizeTagName));
+    const query = normalizeTagName(input);
     const available = suggestions.filter(
         (name) =>
-            !selected.has(normalize(name)) && normalize(name).includes(query),
+            !selected.has(normalizeTagName(name)) &&
+            normalizeTagName(name).includes(query),
     );
-    const exists = suggestions.some((name) => normalize(name) === query);
+    const exists = suggestions.some((name) => normalizeTagName(name) === query);
     const isFull = value.length >= max;
     const shortcuts = recentTags.filter(
-        (name) => !selected.has(normalize(name)),
+        (name) => !selected.has(normalizeTagName(name)),
     );
 
     const add = (name: string) => {
         const clean = name.trim().replace(/\s+/g, ' ');
 
-        if (clean !== '' && !selected.has(normalize(clean)) && !isFull) {
+        if (clean !== '' && !selected.has(normalizeTagName(clean)) && !isFull) {
             // Prefer the existing spelling ("Möte") over what was typed ("möte").
             const existing = suggestions.find(
-                (suggestion) => normalize(suggestion) === normalize(clean),
+                (suggestion) =>
+                    normalizeTagName(suggestion) === normalizeTagName(clean),
             );
             onChange([...value, existing ?? clean]);
         }

@@ -1,5 +1,5 @@
 import { Button } from '@heroui/react';
-import { Plus, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { MobilePageHeader } from '@/components/app-shell/mobile-page-header';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ type Props = {
     filtersOpen: boolean;
     onOpenFilters: () => void;
     filterTestId: string;
+    searchLabel?: string;
     createAction?: { label: string; onPress: () => void; testId: string };
 };
 
@@ -24,9 +25,22 @@ export function MobileListHeader({
     filtersOpen,
     onOpenFilters,
     filterTestId,
+    searchLabel,
     createAction,
 }: Props) {
     const { t, tc } = useTranslation();
+    const FilterIcon = searchLabel ? Search : SlidersHorizontal;
+    const filterLabel = searchLabel
+        ? filterCount
+            ? t(':search, :count selected', {
+                  search: searchLabel,
+                  count: filterCount,
+              })
+            : searchLabel
+        : filterCount
+          ? tc('Filters, :count selected', filterCount)
+          : t('Filters');
+
     return (
         <MobilePageHeader className="flex items-center justify-between">
             <div className="min-w-0">
@@ -41,11 +55,7 @@ export function MobileListHeader({
                 <Button
                     isIconOnly
                     variant="outline"
-                    aria-label={
-                        filterCount
-                            ? tc('Filters, :count selected', filterCount)
-                            : t('Filters')
-                    }
+                    aria-label={filterLabel}
                     aria-haspopup="dialog"
                     aria-expanded={filtersOpen}
                     className={cn(
@@ -57,10 +67,7 @@ export function MobileListHeader({
                     onPress={onOpenFilters}
                     data-test={filterTestId}
                 >
-                    <SlidersHorizontal
-                        aria-hidden="true"
-                        className="size-[18px]"
-                    />
+                    <FilterIcon aria-hidden="true" className="size-[18px]" />
                     {filterCount > 0 && (
                         <span
                             aria-hidden="true"
