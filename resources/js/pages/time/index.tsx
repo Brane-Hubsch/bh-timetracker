@@ -566,12 +566,16 @@ export default function TimeIndex({
             <div
                 className={cn(
                     'grid grid-cols-1 gap-3',
-                    !isList && 'max-md:gap-0',
+                    !isList &&
+                        'max-md:gap-0 max-md:pt-(--mobile-page-header-height)',
                 )}
             >
                 <PageHeader
                     ref={calendarHeader}
-                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3"
+                    className={cn(
+                        'flex flex-wrap items-center justify-between gap-x-5 gap-y-3',
+                        !isList && 'max-md:fixed max-md:inset-x-0',
+                    )}
                 >
                     <Heading
                         className={cn(
