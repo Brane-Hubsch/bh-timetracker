@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { PeriodPicker } from '@/components/period-picker';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useSwipeNavigation } from '@/hooks/use-swipe-navigation';
 import { useTranslation } from '@/lib/i18n';
 import { addDays, formatDate, formatDateRange, isoWeek } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -214,28 +215,53 @@ function PickerBody({
         parseDate(value).add({ days: isDay ? 0 : 3 }),
     );
     const firstDay = WEEKDAYS[weekStartsOn - 1];
-    const gridProps = { focusedDate, firstDay, today, value, onChange };
+    const gridProps = { firstDay, today, value, onChange };
+    const stepMonth = (direction: -1 | 1) =>
+        setFocusedDate((day) => day.add({ months: direction }));
+    const { adjacent, track, viewportProps } = useSwipeNavigation({
+        onSwipe: (direction, finish) => {
+            stepMonth(direction);
+            finish();
+        },
+    });
+    const renderGrid = (month: CalendarDate) =>
+        isDay ? (
+            <DayGrid
+                {...gridProps}
+                focusedDate={month}
+                timezone={timezone}
+                onFocusChange={setFocusedDate}
+            />
+        ) : (
+            <WeekGrid {...gridProps} focusedDate={month} />
+        );
 
     return (
-        <div className="sm:grid sm:grid-cols-[212px_minmax(0,1fr)]">
+        <div className="md:grid md:grid-cols-[212px_minmax(0,1fr)]">
             <div
                 role="group"
                 aria-label={t(isDay ? 'Date presets' : 'Week presets')}
-                className="grid grid-cols-2 content-start gap-x-2 gap-y-0.5 border-b border-separator px-4 py-3.5 min-[390px]:px-5 sm:grid-cols-1 sm:border-e sm:border-b-0 sm:px-4"
+                className={cn(
+                    'grid content-start gap-x-2 gap-y-0.5 border-b border-separator px-4 py-3.5 min-[390px]:px-5 md:grid-cols-1 md:border-e md:border-b-0 md:px-4',
+                    isDay ? 'grid-cols-3' : 'grid-cols-2',
+                )}
             >
                 {presets.map((preset) => (
                     <Button
                         key={preset.date}
                         variant="ghost"
                         aria-pressed={preset.value === value}
-                        className="h-9 w-full justify-start px-3 text-foreground aria-pressed:bg-accent/15"
+                        className={cn(
+                            'h-9 w-full justify-start px-3 text-foreground aria-pressed:bg-accent/15',
+                            isDay && 'max-md:px-2',
+                        )}
                         onPress={() => onChange(preset.date)}
                     >
                         {preset.label}
                     </Button>
                 ))}
             </div>
-            <div className="min-w-0 px-4 pt-4 pb-5 min-[390px]:px-5 sm:px-6">
+            <div className="min-w-0 px-4 pt-4 pb-5 min-[390px]:px-5 md:px-6">
                 <div className="flex h-9 items-center justify-between gap-2">
                     <h3
                         aria-live="polite"
@@ -252,11 +278,7 @@ function PickerBody({
                             variant="ghost"
                             size="sm"
                             aria-label={t('Previous month')}
-                            onPress={() =>
-                                setFocusedDate((day) =>
-                                    day.subtract({ months: 1 }),
-                                )
-                            }
+                            onPress={() => stepMonth(-1)}
                         >
                             <ChevronLeft className="size-4" aria-hidden />
                         </Button>
@@ -265,23 +287,37 @@ function PickerBody({
                             variant="ghost"
                             size="sm"
                             aria-label={t('Next month')}
-                            onPress={() =>
-                                setFocusedDate((day) => day.add({ months: 1 }))
-                            }
+                            onPress={() => stepMonth(1)}
                         >
                             <ChevronRight className="size-4" aria-hidden />
                         </Button>
                     </div>
                 </div>
-                {isDay ? (
-                    <DayGrid
-                        {...gridProps}
-                        timezone={timezone}
-                        onFocusChange={setFocusedDate}
-                    />
-                ) : (
-                    <WeekGrid {...gridProps} />
-                )}
+                <div
+                    {...viewportProps}
+                    className="group/month touch-pan-y touch-pinch-zoom overflow-clip"
+                >
+                    <div
+                        ref={track}
+                        className="relative group-data-[swiping]/month:pointer-events-none"
+                    >
+                        {renderGrid(focusedDate)}
+                        {adjacent && (
+                            <div
+                                inert
+                                aria-hidden="true"
+                                className={cn(
+                                    'absolute top-0 w-full',
+                                    adjacent === 1 ? 'left-full' : 'right-full',
+                                )}
+                            >
+                                {renderGrid(
+                                    focusedDate.add({ months: adjacent }),
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -428,14 +464,6 @@ export function CalendarPicker({
                                         options={[
                                             { id: 'day', label: t('Day') },
                                             { id: 'week', label: t('Week') },
-                                            ...(isMobile
-                                                ? [
-                                                      {
-                                                          id: 'list' as const,
-                                                          label: t('List'),
-                                                      },
-                                                  ]
-                                                : []),
                                         ]}
                                         data-test="calendar-picker-view"
                                     />
