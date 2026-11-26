@@ -686,7 +686,7 @@
 
 @media (width < 48rem) and (display-mode: standalone) {
     :root {
-        --mobile-tab-height: 2.875rem;
+        --mobile-tab-bar-inset: calc(var(--mobile-bottom-inset) - 0.625rem);
     }
 }
 
