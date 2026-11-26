@@ -470,7 +470,7 @@ function MobileProjectRow({ project }: { project: ProjectListItem }) {
                                 </>
                             )}
                         </p>
-                        <span className="shrink-0 tabular-nums">
+                        <span className="shrink-0 whitespace-nowrap tabular-nums">
                             <span className="sr-only">{t('Reported')} </span>
                             {formatHours(project.consumedSeconds, intlLocale)}
                         </span>
