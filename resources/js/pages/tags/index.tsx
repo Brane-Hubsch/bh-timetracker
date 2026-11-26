@@ -28,6 +28,7 @@ import {
     sideDrawerFormClass,
 } from '@/components/side-drawer';
 import { useIsDesktop } from '@/hooks/use-media-query';
+import { useOverlayData } from '@/hooks/use-overlay-data';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { normalizeTagName } from '@/lib/tags';
@@ -97,14 +98,16 @@ export default function TagsIndex({ tags }: Props) {
     const [renaming, setRenaming] = useState<OrganizationTag | null>(null);
     const [renameName, setRenameName] = useState('');
     const [deleting, setDeleting] = useState<OrganizationTag | null>(null);
+    const renameTag = useOverlayData(renaming);
+    const deleteTag = useOverlayData(deleting);
     const [isDeletePending, setDeletePending] = useState(false);
 
     const normalizedRenameName = normalizeTagName(renameName);
     const mergeTarget =
-        renaming &&
+        renameTag &&
         tags.find(
             (tag) =>
-                tag.id !== renaming.id &&
+                tag.id !== renameTag.id &&
                 normalizeTagName(tag.name) === normalizedRenameName,
         );
     const openCreate = () => setCreateOpen(true);
@@ -427,9 +430,9 @@ export default function TagsIndex({ tags }: Props) {
                     </>
                 }
             >
-                {renaming && (
+                {renameTag && (
                     <Form
-                        {...update.form({ tag: renaming.id })}
+                        {...update.form({ tag: renameTag.id })}
                         id={RENAME_FORM}
                         options={{ preserveScroll: true }}
                         onSuccess={() => setRenaming(null)}
@@ -462,9 +465,9 @@ export default function TagsIndex({ tags }: Props) {
                                             <p>
                                                 {tc(
                                                     '":target" already exists. ":name" is merged into it: :count entry gets the tag ":target" and ":name" is removed.|":target" already exists. ":name" is merged into it: :count entries get the tag ":target" and ":name" is removed.',
-                                                    renaming.entryCount,
+                                                    renameTag.entryCount,
                                                     {
-                                                        name: renaming.name,
+                                                        name: renameTag.name,
                                                         target: mergeTarget.name,
                                                     },
                                                 )}
@@ -497,11 +500,11 @@ export default function TagsIndex({ tags }: Props) {
                     });
                 }}
             >
-                {deleting &&
+                {deleteTag &&
                     tc(
                         'The tag ":name" is removed from :count entry. The entry is kept.|The tag ":name" is removed from :count entries. The entries are kept.',
-                        deleting.entryCount,
-                        { name: deleting.name, count: deleting.entryCount },
+                        deleteTag.entryCount,
+                        { name: deleteTag.name, count: deleteTag.entryCount },
                     )}
             </ConfirmDialog>
         </>

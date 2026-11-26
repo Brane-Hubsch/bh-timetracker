@@ -49,6 +49,8 @@
 :root {
     --accent: oklch(0.55 0.24 293);
     --accent-foreground: oklch(0.99 0 0);
+    --backdrop-opacity: 50%;
+    --backdrop: rgb(0 0 0 / var(--backdrop-opacity));
     /* Form fields get a visible border; HeroUI's default is borderless. */
     --field-border-width: 1px;
     --field-border: oklch(0.88 0.004 286);
@@ -58,6 +60,7 @@
 
 .dark {
     --accent: oklch(0.66 0.21 293);
+    --backdrop-opacity: 60%;
     /* HeroUI's dark fields share the card colour; make them darker with a visible border. */
     --field-background: oklch(0.17 0.005 286);
     --field-border: oklch(0.34 0.006 286);
@@ -685,6 +688,12 @@
     }
 }
 
+@media (width < 48rem) and (display-mode: standalone) {
+    :root {
+        --mobile-tab-bar-inset: calc(var(--mobile-bottom-inset) - 0.625rem);
+    }
+}
+
 @media (width < 48rem) {
     /* Safari uses the page background to extend the surface into its system bars. */
     :root:has(.mobile-tab-bar),
@@ -696,6 +705,48 @@
     :root.dark:has(.time-calendar),
     :root.dark:has(.time-calendar) body {
         background-color: var(--background);
+    }
+
+    :root:has(.mobile-tab-bar):not(:has(.drawer__dialog--fullscreen)):has(
+            :is(
+                .drawer__backdrop,
+                .modal__backdrop,
+                .alert-dialog__backdrop
+            ):not([class*='__backdrop--transparent'])
+        ) {
+        /* Safari keeps the previous status-bar tint behind a full-screen scrim.
+         * Give it a solid fixed surface to sample, painting only in the safe area. */
+        & .mobile-status-bar-tint {
+            position: fixed;
+            inset: 0 0 auto;
+            z-index: calc(var(--z-index-overlay) + 1);
+            height: max(1rem, env(safe-area-inset-top));
+            padding-bottom: max(0px, calc(1rem - env(safe-area-inset-top)));
+            pointer-events: none;
+            background-color: color-mix(
+                in srgb,
+                var(--status-bar-surface, var(--surface)),
+                black var(--backdrop-opacity)
+            );
+            background-clip: content-box;
+        }
+
+        /* HeroUI portals both backdrops to the same container when panels stack. */
+        &:has(
+            :nth-child(
+                2 of :is(
+                    .drawer__backdrop,
+                    .modal__backdrop,
+                    .alert-dialog__backdrop
+                ):not([class*='__backdrop--transparent'])
+            )
+        ) {
+            --status-bar-surface: color-mix(
+                in srgb,
+                var(--surface),
+                black var(--backdrop-opacity)
+            );
+        }
     }
 
     .keyboard-aware-sheet {
@@ -751,6 +802,158 @@
 
     .keyboard-aware-sheet[data-keyboard-open] .drawer__dialog--fullscreen {
         padding-bottom: 0.5rem;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Match the HeroUI entry pose and reverse its easing for each placement. */
+    :is(
+        .popover,
+        .tooltip,
+        .dropdown__popover,
+        .select__popover,
+        .combo-box__popover,
+        .autocomplete__popover,
+        .date-picker__popover,
+        .date-range-picker__popover,
+        .color-picker__popover
+    ) {
+        --overlay-exit-scale: 0.95;
+        --overlay-exit-duration: 150ms;
+        --overlay-exit-ease: cubic-bezier(0.75, 0, 0.75, 0.9);
+        --overlay-exit-x: 0px;
+        --overlay-exit-y: 0px;
+
+        &[data-placement^='top'] {
+            --overlay-exit-y: 0.25rem;
+        }
+
+        &[data-placement^='bottom'] {
+            --overlay-exit-y: -0.25rem;
+        }
+
+        &[data-placement^='left'] {
+            --overlay-exit-x: 0.25rem;
+        }
+
+        &[data-placement^='right'] {
+            --overlay-exit-x: -0.25rem;
+        }
+
+        &[data-exiting='true'] {
+            animation: timereport-overlay-exit var(--overlay-exit-duration)
+                var(--overlay-exit-ease);
+        }
+    }
+
+    :is(.popover, .tooltip, .dropdown__popover) {
+        --overlay-exit-scale: 0.9;
+    }
+
+    .autocomplete__popover {
+        --overlay-exit-duration: 250ms;
+        --overlay-exit-ease: cubic-bezier(1, 0, 0.68, 0.28);
+    }
+
+    :is(.modal__container, .alert-dialog__container) {
+        --overlay-exit-scale: 1.05;
+        --overlay-exit-x: 0px;
+        --overlay-exit-y: 0px;
+
+        &[data-placement='top'] {
+            --overlay-exit-y: -0.25rem;
+        }
+
+        &[data-placement='bottom'] {
+            --overlay-exit-y: 0.25rem;
+        }
+
+        &[data-placement='auto'] {
+            @variant max-sm {
+                --overlay-exit-y: 0.25rem;
+            }
+        }
+
+        &[data-exiting='true'] {
+            animation: timereport-overlay-exit 250ms
+                cubic-bezier(0.55, 0.06, 0.75, 0.54);
+        }
+    }
+
+    .modal__container--full {
+        --overlay-exit-scale: 1;
+    }
+
+    :is(.modal__backdrop, .alert-dialog__backdrop)[data-exiting='true'] {
+        /* The backdrop contains the dialog; reverse the opening overlap as well. */
+        animation: fade-out 150ms cubic-bezier(0.8, 0, 1, 1) 100ms both;
+    }
+
+    .modal__backdrop[data-exiting='true']:has(> .overlay-fade) {
+        animation-delay: 30ms;
+    }
+
+    .drawer__backdrop[data-exiting='true'] {
+        transition-duration: 250ms;
+        transition-timing-function: cubic-bezier(1, 0, 0.68, 0.28);
+    }
+
+    .drawer__content[data-exiting='true'] {
+        animation: timereport-drawer-exit var(--drawer-enter-duration)
+            cubic-bezier(1, 0, 0.68, 0.28);
+
+        /* Keep any drag transform on the dialog and finish the slide on the tracked wrapper. */
+        & > .drawer__dialog[data-placement] {
+            translate: 0 0;
+        }
+    }
+
+    .drawer__content--bottom {
+        --drawer-exit-translate: 0 100%;
+    }
+
+    .drawer__content--top {
+        --drawer-exit-translate: 0 -100%;
+    }
+
+    .drawer__content--left {
+        --drawer-exit-translate: -100% 0;
+    }
+
+    .drawer__content--right {
+        --drawer-exit-translate: 100% 0;
+    }
+
+    .overlay-fade[data-entering='true'] {
+        animation: var(--animate-fade-in);
+    }
+
+    .overlay-fade[data-exiting='true'] {
+        animation: fade-out 180ms ease-in both;
+    }
+
+    .toast[data-exiting='true'] {
+        --toast-enter: -100%;
+        --toast-translate-duration: var(--toast-enter-duration);
+        --toast-opacity-duration: var(--toast-enter-duration);
+
+        transition-timing-function:
+            cubic-bezier(1, 0, 0.68, 0.28), var(--toast-ease),
+            cubic-bezier(1, 0, 0.68, 0.28);
+    }
+}
+
+@keyframes timereport-overlay-exit {
+    to {
+        opacity: 0;
+        transform: translate3d(var(--overlay-exit-x), var(--overlay-exit-y), 0)
+            scale(var(--overlay-exit-scale));
+    }
+}
+
+@keyframes timereport-drawer-exit {
+    to {
+        translate: var(--drawer-exit-translate);
     }
 }
 
