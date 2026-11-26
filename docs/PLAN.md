@@ -150,7 +150,8 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 **Kalendervy** (veckovy är standard)
 - Plusknappen förifyller starttiden med början av den aktuella timmen i användarens tidszon. Varaktigheten hämtas från den senaste tidsposten som användaren sparade via plusknappen i den aktuella organisationen och webbläsaren. Sluttiden räknas ut från starttiden och varaktigheten. Samma förval gäller på dator och mobil.
 - På breda skärmar delar kalenderrubriken och periodens totalsumma rad med personväljaren, periodväljaren och plusknappen. Periodväljaren använder samma komponent som i rapporterna och visar periodens namn bredvid datumen. Pilarna stegar en dag eller vecka enligt vald vy.
-- Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare utan lägesbyte.
+- Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare.
+- På mobil ligger Igår, Idag och I morgon på en rad i dagväljaren. Svep åt vänster över månadsrutnätet för nästa månad och åt höger för föregående, eller använd månadspilarna.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
 - Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.
@@ -380,7 +381,7 @@ Klar. Byggt:
 Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
-- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag vid sidledes svep, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Vecka och Lista kan väljas i periodväljaren.
+- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag vid sidledes svep, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i periodväljaren. Lista öppnas via Mer på mobil.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.

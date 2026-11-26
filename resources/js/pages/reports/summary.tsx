@@ -144,7 +144,7 @@ export default function ReportsSummary({
                                 })
                             }
                             className="min-w-0 md:w-44 max-md:[&>[data-slot=label]]:text-xs max-md:[&>[data-slot=label]]:text-muted"
-                            triggerClassName="max-md:h-9 max-md:min-h-9 max-md:text-sm max-md:shadow-none"
+                            triggerClassName="max-md:h-9 max-md:py-0 max-md:shadow-none max-md:[&>[data-slot=select-value]]:text-sm"
                             data-test="report-group"
                         />
                         <SelectField
@@ -165,7 +165,7 @@ export default function ReportsSummary({
                                 })
                             }
                             className="min-w-0 md:w-44 max-md:[&>[data-slot=label]]:text-xs max-md:[&>[data-slot=label]]:text-muted"
-                            triggerClassName="max-md:h-9 max-md:min-h-9 max-md:text-sm max-md:shadow-none"
+                            triggerClassName="max-md:h-9 max-md:py-0 max-md:shadow-none max-md:[&>[data-slot=select-value]]:text-sm"
                             data-test="report-subgroup"
                         />
                     </div>
