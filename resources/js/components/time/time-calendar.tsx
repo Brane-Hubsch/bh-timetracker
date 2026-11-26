@@ -341,6 +341,8 @@ export function TimeCalendar({
                 height={height}
                 // Leave space above 07:00 for its label to straddle the grid line.
                 scrollTime="06:30:00"
+                // Keep the user's scroll position when calendar data is refreshed after a save.
+                scrollTimeReset={false}
                 slotDuration={{ minutes: CALENDAR_SLOT_MINUTES }}
                 snapDuration={{ minutes: CALENDAR_SNAP_MINUTES }}
                 slotHeaderFormat={{
