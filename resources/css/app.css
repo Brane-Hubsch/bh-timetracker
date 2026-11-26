@@ -685,6 +685,12 @@
     }
 }
 
+@media (width < 48rem) and (display-mode: standalone) {
+    :root {
+        --mobile-tab-bar-inset: calc(var(--mobile-bottom-inset) - 0.625rem);
+    }
+}
+
 @media (width < 48rem) {
     /* Safari uses the page background to extend the surface into its system bars. */
     :root:has(.mobile-tab-bar),
