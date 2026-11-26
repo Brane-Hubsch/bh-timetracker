@@ -9,7 +9,7 @@ export function MobilePageHeader({
         <div
             {...props}
             className={cn(
-                'mobile-page-header max-md:sticky max-md:top-0 max-md:z-20 max-md:min-h-(--mobile-page-header-height) max-md:flex-nowrap max-md:gap-2 max-md:border-b max-md:border-separator max-md:bg-surface/95 max-md:px-4 max-md:pt-[calc(0.25rem+env(safe-area-inset-top))] max-md:pb-2 max-md:shadow-sm max-md:backdrop-blur',
+                'mobile-page-header max-md:sticky max-md:top-0 max-md:z-20 max-md:min-h-(--mobile-page-header-height) max-md:flex-nowrap max-md:gap-2 max-md:border-b max-md:border-separator max-md:bg-surface max-md:px-4 max-md:pt-[calc(0.25rem+env(safe-area-inset-top))] max-md:pb-2 max-md:shadow-[0_1px_4px_#0000000a]',
                 className,
             )}
         />

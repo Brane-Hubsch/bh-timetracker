@@ -562,10 +562,10 @@ export default function TimeIndex({
         <>
             <Head title={pageTitle} />
 
-            <div className="grid grid-cols-1 md:gap-3">
+            <div className="grid grid-cols-1 max-md:pt-(--mobile-page-header-height) md:gap-3">
                 <MobilePageHeader
                     ref={calendarHeader}
-                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3"
+                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 max-md:fixed max-md:inset-x-0"
                 >
                     <Heading
                         className="items-center justify-start gap-x-3 gap-y-1 max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[17px]/[21px]"
