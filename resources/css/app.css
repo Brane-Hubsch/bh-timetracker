@@ -669,6 +669,7 @@
             1px + var(--mobile-tab-height) + var(--mobile-tab-bar-inset)
         );
         --mobile-page-header-height: calc(3.125rem + env(safe-area-inset-top));
+        --mobile-page-header-visible-height: 0px;
         --mobile-timer-space: 3.0625rem;
     }
 
@@ -779,9 +780,19 @@
 }
 
 @media (width < 48rem) {
-    /* Keep the page transition from painting over the fixed mobile tab bar. */
+    /* Keep page snapshots between the header's progress line and the tab bar. */
     :root:has(.mobile-tab-bar)::view-transition {
-        clip-path: inset(0 0 var(--mobile-tab-bar-height) 0);
+        clip-path: inset(
+            calc(var(--mobile-page-header-visible-height) + 2px) 0
+                var(--mobile-tab-bar-height) 0
+        );
+    }
+
+    :root:has(.mobile-tab-bar) #nprogress .bar {
+        top: var(--mobile-page-header-visible-height);
+        overflow: clip;
+        /* Inertia sets an inline transition for all properties. Only animate progress. */
+        transition-property: transform !important;
     }
 }
 
