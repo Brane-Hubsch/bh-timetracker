@@ -9,10 +9,7 @@ import {
     useCommandPalette,
 } from '@/components/command-palette';
 import { RunningTimerCard } from '@/components/time/running-timer';
-import {
-    useSidebarSettings,
-    useSyncSidebarVisibility,
-} from '@/hooks/use-sidebar-settings';
+import { useSidebarSettings } from '@/hooks/use-sidebar-settings';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
 import { cn } from '@/lib/utils';
@@ -20,8 +17,7 @@ import { home } from '@/routes';
 
 export function AppSidebar({ className }: { className?: string }) {
     const { t } = useTranslation();
-    useSyncSidebarVisibility();
-    const { orderKey, isVisible } = useSidebarSettings();
+    const { isVisible } = useSidebarSettings();
     const items = useMainNavigation().filter(({ title }) => isVisible(title));
     const {
         props: { currentOrganization, timer },
@@ -57,10 +53,9 @@ export function AppSidebar({ className }: { className?: string }) {
 
             <SidebarNavigation
                 key={JSON.stringify([
-                    orderKey,
+                    currentOrganization?.id,
                     items.map(({ title }) => title),
                 ])}
-                storageKey={orderKey}
                 items={items}
             />
 

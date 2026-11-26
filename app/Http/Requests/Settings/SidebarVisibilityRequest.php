@@ -2,23 +2,22 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Support\SidebarItems;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class SidebarVisibilityRequest extends FormRequest
 {
-    private const ITEMS = ['Search', 'Calendar', 'List', 'Reports', 'Projects', 'Clients', 'Tags', 'Team', 'Add'];
-
     /**
      * @return array<string, array<mixed>>
      */
     public function rules(): array
     {
         return [
-            'item' => ['required_with:visible', 'string', Rule::in(self::ITEMS)],
+            'item' => ['required_with:visible', 'string', Rule::in(SidebarItems::ALL)],
             'visible' => ['required_with:item', 'boolean'],
-            'legacy_hidden_items' => [Rule::when(! $this->has('item'), 'present'), 'array', 'list', 'max:'.count(self::ITEMS)],
-            'legacy_hidden_items.*' => ['required', 'string', 'distinct', Rule::in(self::ITEMS)],
+            'legacy_hidden_items' => [Rule::when(! $this->has('item'), 'present'), 'array', 'list', 'max:'.count(SidebarItems::ALL)],
+            'legacy_hidden_items.*' => ['required', 'string', 'distinct', Rule::in(SidebarItems::ALL)],
         ];
     }
 

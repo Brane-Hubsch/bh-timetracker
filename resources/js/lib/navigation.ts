@@ -27,7 +27,6 @@ type NavigationEntry = {
     title: string;
     route: (slug: string) => NonNullable<InertiaLinkProps['href']>;
     icon: LucideIcon;
-    mobile?: boolean;
     exact?: boolean;
     isVisible?: (props: NavigationProps) => boolean;
 };
@@ -38,11 +37,10 @@ const navigationEntries: readonly NavigationEntry[] = [
         title: 'Calendar',
         route: timeCalendar,
         icon: CalendarDays,
-        mobile: true,
         exact: true,
     },
     { title: 'List', route: timeList, icon: List, exact: true },
-    { title: 'Reports', route: reports, icon: ChartColumn, mobile: true },
+    { title: 'Reports', route: reports, icon: ChartColumn },
     { title: 'Projects', route: projects, icon: FolderKanban },
     {
         title: 'Clients',
@@ -73,8 +71,6 @@ export type MainNavItem = {
     href: NonNullable<InertiaLinkProps['href']>;
     icon: LucideIcon;
     isActive?: boolean;
-    /** Shown in the mobile bottom navigation (others are under "More"). */
-    mobile: boolean;
 };
 
 /**
@@ -91,7 +87,7 @@ export function useMainNavigation(): MainNavItem[] {
 
     return navigationEntries
         .filter((entry) => !entry.isVisible || entry.isVisible(props))
-        .map(({ title, route, icon, mobile, exact }) => {
+        .map(({ title, route, icon, exact }) => {
             const href = route(slug);
 
             return {
@@ -99,7 +95,6 @@ export function useMainNavigation(): MainNavItem[] {
                 href,
                 icon,
                 isActive: exact ? isCurrentUrl(href) : undefined,
-                mobile: mobile ?? false,
             };
         });
 }

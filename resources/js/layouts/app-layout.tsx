@@ -2,10 +2,7 @@ import { Breadcrumbs } from '@heroui/react';
 import { AppSidebar } from '@/components/app-shell/app-sidebar';
 import { SidebarResizeHandle } from '@/components/app-shell/sidebar-resize-handle';
 import { CommandPaletteProvider } from '@/components/command-palette';
-import {
-    MobileBottomNav,
-    MobileTopBar,
-} from '@/components/app-shell/mobile-navigation';
+import { MobileBottomNav } from '@/components/app-shell/mobile-navigation';
 import { usePage } from '@inertiajs/react';
 import { useState, type CSSProperties } from 'react';
 import {
@@ -17,8 +14,9 @@ import {
     useKeyboardShortcuts,
 } from '@/components/keyboard-shortcuts';
 import { useRefreshOnReturn } from '@/hooks/use-refresh-on-return';
+import { useSyncSidebarSettings } from '@/hooks/use-sidebar-settings';
 import { useTranslation } from '@/lib/i18n';
-import { toUrl } from '@/lib/utils';
+import { cn, toUrl } from '@/lib/utils';
 import type { AppLayoutProps, ContentWidth } from '@/types';
 
 const WIDTHS: Record<ContentWidth, string> = {
@@ -27,7 +25,7 @@ const WIDTHS: Record<ContentWidth, string> = {
 };
 
 /**
- * Authenticated app shell: sidebar on desktop, top bar + bottom navigation on mobile, and the ⌘K
+ * Authenticated app shell: sidebar on desktop, bottom navigation on mobile, and the ⌘K
  * command palette. Pages that benefit from wide screens (calendar, reports) set the `wide` width
  * through layout props. The page's data is reloaded when the user comes back after a while.
  */
@@ -41,6 +39,7 @@ export default function AppLayout({
     const [sidebarWidth, setSidebarWidth] = useState(256);
     // Show time reported elsewhere when the user comes back to the app.
     useRefreshOnReturn();
+    useSyncSidebarSettings();
     useTimerTitle();
     useKeyboardShortcuts();
     const hasTimer = Boolean(usePage().props.timer);
@@ -60,10 +59,16 @@ export default function AppLayout({
                 />
 
                 <div className="md:pl-(--sidebar-width)">
-                    <MobileTopBar className="md:hidden" />
-
                     <main
-                        className={`page-transition mx-auto w-full ${WIDTHS[width]} animate-enter px-4 pt-4 ${hasTimer ? 'pb-40' : 'pb-28'} md:px-8 ${compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12'}`}
+                        className={cn(
+                            'page-transition mx-auto w-full animate-enter px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8',
+                            WIDTHS[width],
+                            compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12',
+                            'max-md:has-[.mobile-calendar-header]:animate-none max-md:has-[.mobile-calendar-header]:bg-surface max-md:has-[.mobile-calendar-header]:px-0 max-md:has-[.mobile-calendar-header]:pt-0 dark:max-md:has-[.mobile-calendar-header]:bg-background',
+                            hasTimer
+                                ? 'pb-[calc(10rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(6.625rem+env(safe-area-inset-bottom))]'
+                                : 'pb-[calc(7rem+env(safe-area-inset-bottom))] max-md:has-[.mobile-calendar-header]:pb-[calc(3.5625rem+env(safe-area-inset-bottom))]',
+                        )}
                     >
                         {breadcrumbs.length > 1 && (
                             <Breadcrumbs className="mb-6 hidden md:flex">

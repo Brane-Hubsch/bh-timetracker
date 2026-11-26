@@ -3,14 +3,22 @@ import { useEffect } from 'react';
 
 /**
  * Run `open` once when the page was opened with `?{param}=…` (e.g. from the command palette), then
- * remove the parameters from the address bar so a reload does not open it again.
+ * remove the parameters from the address bar so a reload does not open it again. A page that
+ * redirects to its preferred view can defer opening until that view has loaded.
  */
 export function useOpenFromQuery(
     param: string,
     open: (params: URLSearchParams) => void,
-    alsoRemove: string[] = [],
+    {
+        alsoRemove = [],
+        enabled = true,
+    }: { alsoRemove?: string[]; enabled?: boolean } = {},
 ): void {
     useEffect(() => {
+        if (!enabled) {
+            return;
+        }
+
         const url = new URL(window.location.href);
 
         if (!url.searchParams.has(param)) {
@@ -26,7 +34,7 @@ export function useOpenFromQuery(
             preserveState: true,
             preserveScroll: true,
         });
-        // Only on the first render of the page.
+        // Run on entry, or once the page is enabled.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [enabled]);
 }

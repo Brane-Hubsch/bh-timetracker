@@ -1,7 +1,8 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Copy } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ComponentProps } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { SelectField } from '@/components/form/select-field';
 import Heading from '@/components/heading';
@@ -10,6 +11,7 @@ import {
     draftFromAbsence,
 } from '@/components/time/absence-dialog';
 import { CalendarPicker } from '@/components/time/calendar-picker';
+import { CalendarDaySwipe } from '@/components/time/calendar-day-swipe';
 import { CopyPeriodDialog } from '@/components/time/copy-period-dialog';
 import { startTimer } from '@/components/time/running-timer';
 import { TimeActionsMenu } from '@/components/time/time-actions-menu';
@@ -26,6 +28,7 @@ import {
 } from '@/components/time/time-entry-form';
 import { TimeEntryList } from '@/components/time/time-entry-list';
 import { useInitials } from '@/hooks/use-initials';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useShortcut } from '@/lib/shortcuts';
 import { useTranslation } from '@/lib/i18n';
@@ -83,6 +86,11 @@ type Props = {
     previousPeriodEntries?: TimeEntry[];
 };
 
+type AdjacentDay = Pick<
+    Props,
+    'date' | 'entries' | 'absences' | 'colleaguesOff' | 'calendarHolidays'
+>;
+
 export default function TimeIndex({
     view,
     date,
@@ -109,7 +117,11 @@ export default function TimeIndex({
 }: Props) {
     const { t } = useTranslation();
     const getInitials = useInitials();
-    const { auth, currentOrganization, timer } = usePage().props;
+    const {
+        props: { auth, can, currentOrganization, timer },
+        url,
+    } = usePage();
+    const isMobile = useMediaQuery('(width < 768px)');
     const startOrganization =
         currentOrganization?.timerEnabled &&
         !timer &&
@@ -151,11 +163,18 @@ export default function TimeIndex({
         currentOrganization?.id,
     );
     const isList = view === 'list';
+    const periodUrl = new URL(url, 'http://localhost');
+    const needsMobileDay =
+        isMobile && view === 'week' && !periodUrl.searchParams.has('view');
     const pageTitle = t(isList ? 'List' : 'Calendar');
 
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
     const [absenceDraft, setAbsenceDraft] = useState<AbsenceDraft | null>(null);
+    const [preview, setPreview] = useState<{
+        from: string;
+        day: AdjacentDay;
+    } | null>(null);
     const newAbsence = (startsOn: string, endsOn = startsOn) =>
         setAbsenceDraft({
             userId: member.id,
@@ -167,7 +186,8 @@ export default function TimeIndex({
         });
 
     const dates = weekDates(weekStart);
-    const reportDate = dates.includes(today) ? today : date;
+    const reportDate =
+        (isMobile && view === 'day') || !dates.includes(today) ? date : today;
     const openReport = (mode: TimeReportMode) =>
         setDraft(
             newPlusDraft(
@@ -178,6 +198,7 @@ export default function TimeIndex({
             ),
         );
 
+    const queryOptions = { enabled: !needsMobileDay };
     // A report link can choose a mode, and the command palette may preselect a project.
     useOpenFromQuery(
         'new',
@@ -203,14 +224,82 @@ export default function TimeIndex({
                     : base,
             );
         },
-        ['project'],
+        { ...queryOptions, alsoRemove: ['project'] },
     );
-    useOpenFromQuery('copy', () => setCopyOpen(true));
+    useOpenFromQuery('copy', () => setCopyOpen(true), queryOptions);
     // Opened from the running timer ("?timer=edit" or "?timer=stop").
-    useOpenFromQuery('timer', (params) =>
-        setDraft(timerDraft(params.get('timer') === 'stop')),
+    useOpenFromQuery(
+        'timer',
+        (params) => setDraft(timerDraft(params.get('timer') === 'stop')),
+        queryOptions,
     );
-    useOpenFromQuery('absence', () => newAbsence(reportDate));
+    useOpenFromQuery('absence', () => newAbsence(reportDate), queryOptions);
+
+    useEffect(() => {
+        if (!needsMobileDay) {
+            return;
+        }
+
+        const next = new URL(url, window.location.origin);
+        next.searchParams.set('view', 'day');
+        // The server has to rebuild the period data for the new view.
+        router.get(
+            next,
+            {},
+            {
+                replace: true,
+                preserveState: true,
+                preserveScroll: true,
+                showProgress: false,
+            },
+        );
+    }, [needsMobileDay, url]);
+
+    const calendarHeader = useRef<HTMLDivElement>(null);
+    const didSetMobileScroll = useRef(false);
+    useEffect(() => {
+        if (isList) {
+            didSetMobileScroll.current = false;
+        }
+
+        if (
+            !isMobile ||
+            isList ||
+            needsMobileDay ||
+            didSetMobileScroll.current
+        ) {
+            return;
+        }
+
+        const header = calendarHeader.current;
+        const grid = header?.nextElementSibling;
+        if (!header || !grid) {
+            return;
+        }
+
+        // FullCalendar measures the slots after mount. Wait for their full height
+        // before setting the page scroll, and keep an existing scroll position.
+        const observer = new ResizeObserver(() => {
+            const morning = grid.querySelector('.time-calendar-morning');
+            const slot = morning?.getBoundingClientRect();
+            if (!slot || slot.height < 20) {
+                return;
+            }
+
+            didSetMobileScroll.current = true;
+            observer.disconnect();
+            if (window.scrollY < header.offsetHeight) {
+                window.scrollTo(
+                    0,
+                    window.scrollY + slot.top - header.offsetHeight - 12,
+                );
+            }
+        });
+        observer.observe(grid.querySelector('.time-calendar-morning') ?? grid);
+
+        return () => observer.disconnect();
+    }, [isList, isMobile, needsMobileDay, view]);
+
     const weekTotal = entries.reduce(
         (sum, entry) => sum + entry.durationSeconds,
         0,
@@ -225,7 +314,11 @@ export default function TimeIndex({
                     isIconOnly
                     variant="tertiary"
                     size={view === 'list' ? 'md' : 'lg'}
-                    className={view === 'list' ? undefined : 'shadow-lg'}
+                    className={
+                        isList
+                            ? undefined
+                            : 'shadow-lg max-md:size-11 max-md:rounded-full max-md:border max-md:border-accent/20 max-md:bg-[color-mix(in_oklab,var(--accent)_8%,var(--surface))] max-md:text-accent max-md:[&_svg]:size-4'
+                    }
                     onPress={() => setCopyOpen(true)}
                     aria-label={t(
                         view === 'day'
@@ -251,20 +344,80 @@ export default function TimeIndex({
         </Tooltip>
     );
 
-    const visit = (changes: { date?: string; view?: View; user?: number }) => {
+    const pageData = (changes: {
+        date?: string;
+        view?: View;
+        user?: number;
+    }) => {
         const nextView = changes.view ?? view;
         const route = nextView === 'list' ? list : index;
 
-        return router.get(
-            route.url(),
-            {
+        return {
+            href: route.url(),
+            data: {
                 date: changes.date ?? date,
-                ...(nextView === 'day' ? { view: nextView } : {}),
+                ...(nextView === 'day' || (nextView === 'week' && isMobile)
+                    ? { view: nextView }
+                    : {}),
                 user: changes.user ?? member.id,
             },
-            { preserveScroll: true, preserveState: true, replace: true },
-        );
+        };
     };
+    const visit = (
+        changes: Parameters<typeof pageData>[0],
+        onFinish?: () => void,
+    ) => {
+        const { href, data } = pageData(changes);
+
+        router.get(href, data, {
+            preserveScroll:
+                !isMobile ||
+                !changes.view ||
+                (changes.view === 'list') === isList,
+            preserveState: true,
+            replace: true,
+            showProgress: !onFinish,
+            onFinish,
+        });
+    };
+
+    function prefetchDay(direction: -1 | 1) {
+        const nextDate = addDays(date, direction);
+        const { href, data } = pageData({ date: nextDate });
+
+        router.prefetch(
+            href,
+            {
+                data,
+                onPrefetched: (response) => {
+                    const { props } = JSON.parse(response.data) as {
+                        props: AdjacentDay;
+                    };
+                    if (props.date === nextDate) {
+                        const {
+                            date,
+                            entries,
+                            absences,
+                            colleaguesOff,
+                            calendarHolidays,
+                        } = props;
+                        setPreview({
+                            from: url,
+                            day: {
+                                date,
+                                entries,
+                                absences,
+                                colleaguesOff,
+                                calendarHolidays,
+                            },
+                        });
+                    }
+                },
+            },
+            // Start the request while the finger is down and reuse it on release.
+            { cacheFor: '5s' },
+        );
+    }
 
     const move = (
         entry: TimeEntry,
@@ -290,7 +443,10 @@ export default function TimeIndex({
             },
         );
 
-    const memberPicker = members.length > 1 && (
+    const mobileAvatar = !isList && isMobile;
+    const memberPicker = (mobileAvatar
+        ? can?.canManageTeamTime && members.length > 0
+        : members.length > 1) && (
         <SelectField
             name="user"
             label={<span className="sr-only">{t('Member')}</span>}
@@ -303,7 +459,11 @@ export default function TimeIndex({
                         size="sm"
                         variant="soft"
                         color="accent"
-                        className="size-9 rounded-full in-data-[slot=select-value]:size-6"
+                        className={cn(
+                            'size-9 rounded-full in-data-[slot=select-value]:size-6',
+                            mobileAvatar &&
+                                'in-data-[slot=select-value]:size-[34px]',
+                        )}
                         aria-hidden="true"
                     >
                         {avatar && (
@@ -315,11 +475,27 @@ export default function TimeIndex({
                         )}
                         <Avatar.Fallback>{getInitials(label)}</Avatar.Fallback>
                     </Avatar>
-                    <span className="truncate">{label}</span>
+                    <span
+                        className={cn(
+                            'truncate',
+                            mobileAvatar &&
+                                'in-data-[slot=select-value]:sr-only',
+                        )}
+                    >
+                        {label}
+                    </span>
                 </span>
             )}
-            className="w-fit max-w-full min-w-0 gap-0"
-            triggerClassName="h-9 items-center rounded-full bg-surface py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-3 shadow-none"
+            className={cn(
+                'w-fit max-w-full min-w-0 gap-0',
+                mobileAvatar && 'order-last shrink-0',
+            )}
+            triggerClassName={cn(
+                'h-9 items-center rounded-full bg-surface py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-3 shadow-none',
+                mobileAvatar &&
+                    'size-9 justify-center border-0 bg-transparent p-0',
+            )}
+            triggerAriaLabel={mobileAvatar ? t('Member') : undefined}
             hideIndicator
             data-test="member-select"
         />
@@ -356,14 +532,55 @@ export default function TimeIndex({
         />
     );
 
+    const calendarProps: Omit<ComponentProps<typeof TimeCalendar>, 'view'> = {
+        date,
+        weekStartsOn,
+        timezone,
+        entries,
+        holidays: calendarHolidays,
+        absences,
+        colleaguesOff,
+        floatingAction: copyPeriodButton,
+        hasSelectionDraft: draft?.openedFrom === 'calendar',
+        onSelectDays: newAbsence,
+        onEditAbsence: (absence) => setAbsenceDraft(draftFromAbsence(absence)),
+        timer: timerHere,
+        onEditTimer: () => setDraft(timerDraft(false)),
+        onSelect: (start, end) =>
+            setDraft({
+                ...newDraft(start.slice(0, 10), entries, member.id),
+                start: timeOf(start),
+                end: timeOf(end),
+                openedFrom: 'calendar',
+            }),
+        onEdit: (entry) => setDraft(draftFromEntry(entry)),
+        onChange: move,
+    };
+
     return (
         <>
             <Head title={pageTitle} />
 
-            <div className="grid grid-cols-1 gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
+            <div
+                className={cn(
+                    'grid grid-cols-1 gap-3',
+                    !isList && 'max-md:gap-0',
+                )}
+            >
+                <div
+                    ref={calendarHeader}
+                    className={cn(
+                        'flex flex-wrap items-center justify-between gap-x-5 gap-y-3',
+                        !isList &&
+                            'mobile-calendar-header max-md:sticky max-md:top-0 max-md:z-20 max-md:min-h-[calc(3.125rem+env(safe-area-inset-top))] max-md:flex-nowrap max-md:gap-2 max-md:border-b max-md:border-separator max-md:bg-surface/95 max-md:px-4 max-md:pt-[calc(0.25rem+env(safe-area-inset-top))] max-md:pb-2 max-md:shadow-sm max-md:backdrop-blur',
+                    )}
+                >
                     <Heading
-                        className="items-center justify-start gap-x-3 gap-y-1"
+                        className={cn(
+                            'items-center justify-start gap-x-3 gap-y-1',
+                            !isList &&
+                                'max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[17px]/[21px]',
+                        )}
                         title={pageTitle}
                         actions={
                             <p
@@ -384,7 +601,12 @@ export default function TimeIndex({
                         }
                     />
 
-                    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2.5 md:ms-auto">
+                    <div
+                        className={cn(
+                            'flex max-w-full min-w-0 flex-wrap items-center gap-2.5 md:ms-auto',
+                            !isList && 'max-md:flex-nowrap max-md:gap-2',
+                        )}
+                    >
                         {isList && copyPeriodButton}
                         {memberPicker}
                         {periodPicker}
@@ -403,6 +625,7 @@ export default function TimeIndex({
                     key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
                     className={cn(
                         'animate-fade-in',
+                        !isList && 'max-md:animate-none',
                         view === 'list' && 'mx-auto w-full max-w-[76rem]',
                     )}
                 >
@@ -421,60 +644,67 @@ export default function TimeIndex({
                                 setDraft(newDraft(day, entries, member.id))
                             }
                         />
+                    ) : isMobile && view === 'day' ? (
+                        <CalendarDaySwipe
+                            onSwipeIntent={prefetchDay}
+                            onSwipe={(direction, onFinish) =>
+                                visit(
+                                    { date: addDays(date, direction) },
+                                    onFinish,
+                                )
+                            }
+                            renderAdjacent={(direction) => {
+                                const nextDate = addDays(date, direction);
+                                const day =
+                                    preview?.from === url &&
+                                    preview.day.date === nextDate
+                                        ? preview.day
+                                        : null;
+
+                                return (
+                                    <TimeCalendar
+                                        {...calendarProps}
+                                        view="day"
+                                        date={nextDate}
+                                        entries={day?.entries ?? entries}
+                                        absences={day?.absences ?? absences}
+                                        colleaguesOff={
+                                            day?.colleaguesOff ?? colleaguesOff
+                                        }
+                                        holidays={day?.calendarHolidays ?? []}
+                                        floatingAction={undefined}
+                                        isPreview
+                                    />
+                                );
+                            }}
+                        >
+                            <TimeCalendar {...calendarProps} view={view} />
+                        </CalendarDaySwipe>
                     ) : (
-                        <TimeCalendar
-                            view={view}
-                            date={date}
-                            weekStartsOn={weekStartsOn}
-                            timezone={timezone}
-                            entries={entries}
-                            holidays={calendarHolidays}
-                            absences={absences}
-                            colleaguesOff={colleaguesOff}
-                            floatingAction={copyPeriodButton}
-                            hasSelectionDraft={draft?.openedFrom === 'calendar'}
-                            onSelectDays={newAbsence}
-                            onEditAbsence={(absence) =>
-                                setAbsenceDraft(draftFromAbsence(absence))
-                            }
-                            timer={timerHere}
-                            onEditTimer={() => setDraft(timerDraft(false))}
-                            onSelect={(start, end) =>
-                                setDraft({
-                                    ...newDraft(
-                                        start.slice(0, 10),
-                                        entries,
-                                        member.id,
-                                    ),
-                                    start: timeOf(start),
-                                    end: timeOf(end),
-                                    openedFrom: 'calendar',
-                                })
-                            }
-                            onEdit={(entry) => setDraft(draftFromEntry(entry))}
-                            onChange={move}
-                        />
+                        <TimeCalendar {...calendarProps} view={view} />
                     )}
                 </div>
             </div>
 
             {/* Big "+" on mobile. */}
-            <TimeActionsMenu
-                large
-                placement="top end"
+            <div
                 className={cn(
-                    'fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 size-14 rounded-full shadow-lg md:hidden',
-                    // Above the running timer's bar.
+                    'fixed right-4 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 flex flex-col items-center gap-3 md:hidden',
+                    isList && 'bottom-[calc(5rem+env(safe-area-inset-bottom))]',
                     timer &&
                         'bottom-[calc(7.75rem+env(safe-area-inset-bottom))]',
-                    view !== 'list' &&
-                        canCopyPreviousPeriod &&
-                        'right-6 bottom-[calc(11rem+env(safe-area-inset-bottom))]',
                 )}
-                onStartTimer={onStartTimer}
-                onReport={openReport}
-                testId="new-time-fab"
-            />
+            >
+                {!isList && copyPeriodButton}
+                <TimeActionsMenu
+                    large
+                    placement="top end"
+                    className="size-14 rounded-full shadow-lg"
+                    onStartTimer={onStartTimer}
+                    onReport={openReport}
+                    testId="new-time-fab"
+                />
+            </div>
 
             <TimeEntryForm
                 draft={draft}

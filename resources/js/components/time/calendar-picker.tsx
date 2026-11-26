@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useState } from 'react';
 import { PeriodPicker } from '@/components/period-picker';
 import { SegmentedControl } from '@/components/segmented-control';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import { addDays, formatDate, formatDateRange, isoWeek } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -17,10 +18,10 @@ import { cn } from '@/lib/utils';
 const WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const MONTH_DAY = { day: 'numeric', month: 'long' } as const;
 
-type CalendarView = 'day' | 'week';
+type CalendarView = 'day' | 'week' | 'list';
 
 type Props = {
-    view: CalendarView | 'list';
+    view: CalendarView;
     date: string;
     weekStart: string;
     weekStartsOn: number;
@@ -299,6 +300,7 @@ export function CalendarPicker({
     const { t, intlLocale } = useTranslation();
     const isDay = view === 'day';
     const isList = view === 'list';
+    const isMobile = useMediaQuery('(width < 768px)');
     const value = isDay ? date : weekStart;
     const currentPeriod = isDay
         ? today
@@ -370,6 +372,7 @@ export function CalendarPicker({
             label={label}
             compact
             enclosed
+            mobileLabelOnly={!isList}
             className="min-w-0"
             testId="calendar-period-picker"
         >
@@ -412,14 +415,27 @@ export function CalendarPicker({
                                 >
                                     {t('Today')}
                                 </Button>
-                                {!isList && (
+                                {(!isList || isMobile) && (
                                     <SegmentedControl
                                         aria-label={t('View')}
                                         value={view}
-                                        onChange={onViewChange}
+                                        onChange={(view) => {
+                                            if (isMobile) {
+                                                dismiss();
+                                            }
+                                            onViewChange(view);
+                                        }}
                                         options={[
                                             { id: 'day', label: t('Day') },
                                             { id: 'week', label: t('Week') },
+                                            ...(isMobile
+                                                ? [
+                                                      {
+                                                          id: 'list' as const,
+                                                          label: t('List'),
+                                                      },
+                                                  ]
+                                                : []),
                                         ]}
                                         data-test="calendar-picker-view"
                                     />

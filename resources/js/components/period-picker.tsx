@@ -15,6 +15,8 @@ type Props = {
     compact?: boolean;
     /** Place the trigger and step buttons inside a shared outline. */
     enclosed?: boolean;
+    /** On phones, show the period as a single outlined button. */
+    mobileLabelOnly?: boolean;
     className?: string;
     testId: string;
     children: (context: {
@@ -31,13 +33,18 @@ export function PeriodPicker({
     label,
     compact = false,
     enclosed = false,
+    mobileLabelOnly = false,
     className,
     testId,
     children,
 }: Props) {
     const { t } = useTranslation();
     const isDesktop = useMediaQuery(
-        compact ? '(min-width: 640px)' : '(min-width: 800px)',
+        mobileLabelOnly
+            ? '(min-width: 768px)'
+            : compact
+              ? '(min-width: 640px)'
+              : '(min-width: 800px)',
     );
     const [isOpen, setIsOpen] = useState(false);
     const dismiss = () => setIsOpen(false);
@@ -54,12 +61,24 @@ export function PeriodPicker({
                 enclosed
                     ? 'h-8 justify-center px-3'
                     : 'h-9 justify-between bg-surface ps-3.5 pe-2.5',
+                mobileLabelOnly &&
+                    'max-md:h-[34px] max-md:border max-md:border-border max-md:bg-surface max-md:text-xs',
             )}
             data-test={testId}
         >
-            <span className="flex min-w-0 items-baseline gap-2">
+            <span
+                className={cn(
+                    'flex min-w-0 items-baseline gap-2',
+                    mobileLabelOnly && 'max-md:gap-1.5',
+                )}
+            >
                 {name && (
-                    <span className="truncate font-semibold first-letter:uppercase">
+                    <span
+                        className={cn(
+                            'truncate font-semibold first-letter:uppercase',
+                            mobileLabelOnly && 'max-md:text-[13px]',
+                        )}
+                    >
                         {name}
                     </span>
                 )}
@@ -68,6 +87,7 @@ export function PeriodPicker({
                         className={cn(
                             'truncate tabular-nums',
                             name ? 'font-normal text-muted' : 'font-medium',
+                            mobileLabelOnly && 'max-md:text-[11px]',
                         )}
                     >
                         {range}
@@ -84,6 +104,8 @@ export function PeriodPicker({
                 enclosed
                     ? 'h-9 gap-1 rounded-full border border-border bg-surface p-px'
                     : 'gap-1',
+                mobileLabelOnly &&
+                    'max-md:h-auto max-md:border-0 max-md:bg-transparent max-md:p-0',
                 className,
             )}
         >
@@ -91,7 +113,10 @@ export function PeriodPicker({
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                className={stepButtonClassName}
+                className={cn(
+                    stepButtonClassName,
+                    mobileLabelOnly && 'max-md:hidden',
+                )}
                 isDisabled={!onStep}
                 aria-label={stepLabels?.[0] ?? t('Previous period')}
                 onPress={() => onStep?.(-1)}
@@ -165,7 +190,10 @@ export function PeriodPicker({
                 isIconOnly
                 variant="ghost"
                 size="sm"
-                className={stepButtonClassName}
+                className={cn(
+                    stepButtonClassName,
+                    mobileLabelOnly && 'max-md:hidden',
+                )}
                 isDisabled={!onStep}
                 aria-label={stepLabels?.[1] ?? t('Next period')}
                 onPress={() => onStep?.(1)}

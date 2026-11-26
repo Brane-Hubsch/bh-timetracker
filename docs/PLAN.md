@@ -179,7 +179,7 @@ Se avsnitt 6.
 
 ### 4.9 Mobil och desktop
 
-- Responsiv layout: sidomeny på desktop, bottennavigering (Kalender / Rapporter / Mer) på mobil. (Idag är pausad, se ändringen efter Fas 6.)
+- Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
 - Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
@@ -371,7 +371,7 @@ Klar. Byggt:
 Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
-- Standardvy: vecka på desktop och lista på mobil. Dagvyn finns som flik.
+- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag vid sidledes svep. Vecka och Lista kan väljas i periodväljaren.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
@@ -392,7 +392,7 @@ Klar. Byggt:
 - **Export** till CSV och XLSX med `openspout/openspout`, både för sammanfattningen och den detaljerade rapporten.
 - **Projektlistan** (översikt, 2026-11-23) visar per projekt kod, kund, debitering, timpris (bara för den som får se priser), synlighet, budget i timmar och rapporterad tid, med en sammanfattning överst. Budget och rapporterad tid har varsin kolumn, med **Rapporterat** längst till höger. Budgeten visar även förbrukad andel och ett streck om estimat saknas. Listan filtreras på sök, kund, debiterbart (`billable=1/0`) och aktiva/arkiverade. Filtren ligger i URL:en. MCP-verktyget `list_projects` tar samma filter (`billable`).
 - **Projektsidan** visar debiterbara timmar och belopp, tid per medlem och timmar per vecka för de senaste 12 veckorna. **Kundsidan** visar tid och belopp per projekt för en vald period. Båda har en länk till rapporten.
-- "Rapporter" finns i sidomenyn och i mobilens bottennavigering (Idag / Kalender / Rapporter / Mer).
+- "Rapporter" finns i sidomenyn. På mobil avgör sidomenyns ordning och synlighet om Rapporter visas som flik eller i Mer-panelen.
 
 Avvikelser och förtydliganden:
 
@@ -482,7 +482,7 @@ Hosting är beslutad: Docker Compose, i Coolify (se "Tillägg efter Fas 6: drift
 
 ### Tillägg efter Fas 6: kommandomeny (⌘K) (2026-11-19)
 
-Beställt i efterhand (inte i ursprungsplanen). Kommandomenyn öppnas med ⌘K / Ctrl+K, eller med sökknappen i sidomenyn eller i mobilens toppfält. Byggd med HeroUI (Modal, `Autocomplete.Filter`, SearchField, ListBox).
+Beställt i efterhand (inte i ursprungsplanen). Kommandomenyn öppnas med ⌘K / Ctrl+K, eller med Sök i sidomenyn eller mobilens Mer-panel när Sök är synlig. Byggd med HeroUI (Modal, `Autocomplete.Filter`, SearchField, ListBox).
 
 - **Snabbåtgärder:** Rapportera tid och Kopiera förra veckan. Nytt projekt, Ny kund och Bjud in medlem visas efter behörighet.
 - **Gå till:** alla sidor och inställningar.
@@ -750,7 +750,7 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
 
 ### Tillägg efter Fas 6: inställningar för sidomenyn
 
-I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägen Lägg till. Reglaget Lägg till styr plusknappen i sidomenyn. Synligheten gäller direkt i sidomenyn på desktop och sparas på användarkontot, gemensamt för webbläsare, enheter och organisationer. Om kontot saknar sparade val förs de lokala valen för den aktiva organisationen över när de först hittas. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Menylänksordningen sparas i webbläsaren per användare och organisation. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
+I **Inställningar → Sidomeny** går det att visa eller dölja Sök, de menylänkar som är tillgängliga för den aktuella organisationen och genvägen Lägg till. Reglaget Lägg till styr plusknappen i sidomenyn. Menylänkarna kan ordnas om med mus, pekskärm och tangentbord. Synlighet och ordning gäller direkt i sidomenyn på desktop och i mobilens bottennavigering och Mer-panel. Båda sparas på användarkontot, gemensamt för webbläsare, enheter och organisationer. Om kontot saknar en sparad inställning importeras den från den aktiva organisationens lokala inställningar när den först hittas. En pågående timer kan alltid öppnas och stoppas från sidomenyn.
 
 ### Tillägg efter Fas 6: uppdatering när man kommer tillbaka (2026-11-24)
 
@@ -805,7 +805,7 @@ Beslutat av beställaren: kalendern är det alla använder för att rapportera t
 - **Var man hamnar:** efter inloggning (passkey, Google, magisk länk, e-postverifiering), på `/`, efter onboarding och efter att ha tackat ja eller nej till en inbjudan hamnar man i kalendern (`/{organisation}/calendar`).
   - Startsidan styrs på ett ställe: `fortify.home` (`/calendar`).
   - Listvyn finns på `/{organisation}/list`. Gamla länkar till `/{organisation}/time` leder vidare till kalendern eller listvyn beroende på `view`.
-- **Menyer:** Idag är borttagen ur sidomenyn, mobilens bottennavigering och ⌘K. Mobilens bottennavigering är nu Kalender / Rapporter / Mer.
+- **Menyer:** Idag är borttagen ur sidomenyn, mobilens bottennavigering och ⌘K. Mobilens bottennavigering visar upp till fyra synliga menylänkar i användarens ordning och alltid Mer sist.
 - **Kvar i koden:** `DashboardController`, sidan `dashboard` och deras tester. Sidan nås fortfarande på `/{organisation}/dashboard`.
 - **Slå på igen:** lägg tillbaka menyposten i `resources/js/lib/navigation.ts` och ⌘K-kommandot, och sätt `fortify.home` till `/dashboard`.
 
