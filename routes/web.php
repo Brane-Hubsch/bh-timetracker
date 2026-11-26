@@ -11,6 +11,7 @@ use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Organizations\TeamController;
 use App\Http\Controllers\Projects\ProjectController;
 use App\Http\Controllers\Projects\ProjectMemberController;
+use App\Http\Controllers\PwaManifestController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\Tags\TagController;
 use App\Http\Controllers\TimeEntries\TimeEntryController;
@@ -19,6 +20,7 @@ use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('site.webmanifest', PwaManifestController::class);
 // Fortify can send verified users directly to its unscoped home path.
 Route::get('calendar', HomeController::class);
 
