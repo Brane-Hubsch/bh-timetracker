@@ -575,12 +575,22 @@ export default function TimeIndex({
                                 className="flex items-baseline gap-1.5 text-xs tabular-nums"
                                 data-test="week-total"
                             >
-                                <span className="font-medium text-muted">
+                                <span
+                                    className={cn(
+                                        'font-medium text-muted',
+                                        view === 'day' && 'max-md:font-normal',
+                                    )}
+                                >
                                     {view === 'day'
                                         ? t('Day total')
                                         : t('Week total')}
                                 </span>
-                                <span className="font-semibold">
+                                <span
+                                    className={cn(
+                                        'font-semibold',
+                                        view === 'day' && 'max-md:font-medium',
+                                    )}
+                                >
                                     {formatDuration(
                                         view === 'day' ? dayTotal : weekTotal,
                                     )}

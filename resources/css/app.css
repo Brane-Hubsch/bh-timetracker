@@ -505,6 +505,13 @@
     translate: 0 calc(-1 * var(--time-calendar-holiday-space));
     background:
         linear-gradient(var(--danger-soft), var(--danger-soft)), var(--surface);
+
+    @media (width < 48rem) {
+        inset-block-start: calc(
+            var(--mobile-page-header-height) +
+                var(--time-calendar-holiday-space) + 0.75rem
+        );
+    }
 }
 
 /* Center on the 1px grid rule. The first label stays inside the scroll area. */
@@ -519,6 +526,24 @@
 /* In the day view the whole grid is "today"; the accent date in the header is enough. */
 .time-calendar[data-view='day'] {
     --fc-classic-today: transparent;
+}
+
+@media (width < 48rem) {
+    /* Use the day lane's inline start so the divider follows the measured time axis. */
+    .time-calendar[data-view='day'] .time-calendar-day::before {
+        position: fixed;
+        inset-block: var(--mobile-page-header-height)
+            var(--mobile-tab-bar-height);
+        margin-inline-start: -1px;
+        width: 1px;
+        background-color: var(--separator);
+        pointer-events: none;
+        content: '';
+
+        :where([data-swiping]) & {
+            display: none;
+        }
+    }
 }
 
 .time-calendar-now {
@@ -662,6 +687,12 @@
         background-color: var(--surface);
     }
 
+    /* Match the dark calendar when rubber-band scrolling exposes the page canvas. */
+    :root.dark:has(.time-calendar),
+    :root.dark:has(.time-calendar) body {
+        background-color: var(--background);
+    }
+
     .keyboard-aware-sheet {
         /* Keep the page dimmed behind Safari's floating keyboard toolbar. */
         height: max(100dvh, var(--visual-viewport-height));
@@ -703,6 +734,18 @@
         & .drawer__footer {
             flex-shrink: 0;
         }
+
+        & .drawer__dialog--fullscreen {
+            height: 100%;
+            max-block-size: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding-top: calc(0.5rem + env(safe-area-inset-top));
+        }
+    }
+
+    .keyboard-aware-sheet[data-keyboard-open] .drawer__dialog--fullscreen {
+        padding-bottom: 0.5rem;
     }
 }
 

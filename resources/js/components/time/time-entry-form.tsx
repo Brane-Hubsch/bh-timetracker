@@ -119,7 +119,7 @@ function MemberAvatar({
 }
 
 /**
- * Report or edit time in a dialog (bottom sheet on mobile). Actions sit in the dialog footer so they
+ * Report or edit time in a dialog. Actions sit in the dialog footer so they
  * stay reachable while the fields scroll.
  */
 export function TimeEntryForm({
@@ -190,7 +190,8 @@ export function TimeEntryForm({
     const isEditing = Boolean(source?.id);
     // Editing the running timer: saved, stopped or discarded instead of being an entry.
     const isTimer = Boolean(source?.timer);
-    const canSwitchMode = Boolean(absence) && !isEditing && !isTimer;
+    const isNewEntry = !isEditing && !isTimer;
+    const canSwitchMode = Boolean(absence) && isNewEntry;
     const isAbsence = canSwitchMode && mode === 'absence';
     const [beforeType, afterType] = t('Report :type').split(':type');
     const selectedMode = isAbsence ? 'absence' : 'time';
@@ -569,6 +570,7 @@ export function TimeEntryForm({
                     : undefined
             }
             closeInHeader
+            fullScreenOnMobile={isNewEntry}
             desktopClassName="sm:max-w-xl"
             containerClassName={
                 isEditing
@@ -707,10 +709,7 @@ export function TimeEntryForm({
                 <ModePanel
                     key={selectedMode}
                     id={canSwitchMode ? selectedMode : undefined}
-                    className={cn(
-                        'm-0 grid gap-5 p-0',
-                        !isEditing && !isTimer && 'pt-1',
-                    )}
+                    className={cn('m-0 grid gap-5 p-0', isNewEntry && 'pt-1')}
                 >
                     {isAbsence && absence ? (
                         <AbsenceForm
@@ -799,7 +798,13 @@ export function TimeEntryForm({
                             />
 
                             <div className="grid gap-2">
-                                <div className="grid gap-3 md:grid-cols-[9rem_15.25rem_minmax(0,1fr)]">
+                                <div
+                                    className={cn(
+                                        'grid gap-3 md:grid-cols-[9rem_15.25rem_minmax(0,1fr)]',
+                                        isNewEntry &&
+                                            'max-md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]',
+                                    )}
+                                >
                                     <DatePickerField
                                         label={t('Date')}
                                         value={current.date}
@@ -807,6 +812,11 @@ export function TimeEntryForm({
                                         relativeLabel={dateLabel}
                                         error={errors.date}
                                         isRequired
+                                        className={
+                                            isNewEntry
+                                                ? 'w-full max-md:col-span-2'
+                                                : undefined
+                                        }
                                         data-test="time-entry-date"
                                     />
                                     <FieldPair

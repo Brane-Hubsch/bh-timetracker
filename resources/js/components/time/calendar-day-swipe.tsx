@@ -17,8 +17,16 @@ export function CalendarDaySwipe({
     onSwipe,
 }: Props) {
     const { adjacent, track, viewportProps } = useSwipeNavigation({
-        canStart: (target) =>
-            !target.closest('button, [role="button"], .time-calendar-resizer'),
+        canStart: (target) => {
+            const control = target.closest(
+                'button, [role="button"], .time-calendar-resizer',
+            );
+
+            return (
+                !control ||
+                control.matches('.time-calendar-event, .time-calendar-absence')
+            );
+        },
         canContinue: (viewport) =>
             !viewport.querySelector('[data-calendar-editing]'),
         onSwipeIntent,
