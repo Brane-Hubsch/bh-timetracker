@@ -30,6 +30,11 @@ import type {
     RunningTimer,
     TimeEntry,
 } from '@/types';
+import {
+    CALENDAR_SNAP_MINUTES,
+    CALENDAR_SLOT_MINUTES,
+    useCalendarLongPress,
+} from './use-calendar-long-press';
 
 const TIMER_EVENT_ID = 'running-timer';
 
@@ -201,6 +206,7 @@ export function TimeCalendar({
     const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight(isMobile);
     const calendarRef = useRef<CalendarRef>(null);
+    const calendarKey = `${view}-${date}`;
     const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
@@ -256,6 +262,14 @@ export function TimeCalendar({
         return () => listeners.abort();
     }, [containerRef, isPreview]);
 
+    useCalendarLongPress(
+        containerRef,
+        calendarRef,
+        calendarKey,
+        !isPreview && !hasSelectionDraft,
+        onSelect,
+    );
+
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
     const holidayByDate = new Map(
         holidays.map(({ date, name }) => [date, name]),
@@ -287,7 +301,7 @@ export function TimeCalendar({
         >
             <FullCalendar
                 ref={calendarRef}
-                key={`${view}-${date}`}
+                key={calendarKey}
                 plugins={[timeGridPlugin, interactionPlugin, classicTheme]}
                 initialView={view === 'week' ? 'timeGridWeek' : 'timeGridDay'}
                 initialDate={date}
@@ -327,8 +341,8 @@ export function TimeCalendar({
                 height={height}
                 // Leave space above 07:00 for its label to straddle the grid line.
                 scrollTime="06:30:00"
-                slotDuration="00:30:00"
-                snapDuration="00:15:00"
+                slotDuration={{ minutes: CALENDAR_SLOT_MINUTES }}
+                snapDuration={{ minutes: CALENDAR_SNAP_MINUTES }}
                 slotHeaderFormat={{
                     hour: '2-digit',
                     minute: '2-digit',
@@ -426,6 +440,7 @@ export function TimeCalendar({
                 }
                 slotLaneClass={(info) =>
                     cn(
+                        'time-calendar-slot',
                         info.isMinor && 'time-calendar-slot-minor',
                         info.time?.milliseconds === 7 * 60 * 60 * 1000 &&
                             'time-calendar-morning',
@@ -640,6 +655,9 @@ export function TimeCalendar({
                     );
                 }}
                 select={(info) => {
+                    // Programmatic selections render the long-press preview.
+                    if (!info.jsEvent) return;
+
                     // FullCalendar can still report the last range when released without moving.
                     if (selection.current === 'cancelled' || isSwiping()) {
                         return;

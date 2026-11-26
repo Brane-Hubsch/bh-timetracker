@@ -153,6 +153,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare.
 - På mobil ligger Igår, Idag och I morgon på en rad i dagväljaren. Svep åt vänster över månadsrutnätet för nästa månad och åt höger för föregående, eller använd månadspilarna.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
+- På pekskärm skapar ett långtryck i tom tidsyta ett entimmesblock. Flytta blocket i 15-minuterssteg och släpp för att öppna Rapportera tid med vald dag, start- och sluttid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
 - Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.
 - "Kopiera föregående vecka" (som utkast som användaren bekräftar).
