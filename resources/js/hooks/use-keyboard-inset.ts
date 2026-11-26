@@ -34,6 +34,11 @@ export function useKeyboardInset() {
             previousHeight = height;
             previousField = field;
             sheet.style.setProperty('--sheet-viewport-height', `${height}px`);
+            // A software keyboard shrinks the visual viewport more than browser chrome does.
+            sheet.toggleAttribute(
+                'data-keyboard-open',
+                window.innerHeight - height > 100,
+            );
 
             const body = field?.closest<HTMLElement>(
                 '[data-slot="drawer-body"]',

@@ -11,6 +11,7 @@ type Props = {
     headerContent?: ReactNode;
     wrapContent?: (content: ReactNode) => ReactNode;
     closeInHeader?: boolean;
+    fullScreenOnMobile?: boolean;
     children: ReactNode;
     footer?: ReactNode;
     dismissOnEscape?: boolean;
@@ -28,7 +29,7 @@ const closeClassName =
     'size-8 rounded-lg bg-transparent text-foreground hover:bg-default';
 
 /**
- * A modal on desktop and a bottom sheet (drawer) on mobile.
+ * A modal on desktop and a drawer on mobile.
  */
 export function ResponsiveDialog({
     isOpen,
@@ -37,6 +38,7 @@ export function ResponsiveDialog({
     headerContent,
     wrapContent = (content) => content,
     closeInHeader,
+    fullScreenOnMobile = false,
     children,
     footer,
     dismissOnEscape,
@@ -142,11 +144,19 @@ export function ResponsiveDialog({
         <BottomSheetBackdrop
             isOpen={isOpen}
             onOpenChange={onOpenChange}
+            isDismissable={!fullScreenOnMobile}
             isKeyboardDismissDisabled={dismissOnEscape === false}
         >
             <Drawer.Content placement="bottom" className={containerClassName}>
-                <Drawer.Dialog render={renderDialog}>
-                    <Drawer.Handle />
+                <Drawer.Dialog
+                    className={
+                        fullScreenOnMobile
+                            ? 'drawer__dialog--fullscreen'
+                            : undefined
+                    }
+                    render={renderDialog}
+                >
+                    {!fullScreenOnMobile && <Drawer.Handle />}
                     {wrapContent(
                         <>
                             <Drawer.Header className={headerClassName}>

@@ -9,7 +9,6 @@ type Props = {
     onReport: (mode: TimeReportMode) => void;
     placement: 'top end' | 'bottom end';
     className?: string;
-    large?: boolean;
     isDisabled?: boolean;
     testId: string;
 };
@@ -19,7 +18,6 @@ export function TimeActionsMenu({
     onReport,
     placement,
     className,
-    large = false,
     isDisabled = false,
     testId,
 }: Props) {
@@ -35,10 +33,7 @@ export function TimeActionsMenu({
         >
             <Plus
                 aria-hidden="true"
-                className={cn(
-                    'group-aria-expanded:rotate-45 motion-safe:transition-transform motion-safe:duration-240 motion-safe:ease-out-soft',
-                    large ? 'size-6' : 'size-4',
-                )}
+                className="size-4 group-aria-expanded:rotate-45 motion-safe:transition-transform motion-safe:duration-240 motion-safe:ease-out-soft"
             />
         </Button>
     );

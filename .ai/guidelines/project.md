@@ -182,7 +182,8 @@ describes; propose additions instead of building them.
   and [report filters](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport?node-id=85-1538).
 - New pages and frequent actions get a command in the ⌘K palette (`components/command-palette.tsx`,
   respecting permissions). Pages open dialogs from the palette through `useOpenFromQuery` (`?new=1`).
-- Time entries open in `ResponsiveDialog` (modal on desktop, bottom sheet on mobile). Create/edit forms
+- Time entries open in `ResponsiveDialog` (modal on desktop, full-screen form for new entries on mobile,
+  bottom sheet for editing on mobile). Create/edit forms
   for clients and projects open in `SideDrawer` (right-hand panel on desktop, bottom sheet on mobile) on
   the page they belong to, not on a separate page; the controller sends the form's options only to
   users who may use it (e.g. `projectForm` via `App\Support\ProjectFormOptions`).

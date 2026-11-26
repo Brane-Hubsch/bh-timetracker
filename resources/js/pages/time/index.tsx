@@ -1,6 +1,6 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Copy } from 'lucide-react';
+import { Copy, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { Temporal } from 'temporal-polyfill';
@@ -575,12 +575,22 @@ export default function TimeIndex({
                                 className="flex items-baseline gap-1.5 text-xs tabular-nums"
                                 data-test="week-total"
                             >
-                                <span className="font-medium text-muted">
+                                <span
+                                    className={cn(
+                                        'font-medium text-muted',
+                                        view === 'day' && 'max-md:font-normal',
+                                    )}
+                                >
                                     {view === 'day'
                                         ? t('Day total')
                                         : t('Week total')}
                                 </span>
-                                <span className="font-semibold">
+                                <span
+                                    className={cn(
+                                        'font-semibold',
+                                        view === 'day' && 'max-md:font-medium',
+                                    )}
+                                >
                                     {formatDuration(
                                         view === 'day' ? dayTotal : weekTotal,
                                     )}
@@ -679,13 +689,15 @@ export default function TimeIndex({
                 )}
             >
                 {!copyInToolbar && copyPeriodButton}
-                <TimeActionsMenu
-                    large
-                    placement="top end"
+                <Button
+                    isIconOnly
+                    aria-label={t('Report time')}
                     className="size-14 rounded-full shadow-lg"
-                    onReport={openReport}
-                    testId="new-time-fab"
-                />
+                    onPress={() => openReport('time')}
+                    data-test="new-time-fab"
+                >
+                    <Plus aria-hidden="true" className="size-6" />
+                </Button>
             </div>
 
             <TimeEntryForm

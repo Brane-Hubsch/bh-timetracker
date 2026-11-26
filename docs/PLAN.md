@@ -187,7 +187,7 @@ Se avsnitt 6.
 
 - Responsiv layout: sidomeny på desktop. Mobilens bottennavigering visar de fyra första synliga menylänkarna i kontots ordning, följda av Mer. Övriga länkar, sök, profil och organisationsbyte finns i Mer-panelen.
 - Bottennavigeringen har 16 px luft på sidorna och minst 20 px under flikarna, med safe area inräknad. Bottenark har samma nederkant och knapparna i footern ligger 24 px från skärmens sidor.
-- Stor "+"-knapp för ny post på mobil; formulär i HeroUI Drawer (bottom sheet).
+- Stor "+"-knapp för ny post på mobil. Rapportdialogen fyller skärmen med rubriken och stängkrysset högst upp och Avbryt och Spara längst ned. Datum ligger på en egen rad, följt av Start, Slut och Tid på samma rad. När tangentbordet visas minskar avståndet under knapparna. Kalenderns bakgrund i mörkt läge fortsätter bakom innehållet vid överskrollning.
 - Kund- och projektlistorna använder samma mobilmönster med fast rubrikrad, lista kant i kant, runda ikonknappar och filter i bottenark.
 - Under 768 px följer bottenarket den synliga skärmytan i Safari och i webbappen från hemskärmen. När tangentbordet visas ligger sidan bakom stilla, handtag och rubrik ligger överst och eventuella åtgärder ligger ovanför tangentbordet. Innehållet scrollar och visar fältet med fokus även vid Nästa/Föregående. Arket återtar sin vanliga höjd när tangentbordet stängs.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
@@ -381,7 +381,7 @@ Klar. Byggt:
 Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
-- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag vid sidledes svep. Dag och Vecka kan väljas i periodväljaren. Lista öppnas via Mer på mobil.
+- Standardvy: vecka på desktop och dag på mobil. På mobil har kalendern en fast rubrikrad, scrollar med sidan och byter dag vid sidledes svep, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i periodväljaren. Lista öppnas via Mer på mobil.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
@@ -704,7 +704,7 @@ Beställt i efterhand. Helgdagarna ligger i databasen per organisation (`holiday
 - **Hantera:** ägare och admin (rättigheten `UpdateOrganization`) ser avsnittet Helgdagar i organisationsinställningarna. Där listas dagarna från innevarande år, grupperade per år. Man kan lägga till egna dagar (datum och namn, t.ex. en kick-off), ta bort dagar och fylla på med svenska helgdagar för ett valt år (i år och två år framåt). Påfyllningen hoppar över datum som redan finns, även om de har ett annat namn.
 - **Svenska helgdagar** (`App\Support\SwedishHolidays`): de helgdagar som kan infalla på en vardag samt midsommar-, jul- och nyårsafton. Påsken räknas fram utan calendar-tillägget. Namnen sparas på svenska.
 - **Från start:** nya organisationer får svenska helgdagar för innevarande och nästa år (`CreateOrganization`). Migreringen gav befintliga organisationer 2026 och 2027.
-- **Kalender:** sparade helgdagar visas med namn som röda taggar överst i rätt dagskolumn i vecko- och dagvyn. Taggarna ligger kvar när tiderna scrollas, och den första tidsrutan vid 00:00 går att markera när man scrollar hela vägen upp.
+- **Kalender:** sparade helgdagar visas med namn som röda taggar överst i rätt dagskolumn i vecko- och dagvyn. Taggarna ligger kvar när tiderna scrollas, med 12 px marginal under mobilens fasta rubrik. Den första tidsrutan vid 00:00 går att markera när man scrollar hela vägen upp.
 - **Används** av projektsidans arbetsdagar (`EstimatePace`) och av frånvaro (se nedan). Lördag och söndag räknas aldrig som arbetsdagar.
 - **Kod:** `App\Actions\Holidays` (`CreateHoliday`, `DeleteHoliday`, `AddSwedishHolidays`) och `OrganizationHolidayController`. Andra organisationers helgdagar ger 404.
 
@@ -752,7 +752,7 @@ Beställt i efterhand. Utöver att fylla i tider i efterhand kan man starta och 
 - **Webb:**
   - `TimerController` (`timer.start`, `timer.update`, `timer.stop`, `timer.discard`). Den pågående timern delas till alla sidor som `timer` (`TimerPresenter`), och klockan räknas upp i webbläsaren.
   - Kortet i sidomenyn och raden ovanför bottenmenyn på mobilen visar projekt, kund och klocka med en stoppknapp. Flikens titel visar "▶ 1:23 · Projekt". Kalendern visar den pågående posten från start till nu, streckad.
-  - Plusknappen ovanför profilen och kalenderns plusknapp öppnar samma snabbmeny. Starta timer startar direkt. Rapportera tid och Rapportera frånvaro öppnar rapportdialogen med motsvarande flik vald. En pågående timer ersätter plusknappen i sidomenyn, och kalenderns meny erbjuder fortfarande båda rapporteringsvalen. Timern kan också startas i dialogen *Rapportera tid* (från nu, eller från en ändrad starttid), med "Fortsätt med timer" på en post och med ⌘K.
+  - På dator öppnar plusknappen ovanför profilen och kalenderns plusknapp samma snabbmeny. Starta timer startar direkt. Rapportera tid och Rapportera frånvaro öppnar rapportdialogen med motsvarande flik vald. En pågående timer ersätter plusknappen i sidomenyn, och kalenderns meny erbjuder fortfarande båda rapporteringsvalen. På mobil öppnar kalenderns och listans flytande plusknapp rapportdialogen direkt med tid vald. Frånvaro kan väljas i dialogrubriken. Timern kan också startas med "Fortsätt med timer" på en post och med ⌘K.
   - Dialogen *Pågående timer* (tidsdialogen i timerläge) sparar, stoppar (sluttid valfri, annars nu) eller slänger. Stoppknappen sparar direkt, men öppnar dialogen när projekt saknas eller när timern gått minst 10 timmar (`RunningTimer::LONG_SECONDS`), så att man kontrollerar sluttiden.
   - Sidomenyns plusknapp öppnar rapportdialogen ovanpå den aktuella sidan. När timern startas eller en rapport sparas behålls sidan och dess filter.
 - **MCP:**
