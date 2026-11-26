@@ -36,36 +36,60 @@
         visibility: hidden;
     }
 
-    #splash svg {
-        width: 88px;
-        height: 88px;
-        animation: splash-enter 400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-    }
-
-    #splash .splash-hand {
+    /* "Sekundvisaren": the hand ticks round the clock like a second hand. The outer group steps 30°
+       at a time (12 steps over 3 s) and the inner group springs each step over 250 ms, so the two
+       durations must stay in sync. There is no intro, so the fade-out can start on any frame. */
+    #splash .splash-tick,
+    #splash .splash-kick {
         transform-box: view-box;
         transform-origin: 64px 74px;
-        animation: splash-sweep 1500ms cubic-bezier(0.65, 0, 0.35, 1) 200ms infinite;
     }
 
-    @keyframes splash-enter {
-        from {
-            opacity: 0;
-            transform: scale(0.92);
-        }
+    #splash .splash-tick {
+        animation: splash-tick 3s steps(12) infinite;
     }
 
-    @keyframes splash-sweep {
+    #splash .splash-kick {
+        animation: splash-kick 250ms infinite;
+    }
+
+    @keyframes splash-tick {
         to {
             transform: rotate(360deg);
         }
     }
 
+    @keyframes splash-kick {
+        from {
+            transform: rotate(-30deg);
+            animation-timing-function: cubic-bezier(0.3, 1.6, 0.5, 1);
+        }
+
+        55%,
+        to {
+            transform: rotate(0deg);
+        }
+    }
+
+    @keyframes splash-pulse {
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    /* A still logo that pulses gently. The !important beats app.css, which shortens every animation
+       to 1 ms under reduced motion and would make the infinite ones flicker. */
     @media (prefers-reduced-motion: reduce) {
-        #splash,
-        #splash * {
-            animation: none !important;
+        #splash {
             transition: none !important;
+        }
+
+        #splash .splash-logo * {
+            animation: none !important;
+        }
+
+        #splash .splash-logo {
+            animation: splash-pulse 2s ease-in-out infinite !important;
         }
     }
 </style>
@@ -120,14 +144,18 @@
 </script>
 
 <div id="splash" role="status" aria-label="{{ __('Loading…') }}">
-    <svg viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg class="splash-logo" viewBox="0 0 128 128" width="88" height="88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect width="128" height="128" rx="28" fill="#7C3AED" />
-        <g stroke="white" stroke-width="15">
+        {{-- Strokes are a little thinner than the favicon's 15. The stem's round cap forms the bend, and
+             the hand starts one half stroke from the pivot so its square cap meets it while it turns. --}}
+        <g stroke="white" stroke-width="13">
             <path class="splash-bar" d="M32 38H96" stroke-linecap="square" />
-            <path class="splash-stem" d="M64 38V74" />
-            <circle class="splash-pivot" cx="64" cy="74" r="7.5" fill="white" stroke="none" />
-            {{-- The hand ends where the logo's square cap would, so it can rotate around the pivot. --}}
-            <path class="splash-hand" d="M64 74L93.76 98.8" />
+            <path class="splash-stem" d="M64 38V74" stroke-linecap="round" />
+            <g class="splash-tick">
+                <g class="splash-kick">
+                    <path class="splash-hand" d="M68.99 78.16 88 94" stroke-linecap="square" />
+                </g>
+            </g>
         </g>
     </svg>
 </div>
