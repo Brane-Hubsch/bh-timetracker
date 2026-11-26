@@ -410,7 +410,7 @@ export default function TagsIndex({ tags }: Props) {
                 isOpen={renaming !== null}
                 onOpenChange={(isOpen) => !isOpen && setRenaming(null)}
                 title={t('Rename tag')}
-                mobileClassName={`${keyboardFooterClass} [&_.drawer__footer]:mt-3 [&_.drawer__heading]:text-[17px]/[21px]`}
+                mobileClassName={`${keyboardFooterClass} [&_[data-slot=drawer-footer]]:mt-3 [&_[data-slot=drawer-heading]]:text-[17px]/[21px]`}
                 footer={
                     <>
                         <Button
@@ -457,7 +457,7 @@ export default function TagsIndex({ tags }: Props) {
                                 />
                                 <div role="status">
                                     {mergeTarget && (
-                                        <div className="mt-1.5 flex items-start gap-2 rounded-xl bg-default px-3 py-2.5 text-[13px]/[18px]">
+                                        <div className="mt-1.5 flex items-start gap-2 rounded-xl bg-default px-3 py-2.5 text-[13px]/[18px] text-foreground">
                                             <Merge
                                                 aria-hidden="true"
                                                 className="size-4 shrink-0"
