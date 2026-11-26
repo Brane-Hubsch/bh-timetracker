@@ -78,3 +78,11 @@ it('ships a web app manifest with its icons', function () {
             ->and(getimagesize($path))->toMatchArray([$size, $size, IMAGETYPE_PNG]);
     }
 });
+
+it('renders the startup splash in the initial HTML', function () {
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('id="splash"', false)
+        ->assertSee('window.hideSplash', false)
+        ->assertSee('aria-label="Laddar…"', false);
+});
