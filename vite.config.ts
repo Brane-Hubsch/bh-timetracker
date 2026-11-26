@@ -6,12 +6,14 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig, lazyPlugins } from 'vite-plus';
+import { appIcons } from './scripts/app-icons';
 
 export default defineConfig({
     plugins: lazyPlugins(() => [
+        appIcons(),
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            assets: ['public/favicon.ico'],
+            assets: ['public/favicon.ico', 'resources/app-icons/*.png'],
             refresh: true,
             fonts: [
                 bunny('Inter', {

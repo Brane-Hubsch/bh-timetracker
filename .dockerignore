@@ -10,6 +10,7 @@ auth.json
 node_modules
 vendor
 public/build
+resources/app-icons
 public/hot
 public/storage
 bootstrap/ssr

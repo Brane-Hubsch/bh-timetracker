@@ -36,10 +36,9 @@
 
         <link rel="icon" href="{{ Vite::asset('public/favicon.ico') }}" sizes="16x16 32x32 48x48">
         <link rel="icon" href="{{ Vite::asset('public/favicon.svg') }}" type="image/svg+xml" sizes="any">
-        <link rel="apple-touch-icon" href="/apple-touch-icon-120x120.png" sizes="120x120">
-        <link rel="apple-touch-icon" href="/apple-touch-icon-152x152.png" sizes="152x152">
-        <link rel="apple-touch-icon" href="/apple-touch-icon-167x167.png" sizes="167x167">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+        @foreach ([120, 152, 167, 180] as $size)
+            <link rel="apple-touch-icon" href="{{ Vite::asset("resources/app-icons/apple-touch-{$size}.png") }}" sizes="{{ $size }}x{{ $size }}">
+        @endforeach
         <link rel="manifest" href="/site.webmanifest">
 
         @if (app()->isProduction() && filled(config('services.umami.script_url')) && filled(config('services.umami.website_id')) && request()->getHost() === config('services.umami.domain'))

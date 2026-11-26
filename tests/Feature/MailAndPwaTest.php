@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Notifications\Auth\MagicLinkNotification;
 use App\Notifications\Organizations\OrganizationInvitation as OrganizationInvitationNotification;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Vite;
 
 it('sends Swedish, branded sign-in emails', function () {
     $user = User::factory()->create(['name' => 'Maja Medlem']);
@@ -37,14 +38,43 @@ it('sends Swedish invitation emails', function () {
 });
 
 it('ships a web app manifest with its icons', function () {
-    $manifest = json_decode((string) file_get_contents(public_path('site.webmanifest')), true, flags: JSON_THROW_ON_ERROR);
+    $response = $this->get('/site.webmanifest')
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJsonPath('start_url', '/')
+        ->assertJsonPath('scope', '/')
+        ->assertJsonPath('lang', 'sv')
+        ->assertJsonPath('display', 'standalone')
+        ->assertJsonCount(4, 'icons');
 
-    expect($manifest['lang'])->toBe('sv')
-        ->and($manifest['display'])->toBe('standalone');
+    foreach (['any' => 'icon', 'maskable' => 'icon-maskable'] as $purpose => $name) {
+        foreach ([192, 512] as $size) {
+            $url = Vite::asset("resources/app-icons/{$name}-{$size}.png");
 
-    foreach ($manifest['icons'] as $icon) {
-        expect(public_path(ltrim($icon['src'], '/')))->toBeFile();
+            $response->assertJsonFragment([
+                'src' => $url,
+                'sizes' => "{$size}x{$size}",
+                'type' => 'image/png',
+                'purpose' => $purpose,
+            ]);
+
+            $path = public_path(parse_url($url, PHP_URL_PATH));
+            expect($path)->toBeFile()
+                ->and(getimagesize($path))->toMatchArray([$size, $size, IMAGETYPE_PNG]);
+        }
     }
 
-    $this->get('/login')->assertSee('rel="manifest"', false)->assertSee('name="theme-color"', false);
+    $login = $this->get('/login')
+        ->assertSee('rel="manifest" href="/site.webmanifest"', false)
+        ->assertSee('name="theme-color"', false);
+
+    foreach ([120, 152, 167, 180] as $size) {
+        $url = Vite::asset("resources/app-icons/apple-touch-{$size}.png");
+
+        $login->assertSee("rel=\"apple-touch-icon\" href=\"{$url}\" sizes=\"{$size}x{$size}\"", false);
+
+        $path = public_path(parse_url($url, PHP_URL_PATH));
+        expect($path)->toBeFile()
+            ->and(getimagesize($path))->toMatchArray([$size, $size, IMAGETYPE_PNG]);
+    }
 });
