@@ -49,6 +49,8 @@
 :root {
     --accent: oklch(0.55 0.24 293);
     --accent-foreground: oklch(0.99 0 0);
+    --backdrop-opacity: 50%;
+    --backdrop: rgb(0 0 0 / var(--backdrop-opacity));
     /* Form fields get a visible border; HeroUI's default is borderless. */
     --field-border-width: 1px;
     --field-border: oklch(0.88 0.004 286);
@@ -58,6 +60,7 @@
 
 .dark {
     --accent: oklch(0.66 0.21 293);
+    --backdrop-opacity: 60%;
     /* HeroUI's dark fields share the card colour; make them darker with a visible border. */
     --field-background: oklch(0.17 0.005 286);
     --field-border: oklch(0.34 0.006 286);
@@ -702,6 +705,48 @@
     :root.dark:has(.time-calendar),
     :root.dark:has(.time-calendar) body {
         background-color: var(--background);
+    }
+
+    :root:has(.mobile-tab-bar):not(:has(.drawer__dialog--fullscreen)):has(
+            :is(
+                .drawer__backdrop,
+                .modal__backdrop,
+                .alert-dialog__backdrop
+            ):not([class*='__backdrop--transparent'])
+        ) {
+        /* Safari keeps the previous status-bar tint behind a full-screen scrim.
+         * Give it a solid fixed surface to sample, painting only in the safe area. */
+        & .mobile-status-bar-tint {
+            position: fixed;
+            inset: 0 0 auto;
+            z-index: calc(var(--z-index-overlay) + 1);
+            height: max(1rem, env(safe-area-inset-top));
+            padding-bottom: max(0px, calc(1rem - env(safe-area-inset-top)));
+            pointer-events: none;
+            background-color: color-mix(
+                in srgb,
+                var(--status-bar-surface, var(--surface)),
+                black var(--backdrop-opacity)
+            );
+            background-clip: content-box;
+        }
+
+        /* HeroUI portals both backdrops to the same container when panels stack. */
+        &:has(
+            :nth-child(
+                2 of :is(
+                    .drawer__backdrop,
+                    .modal__backdrop,
+                    .alert-dialog__backdrop
+                ):not([class*='__backdrop--transparent'])
+            )
+        ) {
+            --status-bar-surface: color-mix(
+                in srgb,
+                var(--surface),
+                black var(--backdrop-opacity)
+            );
+        }
     }
 
     .keyboard-aware-sheet {
