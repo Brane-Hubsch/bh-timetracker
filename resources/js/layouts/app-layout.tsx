@@ -12,6 +12,10 @@ import {
     RunningTimerCard,
     useTimerTitle,
 } from '@/components/time/running-timer';
+import {
+    KeyboardShortcutsDialog,
+    useKeyboardShortcuts,
+} from '@/components/keyboard-shortcuts';
 import { useRefreshOnReturn } from '@/hooks/use-refresh-on-return';
 import { useTranslation } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
@@ -38,6 +42,7 @@ export default function AppLayout({
     // Show time reported elsewhere when the user comes back to the app.
     useRefreshOnReturn();
     useTimerTitle();
+    useKeyboardShortcuts();
     const hasTimer = Boolean(usePage().props.timer);
 
     return (
@@ -86,6 +91,7 @@ export default function AppLayout({
                     className="fixed inset-x-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-30 md:hidden"
                 />
                 <MobileBottomNav className="md:hidden" />
+                <KeyboardShortcutsDialog />
             </div>
         </CommandPaletteProvider>
     );

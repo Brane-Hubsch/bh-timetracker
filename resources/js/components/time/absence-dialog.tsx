@@ -14,6 +14,10 @@ import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
 import { SelectField } from '@/components/form/select-field';
 import { ShortcutRow } from '@/components/form/shortcut-row';
+import {
+    SUBMIT_SHORTCUT,
+    SubmitShortcutHint,
+} from '@/components/form/submit-shortcut';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ScrubLabel, TimeScrubLabel } from '@/components/time/time-scrub-label';
@@ -116,6 +120,7 @@ export function AbsenceDialog(props: Props) {
             title={props.draft?.id ? t('Edit absence') : t('Register absence')}
             closeInHeader
             desktopClassName="sm:max-w-[40rem]"
+            submitFormId={FORM_ID}
             footer={<AbsenceDialogFooter {...props} />}
         >
             {props.draft && <AbsenceForm {...props} draft={props.draft} />}
@@ -157,8 +162,14 @@ function AbsenceDialogFooter({
                 <Button slot="close" variant="tertiary">
                     {t('Cancel')}
                 </Button>
-                <Button type="submit" form={FORM_ID} data-test="absence-save">
+                <Button
+                    type="submit"
+                    form={FORM_ID}
+                    aria-keyshortcuts={SUBMIT_SHORTCUT}
+                    data-test="absence-save"
+                >
                     {t('Save')}
+                    <SubmitShortcutHint />
                 </Button>
             </div>
         </div>

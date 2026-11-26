@@ -16,6 +16,10 @@ import { Copy, EllipsisVertical, Play, Trash2, UserRound } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
+import {
+    SUBMIT_SHORTCUT,
+    SubmitShortcutHint,
+} from '@/components/form/submit-shortcut';
 import { TagInput } from '@/components/form/tag-input';
 import { TimeInputField } from '@/components/form/time-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
@@ -510,6 +514,11 @@ export function TimeEntryForm({
         <ResponsiveDialog
             isOpen={draft !== null}
             onOpenChange={(isOpen) => !isOpen && onClose()}
+            // ⌘/Ctrl+Enter saves; for the running timer it stops it.
+            submitFormId={
+                isTimer ? undefined : isAbsence ? ABSENCE_FORM_ID : FORM_ID
+            }
+            onSubmitShortcut={isTimer ? stopTimerFromForm : undefined}
             dismissOnEscape={
                 draft?.openedFrom === 'calendar' &&
                 !isMemberPickerOpen &&
@@ -686,9 +695,11 @@ export function TimeEntryForm({
                                 <Button
                                     onPress={stopTimerFromForm}
                                     isPending={processing}
+                                    aria-keyshortcuts={SUBMIT_SHORTCUT}
                                     data-test="timer-stop"
                                 >
                                     {t('Stop')}
+                                    <SubmitShortcutHint />
                                 </Button>
                             </>
                         ) : (
@@ -714,6 +725,7 @@ export function TimeEntryForm({
                                 type="submit"
                                 form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
                                 isPending={processing}
+                                aria-keyshortcuts={SUBMIT_SHORTCUT}
                                 data-test={
                                     isAbsence
                                         ? 'absence-save'
@@ -721,6 +733,7 @@ export function TimeEntryForm({
                                 }
                             >
                                 {t('Save')}
+                                <SubmitShortcutHint />
                             </Button>
                         )}
                     </div>

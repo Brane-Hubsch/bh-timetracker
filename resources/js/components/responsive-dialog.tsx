@@ -13,6 +13,10 @@ type Props = {
     children: ReactNode;
     footer?: ReactNode;
     dismissOnEscape?: boolean;
+    /** The form ⌘/Ctrl+Enter submits from anywhere in the dialog. */
+    submitFormId?: string;
+    /** What ⌘/Ctrl+Enter does instead of submitting a form (e.g. stop the timer). */
+    onSubmitShortcut?: () => void;
     desktopClassName?: string;
     containerClassName?: string;
 };
@@ -35,6 +39,8 @@ export function ResponsiveDialog({
     children,
     footer,
     dismissOnEscape,
+    submitFormId,
+    onSubmitShortcut,
     desktopClassName = 'sm:max-w-lg',
     containerClassName,
 }: Props) {
@@ -47,6 +53,33 @@ export function ResponsiveDialog({
     const titleClassName = headerContent ? 'sr-only' : headingClassName;
 
     const onKeyDownCapture = (event: KeyboardEvent<HTMLElement>) => {
+        // ⌘/Ctrl+Enter saves, wherever the focus is (also in a field popover).
+        if (
+            isOpen &&
+            (submitFormId || onSubmitShortcut) &&
+            event.key === 'Enter' &&
+            (event.metaKey || event.ctrlKey) &&
+            !event.nativeEvent.isComposing
+        ) {
+            if (onSubmitShortcut) {
+                event.preventDefault();
+                event.stopPropagation();
+                onSubmitShortcut();
+
+                return;
+            }
+
+            const form = document.getElementById(submitFormId ?? '');
+
+            if (form instanceof HTMLFormElement) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.requestSubmit();
+            }
+
+            return;
+        }
+
         // Catch Escape before an open field popover handles it.
         if (
             isOpen &&
