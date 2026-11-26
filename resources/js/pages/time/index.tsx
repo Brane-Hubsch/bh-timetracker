@@ -164,7 +164,6 @@ export default function TimeIndex({
         currentOrganization?.id,
     );
     const isList = view === 'list';
-    const PageHeader = isList ? 'div' : MobilePageHeader;
     const periodUrl = new URL(url, 'http://localhost');
     const needsMobileDay =
         isMobile && view === 'week' && !periodUrl.searchParams.has('view');
@@ -309,18 +308,18 @@ export default function TimeIndex({
     const dayTotal = entries
         .filter((entry) => entry.date === date)
         .reduce((sum, entry) => sum + entry.durationSeconds, 0);
+    const copyInToolbar = isList && !isMobile;
     const copyPeriodButton = canCopyPreviousPeriod && (
         <Tooltip delay={350} closeDelay={0}>
             <Tooltip.Trigger role="presentation" tabIndex={-1} className="flex">
                 <Button
                     isIconOnly
                     variant="tertiary"
-                    size={view === 'list' ? 'md' : 'lg'}
-                    className={
-                        isList
-                            ? undefined
-                            : 'shadow-lg max-md:size-11 max-md:rounded-full max-md:border max-md:border-accent/20 max-md:bg-[color-mix(in_oklab,var(--accent)_8%,var(--surface))] max-md:text-accent max-md:[&_svg]:size-4'
-                    }
+                    size={copyInToolbar ? 'md' : 'lg'}
+                    className={cn(
+                        !copyInToolbar &&
+                            'shadow-lg max-md:size-11 max-md:rounded-full max-md:border max-md:border-accent/20 max-md:bg-[color-mix(in_oklab,var(--accent)_8%,var(--surface))] max-md:text-accent max-md:[&_svg]:size-4',
+                    )}
                     onPress={() => setCopyOpen(true)}
                     aria-label={t(
                         view === 'day'
@@ -333,7 +332,7 @@ export default function TimeIndex({
                 </Button>
             </Tooltip.Trigger>
             <Tooltip.Content
-                placement={view === 'list' ? 'bottom' : 'left'}
+                placement={copyInToolbar ? 'bottom' : 'left'}
                 showArrow
             >
                 <Tooltip.Arrow />
@@ -445,7 +444,7 @@ export default function TimeIndex({
             },
         );
 
-    const mobileAvatar = !isList && isMobile;
+    const mobileAvatar = isMobile;
     const memberPicker = (mobileAvatar
         ? can?.canManageTeamTime && members.length > 0
         : members.length > 1) && (
@@ -563,22 +562,13 @@ export default function TimeIndex({
         <>
             <Head title={pageTitle} />
 
-            <div
-                className={cn(
-                    'grid grid-cols-1 gap-3',
-                    !isList && 'max-md:gap-0',
-                )}
-            >
-                <PageHeader
+            <div className="grid grid-cols-1 md:gap-3">
+                <MobilePageHeader
                     ref={calendarHeader}
                     className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3"
                 >
                     <Heading
-                        className={cn(
-                            'items-center justify-start gap-x-3 gap-y-1',
-                            !isList &&
-                                'max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[17px]/[21px]',
-                        )}
+                        className="items-center justify-start gap-x-3 gap-y-1 max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[17px]/[21px]"
                         title={pageTitle}
                         actions={
                             <p
@@ -599,13 +589,8 @@ export default function TimeIndex({
                         }
                     />
 
-                    <div
-                        className={cn(
-                            'flex max-w-full min-w-0 flex-wrap items-center gap-2.5 md:ms-auto',
-                            !isList && 'max-md:flex-nowrap max-md:gap-2',
-                        )}
-                    >
-                        {isList && copyPeriodButton}
+                    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2.5 max-md:flex-nowrap max-md:gap-2 md:ms-auto">
+                        {copyInToolbar && copyPeriodButton}
                         {memberPicker}
                         {periodPicker}
                         <TimeActionsMenu
@@ -616,14 +601,13 @@ export default function TimeIndex({
                             testId="new-time-button"
                         />
                     </div>
-                </PageHeader>
+                </MobilePageHeader>
 
                 {/* Fades in when the week, day or view changes (not after saving an entry). */}
                 <div
                     key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
                     className={cn(
-                        'animate-fade-in',
-                        !isList && 'max-md:animate-none',
+                        'md:animate-fade-in',
                         view === 'list' && 'mx-auto w-full max-w-[76rem]',
                     )}
                 >
@@ -694,7 +678,7 @@ export default function TimeIndex({
                         'bottom-[calc(var(--mobile-tab-bar-height)+1rem)]',
                 )}
             >
-                {!isList && copyPeriodButton}
+                {!copyInToolbar && copyPeriodButton}
                 <TimeActionsMenu
                     large
                     placement="top end"

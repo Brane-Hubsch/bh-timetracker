@@ -372,7 +372,7 @@ export function CalendarPicker({
             label={label}
             compact
             enclosed
-            mobileLabelOnly={!isList}
+            mobileLabelOnly
             className="min-w-0"
             testId="calendar-period-picker"
         >

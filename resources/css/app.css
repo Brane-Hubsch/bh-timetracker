@@ -633,6 +633,7 @@
 
 @layer base {
     :root {
+        --mobile-page-header-height: calc(3.125rem + env(safe-area-inset-top));
         --mobile-bottom-inset: max(1.25rem, env(safe-area-inset-bottom));
         --mobile-tab-bar-height: calc(3.5625rem + var(--mobile-bottom-inset));
         --mobile-timer-space: 3.0625rem;
