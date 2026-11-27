@@ -671,7 +671,7 @@
         --mobile-tab-bar-height: calc(
             1px + var(--mobile-tab-height) + var(--mobile-tab-bar-inset)
         );
-        --mobile-page-header-height: calc(3.125rem + env(safe-area-inset-top));
+        --mobile-page-header-height: calc(3.5rem + env(safe-area-inset-top));
         --mobile-page-header-visible-height: 0px;
         --mobile-timer-space: 3.0625rem;
     }

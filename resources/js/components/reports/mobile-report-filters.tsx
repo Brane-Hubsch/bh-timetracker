@@ -56,7 +56,7 @@ export function MobileReportFilterSummary({
 
     return (
         labels.length > 0 && (
-            <p className="truncate text-xs/3 text-muted">
+            <p className="truncate text-[13.5px]/[17px] text-muted">
                 {labels.join(' · ')}
             </p>
         )
@@ -187,14 +187,14 @@ export function MobileReportFilters({
                         : t('Filters')
                 }
                 className={cn(
-                    'relative grid size-[34px] min-w-0 shrink-0 place-items-center overflow-visible rounded-full p-0 before:absolute before:-inset-x-[5px] before:-inset-y-1.5 before:content-[""]',
+                    'relative grid size-[38px] min-w-0 shrink-0 place-items-center overflow-visible rounded-full p-0 before:absolute before:-inset-x-[3px] before:-inset-y-[3px] before:content-[""]',
                     activeCount
                         ? 'border-accent/35 bg-accent/10 text-accent'
                         : 'border-border bg-surface text-foreground',
                 )}
                 data-test="mobile-report-filters"
             >
-                <SlidersHorizontal aria-hidden="true" className="size-[18px]" />
+                <SlidersHorizontal aria-hidden="true" className="size-5" />
                 {activeCount > 0 && (
                     <span
                         aria-hidden="true"

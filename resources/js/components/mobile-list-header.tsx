@@ -22,7 +22,7 @@ type Props = {
 };
 
 const buttonClass =
-    'relative grid size-[34px] min-w-0 shrink-0 place-items-center overflow-visible rounded-full p-0 before:absolute before:-inset-y-1.5 before:-inset-x-[5px] before:content-[""]';
+    'relative grid size-[38px] min-w-0 shrink-0 place-items-center overflow-visible rounded-full p-0 before:absolute before:-inset-x-[3px] before:-inset-y-[3px] before:content-[""]';
 
 export function MobileListHeader({
     title,
@@ -51,9 +51,9 @@ export function MobileListHeader({
     return (
         <MobilePageHeader className="flex items-center justify-between">
             <div className="min-w-0">
-                <h1 className="text-[17px]/[21px] font-semibold">{title}</h1>
+                <h1 className="text-[19px]/[24px] font-semibold">{title}</h1>
                 {filterLabels.length > 0 && (
-                    <p className="truncate text-xs text-muted">
+                    <p className="truncate text-[13.5px]/[18px] text-muted">
                         {filterLabels.join(' · ')}
                     </p>
                 )}
@@ -74,7 +74,7 @@ export function MobileListHeader({
                     onPress={onOpenFilters}
                     data-test={filterTestId}
                 >
-                    <FilterIcon aria-hidden="true" className="size-[18px]" />
+                    <FilterIcon aria-hidden="true" className="size-5" />
                     {filterCount > 0 && (
                         <span
                             aria-hidden="true"
@@ -94,10 +94,7 @@ export function MobileListHeader({
                         onPress={createAction.onPress}
                         data-test={createAction.testId}
                     >
-                        <CreateIcon
-                            aria-hidden="true"
-                            className="size-[18px]"
-                        />
+                        <CreateIcon aria-hidden="true" className="size-5" />
                     </Button>
                 )}
             </div>

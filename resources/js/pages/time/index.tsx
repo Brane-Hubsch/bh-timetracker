@@ -475,7 +475,7 @@ export default function TimeIndex({
                         className={cn(
                             'size-9 rounded-full in-data-[slot=select-value]:size-6',
                             mobileAvatar &&
-                                'in-data-[slot=select-value]:size-[34px]',
+                                'in-data-[slot=select-value]:size-[38px] in-data-[slot=select-value]:text-base',
                         )}
                         aria-hidden="true"
                     >
@@ -506,7 +506,7 @@ export default function TimeIndex({
             triggerClassName={cn(
                 'h-9 items-center rounded-full bg-surface py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-3 shadow-none',
                 mobileAvatar &&
-                    'size-9 justify-center border-0 bg-transparent p-0',
+                    'size-10 justify-center border-0 bg-transparent p-0',
             )}
             triggerAriaLabel={mobileAvatar ? t('Member') : undefined}
             hideIndicator
@@ -576,14 +576,14 @@ export default function TimeIndex({
             <div className="grid grid-cols-1 md:gap-3">
                 <MobilePageHeader
                     ref={calendarHeader}
-                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3"
+                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 max-md:gap-1.5"
                 >
                     <Heading
-                        className="items-center justify-start gap-x-3 gap-y-1 max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[17px]/[21px]"
+                        className="items-center justify-start gap-x-3 gap-y-1 max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[19px]/[24px]"
                         title={pageTitle}
                         actions={
                             <p
-                                className="flex items-baseline gap-1.5 text-xs tabular-nums"
+                                className="flex items-baseline gap-1.5 text-xs tabular-nums max-md:text-[13.5px]/[17px]"
                                 data-test="week-total"
                             >
                                 <span
@@ -610,7 +610,7 @@ export default function TimeIndex({
                         }
                     />
 
-                    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2.5 max-md:flex-nowrap max-md:gap-2 md:ms-auto">
+                    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2.5 max-md:flex-nowrap max-md:gap-1.5 md:ms-auto">
                         {copyInToolbar && copyPeriodButton}
                         {memberPicker}
                         {periodPicker}
