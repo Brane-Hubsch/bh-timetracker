@@ -550,12 +550,11 @@ export function TimelineChart({
                                 role="list"
                                 aria-label={chartTitle}
                             >
-                                {buckets.map((bucket, index) => {
+                                {buckets.map((bucket) => {
                                     const barStyle = {
                                         height: `${(bucket.seconds / 3600 / max) * 100}%`,
-                                        animationDelay: `${Math.min(index * 12, 360)}ms`,
                                     };
-                                    const barClassName = `flex w-full ${barMaxWidth} origin-bottom ${mobile ? 'transition-opacity' : 'animate-grow-y transition-[height,opacity]'} duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
+                                    const barClassName = `flex w-full ${barMaxWidth} ${mobile ? 'transition-opacity' : 'transition-[height,opacity]'} duration-300 ${!activeKey || activeKey === bucket.key ? '' : 'opacity-70 group-hover:opacity-100'}`;
 
                                     return (
                                         <div

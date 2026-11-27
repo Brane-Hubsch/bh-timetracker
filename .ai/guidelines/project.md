@@ -171,10 +171,8 @@ describes; propose additions instead of building them.
   `SegmentedControl` (HeroUI ToggleButtonGroup), not `Tabs` without panels; icon-only buttons need an
   `aria-label`. Use the `muted`/`accent` tokens from `app.css`, which are tuned for WCAG AA.
 - Errors render the `error` page in production (`AppServiceProvider::configureErrorPages`).
-- Motion is subtle and functional: page visits use View Transitions (only the content area, see
-  `app.tsx` and `.page-transition`), not filter/paging updates or form posts. Use the `animate-enter`,
-  `animate-fade-in`, `animate-grow-x/y` tokens from `app.css` and `transition-colors` on interactive
-  rows; everything respects `prefers-reduced-motion`.
+- Page and tab navigation switches content directly. Use motion for interactions such as overlays,
+  swiping between periods and color transitions on interactive rows. Respect `prefers-reduced-motion`.
 - When an open overlay's content changes its height, animate growth and shrinkage over 240 ms with
   `--ease-out-soft`. `observeOverlayHeights` handles HeroUI overlay surfaces globally, including
   portalled overlays. Toasts use HeroUI's built-in height transition. Follow the motion annotations

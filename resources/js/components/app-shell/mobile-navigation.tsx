@@ -1,5 +1,5 @@
 import { Button, Drawer, Separator } from '@heroui/react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Building2,
     Check,
@@ -9,13 +9,14 @@ import {
     Search,
     User,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useCommandPalette } from '@/components/command-palette';
 import CreateOrganizationModal from '@/components/create-organization-modal';
 import { LogoImage } from '@/components/logo-image';
 import { UserAvatar, logoutAndFlush } from '@/components/user-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import {
     useSidebarOrder,
     useSidebarSettings,
@@ -23,7 +24,7 @@ import {
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
 import { useMainNavigation } from '@/lib/navigation';
-import { cn } from '@/lib/utils';
+import { cn, toUrl } from '@/lib/utils';
 import { edit as editOrganization } from '@/routes/organizations';
 import { edit as editProfile } from '@/routes/profile';
 import { index as timeCalendar } from '@/routes/time';
@@ -50,6 +51,9 @@ export function MobileBottomNav({ className }: { className?: string }) {
     const { open: openSearch } = useCommandPalette();
     const [isMoreOpen, setMoreOpen] = useState(false);
     const [isCreateOpen, setCreateOpen] = useState(false);
+    const shouldPrefetch = useMediaQuery(
+        '(width < 48rem) and (display-mode: standalone)',
+    );
 
     const [tabs, remaining] = [order.slice(0, 4), order.slice(4)].map(
         (titles) =>
@@ -68,6 +72,32 @@ export function MobileBottomNav({ className }: { className?: string }) {
                 };
             }),
     );
+    const prefetchUrls = (isMoreOpen ? remaining : tabs)
+        .filter(({ isActive }) => !isActive)
+        .map(({ href }) => toUrl(href))
+        .join('\n');
+
+    useEffect(() => {
+        if (!shouldPrefetch || !prefetchUrls) {
+            return;
+        }
+
+        // Give the active view time to render before warming the visible links.
+        const timeout = window.setTimeout(() => {
+            if (document.hidden || !navigator.onLine) {
+                return;
+            }
+
+            for (const url of prefetchUrls.split('\n')) {
+                if (!router.getCached(url) && !router.getPrefetching(url)) {
+                    router.prefetch(url);
+                }
+            }
+        }, 200);
+
+        return () => window.clearTimeout(timeout);
+    }, [shouldPrefetch, prefetchUrls]);
+
     const organizationSettings = currentOrganization
         ? editOrganization(currentOrganization.slug)
         : null;
