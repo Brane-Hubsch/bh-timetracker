@@ -444,8 +444,13 @@ export function CalendarPicker({
                             </p>
                             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                                 <Button
-                                    variant="secondary"
+                                    variant={isList ? 'secondary' : 'ghost'}
                                     size="sm"
+                                    className={
+                                        isList
+                                            ? undefined
+                                            : 'bg-transparent! text-accent'
+                                    }
                                     aria-label={t('Go to today')}
                                     onPress={() => select(today)}
                                 >
