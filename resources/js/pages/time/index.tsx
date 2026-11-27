@@ -196,6 +196,7 @@ export default function TimeIndex({
         });
 
     const dates = weekDates(weekStart);
+    const showsToday = view === 'day' ? date === today : dates.includes(today);
     const reportDate =
         (isMobile && view === 'day') || !dates.includes(today) ? date : today;
     const openReport = (mode: TimeReportMode) =>
@@ -287,26 +288,66 @@ export default function TimeIndex({
             return;
         }
 
-        // FullCalendar measures the slots after mount. Wait for their full height
-        // before scrolling, and keep an existing scroll position.
-        const observer = new ResizeObserver(() => {
-            const morning = grid.querySelector('.time-calendar-morning');
-            const slot = morning?.getBoundingClientRect();
-            if (!slot || slot.height < 20) {
+        let frame = 0;
+        const stop = () => {
+            resizeObserver.disconnect();
+            markerObserver.disconnect();
+            cancelAnimationFrame(frame);
+        };
+        const scheduleScroll = () => {
+            if (frame) {
                 return;
             }
+            // Inertia restores scroll regions on the first frame after changing views.
+            frame = requestAnimationFrame(() => {
+                frame = 0;
+                if (grid.scrollTop === 0) {
+                    const anchor = grid.querySelector<HTMLElement>(
+                        showsToday
+                            ? '.time-calendar-now'
+                            : '.time-calendar-morning',
+                    );
+                    if (
+                        !anchor ||
+                        (showsToday && !anchor.style.top) ||
+                        grid.clientHeight === 0 ||
+                        grid.scrollHeight <= grid.clientHeight
+                    ) {
+                        return;
+                    }
 
-            didSetMobileScroll.current = true;
-            observer.disconnect();
-            if (grid.scrollTop === 0) {
-                grid.scrollTop =
-                    slot.top - grid.getBoundingClientRect().top - 12;
-            }
-        });
-        observer.observe(grid.querySelector('.time-calendar-morning') ?? grid);
+                    const { top, height } = anchor.getBoundingClientRect();
+                    const offset = showsToday
+                        ? (grid.clientHeight - height) / 2
+                        : 12;
+                    grid.scrollTop =
+                        top - grid.getBoundingClientRect().top - offset;
+                }
 
-        return () => observer.disconnect();
-    }, [isList, isMobile, needsMobileDay, view]);
+                didSetMobileScroll.current = true;
+                stop();
+            });
+        };
+
+        const resizeObserver = new ResizeObserver(scheduleScroll);
+        const markerObserver = new MutationObserver(scheduleScroll);
+        resizeObserver.observe(grid);
+        const body = grid.querySelector('.time-calendar-body');
+        if (body) {
+            resizeObserver.observe(body);
+        }
+        if (showsToday) {
+            // FullCalendar can position the line after the grid has stopped resizing.
+            markerObserver.observe(body ?? grid, {
+                subtree: true,
+                childList: true,
+                attributes: true,
+                attributeFilter: ['style'],
+            });
+        }
+
+        return stop;
+    }, [isList, isMobile, needsMobileDay, showsToday, view]);
 
     const weekTotal = entries.reduce(
         (sum, entry) => sum + entry.durationSeconds,
