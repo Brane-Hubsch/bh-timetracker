@@ -539,6 +539,7 @@ export default function TimeIndex({
             weekStartsOn={weekStartsOn}
             today={today}
             timezone={timezone}
+            hasMemberPicker={Boolean(memberPicker)}
             onChange={(date) => visit({ date })}
             onViewChange={(view) => visit({ view })}
         />
