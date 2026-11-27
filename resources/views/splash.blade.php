@@ -22,14 +22,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: oklch(1 0 0);
+        background-color: #f9f6ff;
         transition:
             opacity 250ms ease-out,
             visibility 0s linear 250ms;
     }
 
     html.dark.splash #splash {
-        background-color: oklch(0.145 0 0);
+        background-color: #18141f;
     }
 
     html.splash-hiding #splash {
