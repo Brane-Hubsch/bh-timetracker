@@ -572,7 +572,7 @@
     opacity: 1;
 }
 
-/* FullCalendar selects an entry on touch long-press to enable its resize handles. */
+/* FullCalendar's event selection enables touch resize handles. */
 .time-calendar-event-touch-selected:not(:focus-visible) {
     outline-style: none;
 }
@@ -694,6 +694,12 @@
 @media (width < 768px) {
     .time-calendar-event-touch-selected:not(.time-calendar-event-lifted) {
         --time-calendar-entry-tint: 17%;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .time-calendar-saved-event .time-calendar-entry {
+            transition: background-color 180ms var(--ease-out-soft);
+        }
     }
 
     /* The touch grip is centered on the edge with a larger, invisible drag target. */

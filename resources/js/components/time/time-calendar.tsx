@@ -643,6 +643,9 @@ export function TimeCalendar({
                         ? 'time-calendar-absence'
                         : cn(
                               'time-calendar-event',
+                              !isMirror &&
+                                  byId.has(event.id) &&
+                                  'time-calendar-saved-event',
                               isSelected &&
                                   'time-calendar-event-touch-selected',
                               isDragging && LIFTED_EVENT_CLASS,
