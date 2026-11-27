@@ -4,9 +4,8 @@ import type { CalendarRef } from '@fullcalendar/react';
 import type { CalendarApiImpl } from '@fullcalendar/react/protected-api';
 import { addDays, minutesToTime, timeToMinutes } from '@/lib/time';
 
-export const CALENDAR_SLOT_MINUTES = 30;
 export const CALENDAR_SNAP_MINUTES = 15;
-const CALENDAR_TOUCH_MOVE_TOLERANCE = 8;
+export const CALENDAR_TOUCH_MOVE_TOLERANCE = 8;
 
 const HOLD_DELAY = 500;
 const BLOCK_MINUTES = 60;
@@ -28,15 +27,12 @@ function rangeAtTouch(calendar: HTMLElement, { clientX, clientY }: Touch) {
             calendar.contains(layer),
     );
     const time = slot?.dataset.time;
-    if (!slot || !time) {
+    if (!time) {
         return null;
     }
 
-    const { top, height } = slot.getBoundingClientRect();
-    const minutesInSlot = ((clientY - top) / height) * CALENDAR_SLOT_MINUTES;
-    const snap = Math.floor(minutesInSlot / CALENDAR_SNAP_MINUTES);
     const startMinute = Math.min(
-        timeToMinutes(time) + snap * CALENDAR_SNAP_MINUTES,
+        timeToMinutes(time),
         DAY_MINUTES - BLOCK_MINUTES,
     );
     const endMinute = startMinute + BLOCK_MINUTES;
