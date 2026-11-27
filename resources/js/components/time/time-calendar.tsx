@@ -39,13 +39,12 @@ import {
 } from './use-calendar-event-selection';
 import {
     CALENDAR_SNAP_MINUTES,
-    CALENDAR_SLOT_MINUTES,
-    CALENDAR_TOUCH_MOVE_TOLERANCE,
     useCalendarLongPress,
 } from './use-calendar-long-press';
 
 const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
+const TOUCH_EVENT_DRAG_MIN_DISTANCE = 16;
 const HAPTIC_SWITCH_CLASS =
     'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 [direction:ltr]';
 
@@ -359,7 +358,7 @@ export function TimeCalendar({
                     Math.max(
                         Math.abs(touch.clientX - origin.clientX),
                         Math.abs(touch.clientY - origin.clientY),
-                    ) >= CALENDAR_TOUCH_MOVE_TOLERANCE
+                    ) >= TOUCH_EVENT_DRAG_MIN_DISTANCE
                 ) {
                     eventDragOrigin.current = null;
 
@@ -501,8 +500,10 @@ export function TimeCalendar({
                 scrollTime="06:30:00"
                 // Keep the user's scroll position when calendar data is refreshed after a save.
                 scrollTimeReset={false}
-                slotDuration={{ minutes: CALENDAR_SLOT_MINUTES }}
-                snapDuration={{ minutes: CALENDAR_SNAP_MINUTES }}
+                // Dragging centers its starting point in a row, so each row
+                // must correspond to a single snap to avoid jumping on lift.
+                slotDuration={{ minutes: CALENDAR_SNAP_MINUTES }}
+                slotHeaderInterval={{ hours: 1 }}
                 slotHeaderFormat={{
                     hour: '2-digit',
                     minute: '2-digit',
@@ -654,17 +655,20 @@ export function TimeCalendar({
                         );
                     }
                 }}
-                slotLaneClass={(info) =>
-                    cn(
+                slotLaneClass={(info) => {
+                    const minute = info.date.getUTCMinutes();
+
+                    return cn(
                         'time-calendar-slot',
-                        info.isMinor && 'time-calendar-slot-minor',
+                        minute === 30 && 'time-calendar-slot-minor',
+                        minute % 30 !== 0 && 'time-calendar-slot-quarter',
                         info.time?.milliseconds === 7 * 60 * 60 * 1000 &&
                             'time-calendar-morning',
                         holidays.length > 0 &&
                             info.time?.milliseconds === 0 &&
                             'time-calendar-slot-midnight',
-                    )
-                }
+                    );
+                }}
                 tableBodyClass="time-calendar-body"
                 dayLaneClass={({ dow }) =>
                     dow === 0 || dow === 6
