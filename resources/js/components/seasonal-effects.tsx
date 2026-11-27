@@ -8,11 +8,70 @@ import type { SeasonalEffects as Effects } from '@/lib/seasonal-effects';
 type Flake = {
     x: number;
     y: number;
+    /** 0 is far away (small, slow, faint), 1 is close to the viewer. */
+    depth: number;
     radius: number;
     speed: number;
-    drift: number;
+    opacity: number;
+    sway: number;
+    swaySpeed: number;
     phase: number;
 };
+
+const SPRITE_SIZE = 64;
+
+/**
+ * A soft, round flake drawn once and reused.
+ */
+function flakeSprite(isDark: boolean): HTMLCanvasElement {
+    const sprite = document.createElement('canvas');
+    sprite.width = SPRITE_SIZE;
+    sprite.height = SPRITE_SIZE;
+    const context = sprite.getContext('2d');
+    if (!context) {
+        return sprite;
+    }
+    const center = SPRITE_SIZE / 2;
+
+    // White snow on a dark background; on light backgrounds white would vanish, so the flakes are a soft,
+    // cold blue-grey there instead.
+    const color = isDark ? '255, 255, 255' : '100, 116, 139';
+    const flake = context.createRadialGradient(
+        center,
+        center,
+        0,
+        center,
+        center,
+        center * 0.62,
+    );
+    flake.addColorStop(0, `rgba(${color}, ${isDark ? 1 : 0.75})`);
+    flake.addColorStop(0.45, `rgba(${color}, ${isDark ? 0.85 : 0.55})`);
+    flake.addColorStop(1, `rgba(${color}, 0)`);
+    context.fillStyle = flake;
+    context.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
+
+    return sprite;
+}
+
+function createFlake(
+    width: number,
+    height: number,
+    anywhere: boolean,
+    // Most flakes are far away; a few large ones drift close to the viewer.
+    depth = Math.random() ** 1.8,
+): Flake {
+    return {
+        x: Math.random() * width,
+        y: anywhere ? Math.random() * height : -10,
+        depth,
+        radius: 0.7 + depth * depth * 4.3 + Math.random() * 0.5,
+        speed: 0.25 + depth * 1.35 + Math.random() * 0.2,
+        opacity: 0.35 + depth * 0.6,
+        sway: 0.2 + depth * 0.9 + Math.random() * 0.4,
+        swaySpeed: 0.006 + Math.random() * 0.018,
+        phase: Math.random() * Math.PI * 2,
+    };
+}
 type Spark = {
     x: number;
     y: number;
@@ -95,6 +154,8 @@ export function SeasonalEffects() {
         let width = 0;
         let height = 0;
         let flakes: Flake[] = [];
+        let spriteIsDark = document.documentElement.classList.contains('dark');
+        let sprite = flakeSprite(spriteIsDark);
         const sparks: Spark[] = [];
         const rockets: Rocket[] = [];
         let nextRocketAt = 0;
@@ -111,17 +172,13 @@ export function SeasonalEffects() {
 
             if (snow) {
                 const count = Math.min(
-                    140,
-                    Math.round((width * height) / 12000),
+                    200,
+                    Math.round((width * height) / 8000),
                 );
-                flakes = Array.from({ length: count }, () => ({
-                    x: Math.random() * width,
-                    y: Math.random() * height,
-                    radius: 1 + Math.random() * 2.4,
-                    speed: 0.35 + Math.random() * 0.9,
-                    drift: 0.2 + Math.random() * 0.5,
-                    phase: Math.random() * Math.PI * 2,
-                }));
+                // Far flakes first, so the near ones are drawn on top.
+                flakes = Array.from({ length: count }, () =>
+                    createFlake(width, height, true),
+                ).sort((a, b) => a.depth - b.depth);
             }
         };
 
@@ -162,27 +219,48 @@ export function SeasonalEffects() {
             context.clearRect(0, 0, width, height);
 
             if (snow) {
-                context.fillStyle = isDark
-                    ? 'rgba(255, 255, 255, 0.75)'
-                    : 'rgba(148, 163, 184, 0.6)';
-                context.beginPath();
-                for (const flake of flakes) {
-                    flake.phase += 0.01 * step;
-                    flake.y += flake.speed * step;
-                    flake.x += Math.sin(flake.phase) * flake.drift * step;
-                    if (flake.y - flake.radius > height) {
-                        flake.y = -flake.radius;
-                        flake.x = Math.random() * width;
-                    }
-                    if (flake.x < -5) {
-                        flake.x = width + 5;
-                    } else if (flake.x > width + 5) {
-                        flake.x = -5;
-                    }
-                    context.moveTo(flake.x + flake.radius, flake.y);
-                    context.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+                if (isDark !== spriteIsDark) {
+                    sprite = flakeSprite(isDark);
+                    spriteIsDark = isDark;
                 }
-                context.fill();
+                // A slow breeze with gusts; near flakes are pushed more than far ones.
+                const wind =
+                    Math.sin(now * 0.00017) * 0.5 +
+                    Math.sin(now * 0.00063 + 1.3) * 0.35 +
+                    Math.sin(now * 0.0021) * 0.1;
+
+                for (const flake of flakes) {
+                    flake.phase += flake.swaySpeed * step;
+                    flake.y += flake.speed * step;
+                    flake.x +=
+                        (Math.sin(flake.phase) * flake.sway * 0.5 +
+                            wind * (0.3 + flake.depth)) *
+                        step;
+
+                    const margin = flake.radius * 3;
+                    if (flake.y - margin > height) {
+                        Object.assign(
+                            flake,
+                            createFlake(width, height, false, flake.depth),
+                        );
+                    }
+                    if (flake.x < -margin) {
+                        flake.x = width + margin;
+                    } else if (flake.x > width + margin) {
+                        flake.x = -margin;
+                    }
+
+                    const size = flake.radius * 3.2;
+                    context.globalAlpha = flake.opacity;
+                    context.drawImage(
+                        sprite,
+                        flake.x - size / 2,
+                        flake.y - size / 2,
+                        size,
+                        size,
+                    );
+                }
+                context.globalAlpha = 1;
             }
 
             if (fireworks) {
