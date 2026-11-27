@@ -266,7 +266,6 @@ export default function TimeIndex({
         );
     }, [needsMobileDay, url]);
 
-    const calendarHeader = useRef<HTMLDivElement>(null);
     const calendarGrid = useRef<HTMLDivElement>(null);
     const didSetMobileScroll = useRef(false);
     useEffect(() => {
@@ -284,7 +283,8 @@ export default function TimeIndex({
         }
 
         const grid = calendarGrid.current;
-        if (!grid) {
+        const scrollRegion = grid?.closest<HTMLElement>('[scroll-region]');
+        if (!grid || !scrollRegion) {
             return;
         }
 
@@ -301,7 +301,7 @@ export default function TimeIndex({
             // Inertia restores scroll regions on the first frame after changing views.
             frame = requestAnimationFrame(() => {
                 frame = 0;
-                if (grid.scrollTop === 0) {
+                if (scrollRegion.scrollTop === 0) {
                     const anchor = grid.querySelector<HTMLElement>(
                         showsToday
                             ? '.time-calendar-now'
@@ -310,18 +310,18 @@ export default function TimeIndex({
                     if (
                         !anchor ||
                         (showsToday && !anchor.style.top) ||
-                        grid.clientHeight === 0 ||
-                        grid.scrollHeight <= grid.clientHeight
+                        scrollRegion.clientHeight === 0 ||
+                        scrollRegion.scrollHeight <= scrollRegion.clientHeight
                     ) {
                         return;
                     }
 
                     const { top, height } = anchor.getBoundingClientRect();
                     const offset = showsToday
-                        ? (grid.clientHeight - height) / 2
+                        ? (scrollRegion.clientHeight - height) / 2
                         : 12;
-                    grid.scrollTop =
-                        top - grid.getBoundingClientRect().top - offset;
+                    scrollRegion.scrollTop =
+                        top - scrollRegion.getBoundingClientRect().top - offset;
                 }
 
                 didSetMobileScroll.current = true;
@@ -331,7 +331,7 @@ export default function TimeIndex({
 
         const resizeObserver = new ResizeObserver(scheduleScroll);
         const markerObserver = new MutationObserver(scheduleScroll);
-        resizeObserver.observe(grid);
+        resizeObserver.observe(scrollRegion);
         const body = grid.querySelector('.time-calendar-body');
         if (body) {
             resizeObserver.observe(body);
@@ -626,11 +626,13 @@ export default function TimeIndex({
         <>
             <Head title={pageTitle} />
 
-            <div className="grid grid-cols-1 md:gap-3">
-                <MobilePageHeader
-                    ref={calendarHeader}
-                    className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 max-md:gap-1.5"
-                >
+            <div
+                className={cn(
+                    'grid grid-cols-1 md:gap-3',
+                    isList && 'max-md:min-h-full',
+                )}
+            >
+                <MobilePageHeader className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 max-md:gap-1.5">
                     <Heading
                         className="items-center justify-start gap-x-3 gap-y-1 max-md:shrink-0 max-md:flex-col max-md:items-start max-md:gap-0 max-md:[&_h1]:text-[19px]/[24px]"
                         title={pageTitle}
@@ -684,13 +686,9 @@ export default function TimeIndex({
 
                 <div
                     ref={calendarGrid}
-                    scroll-region={isMobile && !isList ? '' : undefined}
-                    className={cn(
-                        isList
-                            ? 'mx-auto w-full md:max-w-[76rem]'
-                            : 'time-calendar-scroll',
-                        !isList && timer && 'max-md:pb-(--mobile-timer-space)',
-                    )}
+                    className={
+                        isList ? 'mx-auto w-full md:max-w-[76rem]' : undefined
+                    }
                 >
                     {view === 'list' ? (
                         <TimeEntryList
@@ -701,9 +699,7 @@ export default function TimeIndex({
                             absences={absences}
                             colleaguesOff={colleaguesOff}
                             holidays={calendarHolidays}
-                            pageHeaderRef={calendarHeader}
                             isMobile={isMobile}
-                            hasTimer={Boolean(timer)}
                             onSwipe={swipeToPeriod}
                             onSwipeIntent={prefetchPeriod}
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}

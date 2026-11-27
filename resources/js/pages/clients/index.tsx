@@ -16,7 +16,6 @@ import {
 } from '@/hooks/use-mobile-list-filters';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import { index, show } from '@/routes/clients';
 import type { ClientListItem, ClientNameOption } from '@/types';
 
@@ -33,7 +32,7 @@ export default function ClientsIndex({
 }: Props) {
     const { t, tc } = useTranslation();
     const isDesktop = useIsDesktop();
-    const { currentOrganization, timer } = usePage().props;
+    const { currentOrganization } = usePage().props;
     const [isCreateOpen, setCreateOpen] = useState(false);
     useOpenFromQuery('new', () => setCreateOpen(true));
     const { current, search, isOpen, changeOpen, apply, changeSearch } =
@@ -57,14 +56,7 @@ export default function ClientsIndex({
         <>
             <Head title={t('Clients')} />
 
-            <div
-                className={cn(
-                    'flex flex-col md:grid md:gap-6',
-                    timer
-                        ? 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height)-var(--mobile-timer-space))]'
-                        : 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height))]',
-                )}
-            >
+            <div className="flex flex-col max-md:min-h-full md:grid md:gap-6">
                 {isDesktop ? (
                     <>
                         <Heading
