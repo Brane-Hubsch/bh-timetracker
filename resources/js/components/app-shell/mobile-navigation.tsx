@@ -133,6 +133,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                         <HapticTap<HTMLAnchorElement>
                             key={item.title}
                             enabled={!item.isActive}
+                            focusOnTap={false}
                             className="flex min-w-0 flex-1"
                         >
                             {(ref) => (
