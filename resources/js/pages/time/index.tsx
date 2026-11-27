@@ -164,6 +164,7 @@ export default function TimeIndex({
         currentOrganization?.id,
     );
     const isList = view === 'list';
+    const periodKey = `${view}-${weekStart}-${view === 'day' ? date : ''}`;
     const periodUrl = new URL(url, 'http://localhost');
     const needsMobileDay =
         isMobile && view === 'week' && !periodUrl.searchParams.has('view');
@@ -279,22 +280,19 @@ export default function TimeIndex({
         }
 
         // FullCalendar measures the slots after mount. Wait for their full height
-        // before setting the page scroll, and keep an existing scroll position.
+        // before scrolling, and keep an existing scroll position.
         const observer = new ResizeObserver(() => {
-            const header = calendarHeader.current;
             const morning = grid.querySelector('.time-calendar-morning');
             const slot = morning?.getBoundingClientRect();
-            if (!header || !slot || slot.height < 20) {
+            if (!slot || slot.height < 20) {
                 return;
             }
 
             didSetMobileScroll.current = true;
             observer.disconnect();
-            if (window.scrollY < header.offsetHeight) {
-                window.scrollTo(
-                    0,
-                    window.scrollY + slot.top - header.offsetHeight - 12,
-                );
+            if (grid.scrollTop === 0) {
+                grid.scrollTop =
+                    slot.top - grid.getBoundingClientRect().top - 12;
             }
         });
         observer.observe(grid.querySelector('.time-calendar-morning') ?? grid);
@@ -625,14 +623,18 @@ export default function TimeIndex({
                 </MobilePageHeader>
 
                 <div
-                    key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
                     ref={calendarGrid}
-                    className={
-                        isList ? 'mx-auto w-full md:max-w-[76rem]' : undefined
-                    }
+                    scroll-region={isMobile && !isList ? '' : undefined}
+                    className={cn(
+                        isList
+                            ? 'mx-auto w-full md:max-w-[76rem]'
+                            : 'time-calendar-scroll',
+                        !isList && timer && 'max-md:pb-(--mobile-timer-space)',
+                    )}
                 >
                     {view === 'list' ? (
                         <TimeEntryList
+                            key={periodKey}
                             dates={dates}
                             today={today}
                             entries={entries}
@@ -654,6 +656,7 @@ export default function TimeIndex({
                         />
                     ) : isMobile ? (
                         <CalendarSwipe
+                            key={periodKey}
                             onSwipeIntent={prefetchPeriod}
                             onSwipe={swipeToPeriod}
                             renderAdjacent={(direction) => {
@@ -692,7 +695,11 @@ export default function TimeIndex({
                             <TimeCalendar {...calendarProps} view={view} />
                         </CalendarSwipe>
                     ) : (
-                        <TimeCalendar {...calendarProps} view={view} />
+                        <TimeCalendar
+                            key={periodKey}
+                            {...calendarProps}
+                            view={view}
+                        />
                     )}
                 </div>
             </div>
