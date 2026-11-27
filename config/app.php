@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME') ?: 'TimeTracker',
 
     /*
     | Proxies (load balancer, CDN) whose X-Forwarded-* headers are trusted, as a comma separated list of

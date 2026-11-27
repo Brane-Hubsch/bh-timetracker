@@ -27,7 +27,7 @@ export default function OAuthAuthorize({
     action,
 }: Props) {
     const { t } = useTranslation();
-    const { auth } = usePage().props;
+    const { auth, name } = usePage().props;
 
     const fields = (
         <>
@@ -46,8 +46,12 @@ export default function OAuthAuthorize({
                 <Bot className="size-8 text-accent" />
                 <p className="text-sm">
                     {t(
-                        ':client wants to use BH Timetracker as :name. It can read and report time, clients and projects with the same permissions as you.',
-                        { client: client.name, name: auth.user?.name ?? '' },
+                        ':client wants to use :app as :name. It can read and report time, clients and projects with the same permissions as you.',
+                        {
+                            app: name,
+                            client: client.name,
+                            name: auth.user?.name ?? '',
+                        },
                     )}
                 </p>
                 {redirectHost && (

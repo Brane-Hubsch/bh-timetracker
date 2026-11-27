@@ -197,6 +197,8 @@ Se avsnitt 6.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
+- I den inloggade mobilwebbläsaren visas ett installationskort högst en gång per 30 dagar. ”Påminn mig senare” skjuter upp nästa förslag i 30 dagar. Installationsknappen öppnar webbläsarens dialog när den finns och visar annars instruktioner. Den installerade webbappen visar inget kort.
+- Webbappens namn och sidtitlarna hämtas från `APP_NAME`. Sidtitlarna börjar med appnamnet, till exempel ”TimeTracker | Kalender”.
 - Nypzoom är avstängd i den installerade webbappen. Scroll fungerar som vanligt i båda lägena och nypzoom fungerar i webbläsaren.
 - Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. I den installerade mobilappen förladdas de synliga navigationslänkarna och deras siddata sparas kort i minnet.
 
@@ -668,7 +670,7 @@ Beslutat av beställaren: produktion körs med Docker och Docker Compose, med [s
 - **Image** (`Dockerfile`, flerstegsbygge):
   - Bas `serversideup/php:8.5-frankenphp-trixie`, med tilläggen `gd` och `exif` (bilder), `intl` (formatering i exporter) och `postgresql-client` (`pg_dump` 17 för backup).
   - Composer-beroenden utan dev-paket.
-  - Frontendbygget kör Node och PHP i samma steg, eftersom Wayfinders Vite-plugin kör `php artisan`. `VITE_APP_NAME` är byggargument.
+  - Frontendbygget kör Node och PHP i samma steg, eftersom Wayfinders Vite-plugin kör `php artisan`.
   - Inga hemligheter i imagen; allt kommer från miljövariabler vid körning.
   - FrankenPHP körs i workerläge via Laravel Octane, se "Tillägg efter Fas 6: workerläge med Octane".
 - **Tjänster** (`compose.yaml`), alla från samma image:
@@ -781,7 +783,7 @@ Beställt i efterhand: produktionsstacken ska fungera i [Coolify](https://coolif
 - **Miljövariabler:** Coolify skickar bara variabler som står under en tjänsts `environment:`. Därför listas alla inställningar i `x-app-environment` som `${VAR:-standard}`, och `env_file` används inte längre. Coolify visar dem under Environment Variables. `APP_KEY`, `APP_URL`, `DB_PASSWORD` och `MAIL_FROM_ADDRESS` är obligatoriska (`${VAR:?}`), så en deploy stoppas om de saknas. En ny inställning måste läggas till i listan.
 - **HTTPS bakom proxyn:** `OCTANE_HTTPS=true` gör att varje anrop räknas som HTTPS. Det behövs för korrekta länkar och säkra cookies när TLS avslutas framför containern.
 - **Klientens IP:** FrankenPHP skickar proxyns adress till Laravel, inte besökarens. Därför litar Laravel på `X-Forwarded-For` från privata nät, där Coolifys proxy finns (`TRUSTED_PROXIES` är som standard `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16`). Annars skulle alla besökare dela proxyns IP i spärrarna, t.ex. för inloggningslänkar. Med Cloudflare framför läggs Cloudflares adressintervall till. `compose.standalone.yaml` lämnar listan tom, eftersom besökarna där ansluter direkt.
-- **Bygge:** `web`, `queue` och `scheduler` bygger samma image. Därför beror ingen tjänst på att en annan byggt den först, och byggena efter det första kommer från cachen. `APP_NAME` blir byggargumentet `VITE_APP_NAME`.
+- **Bygge:** `web`, `queue` och `scheduler` bygger samma image. Därför beror ingen tjänst på att en annan byggt den först, och byggena efter det första kommer från cachen. `APP_NAME` läses vid körning.
 - **Egen server utan Coolify:** `compose.standalone.yaml` lägger till FrankenPHP:s TLS med Let's Encrypt på port 80/443 och volymerna för certifikat. `.env.production.example` sätter `COMPOSE_FILE=compose.yaml:compose.standalone.yaml`, så vanliga `docker compose` fungerar som förut.
 - **Dokumentation:** README (Production: Coolify och egen server) och `.env.production.example`.
 - **Verifierat lokalt:**

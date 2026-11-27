@@ -1,5 +1,6 @@
 import { Breadcrumbs } from '@heroui/react';
 import { AppSidebar } from '@/components/app-shell/app-sidebar';
+import { InstallPrompt } from '@/components/app-shell/install-prompt';
 import { MobilePageHeaderHost } from '@/components/app-shell/mobile-page-header';
 import { SidebarResizeHandle } from '@/components/app-shell/sidebar-resize-handle';
 import { CommandPaletteProvider } from '@/components/command-palette';
@@ -105,6 +106,7 @@ export default function AppLayout({
                     className="fixed inset-x-3 bottom-[calc(var(--mobile-tab-bar-height)+0.6875rem)] z-30 md:hidden"
                 />
                 <MobileBottomNav className="md:hidden" />
+                <InstallPrompt hasTimer={hasTimer} />
                 <KeyboardShortcutsDialog />
             </div>
         </CommandPaletteProvider>

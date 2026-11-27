@@ -1,5 +1,5 @@
 import { Button, buttonVariants } from '@heroui/react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useTranslation } from '@/lib/i18n';
 import { home } from '@/routes';
 
@@ -12,6 +12,7 @@ type Props = {
  */
 export default function ErrorPage({ status }: Props) {
     const { t } = useTranslation();
+    const { name } = usePage().props;
 
     const messages: Record<
         Props['status'],
@@ -37,9 +38,9 @@ export default function ErrorPage({ status }: Props) {
         },
         503: {
             title: t('Down for maintenance'),
-            description: t(
-                'We are updating BH Timetracker. Back in a few minutes.',
-            ),
+            description: t('We are updating :app. Back in a few minutes.', {
+                app: name,
+            }),
         },
     };
     const message = messages[status] ?? messages[500];

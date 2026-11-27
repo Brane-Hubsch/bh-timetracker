@@ -1,5 +1,5 @@
 import { Button, Input, toast } from '@heroui/react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Bot, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -27,6 +27,7 @@ type Props = {
  */
 export default function AiConnections({ mcpUrl, connections }: Props) {
     const { t, intlLocale } = useTranslation();
+    const { name } = usePage().props;
     const [disconnecting, setDisconnecting] = useState<Connection | null>(null);
     const disconnectTarget = useOverlayData(disconnecting);
     const [isPending, setPending] = useState(false);
@@ -109,9 +110,9 @@ export default function AiConnections({ mcpUrl, connections }: Props) {
                                 )}
                             </li>
                             <li>
-                                {t(
-                                    'Name it BH Timetracker and paste the MCP address.',
-                                )}
+                                {t('Name it :app and paste the MCP address.', {
+                                    app: name,
+                                })}
                             </li>
                             <li>
                                 {t(

@@ -82,7 +82,7 @@ export function stopTimer(timer: RunningTimer) {
     );
 }
 
-/** Puts the running clock in front of the page title, e.g. "▶ 1:23 · Webbshop | Kalender – …". */
+/** Puts the running clock and project in front of the page title. */
 export function useTimerTitle() {
     const { timer } = usePage().props;
     const { t } = useTranslation();

@@ -23,9 +23,9 @@ class PwaManifestController
         }
 
         return response()->json([
-            'name' => 'BH Timetracker',
-            'short_name' => 'Tid',
-            'description' => 'Tidrapportering för BH',
+            'name' => config('app.name'),
+            'short_name' => config('app.name'),
+            'description' => 'Tidrapportering för team',
             'lang' => 'sv',
             'start_url' => '/',
             'scope' => '/',

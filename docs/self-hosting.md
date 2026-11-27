@@ -69,7 +69,7 @@ Also needed for a working installation:
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`             | Your SMTP account. Keep `MAIL_MAILER=smtp`.                                                                                        |
 | `BACKUP_AWS_*`, `BACKUP_ARCHIVE_PASSWORD`, `BACKUP_NOTIFICATION_EMAIL` | Nightly backups (optional, recommended), see [Backups](#backups).                                                                  |
-| `APP_NAME`                                                             | The name shown in the app and in emails (default "BH Timetracker"). It is built into the frontend, so changing it needs a rebuild. |
+| `APP_NAME`                                                             | The name shown in the app, page titles, and on the home screen (default "TimeTracker"). The running application reads this value. |
 
 Optional:
 
@@ -143,7 +143,7 @@ certificates) in front of the `web` service.
    The other services get no domain.
 3. **Environment Variables:** Coolify lists the variables from `compose.yaml`. Fill them in as described
    in [Prepare the settings](#1-prepare-the-settings), with `APP_URL` matching the domain. Multi-line
-   values such as `PASSPORT_PRIVATE_KEY` are fine. Keep **Available during build** on for `APP_NAME`.
+   values such as `PASSPORT_PRIVATE_KEY` are fine.
 4. Deploy, and wait for the deployment to finish.
 5. Open **Terminal**, choose the `web` container and run:
 

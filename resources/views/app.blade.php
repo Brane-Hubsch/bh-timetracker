@@ -6,13 +6,24 @@
         <meta name="theme-color" content="#7c3aed">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
-        <meta name="apple-mobile-web-app-title" content="Tid">
+        <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
 
         {{-- Apply the installed app's viewport limits and system appearance before rendering. --}}
         <script>
             (function() {
                 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                     || window.navigator.standalone === true;
+
+                if (!isStandalone && /Android/i.test(window.navigator.userAgent)) {
+                    // Retain the event even if it arrives before the app shell loads.
+                    window.addEventListener('beforeinstallprompt', (event) => {
+                        event.preventDefault();
+                        window.pwaInstallPrompt = event;
+                    });
+                    window.addEventListener('appinstalled', () => {
+                        window.pwaInstallPrompt = undefined;
+                    });
+                }
 
                 if (isStandalone) {
                     const viewport = document.querySelector('meta[name="viewport"]');
@@ -54,7 +65,7 @@
         @foreach ([120, 152, 167, 180] as $size)
             <link rel="apple-touch-icon" href="{{ Vite::asset("resources/app-icons/apple-touch-{$size}.png") }}" sizes="{{ $size }}x{{ $size }}">
         @endforeach
-        <link rel="manifest" href="/site.webmanifest">
+        <link rel="manifest" href="{{ route('pwa.manifest', absolute: false) }}">
 
         @if (app()->isProduction() && filled(config('services.umami.script_url')) && filled(config('services.umami.website_id')) && request()->getHost() === config('services.umami.domain'))
             @include('analytics.umami')
@@ -65,7 +76,7 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ config('app.name') }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

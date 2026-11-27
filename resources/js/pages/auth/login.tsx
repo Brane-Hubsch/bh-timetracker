@@ -151,6 +151,6 @@ export default function Login({
 }
 
 Login.layout = {
-    title: 'Log in to BH Timetracker',
+    title: 'Log in to :app',
     description: 'Use a passkey, Google or an email link.',
 };

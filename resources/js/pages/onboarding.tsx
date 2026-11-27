@@ -61,7 +61,7 @@ export default function Onboarding({ pendingInvitations }: Props) {
 }
 
 Onboarding.layout = {
-    title: 'Welcome to BH Timetracker',
+    title: 'Welcome to :app',
     description:
         'Accept an invitation or create a new organization to get started.',
 };

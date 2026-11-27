@@ -20,7 +20,7 @@ use App\Http\Middleware\EnsureOrganizationMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
-Route::get('site.webmanifest', PwaManifestController::class);
+Route::get('site.webmanifest', PwaManifestController::class)->name('pwa.manifest');
 // Fortify can send verified users directly to its unscoped home path.
 Route::get('calendar', HomeController::class);
 
