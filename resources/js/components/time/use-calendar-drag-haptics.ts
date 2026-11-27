@@ -29,6 +29,7 @@ export function useCalendarDragHaptics() {
     const armSwitch = (
         control: HTMLInputElement,
         touch: Touch,
+        moveTarget: HTMLElement,
         allowReleaseHaptic = false,
     ) => {
         const listeners = new AbortController();
@@ -89,10 +90,14 @@ export function useCalendarDragHaptics() {
         // tracking this touch. Updating checked during tracking would stop it.
         placeSwitch(touch, SWITCH_OFF_OFFSET);
 
-        control.addEventListener(
+        moveTarget.addEventListener(
             'touchmove',
             (move) => {
-                if (active.trackTouch(move) && active.slot !== null) {
+                if (
+                    move.target === control &&
+                    active.trackTouch(move) &&
+                    active.slot !== null
+                ) {
                     // The calendar has already processed this touch. Keep
                     // FullCalendar's window listener from cancelling native
                     // switch tracking.
@@ -126,6 +131,11 @@ export function useCalendarDragHaptics() {
                 control.style.removeProperty('rotate');
                 control.style.removeProperty('translate');
                 control.style.removeProperty('visibility');
+                if (active.slot !== null && !allowReleaseHaptic) {
+                    // A cancelled native release can leave WebKit tracking
+                    // this touch. Start the next drag with a fresh switch.
+                    control.replaceWith(control.cloneNode());
+                }
                 gesture.current = null;
             });
         };
@@ -145,7 +155,9 @@ export function useCalendarDragHaptics() {
             control instanceof HTMLInputElement &&
             control.hasAttribute('data-calendar-haptic-switch')
         ) {
-            armSwitch(control, touch);
+            // FullCalendar handles the move on the input itself. Listen on
+            // the calendar so the switch sees the updated slot on that move.
+            armSwitch(control, touch, event.currentTarget);
         }
     };
 
@@ -157,7 +169,7 @@ export function useCalendarDragHaptics() {
             return;
         }
 
-        const active = armSwitch(target, touch, true);
+        const active = armSwitch(target, touch, target, true);
         return (start: string, end: string) => {
             if (gesture.current === active) {
                 snapGesture(
