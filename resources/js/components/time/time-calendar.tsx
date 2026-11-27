@@ -110,7 +110,7 @@ type Props = {
 
 /**
  * Fills the viewport below the calendar's top edge, so it uses all available height whatever the
- * toolbar above it wraps to. On mobile the calendar uses its natural height and the page scrolls.
+ * toolbar above it wraps to. On mobile the calendar uses its natural height inside the scroll area.
  */
 function useFillHeight(
     isMobile: boolean,
