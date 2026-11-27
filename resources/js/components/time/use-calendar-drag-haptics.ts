@@ -1,11 +1,16 @@
 import { useRef } from 'react';
 import type { TouchEvent as ReactTouchEvent } from 'react';
 
+const SWITCH_SIZE = 40;
+const SWITCH_OFF_OFFSET = 4;
+const SWITCH_ON_OFFSET = SWITCH_SIZE - SWITCH_OFF_OFFSET;
+
+type Slot = { start: number; end: number };
+
 type DragGesture = {
     control: HTMLInputElement;
-    slot: { start: number; end: number } | null;
-    switched: boolean;
-    moved: boolean;
+    slot: Slot | null;
+    trackedSlot: Slot | null;
 };
 
 function snapGesture(gesture: DragGesture, start: number, end: number) {
@@ -13,30 +18,29 @@ function snapGesture(gesture: DragGesture, start: number, end: number) {
     if (previous?.start === start && previous?.end === end) return;
 
     gesture.slot = { start, end };
-    if (previous) {
-        gesture.switched = !gesture.switched;
-        gesture.moved = true;
-    }
 }
 
 export function useCalendarDragHaptics() {
     const gesture = useRef<DragGesture | null>(null);
 
-    const armSwitch = (control: HTMLInputElement, touch: Touch) => {
+    const armSwitch = (
+        control: HTMLInputElement,
+        touch: Touch,
+        allowReleaseHaptic = false,
+    ) => {
         const listeners = new AbortController();
         const { signal } = listeners;
         const active: DragGesture = {
             control,
             slot: null,
-            switched: false,
-            moved: false,
+            trackedSlot: null,
         };
         gesture.current = active;
         control.checked = false;
         // Rotate a horizontal switch. A square keeps the two axes equal even
         // in WebKit versions that measure the transformed bounding box.
-        control.style.width = '40px';
-        control.style.height = '40px';
+        control.style.width = `${SWITCH_SIZE}px`;
+        control.style.height = `${SWITCH_SIZE}px`;
         control.style.maxHeight = 'none';
         control.style.maxWidth = 'none';
         control.style.rotate = '90deg';
@@ -54,8 +58,10 @@ export function useCalendarDragHaptics() {
         };
         // Start on the off side and inside the thumb, before WebKit starts
         // tracking this touch. Updating checked during tracking would stop it.
-        placeSwitch(touch.clientY, 8);
+        placeSwitch(touch.clientY, SWITCH_OFF_OFFSET);
 
+        let switched = false;
+        let moved = false;
         control.addEventListener(
             'touchmove',
             (move) => {
@@ -69,8 +75,18 @@ export function useCalendarDragHaptics() {
                     // FullCalendar's window listener from cancelling native
                     // switch tracking.
                     move.stopPropagation();
+                    if (active.slot !== active.trackedSlot) {
+                        active.trackedSlot = active.slot;
+                        switched = !switched;
+                        moved = true;
+                    }
                 }
-                placeSwitch(finger.clientY, active.switched ? 28 : 8);
+                // Leave room for WebKit's initial drag threshold even if the
+                // finger shifted slightly while the long press was starting.
+                placeSwitch(
+                    finger.clientY,
+                    switched ? SWITCH_ON_OFFSET : SWITCH_OFF_OFFSET,
+                );
             },
             { signal },
         );
@@ -84,7 +100,9 @@ export function useCalendarDragHaptics() {
                 return;
             }
 
-            if (active.slot !== null && !active.moved) end.preventDefault();
+            if (active.slot !== null && !moved && !allowReleaseHaptic) {
+                end.preventDefault();
+            }
             listeners.abort();
 
             // Leave the control in place until Safari finishes the native touch.
@@ -128,7 +146,7 @@ export function useCalendarDragHaptics() {
             return;
         }
 
-        const active = armSwitch(target, touch);
+        const active = armSwitch(target, touch, true);
         return (start: string, end: string) => {
             if (gesture.current === active) {
                 snapGesture(
@@ -148,6 +166,7 @@ export function useCalendarDragHaptics() {
         const active = gesture.current;
         if (active && active.control === target && start && end) {
             active.slot = { start: start.getTime(), end: end.getTime() };
+            active.trackedSlot = active.slot;
         }
     };
 
