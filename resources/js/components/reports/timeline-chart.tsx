@@ -88,6 +88,9 @@ function ProjectLabels({
 const buttonClassName =
     'group flex h-full w-full items-end justify-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-inset';
 
+// Keep subpixel rounding inside the plot so the final mobile bar stays clear of its clip edge.
+const mobileTimelineColumns = 'grid auto-cols-fr grid-flow-col gap-0.5';
+
 function ProjectSegments({ items }: { items: ProjectHours[] }) {
     return items.map(({ id, color, seconds }) => (
         <span
@@ -118,10 +121,15 @@ function AdjacentBars({
     const { buckets, projects, unit } = timeline;
     return (
         <>
-            <div className="flex h-(--plot-height) items-end gap-0.5 overflow-clip">
+            <div
+                className={cn(
+                    mobileTimelineColumns,
+                    'h-(--plot-height) items-end overflow-clip',
+                )}
+            >
                 {buckets.map((bucket) => (
                     <div
-                        className="flex h-full min-w-0 flex-1 items-end justify-center"
+                        className="flex h-full items-end justify-center"
                         key={bucket.key}
                     >
                         <span
@@ -137,11 +145,11 @@ function AdjacentBars({
                     </div>
                 ))}
             </div>
-            <div className="mt-3 flex gap-0.5">
+            <div className={cn(mobileTimelineColumns, 'mt-3')}>
                 {buckets.map((bucket, index) => (
                     <span
                         key={bucket.key}
-                        className="min-w-0 flex-1 text-center text-[11px] whitespace-nowrap text-muted tabular-nums"
+                        className="text-center text-[11px] whitespace-nowrap text-muted tabular-nums"
                     >
                         {renderTick(bucket, index, unit, labelEvery)}
                     </span>
@@ -301,6 +309,7 @@ export function TimelineChart({
     const { t, intlLocale } = useTranslation();
     const isDesktop = useIsDesktop();
     const mobile = Boolean(report) && !isDesktop;
+    const timelineColumns = mobile ? mobileTimelineColumns : 'flex gap-0.5';
     const axisRef = useRef<HTMLDivElement>(null);
     const [axisWidth, setAxisWidth] = useState(0);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -550,7 +559,10 @@ export function TimelineChart({
                             )}
                         >
                             <div
-                                className="relative flex h-(--plot-height) items-end gap-0.5 overflow-clip"
+                                className={cn(
+                                    timelineColumns,
+                                    'relative h-(--plot-height) items-end overflow-clip',
+                                )}
                                 role="list"
                                 aria-label={chartTitle}
                             >
@@ -652,7 +664,7 @@ export function TimelineChart({
                             </div>
                             <div
                                 ref={axisRef}
-                                className="flex gap-0.5"
+                                className={timelineColumns}
                                 aria-hidden="true"
                             >
                                 {buckets.map((bucket, index) => (
