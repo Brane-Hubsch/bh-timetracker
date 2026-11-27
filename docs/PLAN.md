@@ -713,6 +713,7 @@ Beställt i efterhand. Helgdagarna ligger i databasen per organisation (`holiday
 - **Svenska helgdagar** (`App\Support\SwedishHolidays`): de helgdagar som kan infalla på en vardag samt midsommar-, jul- och nyårsafton. Påsken räknas fram utan calendar-tillägget. Namnen sparas på svenska.
 - **Från start:** nya organisationer får svenska helgdagar för innevarande och nästa år (`CreateOrganization`). Migreringen gav befintliga organisationer 2026 och 2027.
 - **Kalender:** sparade helgdagar visas med namn som röda taggar överst i rätt dagskolumn i vecko- och dagvyn. Taggarna ligger kvar när tiderna scrollas, med 12 px marginal under mobilens fasta rubrik. Den första tidsrutan vid 00:00 går att markera när man scrollar hela vägen upp.
+- I kalenderns veckovy visas rapporterad tid följd av förväntad arbetstid, till exempel ”28:00 av 40:00”. Förväntad tid utgår från den valda medlemmens arbetsschema och minskar när en av organisationens helgdagar infaller på en schemalagd arbetsdag.
 - **Används** av projektsidans arbetsdagar (`EstimatePace`) och av frånvaro (se nedan). Lördag och söndag räknas aldrig som arbetsdagar.
 - **Kod:** `App\Actions\Holidays` (`CreateHoliday`, `DeleteHoliday`, `AddSwedishHolidays`) och `OrganizationHolidayController`. Andra organisationers helgdagar ger 404.
 

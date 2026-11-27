@@ -66,6 +66,7 @@ type Props = {
     today: string;
     weekStart: string;
     weekStartsOn: number;
+    expectedWeekSeconds: number | null;
     timezone: string;
     entries: TimeEntry[];
     absences: Absence[];
@@ -98,6 +99,7 @@ export default function TimeIndex({
     today,
     weekStart,
     weekStartsOn,
+    expectedWeekSeconds,
     timezone,
     entries,
     absences,
@@ -590,6 +592,8 @@ export default function TimeIndex({
                                     className={cn(
                                         'font-medium text-muted',
                                         view === 'day' && 'max-md:font-normal',
+                                        expectedWeekSeconds !== null &&
+                                            'max-md:sr-only',
                                     )}
                                 >
                                     {view === 'day'
@@ -606,6 +610,16 @@ export default function TimeIndex({
                                         view === 'day' ? dayTotal : weekTotal,
                                     )}
                                 </span>
+                                {expectedWeekSeconds !== null && (
+                                    <span className="font-medium whitespace-nowrap text-muted">
+                                        {t('of :expected', {
+                                            expected:
+                                                formatDuration(
+                                                    expectedWeekSeconds,
+                                                ),
+                                        })}
+                                    </span>
+                                )}
                             </p>
                         }
                     />
