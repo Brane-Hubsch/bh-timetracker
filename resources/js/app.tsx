@@ -1,6 +1,11 @@
 import { createInertiaApp, router } from '@inertiajs/react';
 import { AppProviders } from '@/components/providers/app-providers';
 import { initializeTheme } from '@/hooks/use-appearance';
+import {
+    applyThemePreferences,
+    DEFAULT_THEME_PREFERENCES,
+    watchSystemContrast,
+} from '@/lib/theme';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
@@ -11,7 +16,12 @@ import { setUrlDefaults } from '@/wayfinder';
  */
 let currentOrganizationSlug: string | undefined;
 setUrlDefaults(() => ({ current_organization: currentOrganizationSlug }));
+// Form posts and partial reloads do not fire "navigate", but can change the theme (e.g. the brand colour).
+router.on('success', ({ detail: { page } }) => {
+    applyThemePreferences(page.props.theme ?? DEFAULT_THEME_PREFERENCES);
+});
 router.on('navigate', ({ detail: { page } }) => {
+    applyThemePreferences(page.props.theme ?? DEFAULT_THEME_PREFERENCES);
     const slug = page.props.currentOrganization?.slug;
     if (slug !== currentOrganizationSlug) {
         router.flushAll();
@@ -61,3 +71,4 @@ void createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+watchSystemContrast();

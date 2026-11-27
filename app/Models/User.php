@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Concerns\HasOrganizations;
+use App\Enums\Accent;
+use App\Enums\ContrastPreference;
+use App\Enums\Theme;
 use App\Services\Images\ImageStorage;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -38,6 +41,9 @@ use Laravel\Passport\HasApiTokens;
  * @property int|null $current_organization_id
  * @property list<string>|null $sidebar_hidden_items
  * @property list<string>|null $sidebar_order
+ * @property Theme $theme
+ * @property Accent|null $accent Own accent colour; null follows the organization
+ * @property ContrastPreference $contrast
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Organization|null $currentOrganization
@@ -46,7 +52,7 @@ use Laravel\Passport\HasApiTokens;
  * @property-read Collection<int, Organization> $organizations
  */
 #[Fillable(['name', 'email', 'password', 'google_id', 'avatar_url', 'avatar_path', 'locale', 'timezone', 'current_organization_id'])]
-#[Hidden(['password', 'google_id', 'remember_token', 'avatar_path', 'sidebar_hidden_items', 'sidebar_order'])]
+#[Hidden(['password', 'google_id', 'remember_token', 'avatar_path', 'sidebar_hidden_items', 'sidebar_order', 'theme', 'accent', 'contrast'])]
 #[Appends(['avatar'])]
 class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail, OAuthenticatable, PasskeyUser
 {
@@ -61,6 +67,8 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     protected $attributes = [
         'locale' => 'sv',
         'timezone' => 'Europe/Stockholm',
+        'theme' => 'standard',
+        'contrast' => 'system',
     ];
 
     /**
@@ -75,6 +83,9 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             'password' => 'hashed',
             'sidebar_hidden_items' => 'array',
             'sidebar_order' => 'array',
+            'theme' => Theme::class,
+            'accent' => Accent::class,
+            'contrast' => ContrastPreference::class,
         ];
     }
 

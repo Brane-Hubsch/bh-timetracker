@@ -24,6 +24,8 @@ export type OrganizationSettings = Organization & {
     /** Hours a full absence day counts as. */
     workdayHours: number;
     timerEnabled: boolean;
+    /** Brand accent for members without their own; null is the default violet. */
+    accent: import('@/lib/theme').AccentName | null;
     /** Logo URL in preview size (256 px), or null without a logo. */
     logo: string | null;
 };

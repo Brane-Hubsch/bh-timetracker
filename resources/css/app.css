@@ -67,6 +67,304 @@
     --muted: oklch(0.72 0.012 286);
 }
 
+/*
+ * Themes (data-palette), accents (data-accent) and high contrast (data-contrast) on <html>; see
+ * App\Support\ThemePreferences. Standard + violet is the base above. Values are contrast-checked:
+ * text and muted text reach WCAG AA (high contrast: 7:1, borders 3:1) on every surface, in both modes.
+ */
+
+:root:not(.dark)[data-palette='sand'] {
+    --background: oklch(0.962 0.012 80);
+    --surface: oklch(0.993 0.005 85);
+    --surface-secondary: oklch(0.945 0.013 80);
+    --surface-tertiary: oklch(0.928 0.015 78);
+    --overlay: oklch(0.995 0.004 85);
+    --default: oklch(0.93 0.014 78);
+    --field-background: oklch(0.995 0.004 85);
+    --segment: oklch(0.995 0.004 85);
+    --foreground: oklch(0.235 0.018 60);
+    --muted: oklch(0.48 0.022 65);
+    --border: oklch(0.885 0.016 75);
+    --separator: oklch(0.905 0.014 75);
+    --field-border: oklch(0.86 0.018 75);
+    --radius: 0.625rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root.dark[data-palette='sand'] {
+    --background: oklch(0.155 0.008 70);
+    --surface: oklch(0.215 0.01 70);
+    --surface-secondary: oklch(0.255 0.011 70);
+    --surface-tertiary: oklch(0.275 0.012 70);
+    --overlay: oklch(0.225 0.01 70);
+    --default: oklch(0.285 0.012 70);
+    --field-background: oklch(0.185 0.009 70);
+    --segment: oklch(0.39 0.014 70);
+    --foreground: oklch(0.965 0.012 85);
+    --muted: oklch(0.73 0.02 75);
+    --border: oklch(0.3 0.012 70);
+    --separator: oklch(0.27 0.011 70);
+    --field-border: oklch(0.36 0.014 70);
+    --radius: 0.625rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root:not(.dark)[data-palette='slate'] {
+    --background: oklch(0.965 0.008 250);
+    --surface: oklch(0.992 0.003 250);
+    --surface-secondary: oklch(0.945 0.01 250);
+    --surface-tertiary: oklch(0.928 0.012 250);
+    --overlay: oklch(0.992 0.003 250);
+    --default: oklch(0.93 0.012 250);
+    --field-background: oklch(0.992 0.003 250);
+    --segment: oklch(0.992 0.003 250);
+    --foreground: oklch(0.225 0.025 255);
+    --muted: oklch(0.48 0.028 255);
+    --border: oklch(0.885 0.014 250);
+    --separator: oklch(0.905 0.012 250);
+    --field-border: oklch(0.86 0.016 250);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root.dark[data-palette='slate'] {
+    --background: oklch(0.155 0.02 258);
+    --surface: oklch(0.21 0.024 258);
+    --surface-secondary: oklch(0.25 0.026 258);
+    --surface-tertiary: oklch(0.27 0.027 258);
+    --overlay: oklch(0.22 0.025 258);
+    --default: oklch(0.28 0.027 258);
+    --field-background: oklch(0.18 0.022 258);
+    --segment: oklch(0.38 0.03 258);
+    --foreground: oklch(0.965 0.008 250);
+    --muted: oklch(0.73 0.03 255);
+    --border: oklch(0.3 0.026 258);
+    --separator: oklch(0.265 0.025 258);
+    --field-border: oklch(0.37 0.03 258);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root:not(.dark)[data-palette='graphite'] {
+    --background: oklch(0.985 0 0);
+    --surface: oklch(1 0 0);
+    --surface-secondary: oklch(0.96 0 0);
+    --surface-tertiary: oklch(0.945 0 0);
+    --overlay: oklch(1 0 0);
+    --default: oklch(0.945 0 0);
+    --field-background: oklch(1 0 0);
+    --segment: oklch(1 0 0);
+    --foreground: oklch(0.18 0 0);
+    --muted: oklch(0.47 0 0);
+    --border: oklch(0.88 0 0);
+    --separator: oklch(0.91 0 0);
+    --field-border: oklch(0.84 0 0);
+    --radius: 0.25rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root.dark[data-palette='graphite'] {
+    --background: oklch(0.09 0 0);
+    --surface: oklch(0.165 0 0);
+    --surface-secondary: oklch(0.21 0 0);
+    --surface-tertiary: oklch(0.23 0 0);
+    --overlay: oklch(0.18 0 0);
+    --default: oklch(0.24 0 0);
+    --field-background: oklch(0.13 0 0);
+    --segment: oklch(0.36 0 0);
+    --foreground: oklch(0.97 0 0);
+    --muted: oklch(0.72 0 0);
+    --border: oklch(0.26 0 0);
+    --separator: oklch(0.22 0 0);
+    --field-border: oklch(0.34 0 0);
+    --radius: 0.25rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root:not(.dark)[data-accent='blue'] {
+    --accent: oklch(0.53 0.2 258);
+}
+
+:root.dark[data-accent='blue'] {
+    --accent: oklch(0.7 0.15 252);
+    --accent-foreground: oklch(0.16 0.03 252);
+}
+
+:root:not(.dark)[data-accent='teal'] {
+    --accent: oklch(0.5 0.085 200);
+}
+
+:root.dark[data-accent='teal'] {
+    --accent: oklch(0.75 0.12 195);
+    --accent-foreground: oklch(0.16 0.03 195);
+}
+
+:root:not(.dark)[data-accent='green'] {
+    --accent: oklch(0.5 0.13 150);
+}
+
+:root.dark[data-accent='green'] {
+    --accent: oklch(0.74 0.17 150);
+    --accent-foreground: oklch(0.16 0.03 150);
+}
+
+:root:not(.dark)[data-accent='orange'] {
+    --accent: oklch(0.545 0.155 45);
+}
+
+:root.dark[data-accent='orange'] {
+    --accent: oklch(0.75 0.15 58);
+    --accent-foreground: oklch(0.16 0.03 58);
+}
+
+:root:not(.dark)[data-accent='pink'] {
+    --accent: oklch(0.56 0.22 355);
+}
+
+:root.dark[data-accent='pink'] {
+    --accent: oklch(0.73 0.16 355);
+    --accent-foreground: oklch(0.16 0.03 355);
+}
+
+:root:not(.dark)[data-accent='neutral'] {
+    --accent: oklch(0.26 0 0);
+}
+
+:root.dark[data-accent='neutral'] {
+    --accent: oklch(0.92 0 0);
+    --accent-foreground: oklch(0.16 0.03 0);
+}
+
+:root:not(.dark)[data-contrast='more'] {
+    --muted: oklch(0.4 0.01 286);
+    --border: oklch(0.62 0.01 286);
+    --separator: oklch(0.7 0.01 286);
+    --field-border: oklch(0.55 0.01 286);
+}
+
+:root.dark[data-contrast='more'] {
+    --muted: oklch(0.82 0.01 286);
+    --border: oklch(0.6 0.01 286);
+    --separator: oklch(0.5 0.01 286);
+    --field-border: oklch(0.65 0.01 286);
+}
+
+/*
+ * Themes with their own accent colour (the accent picker does not apply). Terminal is always dark
+ * (lib/theme.ts adds the dark class) and uses the system monospace font.
+ */
+
+:root[data-palette='terminal'] {
+    color-scheme: dark;
+    --background: oklch(0 0 0);
+    --surface: oklch(0.13 0.02 145);
+    --surface-secondary: oklch(0.16 0.025 145);
+    --surface-tertiary: oklch(0.18 0.03 145);
+    --overlay: oklch(0.14 0.022 145);
+    --default: oklch(0.2 0.035 145);
+    --field-background: oklch(0.06 0.01 145);
+    --segment: oklch(0.28 0.05 145);
+    --foreground: oklch(0.87 0.2 145);
+    --muted: oklch(0.7 0.15 145);
+    --border: oklch(0.3 0.06 145);
+    --separator: oklch(0.24 0.045 145);
+    --field-border: oklch(0.42 0.09 145);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+    --radius: 0;
+    --field-radius: 0;
+    --font-sans:
+        ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas,
+        'Liberation Mono', monospace;
+}
+
+:root[data-palette='terminal'][data-accent] {
+    --accent: oklch(0.87 0.2 145);
+    --accent-foreground: oklch(0.12 0.03 145);
+}
+
+:root[data-palette='terminal'][data-contrast='more'] {
+    --muted: oklch(0.82 0.18 145);
+    --border: oklch(0.6 0.13 145);
+    --separator: oklch(0.45 0.1 145);
+    --field-border: oklch(0.66 0.14 145);
+}
+
+:root:not(.dark)[data-palette='barbie'] {
+    --background: oklch(0.95 0.027 350);
+    --surface: oklch(0.988 0.006 350);
+    --surface-secondary: oklch(0.93 0.04 350);
+    --surface-tertiary: oklch(0.91 0.05 350);
+    --overlay: oklch(0.988 0.006 350);
+    --default: oklch(0.92 0.045 350);
+    --field-background: oklch(0.99 0.004 350);
+    --segment: oklch(0.99 0.004 350);
+    --foreground: oklch(0.3 0.1 350);
+    --muted: oklch(0.47 0.12 352);
+    --border: oklch(0.87 0.06 350);
+    --separator: oklch(0.9 0.05 350);
+    --field-border: oklch(0.84 0.07 350);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+    --radius: 1rem;
+}
+
+:root:not(.dark)[data-palette='barbie'][data-accent] {
+    --accent: oklch(0.55 0.22 357);
+    --accent-foreground: oklch(0.99 0 0);
+}
+
+:root:not(.dark)[data-palette='barbie'][data-contrast='more'] {
+    --muted: oklch(0.38 0.12 352);
+    --border: oklch(0.58 0.14 350);
+    --separator: oklch(0.68 0.11 350);
+    --field-border: oklch(0.52 0.15 350);
+}
+
+:root.dark[data-palette='barbie'] {
+    --background: oklch(0.16 0.04 350);
+    --surface: oklch(0.22 0.055 350);
+    --surface-secondary: oklch(0.26 0.06 350);
+    --surface-tertiary: oklch(0.28 0.065 350);
+    --overlay: oklch(0.23 0.055 350);
+    --default: oklch(0.3 0.07 350);
+    --field-background: oklch(0.19 0.05 350);
+    --segment: oklch(0.4 0.09 350);
+    --foreground: oklch(0.965 0.014 350);
+    --muted: oklch(0.8 0.07 350);
+    --border: oklch(0.33 0.07 350);
+    --separator: oklch(0.28 0.06 350);
+    --field-border: oklch(0.4 0.08 350);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+    --radius: 1rem;
+}
+
+:root.dark[data-palette='barbie'][data-accent] {
+    --accent: oklch(0.76 0.16 355);
+    --accent-foreground: oklch(0.18 0.06 355);
+}
+
+:root.dark[data-palette='barbie'][data-contrast='more'] {
+    --muted: oklch(0.88 0.05 350);
+    --border: oklch(0.62 0.12 350);
+    --separator: oklch(0.5 0.1 350);
+    --field-border: oklch(0.66 0.12 350);
+}
+
 @media (width < 48rem) {
     :is(.modal__close-trigger, .drawer__close-trigger) {
         @apply min-h-9 min-w-9 rounded-full bg-default;
@@ -1167,4 +1465,13 @@
         animation-delay: 0ms !important;
         transition-duration: 1ms !important;
     }
+}
+
+/* The shovel follows the mouse while shovelling the December snow (components/snow-shovel.tsx). */
+.is-shovelling,
+.is-shovelling * {
+    cursor:
+        url("data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='-30 0 100 100'><g transform='rotate(35 20 50)'><path fill-rule='evenodd' d='M14 4h12a4 4 0 0 1 4 4v5a4 4 0 0 1-4 4h-3v46h-6V17h-3a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Zm1 4v5h10V8H15Z' fill='%23374151'/><rect x='17.5' y='16' width='5' height='48' rx='1' fill='%23B45309'/><rect x='15' y='60' width='10' height='7' rx='1.5' fill='%2364748B'/><path d='M8 65h24l2 29a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4l2-29Z' fill='%23CBD5E1' stroke='%23475569' stroke-width='3'/></g></svg>")
+            7 28,
+        grabbing !important;
 }
