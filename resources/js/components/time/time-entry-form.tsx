@@ -4,7 +4,6 @@ import {
     Button,
     Description,
     Dropdown,
-    Input,
     Label,
     Tabs,
     TextArea,
@@ -15,6 +14,7 @@ import { today } from '@internationalized/date';
 import { Copy, EllipsisVertical, Play, Trash2, UserRound } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { DatePickerField } from '@/components/form/date-picker-field';
+import { DurationInputField } from '@/components/form/duration-input-field';
 import { FieldPair } from '@/components/form/field-pair';
 import {
     SUBMIT_SHORTCUT,
@@ -147,6 +147,7 @@ export function TimeEntryForm({
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+    const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
     const [mode, setMode] = useState<TimeReportMode | null>(
         draft?.reportMode ?? null,
     );
@@ -184,6 +185,7 @@ export function TimeEntryForm({
         setErrors({});
         setIsMemberPickerOpen(false);
         setIsActionsMenuOpen(false);
+        setIsTimePickerOpen(false);
         setMode(draft.reportMode ?? null);
     }
 
@@ -231,6 +233,7 @@ export function TimeEntryForm({
     };
 
     const changeDuration = (value: string) => {
+        setHasTyped(true);
         setDuration(value);
         const seconds = parseDuration(value);
 
@@ -500,7 +503,8 @@ export function TimeEntryForm({
             dismissOnEscape={
                 draft?.openedFrom === 'calendar' &&
                 !isMemberPickerOpen &&
-                !isActionsMenuOpen
+                !isActionsMenuOpen &&
+                !isTimePickerOpen
                     ? values === source && !hasTyped && !processing
                     : undefined
             }
@@ -721,6 +725,7 @@ export function TimeEntryForm({
                             }}
                             userId={current.userId}
                             onClose={onClose}
+                            onTimePickerOpenChange={setIsTimePickerOpen}
                         />
                     ) : (
                         <form
@@ -853,8 +858,15 @@ export function TimeEntryForm({
                                         firstField={
                                             <TimeInputField
                                                 label={t('Start')}
+                                                pickerTitle={t(
+                                                    'Choose start time',
+                                                )}
                                                 value={current.start}
+                                                defaultTime={source?.start}
                                                 onChange={changeStart}
+                                                onPickerOpenChange={
+                                                    setIsTimePickerOpen
+                                                }
                                                 isInvalid={Boolean(
                                                     errors.start,
                                                 )}
@@ -866,8 +878,15 @@ export function TimeEntryForm({
                                         secondField={
                                             <TimeInputField
                                                 label={t('End')}
+                                                pickerTitle={t(
+                                                    'Choose end time',
+                                                )}
                                                 value={current.end}
+                                                defaultTime={current.start}
                                                 onChange={changeEnd}
+                                                onPickerOpenChange={
+                                                    setIsTimePickerOpen
+                                                }
                                                 isInvalid={Boolean(
                                                     errors.end ??
                                                     errors.ended_at,
@@ -877,38 +896,46 @@ export function TimeEntryForm({
                                             />
                                         }
                                     />
-                                    <TextField
+                                    <DurationInputField
+                                        label={t('Duration')}
+                                        pickerTitle={t('Choose duration')}
                                         name="duration"
                                         value={duration}
                                         onChange={changeDuration}
-                                        validationBehavior="aria"
+                                        onPickerOpenChange={setIsTimePickerOpen}
+                                        preview={(minutes) =>
+                                            current.start && minutes > 0
+                                                ? t('End :time', {
+                                                      time: minutesToTime(
+                                                          timeToMinutes(
+                                                              current.start,
+                                                          ) + minutes,
+                                                      ),
+                                                  })
+                                                : undefined
+                                        }
                                         className="w-full"
-                                    >
-                                        <Label className="sr-only">
-                                            {t('Duration')}
-                                        </Label>
-                                        <span className="label">
-                                            <TimeScrubLabel
-                                                label={t('Duration')}
-                                                value={duration}
-                                                minutes={
-                                                    duration
-                                                        ? Math.round(
-                                                              durationForDrag /
-                                                                  60,
-                                                          )
-                                                        : undefined
-                                                }
-                                                maxMinutes={1440}
-                                                onAdjust={adjustDuration}
-                                            />
-                                        </span>
-                                        <Input
-                                            inputMode="decimal"
-                                            placeholder="1:30"
-                                            data-test="time-entry-duration"
-                                        />
-                                    </TextField>
+                                        visibleLabel={
+                                            <span className="label">
+                                                <TimeScrubLabel
+                                                    label={t('Duration')}
+                                                    value={duration}
+                                                    minutes={
+                                                        duration
+                                                            ? Math.round(
+                                                                  durationForDrag /
+                                                                      60,
+                                                              )
+                                                            : undefined
+                                                    }
+                                                    maxMinutes={1440}
+                                                    onAdjust={adjustDuration}
+                                                />
+                                            </span>
+                                        }
+                                        placeholder="1:30"
+                                        data-test="time-entry-duration"
+                                    />
                                 </div>
                                 {timeError ? (
                                     <p className="text-sm text-danger">

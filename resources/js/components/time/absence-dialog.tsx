@@ -1,17 +1,11 @@
-import {
-    Button,
-    Description,
-    InputGroup,
-    Label,
-    TextArea,
-    TextField,
-} from '@heroui/react';
+import { Button, Description, Label, TextArea, TextField } from '@heroui/react';
 import { router } from '@inertiajs/react';
 import { parseDate } from '@internationalized/date';
 import { Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 import { HapticButton } from '@/components/haptic-button';
 import { DatePickerField } from '@/components/form/date-picker-field';
+import { DurationInputField } from '@/components/form/duration-input-field';
 import { FieldPair } from '@/components/form/field-pair';
 import { SelectField } from '@/components/form/select-field';
 import { ShortcutRow } from '@/components/form/shortcut-row';
@@ -193,10 +187,12 @@ export function AbsenceForm({
     holidays,
     workdaySeconds,
     userId,
+    onTimePickerOpenChange,
 }: AbsenceOptions & {
     draft: AbsenceDraft;
     onClose: () => void;
     userId?: number;
+    onTimePickerOpenChange?: (open: boolean) => void;
 }) {
     const { t, tc, intlLocale } = useTranslation();
     const errorId = useId();
@@ -425,53 +421,47 @@ export function AbsenceForm({
                     )}
                 </div>
                 {isPartial && (
-                    <TextField
+                    <DurationInputField
+                        label={t('Hours per day')}
+                        pickerTitle={t('Hours per day')}
                         value={values.hoursPerDay}
                         onChange={(hoursPerDay) => set({ hoursPerDay })}
-                        isInvalid={Boolean(errors.hours_per_day)}
-                        validationBehavior="aria"
+                        onPickerOpenChange={onTimePickerOpenChange}
+                        preview={(minutes) =>
+                            days > 0 && minutes > 0
+                                ? t(':duration total', {
+                                      duration: formatDuration(
+                                          minutes * 60 * days,
+                                      ),
+                                  })
+                                : undefined
+                        }
+                        error={errors.hours_per_day}
                         className="w-full min-[390px]:w-[7.5rem] sm:w-40"
-                    >
-                        <Label className="sr-only">{t('Hours per day')}</Label>
-                        <span className="label text-xs leading-5 whitespace-nowrap sm:text-sm">
-                            <TimeScrubLabel
-                                label={t('Hours')}
-                                value={values.hoursPerDay}
-                                minutes={
-                                    secondsPerDay === null
-                                        ? undefined
-                                        : Math.min(
-                                              MAX_MINUTES_PER_DAY,
-                                              Math.round(secondsPerDay / 60),
-                                          )
-                                }
-                                maxMinutes={MAX_MINUTES_PER_DAY}
-                                onAdjust={adjustHours}
-                            />
-                        </span>
-                        <InputGroup
-                            fullWidth
-                            className="max-sm:min-h-[2.625rem]"
-                        >
-                            <InputGroup.Input
-                                className="min-w-0 max-sm:ps-2 max-sm:text-sm"
-                                inputMode="decimal"
-                                placeholder="4:00"
-                                data-test="absence-hours"
-                            />
-                            <InputGroup.Suffix
-                                aria-hidden="true"
-                                className="shrink-0 border-s-0 text-sm font-normal whitespace-nowrap text-muted max-sm:ps-0 max-sm:pe-2"
-                            >
-                                {t('per day')}
-                            </InputGroup.Suffix>
-                        </InputGroup>
-                        {errors.hours_per_day && (
-                            <Description className="text-danger">
-                                {errors.hours_per_day}
-                            </Description>
-                        )}
-                    </TextField>
+                        visibleLabel={
+                            <span className="label text-xs leading-5 whitespace-nowrap sm:text-sm">
+                                <TimeScrubLabel
+                                    label={t('Hours')}
+                                    value={values.hoursPerDay}
+                                    minutes={
+                                        secondsPerDay === null
+                                            ? undefined
+                                            : Math.min(
+                                                  MAX_MINUTES_PER_DAY,
+                                                  Math.round(
+                                                      secondsPerDay / 60,
+                                                  ),
+                                              )
+                                    }
+                                    maxMinutes={MAX_MINUTES_PER_DAY}
+                                    onAdjust={adjustHours}
+                                />
+                            </span>
+                        }
+                        placeholder="4:00"
+                        suffix={t('per day')}
+                        data-test="absence-hours"
+                    />
                 )}
             </div>
 
