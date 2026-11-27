@@ -67,7 +67,8 @@ export function PeriodPicker({
                     ? 'h-8 justify-center px-3'
                     : 'h-9 justify-between bg-surface ps-3.5 pe-2.5',
                 labelOnly &&
-                    'max-md:h-[34px] max-md:border max-md:border-border max-md:bg-surface max-md:text-xs',
+                    'max-md:h-[38px] max-md:border max-md:border-border max-md:bg-surface',
+                mobileLabelOnly && 'max-md:px-1.5',
                 mobileStepInPanel && 'max-md:min-h-0 max-md:px-3',
             )}
             data-test={testId}
@@ -75,14 +76,15 @@ export function PeriodPicker({
             <span
                 className={cn(
                     'flex min-w-0 items-baseline gap-2',
-                    labelOnly && 'max-md:gap-1.5',
+                    mobileLabelOnly && 'max-md:gap-1',
+                    mobileStepInPanel && 'max-md:gap-1.5',
                 )}
             >
                 {name && (
                     <span
                         className={cn(
                             'truncate font-semibold first-letter:uppercase',
-                            labelOnly && 'max-md:text-[13px]',
+                            labelOnly && 'max-md:text-[14.5px]',
                             mobileStepInPanel && 'max-md:shrink-0',
                         )}
                     >
@@ -98,7 +100,7 @@ export function PeriodPicker({
                                 : mobileStepInPanel
                                   ? 'font-semibold'
                                   : 'font-medium',
-                            labelOnly && 'max-md:text-[11px]',
+                            labelOnly && 'max-md:text-[12.5px]',
                         )}
                     >
                         {range}

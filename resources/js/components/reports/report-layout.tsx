@@ -76,10 +76,10 @@ export function ReportLayout({
                         className="max-md:hidden"
                     />
                 ) : (
-                    <MobilePageHeader className="report-mobile-header grid grid-cols-1 pb-2.5! md:hidden">
-                        <div className="flex h-[34px] min-w-0 items-center gap-2">
+                    <MobilePageHeader className="grid grid-cols-1 pb-3! md:hidden">
+                        <div className="flex min-h-[38px] min-w-0 items-center gap-2">
                             <div className="min-w-0 flex-1">
-                                <h1 className="text-[17px]/[21px] font-semibold">
+                                <h1 className="text-[19px]/[24px] font-semibold">
                                     {t('Reports')}
                                 </h1>
                                 {mobileControls && (
@@ -121,6 +121,7 @@ export function ReportLayout({
                         </div>
                         <SegmentedControl
                             aria-label={t('Report type')}
+                            className="grid-cols-[1.25fr_1fr_1fr] [&_.toggle-button]:h-9 [&_.toggle-button]:text-[clamp(0.8125rem,4vw,0.96875rem)]"
                             fullWidth
                             options={[
                                 { id: 'summary', label: titles.summary },
