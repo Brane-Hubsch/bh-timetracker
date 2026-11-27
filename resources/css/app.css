@@ -608,6 +608,10 @@
     --time-calendar-entry-shift: 0px;
 }
 
+.time-calendar[data-calendar-selection-draft] [data-calendar-haptic-selection] {
+    display: none;
+}
+
 /* Line up the first card with standalone cards, including when it has an overlap. */
 .time-calendar-event-lane
     > :is(

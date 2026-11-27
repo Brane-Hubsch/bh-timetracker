@@ -29,7 +29,7 @@ export function useCalendarDragHaptics() {
     const armSwitch = (
         control: HTMLInputElement,
         touch: Touch,
-        moveTarget: HTMLElement,
+        moveTarget: HTMLElement | null,
         allowReleaseHaptic = false,
     ) => {
         const listeners = new AbortController();
@@ -90,7 +90,7 @@ export function useCalendarDragHaptics() {
         // tracking this touch. Updating checked during tracking would stop it.
         placeSwitch(touch, SWITCH_OFF_OFFSET);
 
-        moveTarget.addEventListener(
+        moveTarget?.addEventListener(
             'touchmove',
             (move) => {
                 if (
@@ -169,7 +169,7 @@ export function useCalendarDragHaptics() {
             return;
         }
 
-        const active = armSwitch(target, touch, target, true);
+        const active = armSwitch(target, touch, null, true);
         return {
             snap: (start: string, end: string) => {
                 if (gesture.current === active) {
@@ -180,6 +180,10 @@ export function useCalendarDragHaptics() {
                     );
                 }
             },
+            trackMove: (event: TouchEvent) =>
+                gesture.current === active &&
+                active.slot !== null &&
+                active.trackTouch(event),
             prepareRelease: () => {
                 // End WebKit's drag tracking so the real touchend can toggle
                 // the switch and confirm the selection even after a snap.

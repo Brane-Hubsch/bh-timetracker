@@ -57,6 +57,7 @@ type Press = {
     range: ReturnType<typeof rangeAtTouch>;
     nativeHaptics?: {
         snap: (start: string, end: string) => void;
+        trackMove: (event: TouchEvent) => boolean;
         prepareRelease: () => void;
     };
 };
@@ -169,11 +170,14 @@ export function useCalendarLongPress(
             if (!touch) return;
 
             if (press.active) {
-                // The native switch needs the uncancelled touchmove, and
-                // its touch-action already blocks scrolling on this target.
-                if (!press.nativeHaptics && event.cancelable)
-                    event.preventDefault();
                 preview(touch);
+                if (press.nativeHaptics?.trackMove(event)) {
+                    // Position the switch for this snap before Safari runs its
+                    // default action or FullCalendar can cancel the move.
+                    event.stopPropagation();
+                } else if (!press.nativeHaptics && event.cancelable) {
+                    event.preventDefault();
+                }
             } else if (
                 Math.max(
                     Math.abs(touch.clientX - press.origin.clientX),
