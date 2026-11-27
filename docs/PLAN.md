@@ -391,6 +391,7 @@ Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
 - Standardvy: vecka på desktop och dag på mobil. På mobil rullas kalenderns dag- och veckovy mellan den fasta rubrikraden och bottennavigeringen. Rullningsindikatorn håller sig inom samma yta. Sidledes svep byter dag eller vecka, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i kalenderns periodväljare. Lista nås via mobilnavigeringen.
+- På mobil ger ett direkt tryck ett lätt haptiskt klick vid flikbyte, öppning av Mer eller kalenderns datumväljare och vid tryck på Spara i tidrapporteringen där enheten stöder det. Den aktiva fliken ger ingen puls. Android med stöd för vibration ger också en kort puls när en flytt eller längdändring snäpper till ett nytt giltigt 15-minutersläge. På iPhone visas återkopplingen under draget i kalendern.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.

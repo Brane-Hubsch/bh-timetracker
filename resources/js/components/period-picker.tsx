@@ -1,7 +1,8 @@
 import { Button, Drawer, Popover } from '@heroui/react';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
+import { HapticTap } from '@/components/haptic-tap';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ type Props = {
     mobileLabelOnly?: boolean;
     /** Move the step buttons into the mobile panel header. */
     mobileStepInPanel?: boolean;
+    haptic?: boolean;
     className?: string;
     triggerClassName?: string;
     testId: string;
@@ -41,6 +43,7 @@ export function PeriodPicker({
     enclosed = false,
     mobileLabelOnly = false,
     mobileStepInPanel = false,
+    haptic = false,
     className,
     triggerClassName,
     testId,
@@ -62,8 +65,9 @@ export function PeriodPicker({
         ? 'size-8 shrink-0 rounded-full'
         : undefined;
 
-    const trigger = (
+    const trigger = (ref?: Ref<HTMLButtonElement>) => (
         <Button
+            ref={ref}
             variant={enclosed ? 'ghost' : 'outline'}
             className={cn(
                 'min-w-0 flex-1 rounded-full md:flex-none',
@@ -157,7 +161,7 @@ export function PeriodPicker({
             {(!mobileStepInPanel || isDesktop) && stepButton(-1)}
             {isDesktop ? (
                 <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-                    {trigger}
+                    {trigger()}
                     <Popover.Content
                         placement={compact ? 'bottom end' : 'bottom start'}
                         offset={8}
@@ -176,7 +180,16 @@ export function PeriodPicker({
                 </Popover>
             ) : (
                 <Drawer isOpen={isOpen} onOpenChange={setIsOpen}>
-                    {trigger}
+                    {haptic ? (
+                        <HapticTap<HTMLButtonElement>
+                            enabled={!isOpen}
+                            className="flex min-w-0 flex-1"
+                        >
+                            {trigger}
+                        </HapticTap>
+                    ) : (
+                        trigger()
+                    )}
                     <Backdrop variant="opaque">
                         <Drawer.Content
                             placement="bottom"

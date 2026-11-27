@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useCommandPalette } from '@/components/command-palette';
 import CreateOrganizationModal from '@/components/create-organization-modal';
+import { HapticTap } from '@/components/haptic-tap';
 import { LogoImage } from '@/components/logo-image';
 import { UserAvatar, logoutAndFlush } from '@/components/user-menu';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -117,35 +118,58 @@ export function MobileBottomNav({ className }: { className?: string }) {
                     )}
                 >
                     {tabs.map((item) => (
-                        <Link
+                        <HapticTap<HTMLAnchorElement>
                             key={item.title}
-                            href={item.href}
-                            aria-current={item.isActive ? 'page' : undefined}
-                            className={cn(
-                                tabClass,
-                                item.isActive ? 'text-accent' : 'text-muted',
-                            )}
+                            enabled={!item.isActive}
+                            className="flex min-w-0 flex-1"
                         >
-                            <item.icon
-                                aria-hidden="true"
-                                className="size-[22px]"
-                            />
-                            <span className="max-w-full truncate">
-                                {t(item.title)}
-                            </span>
-                        </Link>
+                            {(ref) => (
+                                <Link
+                                    ref={ref}
+                                    href={item.href}
+                                    aria-current={
+                                        item.isActive ? 'page' : undefined
+                                    }
+                                    className={cn(
+                                        tabClass,
+                                        item.isActive
+                                            ? 'text-accent'
+                                            : 'text-muted',
+                                    )}
+                                >
+                                    <item.icon
+                                        aria-hidden="true"
+                                        className="size-[22px]"
+                                    />
+                                    <span className="max-w-full truncate">
+                                        {t(item.title)}
+                                    </span>
+                                </Link>
+                            )}
+                        </HapticTap>
                     ))}
-                    <Drawer.Trigger
-                        aria-current={isMoreActive ? 'page' : undefined}
-                        className={cn(
-                            tabClass,
-                            isMoreActive ? 'text-accent' : 'text-muted',
-                        )}
-                        data-test="mobile-more-button"
+                    <HapticTap<HTMLButtonElement>
+                        enabled={!isMoreOpen}
+                        className="flex min-w-0 flex-1"
                     >
-                        <Menu aria-hidden="true" className="size-[22px]" />
-                        {t('More')}
-                    </Drawer.Trigger>
+                        {(ref) => (
+                            <Drawer.Trigger
+                                ref={ref}
+                                aria-current={isMoreActive ? 'page' : undefined}
+                                className={cn(
+                                    tabClass,
+                                    isMoreActive ? 'text-accent' : 'text-muted',
+                                )}
+                                data-test="mobile-more-button"
+                            >
+                                <Menu
+                                    aria-hidden="true"
+                                    className="size-[22px]"
+                                />
+                                {t('More')}
+                            </Drawer.Trigger>
+                        )}
+                    </HapticTap>
                 </nav>
 
                 <BottomSheetBackdrop>

@@ -416,6 +416,7 @@ export function CalendarPicker({
             compact
             enclosed
             mobileLabelOnly
+            haptic={!isList}
             className={cn(
                 'min-w-0',
                 wideMobileSpacing && hasMemberPicker && 'max-md:me-1',
