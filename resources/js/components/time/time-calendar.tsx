@@ -42,6 +42,8 @@ import {
 
 const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
+const HAPTIC_SWITCH_CLASS =
+    'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 [direction:ltr]';
 
 function ExpectedWeekTimeHint({ duration }: { duration: string }) {
     const { t } = useTranslation();
@@ -394,6 +396,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
+            onTouchStart={dragHaptics.arm}
             className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-(--mobile-scroll-background)"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
@@ -502,7 +505,7 @@ export function TimeCalendar({
                         return true;
                     }
 
-                    dragHaptics.snap(slot.start);
+                    dragHaptics.snap(slot.start, slot.end);
                     const previous = lastTouchSlot.current;
                     if (previous) {
                         const start = slot.start.getTime();
@@ -593,6 +596,34 @@ export function TimeCalendar({
                     (isMobile || !info.isSelected) &&
                     'time-calendar-resizer time-calendar-resizer-end'
                 }
+                eventDidMount={({ el, event, isMirror }) => {
+                    if (
+                        !isMobile ||
+                        isPreview ||
+                        isMirror ||
+                        !byId.has(event.id)
+                    )
+                        return;
+
+                    // TimeGrid only exposes classes for its resize handles.
+                    // Put the switch inside each existing pointer target.
+                    for (const handle of el.querySelectorAll(
+                        ':scope > .time-calendar-resizer',
+                    )) {
+                        const control = document.createElement('input');
+                        control.type = 'checkbox';
+                        control.setAttribute('switch', '');
+                        control.setAttribute('aria-hidden', 'true');
+                        control.tabIndex = -1;
+                        control.dataset.calendarHapticSwitch = '';
+                        control.dataset.test = 'calendar-resize-haptic-switch';
+                        control.className = cn(
+                            HAPTIC_SWITCH_CLASS,
+                            'z-10 max-h-full pointer-coarse:supports-[-webkit-touch-callout:none]:[.time-calendar-event-touch-selected_&]:block',
+                        );
+                        handle.append(control);
+                    }
+                }}
                 slotLaneClass={(info) =>
                     cn(
                         'time-calendar-slot',
@@ -815,9 +846,12 @@ export function TimeCalendar({
                                         {...{ switch: '' }}
                                         aria-hidden="true"
                                         tabIndex={-1}
+                                        data-calendar-haptic-switch=""
                                         data-test="calendar-drag-haptic-switch"
-                                        className="absolute inset-0 m-auto hidden size-11 max-h-1/2 max-w-full touch-none appearance-auto opacity-0 [direction:ltr] [writing-mode:vertical-lr] pointer-coarse:supports-[-webkit-touch-callout:none]:block"
-                                        onTouchStart={dragHaptics.arm}
+                                        className={cn(
+                                            HAPTIC_SWITCH_CLASS,
+                                            'max-h-1/2 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+                                        )}
                                     />
                                 )}
                         </div>
@@ -877,7 +911,7 @@ export function TimeCalendar({
                 }}
                 eventDragStart={({ el, jsEvent, event }) => {
                     trackTouchSlots(jsEvent, event.start, event.end);
-                    dragHaptics.start(jsEvent.target, event.start);
+                    dragHaptics.start(jsEvent.target, event.start, event.end);
                     eventDragOrigin.current =
                         typeof TouchEvent !== 'undefined' &&
                         jsEvent instanceof TouchEvent
@@ -948,6 +982,7 @@ export function TimeCalendar({
                 }}
                 eventResizeStart={({ el, jsEvent, event }) => {
                     trackTouchSlots(jsEvent, event.start, event.end);
+                    dragHaptics.start(jsEvent.target, event.start, event.end);
                     setEditing(true);
                     const wrapper = el.parentElement;
                     const lane = el.closest<HTMLElement>('[data-date]');
