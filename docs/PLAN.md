@@ -197,7 +197,7 @@ Se avsnitt 6.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
-- I den inloggade mobilwebbläsaren visas ett installationskort högst en gång per 30 dagar. ”Påminn mig senare” skjuter upp nästa förslag i 30 dagar. Installationsknappen öppnar webbläsarens dialog när den finns och visar annars instruktioner. Den installerade webbappen visar inget kort.
+- I den inloggade mobilwebbläsaren visas ett installationsförslag i ett bottenark ovanpå flikraden högst en gång per 30 dagar. ”Påminn mig senare” skjuter upp nästa förslag i 30 dagar. Installationsknappen öppnar webbläsarens dialog när den finns och visar annars instruktioner. Den installerade webbappen visar inget installationsförslag.
 - Webbappens namn och sidtitlarna hämtas från `APP_NAME`. Sidtitlarna börjar med appnamnet, till exempel ”TimeTracker | Kalender”.
 - Nypzoom är avstängd i den installerade webbappen. Scroll fungerar som vanligt i båda lägena och nypzoom fungerar i webbläsaren.
 - Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. I den installerade mobilappen förladdas de synliga navigationslänkarna och deras siddata sparas kort i minnet.

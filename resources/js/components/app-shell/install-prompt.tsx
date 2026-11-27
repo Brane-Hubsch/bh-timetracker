@@ -1,8 +1,8 @@
-import { Button, Card } from '@heroui/react';
+import { Button, Drawer } from '@heroui/react';
 import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useId, useState } from 'react';
+import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useTranslation } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import installIconFace from '@/assets/install-icon-face.svg';
 import installIconHand from '@/assets/install-icon-hand.svg';
 
@@ -31,18 +31,17 @@ function nextPromptAt() {
     }
 }
 
-export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
+export function InstallPrompt() {
     const { name } = usePage().props;
     const { t } = useTranslation();
-    const titleId = useId();
-    const [step, setStep] = useState<'hidden' | 'offer' | 'instructions'>(
-        'hidden',
-    );
+    const descriptionId = useId();
+    const [isOpen, setIsOpen] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
     const [isInstalling, setIsInstalling] = useState(false);
 
     const dismiss = useCallback(() => {
         deferReminder();
-        setStep('hidden');
+        setIsOpen(false);
     }, []);
 
     useEffect(() => {
@@ -65,7 +64,8 @@ export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
                 Date.now() >= nextPromptAt()
             ) {
                 deferReminder();
-                setStep('offer');
+                setShowInstructions(false);
+                setIsOpen(true);
             }
         };
 
@@ -74,7 +74,7 @@ export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
                 event.key === storageKey &&
                 Number(event.newValue) > Date.now()
             ) {
-                setStep('hidden');
+                setIsOpen(false);
             }
         };
 
@@ -108,83 +108,93 @@ export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
             }
         }
 
-        setStep('instructions');
-    }
-
-    if (step === 'hidden') {
-        return null;
+        setShowInstructions(true);
     }
 
     return (
-        <Card
-            aria-labelledby={titleId}
-            className={cn(
-                'fixed inset-x-3 bottom-(--install-bottom) z-40 mx-auto max-h-[calc(100dvh-var(--install-bottom)-env(safe-area-inset-top)-0.75rem)] max-w-[24rem] gap-4 overflow-y-auto overscroll-contain rounded-2xl border border-border p-5 text-center shadow-lg md:[--install-bottom:0.75rem]',
-                hasTimer
-                    ? '[--install-bottom:calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space)+0.75rem)]'
-                    : '[--install-bottom:calc(var(--mobile-tab-bar-height)+0.75rem)]',
-            )}
+        <BottomSheetBackdrop
+            isOpen={isOpen}
+            onOpenChange={(open) => {
+                if (!open) {
+                    dismiss();
+                }
+            }}
+            variant="opaque"
         >
-            <Card.Header className="shrink-0 items-center gap-3">
-                <div
-                    className="relative size-[72px] shrink-0"
-                    aria-hidden="true"
+            <Drawer.Content placement="bottom">
+                <Drawer.Dialog
+                    aria-describedby={descriptionId}
+                    className="mx-auto max-w-lg bg-surface px-6 pt-2 pb-(--mobile-bottom-inset) text-center max-md:px-6"
                 >
-                    <img src={installIconFace} width={72} height={72} alt="" />
-                    <img
-                        src={installIconHand}
-                        width={72}
-                        height={72}
-                        alt=""
-                        className="absolute inset-0 origin-[50%_57.8125%] motion-safe:animate-install-clock-hand"
-                    />
-                </div>
-                <div className="w-full space-y-1">
-                    <Card.Title
-                        id={titleId}
-                        className="text-2xl leading-8 font-semibold wrap-anywhere"
-                    >
-                        {t('Install :app', { app: name })}
-                    </Card.Title>
-                    <Card.Description className="text-base leading-6">
-                        {t('Open the app directly from your home screen.')}
-                    </Card.Description>
-                </div>
-            </Card.Header>
-            {step === 'instructions' && (
-                <p
-                    role="status"
-                    className="shrink-0 rounded-xl bg-surface-secondary px-3 py-2 text-base"
-                >
-                    {/Android/i.test(navigator.userAgent)
-                        ? t(
-                              'Open the browser menu and choose Install app or Add to Home screen.',
-                          )
-                        : t(
-                              'Tap Share in your browser and choose Add to Home Screen. Turn on Open as Web App if available.',
-                          )}
-                </p>
-            )}
-            <Card.Footer className="shrink-0 flex-col gap-2">
-                <Button
-                    size="lg"
-                    variant="ghost"
-                    fullWidth
-                    className="min-h-11"
-                    onPress={dismiss}
-                >
-                    {t('Remind me later')}
-                </Button>
-                <Button
-                    size="lg"
-                    fullWidth
-                    className="min-h-11"
-                    isPending={isInstalling}
-                    onPress={install}
-                >
-                    {t('Add to Home Screen')}
-                </Button>
-            </Card.Footer>
-        </Card>
+                    <Drawer.Handle className="pb-4" />
+                    <Drawer.Body className="grid animate-none content-start justify-items-center gap-4 mask-none py-0">
+                        <div className="grid w-full justify-items-center gap-3">
+                            <div
+                                className="relative size-[72px]"
+                                aria-hidden="true"
+                            >
+                                <img
+                                    src={installIconFace}
+                                    width={72}
+                                    height={72}
+                                    alt=""
+                                />
+                                <img
+                                    src={installIconHand}
+                                    width={72}
+                                    height={72}
+                                    alt=""
+                                    className="absolute inset-0 origin-[50%_57.8125%] motion-safe:animate-install-clock-hand"
+                                />
+                            </div>
+                            <div className="w-full space-y-1">
+                                <Drawer.Heading className="text-2xl leading-8 font-semibold wrap-anywhere">
+                                    {t('Install :app', { app: name })}
+                                </Drawer.Heading>
+                                <p id={descriptionId} className="text-base">
+                                    {t(
+                                        'Open the app directly from your home screen.',
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                        {showInstructions && (
+                            <p
+                                role="status"
+                                className="w-full rounded-xl bg-surface-secondary px-3 py-2 text-base text-foreground"
+                            >
+                                {/Android/i.test(navigator.userAgent)
+                                    ? t(
+                                          'Open the browser menu and choose Install app or Add to Home screen.',
+                                      )
+                                    : t(
+                                          'Tap Share in your browser and choose Add to Home Screen. Turn on Open as Web App if available.',
+                                      )}
+                            </p>
+                        )}
+                    </Drawer.Body>
+                    <Drawer.Footer className="mt-4 flex-col max-md:px-0">
+                        <Button
+                            size="lg"
+                            variant="ghost"
+                            fullWidth
+                            className="min-h-11"
+                            onPress={dismiss}
+                        >
+                            {t('Remind me later')}
+                        </Button>
+                        <Button
+                            size="lg"
+                            fullWidth
+                            className="min-h-11"
+                            isPending={isInstalling}
+                            onPress={install}
+                        >
+                            {t('Add to Home Screen')}
+                        </Button>
+                    </Drawer.Footer>
+                </Drawer.Dialog>
+            </Drawer.Content>
+        </BottomSheetBackdrop>
     );
 }

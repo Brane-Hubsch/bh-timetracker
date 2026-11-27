@@ -106,7 +106,7 @@ export default function AppLayout({
                     className="fixed inset-x-3 bottom-[calc(var(--mobile-tab-bar-height)+0.6875rem)] z-30 md:hidden"
                 />
                 <MobileBottomNav className="md:hidden" />
-                <InstallPrompt hasTimer={hasTimer} />
+                <InstallPrompt />
                 <KeyboardShortcutsDialog />
             </div>
         </CommandPaletteProvider>
