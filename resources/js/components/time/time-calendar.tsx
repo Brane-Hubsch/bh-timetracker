@@ -278,11 +278,11 @@ export function TimeCalendar({
         start: Date | null,
         end: Date | null,
     ) => {
+        // FullCalendar can start a resize on the first touchmove.
+        const isTouch =
+            typeof TouchEvent !== 'undefined' && jsEvent instanceof TouchEvent;
         lastTouchSlot.current =
-            isMobile &&
-            isAndroidTouch(jsEvent.type === 'touchstart') &&
-            start &&
-            end
+            isMobile && isAndroidTouch(isTouch) && start && end
                 ? { start: start.getTime(), end: end.getTime() }
                 : null;
     };
