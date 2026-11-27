@@ -8,6 +8,7 @@ import { CALENDAR_TOUCH_MOVE_TOLERANCE } from './use-calendar-long-press';
 export const CALENDAR_EVENT_LONG_PRESS_DELAY = 400;
 const EVENT_SELECTION_TIMEOUT = 5000;
 const RESIZE_HANDLE = '.time-calendar-resizer';
+const TIME_EVENT = '.time-calendar-event';
 const SELECTED_EVENT = '.time-calendar-event-touch-selected';
 
 export function useCalendarEventSelection(
@@ -44,6 +45,10 @@ export function useCalendarEventSelection(
         const capture = { capture: true, signal };
         const observe = { ...capture, passive: true };
         const isEditing = () => container.hasAttribute('data-calendar-editing');
+        let ignoreReleaseClick = false;
+        const resetReleaseClick = () => {
+            ignoreReleaseClick = false;
+        };
         let press: {
             origin: Touch;
             started: number;
@@ -51,23 +56,42 @@ export function useCalendarEventSelection(
             entryId?: string;
         } | null = null;
 
+        window.addEventListener('pointerdown', resetReleaseClick, observe);
+        window.addEventListener('keydown', resetReleaseClick, observe);
+        window.addEventListener(
+            'click',
+            (event) => {
+                if (
+                    ignoreReleaseClick &&
+                    event.target instanceof Node &&
+                    container.contains(event.target)
+                ) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            },
+            capture,
+        );
         container.addEventListener(
             'touchstart',
             (event) => {
+                resetReleaseClick();
                 const { target, touches } = event;
                 if (touches.length !== 1 || !(target instanceof Element))
                     return;
-                const selected = target.closest<HTMLElement>(SELECTED_EVENT);
-                if (!selected) return;
+                const element = target.closest<HTMLElement>(TIME_EVENT);
+                if (!element) return;
 
-                pause();
+                const selected = element.matches(SELECTED_EVENT);
+                if (selected) pause();
                 press = {
                     origin: touches[0],
                     started: event.timeStamp,
-                    element: selected,
-                    entryId: target.closest(RESIZE_HANDLE)
-                        ? undefined
-                        : getElEventRange(selected)?.def.publicId,
+                    element,
+                    entryId:
+                        selected && !target.closest(RESIZE_HANDLE)
+                            ? getElEventRange(element)?.def.publicId
+                            : undefined,
                 };
             },
             observe,
@@ -101,17 +125,22 @@ export function useCalendarEventSelection(
 
             const { element, entryId, started } = press;
             press = null;
-            if (!isEditing()) resume();
-            if (
-                event.type !== 'touchend' ||
-                !entryId ||
-                event.timeStamp - started >= CALENDAR_EVENT_LONG_PRESS_DELAY ||
-                container.closest('[data-swiping]')
-            )
-                return;
+            const editing = isEditing();
+            if (!editing) resume();
+            if (event.type !== 'touchend') return;
 
-            // FullCalendar starts a drag immediately on a selected event, which can suppress its click.
+            const editOnTap =
+                entryId &&
+                event.timeStamp - started < CALENDAR_EVENT_LONG_PRESS_DELAY &&
+                !container.closest('[data-swiping]');
+            if (!editing && !editOnTap) return;
+
+            // A drag release can generate a click from Safari's native switch.
+            // A short tap on an already selected event opens the sheet here.
+            ignoreReleaseClick = true;
             if (event.cancelable) event.preventDefault();
+            if (!editOnTap) return;
+
             // The edit sheet restores focus to the active element when it closes.
             element.blur();
             dismiss();

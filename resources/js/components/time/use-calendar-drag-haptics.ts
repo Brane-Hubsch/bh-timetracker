@@ -126,6 +126,11 @@ export function useCalendarDragHaptics() {
                 control.style.removeProperty('rotate');
                 control.style.removeProperty('translate');
                 control.style.removeProperty('visibility');
+                if (active.slot !== null && !allowReleaseHaptic) {
+                    // A cancelled native release can leave WebKit tracking
+                    // this touch. Start the next drag with a fresh switch.
+                    control.replaceWith(control.cloneNode());
+                }
                 gesture.current = null;
             });
         };
