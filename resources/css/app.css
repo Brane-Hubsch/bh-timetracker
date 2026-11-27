@@ -690,7 +690,7 @@
 
 @media (width < 48rem) and (display-mode: standalone) {
     :root {
-        --mobile-tab-bar-inset: calc(var(--mobile-bottom-inset) - 0.625rem);
+        --mobile-tab-bar-inset: calc(var(--mobile-bottom-inset) - 0.8125rem);
     }
 }
 
