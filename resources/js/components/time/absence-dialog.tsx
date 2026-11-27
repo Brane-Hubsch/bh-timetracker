@@ -10,6 +10,7 @@ import { router } from '@inertiajs/react';
 import { parseDate } from '@internationalized/date';
 import { Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { FieldPair } from '@/components/form/field-pair';
 import { SelectField } from '@/components/form/select-field';
@@ -163,10 +164,10 @@ function AbsenceDialogFooter({
                 </Button>
             )}
             <div className="ml-auto flex gap-2">
-                <Button slot="close" variant="tertiary">
+                <HapticButton slot="close" variant="tertiary">
                     {t('Cancel')}
-                </Button>
-                <Button
+                </HapticButton>
+                <HapticButton
                     type="submit"
                     form={FORM_ID}
                     aria-keyshortcuts={SUBMIT_SHORTCUT}
@@ -174,7 +175,7 @@ function AbsenceDialogFooter({
                 >
                     {t('Save')}
                     <SubmitShortcutHint />
-                </Button>
+                </HapticButton>
             </div>
         </div>
     );

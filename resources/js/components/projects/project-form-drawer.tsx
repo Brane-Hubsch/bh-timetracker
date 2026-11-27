@@ -1,5 +1,4 @@
 import {
-    Button,
     Description,
     FieldError,
     Label,
@@ -10,6 +9,7 @@ import {
 } from '@heroui/react';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useId } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { DatePickerField } from '@/components/form/date-picker-field';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
@@ -338,21 +338,21 @@ export function ProjectFormDrawer({
                     </div>
                 </SideDrawerBody>
                 <SideDrawerFooter>
-                    <Button
+                    <HapticButton
                         slot="close"
                         variant="tertiary"
-                        className="max-md:flex-1"
+                        containerClassName="max-md:flex-1"
                     >
                         {t('Cancel')}
-                    </Button>
-                    <Button
+                    </HapticButton>
+                    <HapticButton
                         type="submit"
                         isPending={form.processing}
-                        className="max-md:flex-1"
+                        containerClassName="max-md:flex-1"
                         data-test="project-save"
                     >
                         {t('Save')}
-                    </Button>
+                    </HapticButton>
                 </SideDrawerFooter>
             </form>
         </SideDrawer>

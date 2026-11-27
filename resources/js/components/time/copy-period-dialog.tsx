@@ -1,6 +1,7 @@
 import { Button, Checkbox } from '@heroui/react';
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { ProjectDot } from '@/components/project-dot';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { useTranslation } from '@/lib/i18n';
@@ -74,9 +75,9 @@ export function CopyPeriodDialog({
             title={t(targetDay ? 'Copy previous day' : 'Copy previous week')}
             footer={
                 <>
-                    <Button slot="close" variant="tertiary">
+                    <HapticButton slot="close" variant="tertiary">
                         {t('Cancel')}
-                    </Button>
+                    </HapticButton>
                     <Button
                         onPress={submit}
                         isDisabled={selected.size === 0}

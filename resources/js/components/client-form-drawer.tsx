@@ -14,6 +14,7 @@ import { Form, useHttp } from '@inertiajs/react';
 import { Link2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFilter } from 'react-aria-components';
+import { HapticButton } from '@/components/haptic-button';
 import { ImageUploadField } from '@/components/form/image-upload-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import {
@@ -371,23 +372,27 @@ export function ClientFormDrawer({
                             </div>
                         </SideDrawerBody>
                         <SideDrawerFooter>
-                            <Button
+                            <HapticButton
                                 type="button"
                                 slot="close"
                                 variant="tertiary"
-                                className={client ? undefined : 'max-md:flex-1'}
+                                containerClassName={
+                                    client ? undefined : 'max-md:flex-1'
+                                }
                             >
                                 {t('Cancel')}
-                            </Button>
-                            <Button
+                            </HapticButton>
+                            <HapticButton
                                 type="submit"
                                 isPending={processing}
                                 isDisabled={findingLogo || duplicate}
-                                className={client ? undefined : 'max-md:flex-1'}
+                                containerClassName={
+                                    client ? undefined : 'max-md:flex-1'
+                                }
                                 data-test="client-save"
                             >
                                 {t('Save')}
-                            </Button>
+                            </HapticButton>
                         </SideDrawerFooter>
                     </>
                 )}

@@ -1,9 +1,11 @@
 import { Button } from '@heroui/react';
 import { Form, useFormContext } from '@inertiajs/react';
+import { HapticButton } from '@/components/haptic-button';
 import { SelectField } from '@/components/form/select-field';
 import { TextInputField } from '@/components/form/text-input-field';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { store as storeInvitation } from '@/routes/organizations/invitations';
 import type { Organization, RoleOption } from '@/types';
 
@@ -83,18 +85,24 @@ function InviteFields({
 function InviteActions() {
     const { t } = useTranslation();
     const form = useFormContext();
+    const buttonLayoutClassName = 'max-md:min-w-0 max-md:flex-1';
     const buttonClassName =
-        'max-md:min-w-0 max-md:flex-1 max-md:px-1 max-md:leading-tight max-md:whitespace-normal';
+        'max-md:min-w-0 max-md:px-1 max-md:leading-tight max-md:whitespace-normal';
 
     return (
         <>
-            <Button slot="close" variant="tertiary" className={buttonClassName}>
+            <HapticButton
+                slot="close"
+                variant="tertiary"
+                containerClassName={buttonLayoutClassName}
+                className={buttonClassName}
+            >
                 {t('Cancel')}
-            </Button>
+            </HapticButton>
             <Button
                 type="submit"
                 isPending={form?.processing}
-                className={buttonClassName}
+                className={cn(buttonLayoutClassName, buttonClassName)}
                 data-test="invite-submit"
             >
                 {t('Send invitation')}

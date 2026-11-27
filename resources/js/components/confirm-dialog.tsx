@@ -1,5 +1,6 @@
 import { AlertDialog, Button } from '@heroui/react';
 import type { ReactNode } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { useTranslation } from '@/lib/i18n';
 
 type ConfirmDialogProps = {
@@ -40,9 +41,9 @@ export function ConfirmDialog({
                     </AlertDialog.Header>
                     <AlertDialog.Body>{children}</AlertDialog.Body>
                     <AlertDialog.Footer>
-                        <Button slot="close" variant="tertiary">
+                        <HapticButton slot="close" variant="tertiary">
                             {t('Cancel')}
-                        </Button>
+                        </HapticButton>
                         <Button
                             variant={status === 'danger' ? 'danger' : 'primary'}
                             isPending={isPending}

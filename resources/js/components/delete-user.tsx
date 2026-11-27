@@ -1,6 +1,7 @@
 import { AlertDialog, Button } from '@heroui/react';
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
@@ -64,9 +65,12 @@ export default function DeleteUser() {
                                         />
                                     </AlertDialog.Body>
                                     <AlertDialog.Footer>
-                                        <Button slot="close" variant="tertiary">
+                                        <HapticButton
+                                            slot="close"
+                                            variant="tertiary"
+                                        >
                                             {t('Cancel')}
-                                        </Button>
+                                        </HapticButton>
                                         <Button
                                             type="submit"
                                             variant="danger"
