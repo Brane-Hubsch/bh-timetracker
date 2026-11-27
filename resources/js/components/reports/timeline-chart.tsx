@@ -336,6 +336,7 @@ export function TimelineChart({
         !!firstDay &&
         !!lastDay &&
         isWholeMonths(firstDay, lastDay);
+    const scrollDays = showDayNumbers && !mobile;
     const isSunday = (key: string) =>
         isDailyReport && new Date(`${key}T00:00:00Z`).getUTCDay() === 0;
 
@@ -482,13 +483,16 @@ export function TimelineChart({
             {projects && !report && <ProjectLabels items={projects} />}
 
             <div
-                className={
-                    showDayNumbers && !mobile
+                className={cn(
+                    scrollDays
                         ? '-mt-2 grid min-w-0 gap-3 overflow-x-auto pt-2'
-                        : 'contents'
-                }
+                        : report
+                          ? 'contents md:block'
+                          : 'contents',
+                    report && 'md:-ml-[11px]',
+                )}
                 style={
-                    showDayNumbers && !mobile
+                    scrollDays
                         ? {
                               gridTemplateColumns: `minmax(${HOURS_AXIS_WIDTH_REM + buckets.length * DAY_COLUMN_WIDTH_REM}rem, 1fr)`,
                           }
