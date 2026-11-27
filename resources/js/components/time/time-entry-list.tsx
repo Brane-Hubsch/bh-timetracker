@@ -1,4 +1,5 @@
 import { CalendarDays, CalendarOff, Clock } from 'lucide-react';
+import { useLayoutEffect, type RefObject } from 'react';
 import { ProjectDot } from '@/components/project-dot';
 import {
     MobileTimeEntryRow,
@@ -23,6 +24,7 @@ type Props = {
     absences: Absence[];
     colleaguesOff: ColleagueOff[];
     holidays: CalendarHoliday[];
+    pageHeaderRef: RefObject<HTMLDivElement | null>;
     isMobile: boolean;
     hasTimer: boolean;
     onSwipe: (direction: -1 | 1, onFinish: () => void) => void;
@@ -42,6 +44,7 @@ export function TimeEntryList({
     absences,
     colleaguesOff,
     holidays,
+    pageHeaderRef,
     isMobile,
     hasTimer,
     onSwipe,
@@ -56,6 +59,66 @@ export function TimeEntryList({
         onSwipe: isMobile ? onSwipe : undefined,
         onSwipeIntent,
     });
+
+    useLayoutEffect(() => {
+        const list = track.current;
+        if (!isMobile || !list) {
+            return;
+        }
+
+        const headers = Array.from(
+            list.querySelectorAll<HTMLElement>(':scope > section > header'),
+        );
+        let shadowedHeader: HTMLElement | undefined;
+        let frame: number | undefined;
+
+        const update = () => {
+            frame = undefined;
+            const top = pageHeaderRef.current?.getBoundingClientRect().bottom;
+            const header = headers.find(
+                (day) =>
+                    top !== undefined &&
+                    Math.abs(day.getBoundingClientRect().top - top) <= 0.5,
+            );
+
+            if (header !== shadowedHeader) {
+                shadowedHeader?.removeAttribute('data-time-day-stuck');
+                header?.setAttribute('data-time-day-stuck', '');
+                shadowedHeader = header;
+            }
+        };
+        const scheduleUpdate = () => {
+            frame ??= requestAnimationFrame(update);
+        };
+
+        update();
+        window.addEventListener('scroll', scheduleUpdate, { passive: true });
+        const observer = new ResizeObserver(scheduleUpdate);
+        observer.observe(list);
+        if (pageHeaderRef.current) {
+            observer.observe(pageHeaderRef.current, { box: 'border-box' });
+        }
+
+        return () => {
+            window.removeEventListener('scroll', scheduleUpdate);
+            observer.disconnect();
+            if (frame !== undefined) {
+                cancelAnimationFrame(frame);
+            }
+            shadowedHeader?.removeAttribute('data-time-day-stuck');
+        };
+    }, [
+        absences,
+        colleaguesOff,
+        dates,
+        entries,
+        holidays,
+        isMobile,
+        pageHeaderRef,
+        today,
+        track,
+    ]);
+
     const holidayByDate = new Map(
         holidays.map(({ date, name }) => [date, name]),
     );
@@ -96,7 +159,7 @@ export function TimeEntryList({
                         className="md:grid md:gap-2"
                         data-test="time-day"
                     >
-                        <header className="max-md:sticky max-md:top-(--mobile-page-header-visible-height) max-md:z-10 max-md:bg-background max-md:px-4 max-md:py-1.5 md:space-y-2 md:px-1">
+                        <header className="max-md:sticky max-md:top-(--mobile-page-header-visible-height) max-md:z-10 max-md:bg-surface max-md:px-4 max-md:py-1.5 max-md:data-[time-day-stuck]:shadow-[0_1px_4px_#0000000a] md:space-y-2 md:px-1">
                             <div className="flex items-start justify-between gap-2 text-[13px]/[18px] md:text-sm">
                                 <h2 className="font-semibold first-letter:uppercase md:font-medium">
                                     {date === today
