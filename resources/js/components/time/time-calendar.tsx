@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { formatHours } from '@/lib/format';
+import { isAndroidTouch, vibrateLightly } from '@/lib/haptics';
 import { useTranslation } from '@/lib/i18n';
 import {
     addDays,
@@ -265,6 +266,7 @@ export function TimeCalendar({
     const calendarKey = `${view}-${date}`;
     const resizeLane = useRef<HTMLElement | null>(null);
     const eventDragOrigin = useRef<Touch | null>(null);
+    const lastTouchSlot = useRef<{ start: number; end: number } | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
     const [weekNumberHeader, setWeekNumberHeader] =
@@ -273,6 +275,19 @@ export function TimeCalendar({
         Boolean(containerRef.current?.closest('[data-swiping]'));
     const setEditing = (editing: boolean) =>
         containerRef.current?.toggleAttribute('data-calendar-editing', editing);
+    const trackTouchSlots = (
+        jsEvent: Event,
+        start: Date | null,
+        end: Date | null,
+    ) => {
+        // FullCalendar can start a resize on the first touchmove.
+        const isTouch =
+            typeof TouchEvent !== 'undefined' && jsEvent instanceof TouchEvent;
+        lastTouchSlot.current =
+            isMobile && isAndroidTouch(isTouch) && start && end
+                ? { start: start.getTime(), end: end.getTime() }
+                : null;
+    };
 
     useLayoutEffect(() => {
         if (isPreview) {
@@ -480,9 +495,24 @@ export function TimeCalendar({
                 editable={!isPreview}
                 eventLongPressDelay={400}
                 eventAllow={(slot) => {
-                    if (isSwiping()) return false;
-                    if (!slot.allDay) dragHaptics.snap(slot.start);
+                    if (isSwiping()) {
+                        return false;
+                    }
+                    if (slot.allDay) {
+                        return true;
+                    }
 
+                    dragHaptics.snap(slot.start);
+                    const previous = lastTouchSlot.current;
+                    if (previous) {
+                        const start = slot.start.getTime();
+                        const end = slot.end.getTime();
+
+                        if (previous.start !== start || previous.end !== end) {
+                            lastTouchSlot.current = { start, end };
+                            vibrateLightly();
+                        }
+                    }
                     return true;
                 }}
                 eventMinHeight={0}
@@ -846,6 +876,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventDragStart={({ el, jsEvent, event }) => {
+                    trackTouchSlots(jsEvent, event.start, event.end);
                     dragHaptics.start(jsEvent.target, event.start);
                     eventDragOrigin.current =
                         typeof TouchEvent !== 'undefined' &&
@@ -892,6 +923,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventDragStop={({ el }) => {
+                    lastTouchSlot.current = null;
                     eventDragOrigin.current = null;
                     setEditing(false);
                     const style = containerRef.current?.style;
@@ -914,7 +946,8 @@ export function TimeCalendar({
                         );
                     }
                 }}
-                eventResizeStart={({ el }) => {
+                eventResizeStart={({ el, jsEvent, event }) => {
+                    trackTouchSlots(jsEvent, event.start, event.end);
                     setEditing(true);
                     const wrapper = el.parentElement;
                     const lane = el.closest<HTMLElement>('[data-date]');
@@ -933,6 +966,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventResizeStop={() => {
+                    lastTouchSlot.current = null;
                     setEditing(false);
                     resizeLane.current?.style.removeProperty(
                         '--resize-origin-top',

@@ -22,6 +22,7 @@ import {
 } from '@/components/form/submit-shortcut';
 import { TagInput } from '@/components/form/tag-input';
 import { TimeInputField } from '@/components/form/time-input-field';
+import { HapticTap } from '@/components/haptic-tap';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ABSENCE_FORM_ID, AbsenceForm } from '@/components/time/absence-dialog';
 import type { AbsenceOptions } from '@/components/time/absence-dialog';
@@ -681,20 +682,31 @@ export function TimeEntryForm({
                                 <Button slot="close" variant="tertiary">
                                     {t('Cancel')}
                                 </Button>
-                                <Button
-                                    type="submit"
-                                    form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
-                                    isPending={processing}
-                                    aria-keyshortcuts={SUBMIT_SHORTCUT}
-                                    data-test={
-                                        isAbsence
-                                            ? 'absence-save'
-                                            : 'time-entry-save'
-                                    }
+                                <HapticTap<HTMLButtonElement>
+                                    enabled={!processing}
                                 >
-                                    {t('Save')}
-                                    <SubmitShortcutHint />
-                                </Button>
+                                    {(ref) => (
+                                        <Button
+                                            ref={ref}
+                                            type="submit"
+                                            form={
+                                                isAbsence
+                                                    ? ABSENCE_FORM_ID
+                                                    : FORM_ID
+                                            }
+                                            isPending={processing}
+                                            aria-keyshortcuts={SUBMIT_SHORTCUT}
+                                            data-test={
+                                                isAbsence
+                                                    ? 'absence-save'
+                                                    : 'time-entry-save'
+                                            }
+                                        >
+                                            {t('Save')}
+                                            <SubmitShortcutHint />
+                                        </Button>
+                                    )}
+                                </HapticTap>
                             </>
                         )}
                     </div>
