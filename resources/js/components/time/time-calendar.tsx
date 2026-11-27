@@ -89,7 +89,7 @@ function CalendarCreationHapticSwitch() {
             onClick={(event) => event.stopPropagation()}
             className={cn(
                 HAPTIC_SWITCH_CLASS,
-                'z-0 h-full max-w-1/3 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+                'z-0 h-full w-1/3 max-md:pointer-coarse:supports-[-webkit-touch-callout:none]:block',
             )}
         />
     );
@@ -1124,8 +1124,7 @@ export function TimeCalendar({
                       )
                     : null;
             })}
-            {isMobile &&
-                !isPreview &&
+            {!isPreview &&
                 !hasSelectionDraft &&
                 dayLanes.map((lane) => {
                     // Share the entry layer while staying below its cards.
