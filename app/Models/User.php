@@ -89,6 +89,17 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
+     * Prefer the team's upload when displaying a member in that organization.
+     */
+    public function avatarForMembership(?Membership $membership = null): ?string
+    {
+        $pivot = $this->getRelations()['pivot'] ?? null;
+        $membership ??= $pivot instanceof Membership ? $pivot : null;
+
+        return $membership?->avatarUrl() ?? $this->avatar;
+    }
+
+    /**
      * Emails and notifications use the user's language.
      */
     public function preferredLocale(): string

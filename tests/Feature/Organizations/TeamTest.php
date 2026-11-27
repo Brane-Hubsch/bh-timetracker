@@ -5,6 +5,7 @@ use App\Actions\Organizations\AddInvitedMember;
 use App\Actions\Organizations\RemoveOrganizationMember;
 use App\Enums\OrganizationRole;
 use App\Models\OrganizationInvitation;
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
@@ -176,9 +177,45 @@ it('adds and removes a workspace profile picture without changing the user profi
         ->assertSessionHasNoErrors();
 
     $membership = $this->organization->memberships()->where('user_id', $this->member->id)->firstOrFail();
+    $avatar = Storage::disk('public')->url("{$membership->avatar_path}/128.webp");
+    $slug = $this->organization->slug;
+
     expect($this->member->refresh()->avatar_path)->toBeNull()
         ->and($membership->avatar_path)->not->toBeNull();
-    $this->get($this->team)->assertInertia(fn (Assert $page) => $page->where('members.1.hasTeamAvatar', true));
+    $this->get($this->team)->assertInertia(fn (Assert $page) => $page
+        ->where('members.1.hasTeamAvatar', true)
+        ->where('members.1.avatar', $avatar));
+    $this->get(route('time.index', $slug))->assertInertia(fn (Assert $page) => $page
+        ->where('members.1.avatar', $avatar));
+    $this->get(route('reports.summary', $slug))->assertInertia(fn (Assert $page) => $page
+        ->where('options.members.1.avatar', $avatar));
+    $this->get(route('organizations.edit', $slug))->assertInertia(fn (Assert $page) => $page
+        ->where('members.1.avatar', $avatar));
+
+    $project = Project::factory()->for($this->organization)->create();
+    $project->members()->attach($this->member);
+    $this->get(route('projects.show', [$slug, $project]))->assertInertia(fn (Assert $page) => $page
+        ->where('members.0.avatar', $avatar));
+
     $this->from($this->team)->delete($url)->assertRedirect($this->team);
     expect($membership->refresh()->avatar_path)->toBeNull();
+    $this->get(route('time.index', $slug))->assertInertia(fn (Assert $page) => $page
+        ->where('members.1.avatar', null));
+});
+
+it('uses a team avatar for the signed-in member only in that organization', function () {
+    $teamPath = 'images/avatars/team';
+    $profilePath = 'images/avatars/profile';
+    $this->member->update(['avatar_path' => $profilePath, 'avatar_url' => 'https://example.test/google.jpg']);
+    $this->organization->members()->updateExistingPivot($this->member, ['avatar_path' => $teamPath]);
+
+    $other = User::factory()->create()->currentOrganization;
+    $other->members()->attach($this->member, ['role' => OrganizationRole::Member]);
+
+    $this->actingAs($this->member)
+        ->get(route('time.index', $this->organization->slug))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.avatar', Storage::disk('public')->url("{$teamPath}/128.webp")));
+    $this->get(route('time.index', $other->slug))->assertInertia(fn (Assert $page) => $page
+        ->where('auth.user.avatar', Storage::disk('public')->url("{$profilePath}/128.webp")));
 });

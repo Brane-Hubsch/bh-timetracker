@@ -106,6 +106,10 @@ class ProjectController extends Controller
 
         $project->load(['client', 'members']);
         $organization = $this->currentOrganization->getOrFail();
+        $memberships = $organization->memberships()
+            ->whereIn('user_id', $project->members->modelKeys())
+            ->get(['user_id', 'avatar_path'])
+            ->keyBy('user_id');
         $canViewRates = $user->can('viewRates', $organization);
         $canManage = $user->can('update', $project);
         $consumedSeconds = $project->consumedSeconds();
@@ -126,7 +130,7 @@ class ProjectController extends Controller
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
-                'avatar' => $member->avatar,
+                'avatar' => $member->avatarForMembership($memberships->get($member->id)),
                 'hourlyRate' => $canViewRates ? $this->assignment($member)?->hourly_rate : null,
             ]),
             'assignableMembers' => $canManage
