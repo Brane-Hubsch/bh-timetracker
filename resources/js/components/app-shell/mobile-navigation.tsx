@@ -168,7 +168,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                                     >
                                         <UserAvatar
                                             user={user}
-                                            className="size-10 shrink-0"
+                                            className="size-10 shrink-0 [--avatar-radius:9999px]"
                                         />
                                         <span className="min-w-0">
                                             <span className="block truncate text-sm font-medium">
