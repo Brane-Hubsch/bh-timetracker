@@ -1,8 +1,9 @@
 {{--
-    Full-screen splash shown while the app starts cold: a fresh page load that did not come from
-    inside the app (a PWA launch after the OS dropped it from memory, a bookmark or a typed URL).
-    Reloads and full-page loads from within the app skip it. It stays at least 1.5 s and hides once
-    React has rendered (AppProviders calls window.hideSplash), or after 10 s if the app never starts.
+    Full-screen splash shown while the app starts cold: a reload, or a fresh page load that did not
+    come from inside the app (a PWA launch after the OS dropped it from memory, a bookmark or a typed
+    URL). Full-page loads from within the app and back/forward skip it. It stays at least 1.5 s and
+    hides once React has rendered (AppProviders calls window.hideSplash), or after 10 s if the app
+    never starts.
     Everything is inline so it paints before the JS bundle has loaded.
 --}}
 <style>
@@ -99,16 +100,19 @@
         var minimumVisibleMs = 1500;
         var root = document.documentElement;
         var navigation = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-        var isFreshLoad = !navigation || navigation.type === 'navigate';
+        var navigationType = navigation ? navigation.type : 'navigate';
         var cameFromApp = false;
 
         try {
             cameFromApp = document.referrer !== '' && new URL(document.referrer).origin === location.origin;
         } catch (error) {}
 
+        // A reload keeps the original referrer, so only fresh loads are checked for coming from the app.
+        var isColdStart = navigationType === 'reload' || (navigationType === 'navigate' && !cameFromApp);
+
         window.hideSplash = function () {};
 
-        if (!isFreshLoad || cameFromApp) {
+        if (!isColdStart) {
             return;
         }
 
