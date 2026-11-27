@@ -4,6 +4,7 @@ import {
     EllipsisVertical,
     Merge,
     Pencil,
+    Plus,
     Tag as TagIcon,
     Tags,
     Trash2,
@@ -171,6 +172,7 @@ export default function TagsIndex({ tags }: Props) {
                                 onPress={openCreate}
                                 data-test="add-tag-button"
                             >
+                                <Plus aria-hidden="true" className="size-4" />
                                 {t('Add')}
                             </Button>
                         </div>
