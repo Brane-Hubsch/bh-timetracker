@@ -489,7 +489,7 @@ export function TimelineChart({
                         : report
                           ? 'contents md:block'
                           : 'contents',
-                    report && 'md:-ml-2',
+                    report && 'md:-ml-[11px]',
                 )}
                 style={
                     scrollDays
