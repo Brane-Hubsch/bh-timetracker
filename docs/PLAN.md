@@ -158,7 +158,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - På pekskärm skapar ett långtryck i tom tidsyta ett entimmesblock. Flytta blocket i 15-minuterssteg och släpp för att öppna Rapportera tid med vald dag, start- och sluttid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
-- Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.
+- Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen. ISO-veckonumret visas centrerat i en dämpad ton ovanför timskalan i veckovyn.
 - "Kopiera föregående vecka" (som utkast som användaren bekräftar).
 - Admin kan växla till att se/rapportera åt en annan medlem.
 - Bibliotek: **FullCalendar** (React, endast MIT-delarna `timegrid` + `interaction`), stylat med HeroUI:s CSS-variabler. Gör en kort spike först; om det blir för tungt att styla, bygg en egen enkel veckovy.
@@ -714,6 +714,7 @@ Beställt i efterhand. Helgdagarna ligger i databasen per organisation (`holiday
 - **Svenska helgdagar** (`App\Support\SwedishHolidays`): de helgdagar som kan infalla på en vardag samt midsommar-, jul- och nyårsafton. Påsken räknas fram utan calendar-tillägget. Namnen sparas på svenska.
 - **Från start:** nya organisationer får svenska helgdagar för innevarande och nästa år (`CreateOrganization`). Migreringen gav befintliga organisationer 2026 och 2027.
 - **Kalender:** sparade helgdagar visas med namn som röda taggar överst i rätt dagskolumn i vecko- och dagvyn. Taggarna ligger kvar när tiderna scrollas, med 12 px marginal under mobilens fasta rubrik. Den första tidsrutan vid 00:00 går att markera när man scrollar hela vägen upp.
+- I kalenderns veckovy visas förväntad arbetstid under veckonumret ovanför timskalan. En tooltip förklarar att tiden utgår från den valda medlemmens arbetsschema och att helgdagar på schemalagda arbetsdagar räknas bort. Förklaringen går även att öppna med ett tryck.
 - **Används** av projektsidans arbetsdagar (`EstimatePace`) och av frånvaro (se nedan). Lördag och söndag räknas aldrig som arbetsdagar.
 - **Kod:** `App\Actions\Holidays` (`CreateHoliday`, `DeleteHoliday`, `AddSwedishHolidays`) och `OrganizationHolidayController`. Andra organisationers helgdagar ger 404.
 

@@ -62,6 +62,7 @@ it('shows the week of the signed-in user in their time zone', function (string $
             ->component('time/index')
             ->where('view', $view)
             ->where('weekStart', '2026-11-16')
+            ->where('expectedWeekSeconds', $view === 'week' ? 40 * 3600 : null)
             ->where('today', '2026-11-18')
             ->has('entries', 1)
             ->where('entries.0.id', $mine->id)
@@ -111,6 +112,45 @@ it('sends saved holidays from the current organization for the visible dates', f
         ['date' => '2026-11-22', 'name' => 'Last day'],
     ]],
 ]);
+
+it('uses the organization’s workday length and deducts holidays on scheduled days', function () {
+    $this->organization->update(['workday_seconds' => 27000]);
+    Holiday::factory()->for($this->organization)->create(['date' => '2026-11-18']);
+    Holiday::factory()->for($this->organization)->create(['date' => '2026-11-21']);
+
+    $this->actingAs($this->member)
+        ->get(timeRoute('time.index', ['date' => '2026-11-18']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('expectedWeekSeconds', 4 * 27000));
+});
+
+it('uses the selected member’s schedule across their displayed week', function () {
+    $this->organization->members()->updateExistingPivot($this->member->id, [
+        'week_starts_on' => 3,
+        'working_days' => [2, 3, 6, 7],
+        'workday_seconds' => 23400,
+    ]);
+    foreach (['2026-11-17', '2026-11-18', '2026-11-23', '2026-11-24', '2026-11-25'] as $date) {
+        Holiday::factory()->for($this->organization)->create(['date' => $date]);
+    }
+    Holiday::factory()->create(['date' => '2026-11-21']);
+
+    $this->actingAs($this->admin)
+        ->get(timeRoute('time.index', ['date' => '2026-11-18', 'user' => $this->member->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('member.id', $this->member->id)
+            ->where('weekStart', '2026-11-18')
+            ->where('expectedWeekSeconds', 2 * 23400));
+});
+
+it('shows zero expected time for a member with no scheduled working days', function () {
+    $this->organization->members()->updateExistingPivot($this->member->id, ['working_days' => []]);
+
+    $this->actingAs($this->member)
+        ->get(timeRoute('time.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('expectedWeekSeconds', 0));
+});
 
 it('redirects older time links and preserves the selected week, member and dialog', function (string $oldView, string $path, string $newView) {
     $query = "date=2026-11-16&user={$this->member->id}&new=1";

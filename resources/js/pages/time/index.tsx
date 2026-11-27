@@ -66,6 +66,7 @@ type Props = {
     today: string;
     weekStart: string;
     weekStartsOn: number;
+    expectedWeekSeconds: number | null;
     timezone: string;
     entries: TimeEntry[];
     absences: Absence[];
@@ -89,7 +90,12 @@ type Props = {
 
 type CalendarPreview = Pick<
     Props,
-    'date' | 'entries' | 'absences' | 'colleaguesOff' | 'calendarHolidays'
+    | 'date'
+    | 'entries'
+    | 'absences'
+    | 'colleaguesOff'
+    | 'calendarHolidays'
+    | 'expectedWeekSeconds'
 >;
 
 export default function TimeIndex({
@@ -98,6 +104,7 @@ export default function TimeIndex({
     today,
     weekStart,
     weekStartsOn,
+    expectedWeekSeconds,
     timezone,
     entries,
     absences,
@@ -407,6 +414,7 @@ export default function TimeIndex({
                                   absences,
                                   colleaguesOff,
                                   calendarHolidays,
+                                  expectedWeekSeconds,
                               } = props;
                               setPreviews((previous) => ({
                                   from: url,
@@ -419,6 +427,7 @@ export default function TimeIndex({
                                           absences,
                                           colleaguesOff,
                                           calendarHolidays,
+                                          expectedWeekSeconds,
                                       },
                                   },
                               }));
@@ -546,6 +555,7 @@ export default function TimeIndex({
     const calendarProps: Omit<ComponentProps<typeof TimeCalendar>, 'view'> = {
         date,
         weekStartsOn,
+        expectedWeekSeconds,
         timezone,
         entries,
         holidays: calendarHolidays,
@@ -681,6 +691,10 @@ export default function TimeIndex({
                                         {...calendarProps}
                                         view={view}
                                         date={nextDate}
+                                        expectedWeekSeconds={
+                                            adjacent?.expectedWeekSeconds ??
+                                            null
+                                        }
                                         entries={adjacent?.entries ?? entries}
                                         absences={
                                             adjacent?.absences ?? absences

@@ -6,7 +6,7 @@ import classicTheme from '@fullcalendar/react/themes/classic';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
-import { Tooltip } from '@heroui/react';
+import { Button, Popover, Tooltip } from '@heroui/react';
 import { Banknote, CalendarDays, CalendarOff } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -20,6 +20,7 @@ import {
     formatDate,
     formatDuration,
     fromCalendarDate,
+    isoWeek,
     timeOf,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,51 @@ import {
 
 const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
+
+function ExpectedWeekTimeHint({ duration }: { duration: string }) {
+    const { t } = useTranslation();
+    const [isOpen, setIsOpen] = useState(false);
+    const title = t('Expected time: :duration', { duration });
+    const content = (
+        <>
+            <p aria-hidden="true" className="font-semibold">
+                {title}
+            </p>
+            <p className="mt-1 text-muted">
+                {t('Schedule excluding holidays.')}
+            </p>
+        </>
+    );
+
+    return (
+        <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+            <Tooltip delay={350} closeDelay={0} isDisabled={isOpen}>
+                <Button
+                    variant="ghost"
+                    aria-label={title}
+                    className="absolute inset-0 h-full w-full min-w-0 rounded-sm p-0 [--button-bg-hover:transparent] [--button-bg-pressed:transparent] focus-visible:ring-inset"
+                />
+                <Tooltip.Content
+                    placement="right"
+                    showArrow
+                    className="w-max max-w-[calc(100vw-5rem)] break-normal"
+                >
+                    <Tooltip.Arrow />
+                    {content}
+                </Tooltip.Content>
+            </Tooltip>
+            <Popover.Content
+                placement="right"
+                className="w-max max-w-[calc(100vw-5rem)]"
+            >
+                <Popover.Arrow />
+                <Popover.Dialog aria-label={title} className="p-2 text-xs">
+                    {content}
+                </Popover.Dialog>
+            </Popover.Content>
+        </Popover>
+    );
+}
 
 /**
  * Where the running timer's event ends: now (local wall-clock time), at least 15 minutes after the
@@ -81,6 +127,7 @@ type Props = {
     view: 'week' | 'day';
     date: string;
     weekStartsOn: number;
+    expectedWeekSeconds: number | null;
     timezone: string;
     entries: TimeEntry[];
     holidays: CalendarHoliday[];
@@ -186,6 +233,7 @@ export function TimeCalendar({
     view,
     date,
     weekStartsOn,
+    expectedWeekSeconds,
     timezone,
     entries,
     holidays,
@@ -203,6 +251,10 @@ export function TimeCalendar({
     onChange,
 }: Props) {
     const { t, locale, intlLocale } = useTranslation();
+    const expectedWeekDuration =
+        expectedWeekSeconds === null
+            ? null
+            : formatDuration(expectedWeekSeconds);
     const isMobile = useMediaQuery('(width < 768px)');
     const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight(isMobile);
@@ -211,6 +263,8 @@ export function TimeCalendar({
     const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
+    const [weekNumberHeader, setWeekNumberHeader] =
+        useState<HTMLElement | null>(null);
     const isSwiping = () =>
         Boolean(containerRef.current?.closest('[data-swiping]'));
     const setEditing = (editing: boolean) =>
@@ -316,6 +370,30 @@ export function TimeCalendar({
                 headerToolbar={false}
                 // The day view's date and total are in the page header above.
                 dayHeaders={view === 'week'}
+                weekNumbers={view === 'week'}
+                weekNumberCalculation={(day) =>
+                    isoWeek(fromCalendarDate(day).slice(0, 10))
+                }
+                weekNumberFormat={{ week: 'short' }}
+                weekNumberHeaderClass="time-calendar-week-number"
+                weekNumberHeaderDidMount={
+                    isPreview ? undefined : ({ el }) => setWeekNumberHeader(el)
+                }
+                weekNumberHeaderWillUnmount={({ el }) =>
+                    setWeekNumberHeader((header) =>
+                        header === el ? null : header,
+                    )
+                }
+                weekNumberHeaderContent={({ text }) => (
+                    <span className="flex flex-col items-center gap-1 font-normal text-muted tabular-nums">
+                        <span className="text-[11px]/4 opacity-90">{text}</span>
+                        {expectedWeekDuration !== null && (
+                            <span className="text-[11px]/4 font-medium">
+                                {expectedWeekDuration}
+                            </span>
+                        )}
+                    </span>
+                )}
                 borderless
                 allDaySlot={showAbsenceRow}
                 allDayHeaderClass="items-center justify-center"
@@ -822,6 +900,14 @@ export function TimeCalendar({
                     }
                 }}
             />
+            {/* FullCalendar marks custom week-number content as aria-hidden. */}
+            {!isPreview &&
+                weekNumberHeader &&
+                expectedWeekDuration !== null &&
+                createPortal(
+                    <ExpectedWeekTimeHint duration={expectedWeekDuration} />,
+                    weekNumberHeader,
+                )}
             {dayLanes.map((lane) => {
                 const name = holidayByDate.get(lane.dataset.date ?? '');
 

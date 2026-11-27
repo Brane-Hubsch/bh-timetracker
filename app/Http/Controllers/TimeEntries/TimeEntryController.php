@@ -14,6 +14,7 @@ use App\Http\Requests\TimeEntries\CopyTimeEntriesRequest;
 use App\Http\Requests\TimeEntries\TimeEntryRequest;
 use App\Models\Absence;
 use App\Models\Holiday;
+use App\Models\Membership;
 use App\Models\Organization;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -21,6 +22,7 @@ use App\Support\AbsencePresenter;
 use App\Support\CurrentOrganization;
 use App\Support\HolidayDates;
 use App\Support\TimeEntryPresenter;
+use App\Support\WorkingDays;
 use Carbon\CarbonImmutable;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
@@ -55,9 +57,11 @@ class TimeEntryController extends Controller
             default => 'week',
         };
         $date = $this->parseDate($request->string('date')->value(), $timezone);
-        $weekStartsOn = $organization->memberships()->where('user_id', $member->id)->first()?->week_starts_on;
+        $membership = $organization->memberships()->where('user_id', $member->id)->first();
+        $weekStartsOn = $membership?->week_starts_on;
         $weekStart = $this->presenter->weekStart($date, $organization, $weekStartsOn);
         $weekEnd = $weekStart->addWeek();
+        $absenceOptions = $this->absenceOptions($organization, $user, $weekStart);
 
         $entries = TimeEntry::query()
             ->where('user_id', $member->id)
@@ -94,11 +98,17 @@ class TimeEntryController extends Controller
             'today' => CarbonImmutable::now($timezone)->toDateString(),
             'weekStart' => $weekStart->toDateString(),
             'weekStartsOn' => $weekStartsOn ?? $organization->week_starts_on,
+            'expectedWeekSeconds' => $view === 'week' ? fn () => WorkingDays::between(
+                $weekStart,
+                $weekEnd->subDay(),
+                $absenceOptions['holidays'],
+                $membership->working_days ?? Membership::DEFAULT_WORKING_DAYS,
+            ) * ($membership->workday_seconds ?? $organization->workday_seconds) : null,
             'timezone' => $timezone,
             'entries' => $entries->map(fn (TimeEntry $entry) => $this->presenter->entry($entry, $timezone)),
             'absences' => $weekAbsences->where('user_id', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::absence($absence)),
             'colleaguesOff' => $weekAbsences->where('user_id', '!=', $member->id)->values()->map(fn (Absence $absence) => AbsencePresenter::colleagueOff($absence)),
-            ...$this->absenceOptions($organization, $user, $weekStart),
+            ...$absenceOptions,
             'calendarHolidays' => fn () => $organization->holidays()
                 ->whereDate('date', '>=', $periodStart->toDateString())
                 ->whereDate('date', '<', $periodEnd->toDateString())
@@ -252,7 +262,7 @@ class TimeEntryController extends Controller
             : [];
     }
 
-    /** @return array<string, mixed> */
+    /** @return array{absenceTypes: list<array{value: string, label: string}>, recentAbsenceTypes: list<string>, workdaySeconds: int, holidays: array<int, string>} */
     private function absenceOptions(Organization $organization, User $user, CarbonImmutable $date): array
     {
         return [
