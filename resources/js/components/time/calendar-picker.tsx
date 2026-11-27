@@ -339,6 +339,7 @@ export function CalendarPicker({
     const { t, intlLocale } = useTranslation();
     const isDay = view === 'day';
     const isList = view === 'list';
+    const showToday = isList || (isDay && date !== today);
     const value = isDay ? date : weekStart;
     const currentPeriod = isDay
         ? today
@@ -453,18 +454,29 @@ export function CalendarPicker({
                                 )}
                             </p>
                             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    aria-label={t('Go to today')}
-                                    onPress={() => select(today)}
-                                >
-                                    {t('Today')}
-                                </Button>
+                                {showToday && (
+                                    <Button
+                                        variant={isList ? 'secondary' : 'ghost'}
+                                        size="sm"
+                                        className={
+                                            isList
+                                                ? undefined
+                                                : 'bg-transparent! text-accent'
+                                        }
+                                        aria-label={t('Go to today')}
+                                        onPress={() => select(today)}
+                                    >
+                                        {t('Today')}
+                                    </Button>
+                                )}
                                 {(!isList || !isDesktop) && (
                                     <SegmentedControl<CalendarView>
                                         aria-label={t('View')}
-                                        className="max-md:gap-0 max-md:p-[3px] max-md:[&>button]:px-2.5 max-md:[&>button[data-selected=true]]:bg-accent-soft max-md:[&>button[data-selected=true]]:shadow-none"
+                                        className={cn(
+                                            !isList &&
+                                                'bg-transparent! inset-ring inset-ring-border',
+                                            'max-md:gap-0 max-md:p-[3px] max-md:[&>button]:px-2.5 max-md:[&>button[data-selected=true]]:bg-accent-soft max-md:[&>button[data-selected=true]]:shadow-none',
+                                        )}
                                         value={view}
                                         onChange={(view) => {
                                             if (!isDesktop) {
@@ -475,7 +487,7 @@ export function CalendarPicker({
                                         options={[
                                             { id: 'day', label: t('Day') },
                                             { id: 'week', label: t('Week') },
-                                            ...(!isDesktop
+                                            ...(isList && !isDesktop
                                                 ? [
                                                       {
                                                           id: 'list' as const,
