@@ -492,6 +492,11 @@
     --time-calendar-holiday-space: 2rem;
 }
 
+/* The internal scrollers inherit the transparent track when the week changes. */
+.time-calendar-body {
+    scrollbar-color: var(--scrollbar-color);
+}
+
 /* Keep iOS text selection from taking over a long press on the time grid. */
 @media (any-pointer: coarse) {
     .time-calendar-body {
