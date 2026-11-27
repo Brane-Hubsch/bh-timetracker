@@ -125,7 +125,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                 <nav
                     aria-label={t('Main')}
                     className={cn(
-                        'mobile-tab-bar fixed inset-x-0 bottom-0 z-30 flex border-t border-separator bg-surface px-4 pb-(--mobile-tab-bar-inset) shadow-[0_-2px_8px_#0000000a]',
+                        'mobile-tab-bar relative z-30 flex shrink-0 border-t border-separator bg-surface px-4 pb-(--mobile-tab-bar-inset) shadow-[0_-2px_8px_#0000000a]',
                         className,
                     )}
                 >

@@ -72,7 +72,6 @@ export default function ProjectsIndex({
 }: Props) {
     const { t } = useTranslation();
     const [isCreateOpen, setCreateOpen] = useState(false);
-    const { timer } = usePage().props;
     const isMobile = !useIsDesktop();
     // ?new=1 from the command palette and links on other pages.
     useOpenFromQuery('new', () => setCreateOpen(projectForm !== null));
@@ -89,7 +88,6 @@ export default function ProjectsIndex({
                     filters={filters}
                     clients={clients}
                     onCreate={onCreate}
-                    hasTimer={Boolean(timer)}
                 />
             ) : (
                 <DesktopProjects

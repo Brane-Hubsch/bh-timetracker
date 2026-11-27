@@ -150,7 +150,7 @@ export function MobileReportEntries({
                 return (
                     <div key={date ?? 'entries'}>
                         {date && (
-                            <h2 className="sticky top-(--mobile-page-header-visible-height) z-10 flex items-center justify-between gap-2 bg-(--mobile-scroll-background) px-4 py-1.5 text-[13px]/[18px] font-semibold">
+                            <h2 className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-(--mobile-scroll-background) px-4 py-1.5 text-[13px]/[18px] font-semibold">
                                 <span className="first-letter:uppercase">
                                     {formatDate(date, intlLocale, {
                                         weekday: 'long',

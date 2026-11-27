@@ -988,24 +988,7 @@
 }
 
 @media (width < 48rem) {
-    /* The fixed bars sit outside the calendar's native scroll area. */
-    main:has(.time-calendar-scroll) {
-        padding-block-end: var(--mobile-tab-bar-height);
-    }
-
-    .time-calendar-scroll {
-        block-size: calc(
-            100dvh -
-                max(
-                    var(--mobile-page-header-height),
-                    var(--mobile-page-header-visible-height)
-                ) -
-                var(--mobile-tab-bar-height)
-        );
-        overflow-y: auto;
-    }
-
-    .time-calendar-scroll:has([data-calendar-haptic-move]) {
+    .app-page-scroll:has([data-calendar-haptic-move]) {
         /* The entry allows native panning before the hold. Once lifted, keep
            the finger on the switch without cancelling its touch events. */
         overflow-y: hidden;

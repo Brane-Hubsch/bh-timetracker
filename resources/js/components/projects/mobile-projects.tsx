@@ -37,7 +37,6 @@ type Props = {
     filters: ProjectListFilters;
     clients: ProjectFilterClient[];
     onCreate?: () => void;
-    hasTimer: boolean;
 };
 
 const defaultFilters: ProjectListFilters = {
@@ -57,7 +56,6 @@ export function MobileProjects({
     filters,
     clients,
     onCreate,
-    hasTimer,
 }: Props) {
     const { t, tc } = useTranslation();
     const [clientSearch, setClientSearch] = useState('');
@@ -91,16 +89,7 @@ export function MobileProjects({
 
     return (
         <>
-            <div
-                className="flex min-h-[calc(100svh-var(--mobile-tab-bar-height)-var(--project-timer-space))] flex-col"
-                style={
-                    {
-                        '--project-timer-space': hasTimer
-                            ? 'var(--mobile-timer-space)'
-                            : '0px',
-                    } as React.CSSProperties
-                }
-            >
+            <div className="flex min-h-full flex-col">
                 <MobileListHeader
                     title={t('Projects')}
                     filterLabels={activeLabels}
