@@ -157,7 +157,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - På pekskärm skapar ett långtryck i tom tidsyta ett entimmesblock. Flytta blocket i 15-minuterssteg och släpp för att öppna Rapportera tid med vald dag, start- och sluttid.
 - Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
-- Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen.
+- Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen. ISO-veckonumret visas centrerat i en dämpad ton ovanför timskalan i veckovyn.
 - "Kopiera föregående vecka" (som utkast som användaren bekräftar).
 - Admin kan växla till att se/rapportera åt en annan medlem.
 - Bibliotek: **FullCalendar** (React, endast MIT-delarna `timegrid` + `interaction`), stylat med HeroUI:s CSS-variabler. Gör en kort spike först; om det blir för tungt att styla, bygg en egen enkel veckovy.
