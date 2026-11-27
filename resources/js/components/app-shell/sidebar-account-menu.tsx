@@ -1,5 +1,6 @@
 import { Button, Popover, Separator } from '@heroui/react';
 import { Link, usePage } from '@inertiajs/react';
+import { Keyboard } from 'lucide-react';
 import { useState } from 'react';
 import checkIcon from '@/assets/account-check.svg';
 import logoutIcon from '@/assets/account-logout.svg';
@@ -11,6 +12,7 @@ import { LogoImage } from '@/components/logo-image';
 import { UserAvatar, logoutAndFlush } from '@/components/user-menu';
 import { useSwitchOrganization } from '@/hooks/use-switch-organization';
 import { useTranslation } from '@/lib/i18n';
+import { triggerShortcut } from '@/lib/shortcuts';
 import { cn } from '@/lib/utils';
 import { edit as editOrganization } from '@/routes/organizations';
 import { edit as editProfile } from '@/routes/profile';
@@ -198,6 +200,26 @@ export function SidebarAccountMenu() {
                             <AccountIcon src={settingsIcon} />
                             {t('Profile settings')}
                         </Link>
+                        <Separator className="mx-0.5" />
+
+                        <Button
+                            variant="ghost"
+                            className={rowClassName}
+                            onPress={() => {
+                                setIsOpen(false);
+                                window.setTimeout(
+                                    () => triggerShortcut('help'),
+                                    0,
+                                );
+                            }}
+                            data-test="keyboard-shortcuts-menu-item"
+                        >
+                            <Keyboard
+                                aria-hidden="true"
+                                className="size-4 shrink-0 text-muted"
+                            />
+                            {t('Keyboard shortcuts')}
+                        </Button>
                         <Button
                             variant="ghost"
                             className={rowClassName}

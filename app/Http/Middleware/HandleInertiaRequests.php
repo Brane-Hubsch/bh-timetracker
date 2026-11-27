@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\RunningTimer;
+use App\Models\User;
 use App\Support\CurrentOrganization;
 use App\Support\TimerPresenter;
 use Illuminate\Http\Request;
@@ -45,9 +46,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'locale' => app()->getLocale(),
-            'auth' => [
-                'user' => $user,
-            ],
+            'auth' => fn () => ['user' => $user ? $this->authUser($user, $currentOrganization) : null],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'sidebarHiddenItems' => $user?->sidebar_hidden_items,
             'sidebarOrder' => $user?->sidebar_order,
@@ -57,5 +56,16 @@ class HandleInertiaRequests extends Middleware
             'timer' => fn () => $user && ($timer = RunningTimer::runningFor($user)) ? TimerPresenter::present($timer, $user) : null,
             'can' => fn () => $user && ($organization = $currentOrganization->get()) ? $user->toOrganizationPermissions($organization) : null,
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function authUser(User $user, CurrentOrganization $currentOrganization): array
+    {
+        $membership = $currentOrganization->get()?->memberships()
+            ->where('user_id', $user->id)
+            ->whereNull('deactivated_at')
+            ->first(['avatar_path']);
+
+        return [...$user->toArray(), 'avatar' => $user->avatarForMembership($membership)];
     }
 }

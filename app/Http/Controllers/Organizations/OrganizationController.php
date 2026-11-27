@@ -76,7 +76,7 @@ class OrganizationController extends Controller
                     'id' => $member->id,
                     'name' => $member->name,
                     'email' => $member->email,
-                    'avatar' => $member->avatar,
+                    'avatar' => $member->avatarForMembership($membership),
                     'role' => $membership->role->value,
                     'role_label' => $membership->role->label(),
                     'hourly_rate' => $user->can('viewRates', $organization) ? $membership->hourly_rate : null,

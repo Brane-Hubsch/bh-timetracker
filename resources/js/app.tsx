@@ -11,9 +11,24 @@ import { setUrlDefaults } from '@/wayfinder';
  */
 let currentOrganizationSlug: string | undefined;
 setUrlDefaults(() => ({ current_organization: currentOrganizationSlug }));
-router.on('navigate', (event) => {
-    currentOrganizationSlug =
-        event.detail.page.props.currentOrganization?.slug ?? undefined;
+router.on('navigate', ({ detail: { page } }) => {
+    const slug = page.props.currentOrganization?.slug;
+    if (slug !== currentOrganizationSlug) {
+        router.flushAll();
+    }
+    currentOrganizationSlug = slug;
+});
+
+router.on('start', ({ detail: { visit } }) => {
+    if (visit.method !== 'get' && visit.method !== 'query') {
+        router.flushAll();
+    }
+});
+router.on('finish', ({ detail: { visit } }) => {
+    // Discard any prefetches that started while the write was in flight.
+    if (visit.method !== 'get' && visit.method !== 'query') {
+        router.flushAll();
+    }
 });
 
 const appName = import.meta.env.VITE_APP_NAME || 'BH Timetracker';
@@ -42,18 +57,6 @@ void createInertiaApp({
     progress: {
         color: '#7c3aed',
         delay: 200,
-    },
-    defaults: {
-        // Animate page changes, but not filter/paging updates (preserveState), partial reloads or
-        // form submissions, and never for users who prefer reduced motion.
-        visitOptions: (href, options) => ({
-            viewTransition:
-                options.method === 'get' &&
-                !options.preserveState &&
-                !options.async &&
-                (options.only ?? []).length === 0 &&
-                !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        }),
     },
 });
 

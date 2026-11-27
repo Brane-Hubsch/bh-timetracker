@@ -415,11 +415,19 @@ export function TimeCalendar({
                         color: 'transparent',
                     })),
                 ]}
-                eventClass={({ event, isMirror, isDragging, isResizing }) =>
+                eventClass={({
+                    event,
+                    isSelected,
+                    isMirror,
+                    isDragging,
+                    isResizing,
+                }) =>
                     event.allDay
                         ? 'time-calendar-absence'
                         : cn(
                               'time-calendar-event',
+                              isSelected &&
+                                  'time-calendar-event-touch-selected',
                               isMirror && 'time-calendar-event-mirror',
                               isMirror &&
                                   isDragging &&

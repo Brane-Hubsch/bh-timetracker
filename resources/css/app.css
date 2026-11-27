@@ -12,8 +12,6 @@
     --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
     --animate-enter: enter 240ms var(--ease-out-soft) both;
     --animate-fade-in: fade-in 180ms ease-out both;
-    --animate-grow-y: grow-y 480ms var(--ease-out-soft) backwards;
-    --animate-grow-x: grow-x 560ms var(--ease-out-soft) backwards;
 
     @keyframes enter {
         from {
@@ -25,18 +23,6 @@
     @keyframes fade-in {
         from {
             opacity: 0;
-        }
-    }
-
-    @keyframes grow-y {
-        from {
-            transform: scaleY(0);
-        }
-    }
-
-    @keyframes grow-x {
-        from {
-            transform: scaleX(0);
         }
     }
 
@@ -253,6 +239,11 @@
     margin-bottom: 0 !important;
     padding-block: 0 !important;
     padding-inline: var(--time-calendar-entry-padding, 4px) !important;
+}
+
+/* FullCalendar selects an entry on touch long-press to enable its resize handles. */
+.time-calendar-event-touch-selected:not(:focus-visible) {
+    outline-style: none;
 }
 
 /* The classic theme adds vertical padding to short events, shifting both edges as they resize. */
@@ -489,6 +480,15 @@
     --time-calendar-holiday-space: 2rem;
 }
 
+/* Keep iOS text selection from taking over a long press on the time grid. */
+@media (any-pointer: coarse) {
+    .time-calendar-body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
 /* The time grid's scroll canvas is shared by the lanes, hour labels and now indicator. */
 .time-calendar[data-holidays]
     .time-calendar-body
@@ -701,9 +701,9 @@
         background-color: var(--surface);
     }
 
-    /* Match the dark calendar when rubber-band scrolling exposes the page canvas. */
-    :root.dark:has(.time-calendar),
-    :root.dark:has(.time-calendar) body {
+    /* Match the dark app background when rubber-band scrolling exposes the page canvas. */
+    :root.dark:has(.mobile-tab-bar),
+    :root.dark:has(.mobile-tab-bar) body {
         background-color: var(--background);
     }
 
@@ -957,19 +957,6 @@
     }
 }
 
-/*
- * Page transitions (View Transitions API, enabled for page visits in app.tsx). Only the page content
- * moves: it fades out quickly and the new page fades in with a small rise. Navigation stays put.
- * Browsers without the API simply switch pages.
- */
-.page-transition {
-    view-transition-name: page;
-}
-
-.settings-navigation {
-    view-transition-name: settings-navigation;
-}
-
 /* Preserve native scroll containers and keep any overlay arrow visible. */
 [data-overlay-resizing]:not(
     :has([data-slot='popover-overlay-arrow'], [data-slot='tooltip-arrow'])
@@ -977,40 +964,13 @@
     overflow: clip;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-    animation-duration: 160ms;
-}
-
 @media (width < 48rem) {
-    /* Keep page snapshots between the header's progress line and the tab bar. */
-    :root:has(.mobile-tab-bar)::view-transition {
-        clip-path: inset(
-            calc(var(--mobile-page-header-visible-height) + 2px) 0
-                var(--mobile-tab-bar-height) 0
-        );
-    }
-
     :root:has(.mobile-tab-bar) #nprogress .bar {
         top: var(--mobile-page-header-visible-height);
         overflow: clip;
         /* Inertia sets an inline transition for all properties. Only animate progress. */
         transition-property: transform !important;
     }
-}
-
-::view-transition-group(page) {
-    animation-duration: 240ms;
-    animation-timing-function: var(--ease-out-soft);
-}
-
-/* The old page is gone before the new one rises in, so the two never overlap. */
-::view-transition-old(page) {
-    animation: 90ms ease-in both fade-out;
-}
-
-::view-transition-new(page) {
-    animation: 220ms var(--ease-out-soft) 90ms both enter;
 }
 
 @keyframes fade-out {
@@ -1022,10 +982,7 @@
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
-    *::after,
-    ::view-transition-group(*),
-    ::view-transition-old(*),
-    ::view-transition-new(*) {
+    *::after {
         animation-duration: 1ms !important;
         animation-delay: 0ms !important;
         transition-duration: 1ms !important;
