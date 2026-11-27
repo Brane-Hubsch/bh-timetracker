@@ -9,7 +9,7 @@ import {
     Search,
     User,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { BottomSheetBackdrop } from '@/components/bottom-sheet-backdrop';
 import { useCommandPalette } from '@/components/command-palette';
 import CreateOrganizationModal from '@/components/create-organization-modal';
@@ -40,7 +40,8 @@ const drawerBodyClass =
 
 export function MobileBottomNav({ className }: { className?: string }) {
     const { t } = useTranslation();
-    const { auth, can, currentOrganization } = usePage().props;
+    const { component, props } = usePage();
+    const { auth, can, currentOrganization } = props;
     const { user } = auth;
     const { isVisible } = useSidebarSettings();
     const navigation = useMainNavigation().filter(({ title }) =>
@@ -51,9 +52,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
     const { open: openSearch } = useCommandPalette();
     const [isMoreOpen, setMoreOpen] = useState(false);
     const [isCreateOpen, setCreateOpen] = useState(false);
-    const shouldPrefetch = useMediaQuery(
-        '(width < 48rem) and (display-mode: standalone)',
-    );
+    const isMobile = useMediaQuery('(width < 48rem)');
 
     const [tabs, remaining] = [order.slice(0, 4), order.slice(4)].map(
         (titles) =>
@@ -72,31 +71,44 @@ export function MobileBottomNav({ className }: { className?: string }) {
                 };
             }),
     );
-    const prefetchUrls = (isMoreOpen ? remaining : tabs)
-        .filter(({ isActive }) => !isActive)
-        .map(({ href }) => toUrl(href))
-        .join('\n');
+    const destinations = (isMoreOpen ? remaining : tabs).filter(
+        ({ isActive }) => !isActive,
+    );
+    const prefetchUrls = destinations.map(({ href }) => toUrl(href)).join('\n');
 
-    useEffect(() => {
-        if (!shouldPrefetch || !prefetchUrls) {
+    const prefetchDestinations = useEffectEvent(() => {
+        const { connection } = navigator as Navigator & {
+            connection?: { saveData?: boolean };
+        };
+        if (document.hidden || !navigator.onLine || connection?.saveData) {
             return;
         }
 
-        // Give the active view time to render before warming the visible links.
-        const timeout = window.setTimeout(() => {
-            if (document.hidden || !navigator.onLine) {
-                return;
+        for (const { href, page } of destinations) {
+            if (page !== component) {
+                // A speculative import can fail without blocking navigation.
+                void router.resolveComponent(page).catch(() => {});
             }
 
-            for (const url of prefetchUrls.split('\n')) {
-                if (!router.getCached(url) && !router.getPrefetching(url)) {
-                    router.prefetch(url);
-                }
+            if (!router.getCached(href) && !router.getPrefetching(href)) {
+                router.prefetch(href);
             }
-        }, 200);
+        }
+    });
+
+    useEffect(() => {
+        if (!isMobile || !user.email_verified_at || !prefetchUrls) {
+            return;
+        }
+
+        // Use the splash's existing display time without blocking dismissal on the network.
+        const delay = document.documentElement.classList.contains('splash')
+            ? 0
+            : 200;
+        const timeout = window.setTimeout(() => prefetchDestinations(), delay);
 
         return () => window.clearTimeout(timeout);
-    }, [shouldPrefetch, prefetchUrls]);
+    }, [isMobile, prefetchUrls, user.email_verified_at]);
 
     const organizationSettings = currentOrganization
         ? editOrganization(currentOrganization.slug)

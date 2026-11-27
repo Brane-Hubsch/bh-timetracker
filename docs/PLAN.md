@@ -201,7 +201,7 @@ Se avsnitt 6.
 - I den inloggade mobilwebbläsaren visas ett installationsförslag i ett bottenark ovanpå flikraden högst en gång per 30 dagar. ”Påminn mig senare” skjuter upp nästa förslag i 30 dagar. Installationsknappen öppnar webbläsarens dialog när den finns och visar annars instruktioner. Den installerade webbappen visar inget installationsförslag.
 - Webbappens namn och sidtitlarna hämtas från `APP_NAME`. Sidtitlarna börjar med appnamnet, till exempel ”TimeTracker | Kalender”.
 - Nypzoom är avstängd i den installerade webbappen. Scroll fungerar som vanligt i båda lägena och nypzoom fungerar i webbläsaren.
-- Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. I den installerade mobilappen förladdas de synliga navigationslänkarna och deras siddata sparas kort i minnet.
+- Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. Vid kallstart på mobil börjar flikarnas kod och siddata förladdas under splash-skärmen. Splash-skärmen tonas ut när startvyn är redo och skärmen har visats i minst 1,5 sekunder. Inertia sparar flikdata i minnet i upp till 30 sekunder. Versionsmärkta byggfiler och publik grafik återanvänds mellan starter via webbläsarens HTTP-cache.
 
 ## 5. Teknisk arkitektur
 
