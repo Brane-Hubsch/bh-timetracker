@@ -4,8 +4,10 @@ import type { TouchEvent as ReactTouchEvent } from 'react';
 type DragGesture = {
     control: HTMLInputElement;
     slot: { start: number; end: number } | null;
+    pickupPending: boolean;
     switched: boolean;
     moved: boolean;
+    trackTouch: (event: TouchEvent) => boolean;
 };
 
 function snapGesture(gesture: DragGesture, start: number, end: number) {
@@ -14,7 +16,9 @@ function snapGesture(gesture: DragGesture, start: number, end: number) {
 
     gesture.slot = { start, end };
     if (previous) {
-        gesture.switched = !gesture.switched;
+        // A resize can start and snap on the same touchmove. One switch
+        // transition covers both so the pickup pulse is never cancelled.
+        if (!gesture.pickupPending) gesture.switched = !gesture.switched;
         gesture.moved = true;
     }
 }
@@ -25,13 +29,6 @@ export function useCalendarDragHaptics() {
     const armSwitch = (control: HTMLInputElement, touch: Touch) => {
         const listeners = new AbortController();
         const { signal } = listeners;
-        const active: DragGesture = {
-            control,
-            slot: null,
-            switched: false,
-            moved: false,
-        };
-        gesture.current = active;
         control.checked = false;
         // Rotate a horizontal switch. A square keeps the two axes equal even
         // in WebKit versions that measure the transformed bounding box.
@@ -52,6 +49,28 @@ export function useCalendarDragHaptics() {
             // Resolve the new position before WebKit handles this touch.
             control.getBoundingClientRect();
         };
+        const active: DragGesture = {
+            control,
+            slot: null,
+            pickupPending: false,
+            switched: false,
+            moved: false,
+            trackTouch: ({ touches }) => {
+                const finger = Array.from(touches).find(
+                    ({ identifier }) => identifier === touch.identifier,
+                );
+                if (!finger) return false;
+
+                if (active.pickupPending) {
+                    active.pickupPending = false;
+                    active.switched = !active.switched;
+                }
+                placeSwitch(finger.clientY, active.switched ? 28 : 8);
+
+                return true;
+            },
+        };
+        gesture.current = active;
         // Start on the off side and inside the thumb, before WebKit starts
         // tracking this touch. Updating checked during tracking would stop it.
         placeSwitch(touch.clientY, 8);
@@ -59,18 +78,12 @@ export function useCalendarDragHaptics() {
         control.addEventListener(
             'touchmove',
             (move) => {
-                const finger = Array.from(move.touches).find(
-                    ({ identifier }) => identifier === touch.identifier,
-                );
-                if (!finger) return;
-
-                if (active.slot !== null) {
+                if (active.trackTouch(move) && active.slot !== null) {
                     // The calendar has already processed this touch. Keep
                     // FullCalendar's window listener from cancelling native
                     // switch tracking.
                     move.stopPropagation();
                 }
-                placeSwitch(finger.clientY, active.switched ? 28 : 8);
             },
             { signal },
         );
@@ -148,6 +161,8 @@ export function useCalendarDragHaptics() {
         const active = gesture.current;
         if (active && active.control === target && start && end) {
             active.slot = { start: start.getTime(), end: end.getTime() };
+            // Safari's native switch can pulse on the next physical touchmove.
+            active.pickupPending = true;
         }
     };
 
@@ -158,5 +173,13 @@ export function useCalendarDragHaptics() {
         }
     };
 
-    return { arm, armSelection, start, snap };
+    const moveHeldSwitch = (event: TouchEvent) => {
+        const active = gesture.current;
+        if (!active || active.slot === null || active.control !== event.target)
+            return false;
+
+        return active.trackTouch(event);
+    };
+
+    return { arm, armSelection, start, snap, moveHeldSwitch };
 }
