@@ -496,7 +496,7 @@
     }
 }
 
-/* Keep the title and duration on one line when the time slot is too short for a footer. */
+/* Share the first row between the title and duration when there's no room for a footer. */
 @container time-calendar-entry (height < 58px) {
     .time-calendar-entry-layout {
         flex-direction: row;
@@ -505,12 +505,42 @@
         padding: 0 0.25rem;
     }
 
-    .time-calendar-entry-range {
-        display: none;
-    }
-
     .time-calendar-entry-icon {
         position: static;
+    }
+}
+
+@container time-calendar-entry (40px <= height < 58px) {
+    .time-calendar-entry-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            'title duration'
+            'range range';
+        align-content: center;
+        row-gap: 0.125rem;
+    }
+
+    .time-calendar-entry-content {
+        display: contents;
+    }
+
+    .time-calendar-entry-title {
+        grid-area: title;
+    }
+
+    .time-calendar-entry-duration {
+        grid-area: duration;
+    }
+
+    .time-calendar-entry-range {
+        grid-area: range;
+    }
+}
+
+@container time-calendar-entry (height < 40px) {
+    .time-calendar-entry-range {
+        display: none;
     }
 }
 

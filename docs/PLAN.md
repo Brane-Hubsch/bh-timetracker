@@ -201,7 +201,7 @@ Se avsnitt 6.
 - I den inloggade mobilwebbläsaren visas ett installationsförslag i ett bottenark ovanpå flikraden högst en gång per 30 dagar. ”Påminn mig senare” skjuter upp nästa förslag i 30 dagar. Installationsknappen öppnar webbläsarens dialog när den finns och visar annars instruktioner. Den installerade webbappen visar inget installationsförslag.
 - Webbappens namn och sidtitlarna hämtas från `APP_NAME`. Sidtitlarna börjar med appnamnet, till exempel ”TimeTracker | Kalender”.
 - Nypzoom är avstängd i den installerade webbappen. Scroll fungerar som vanligt i båda lägena och nypzoom fungerar i webbläsaren.
-- Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. I den installerade mobilappen förladdas de synliga navigationslänkarna och deras siddata sparas kort i minnet.
+- Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. Vid kallstart på mobil börjar flikarnas kod och siddata förladdas under splash-skärmen. Splash-skärmen tonas ut när startvyn är redo och skärmen har visats i minst 1,5 sekunder. Inertia sparar flikdata i minnet i upp till 30 sekunder. Versionsmärkta byggfiler och publik grafik återanvänds mellan starter via webbläsarens HTTP-cache.
 
 ## 5. Teknisk arkitektur
 
@@ -392,7 +392,7 @@ Avvikelser och förtydliganden:
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
 - Standardvy: vecka på desktop och dag på mobil. På mobil rullas kalenderns dag- och veckovy mellan den fasta rubrikraden och bottennavigeringen. Rullningsindikatorn håller sig inom samma yta. Sidledes svep byter dag eller vecka, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i kalenderns periodväljare. Lista nås via mobilnavigeringen.
 - På mobil ger ett direkt tryck ett lätt haptiskt klick vid flikbyte, öppning av Mer eller kalenderns datumväljare och vid tryck på Spara i tidrapporteringen där enheten stöder det. Den aktiva fliken ger ingen puls. Android med stöd för vibration ger också en kort puls när en flytt eller längdändring snäpper till ett nytt giltigt 15-minutersläge.
-- Experiment på iPhone: `ios-drag-haptics=1` i kalenderns webbadress gör det möjligt att prova ett haptiskt klick för varje nytt 15-minutersläge när en sparad tidspost flyttas. Samma drag ska fortfarande kunna flytta posten framåt och bakåt. Testas på fysisk enhet innan bredare aktivering.
+- På iPhone med stöd för Safaris inbyggda reglage kan ett långtryck mitt på en sparad tidspost ge ett haptiskt klick vid varje nytt giltigt 15-minutersläge under flytten. Den genomskinliga träffytan är högst 44 × 44 px så att resten av posten går att rulla från.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
