@@ -1,10 +1,12 @@
 @php
     $theme = $page['props']['theme'] ?? [];
+    $alwaysDark = \App\Enums\Theme::tryFrom($theme['theme'] ?? '')?->isAlwaysDark() ?? false;
 @endphp
 <!DOCTYPE html>
 <html
     lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    @class(['dark' => ($appearance ?? 'system') == 'dark'])
+    @class(['dark' => ($appearance ?? 'system') == 'dark' || $alwaysDark])
+    @if ($alwaysDark) data-forced-mode="dark" @endif
     data-palette="{{ $theme['theme'] ?? 'standard' }}"
     data-accent="{{ $theme['accent'] ?? 'violet' }}"
     data-contrast="{{ ($theme['contrast'] ?? 'system') === 'more' ? 'more' : 'normal' }}"

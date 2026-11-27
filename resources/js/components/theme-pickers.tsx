@@ -41,6 +41,7 @@ export function ThemePicker({
     const { t } = useTranslation();
     const { resolvedAppearance } = useAppearance();
     const accentColor = useAccentColor()(accent);
+    const isDark = resolvedAppearance === 'dark';
 
     return (
         <ToggleButtonGroup
@@ -57,19 +58,23 @@ export function ThemePicker({
                 }
             }}
             isDetached
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3"
             data-test="theme-picker"
         >
             {THEMES.map((theme) => {
-                const colors =
-                    resolvedAppearance === 'dark' ? theme.dark : theme.light;
+                const colors = isDark ? theme.dark : theme.light;
+                const previewAccent = theme.accent
+                    ? isDark || theme.alwaysDark
+                        ? theme.accent.dark
+                        : theme.accent.light
+                    : accentColor;
 
                 return (
                     <ToggleButton
                         key={theme.id}
                         id={theme.id}
                         aria-label={t(theme.label)}
-                        className="group h-auto flex-col items-stretch gap-2.5 rounded-2xl border border-separator bg-surface p-2 pb-3 text-start transition-colors data-[selected=true]:border-accent data-[selected=true]:ring-1 data-[selected=true]:ring-accent"
+                        className="group h-auto w-full min-w-0 flex-col items-stretch gap-2.5 rounded-2xl border border-separator bg-surface p-2 pb-3 text-start whitespace-normal transition-colors data-[selected=true]:border-accent data-[selected=true]:ring-1 data-[selected=true]:ring-accent"
                     >
                         <span
                             aria-hidden="true"
@@ -111,7 +116,7 @@ export function ThemePicker({
                                 <span
                                     className="mt-1 h-2 w-8"
                                     style={{
-                                        backgroundColor: accentColor,
+                                        backgroundColor: previewAccent,
                                         borderRadius: theme.radius / 2,
                                     }}
                                 />
@@ -148,10 +153,12 @@ export function AccentPicker({
     'aria-label': ariaLabel,
     'aria-describedby': describedBy,
     'data-test': dataTest,
+    isDisabled = false,
 }: {
     value: AccentName | null;
     onChange: (accent: AccentName | null) => void;
     organizationAccent?: AccentName;
+    isDisabled?: boolean;
     'aria-label': string;
     'aria-describedby'?: string;
     'data-test'?: string;
@@ -181,6 +188,7 @@ export function AccentPicker({
                 }
             }}
             isDetached
+            isDisabled={isDisabled}
             className="flex flex-wrap items-center gap-2"
             data-test={dataTest}
         >

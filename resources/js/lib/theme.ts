@@ -2,7 +2,15 @@
  * Themes, accent colours and contrast. The colours themselves live in app.css as CSS variables keyed by
  * data attributes on <html>; the hex values here are only for previews and the browser's theme colour.
  */
-export type ThemeName = 'standard' | 'sand' | 'slate' | 'graphite';
+import { refreshAppearance } from '@/hooks/use-appearance';
+
+export type ThemeName =
+    | 'standard'
+    | 'sand'
+    | 'slate'
+    | 'graphite'
+    | 'terminal'
+    | 'barbie';
 export type AccentName =
     | 'violet'
     | 'blue'
@@ -39,6 +47,10 @@ export const THEMES: {
     radius: number;
     light: PreviewColors;
     dark: PreviewColors;
+    /** The theme's own accent colour; the accent setting does not apply. */
+    accent?: { light: string; dark: string };
+    /** Always dark, whatever the mode setting. */
+    alwaysDark?: boolean;
 }[] = [
     {
         id: 'standard',
@@ -128,7 +140,58 @@ export const THEMES: {
             border: '#242424',
         },
     },
+    {
+        id: 'terminal',
+        label: 'Terminal',
+        description: 'Black and green, always dark',
+        radius: 0,
+        light: {
+            background: '#000000',
+            sidebar: '#071007',
+            surface: '#040904',
+            foreground: '#72f57c',
+            muted: '#5bb661',
+            border: '#18361a',
+        },
+        dark: {
+            background: '#000000',
+            sidebar: '#071007',
+            surface: '#040904',
+            foreground: '#72f57c',
+            muted: '#5bb661',
+            border: '#18361a',
+        },
+        accent: { light: '#72f57c', dark: '#72f57c' },
+        alwaysDark: true,
+    },
+    {
+        id: 'barbie',
+        label: 'Barbie',
+        description: 'Pink, pink, pink',
+        radius: 12,
+        light: {
+            background: '#fee8f1',
+            sidebar: '#fedeec',
+            surface: '#fff9fc',
+            foreground: '#501135',
+            muted: '#8b3a62',
+            border: '#f4c5da',
+        },
+        dark: {
+            background: '#190610',
+            sidebar: '#391628',
+            surface: '#2d0e1e',
+            foreground: '#fbf0f5',
+            muted: '#e1acc4',
+            border: '#4f253a',
+        },
+        accent: { light: '#ca0c73', dark: '#fe82b6' },
+    },
 ];
+
+export function themeFor(name: ThemeName) {
+    return THEMES.find(({ id }) => id === name) ?? THEMES[0];
+}
 
 export const ACCENTS: {
     id: AccentName;
@@ -175,15 +238,30 @@ export function applyThemePreferences(preferences: ThemePreferences): void {
         (preferences.contrast === 'system' &&
             contrastQuery()?.matches === true);
 
+    const theme = themeFor(preferences.theme);
+
     root.dataset.palette = preferences.theme;
     root.dataset.accent = preferences.accent;
     root.dataset.contrast = isHighContrast ? 'more' : 'normal';
 
-    const accent = ACCENTS.find(({ id }) => id === preferences.accent);
+    if ((root.dataset.forcedMode === 'dark') !== Boolean(theme.alwaysDark)) {
+        if (theme.alwaysDark) {
+            root.dataset.forcedMode = 'dark';
+        } else {
+            delete root.dataset.forcedMode;
+        }
+        refreshAppearance();
+    }
+
+    const accent =
+        theme.accent ?? ACCENTS.find(({ id }) => id === preferences.accent);
     const themeColor = document.querySelector('meta[name="theme-color"]');
 
     if (accent && themeColor) {
-        themeColor.setAttribute('content', accent.light);
+        themeColor.setAttribute(
+            'content',
+            theme.alwaysDark ? theme.dark.background : accent.light,
+        );
     }
 }
 

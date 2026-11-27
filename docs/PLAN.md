@@ -742,7 +742,7 @@ Beställt i efterhand. I dialogerna *Rapportera tid* (även i läget för frånv
 Beställt i efterhand. Under *Inställningar → Utseende* väljer var och en hur appen ser ut. Standardutseendet är oförändrat. Designen finns i Figma på sidan "Utseende · Teman (förslag)".
 
 - **Läge:** ljust, mörkt eller enhetens läge, som tidigare. Valet sparas per enhet (cookie och webbläsarens lagring).
-- **Tema** (`users.theme`, `App\Enums\Theme`): Standard (dagens utseende och förval), Sand (varma toner, rundare hörn), Skiffer (svala blågrå toner) och Grafit (neutralt grått, stramare hörn). Varje tema har en ljus och en mörk variant.
+- **Tema** (`users.theme`, `App\Enums\Theme`): Standard (dagens utseende och förval), Sand (varma toner, rundare hörn), Skiffer (svala blågrå toner) och Grafit (neutralt grått, stramare hörn). Varje tema har en ljus och en mörk variant. Dessutom två roliga teman med egen accentfärg (accentvalet gäller inte då): Terminal (grönt på svart, systemets monospace-typsnitt, skarpa hörn, alltid mörkt oavsett läge) och Barbie (rosa i ljust och mörkt läge, rundade hörn).
 - **Accentfärg** (`users.accent`, `App\Enums\Accent`): violett, blå, turkos, grön, orange, rosa eller neutral. Tomt värde betyder organisationens färg.
 - **Varumärkesfärg per organisation** (`organizations.accent`): ägare och administratörer väljer den i organisationsinställningarna (samma behörighet som övriga inställningar). Den gäller alla medlemmar som inte valt en egen färg. Tomt värde betyder violett.
 - **Kontrast** (`users.contrast`, `App\Enums\ContrastPreference`): enhetens inställning (`prefers-contrast: more`, förval), normal eller hög. Hög kontrast ger tydligare ramar och mörkare dämpad text.

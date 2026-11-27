@@ -10,7 +10,7 @@ import {
     ThemePicker,
 } from '@/components/theme-pickers';
 import { useTranslation } from '@/lib/i18n';
-import { applyThemePreferences } from '@/lib/theme';
+import { applyThemePreferences, themeFor } from '@/lib/theme';
 import type { ThemePreferences } from '@/lib/theme';
 import {
     edit as editAppearance,
@@ -45,6 +45,7 @@ export default function Appearance() {
     const { t } = useTranslation();
     const { theme: saved, currentOrganization } = usePage().props;
     const [preferences, setPreferences] = useState<ThemePreferences>(saved);
+    const theme = themeFor(preferences.theme);
 
     const save = (changes: Partial<ThemePreferences>) => {
         const next = { ...preferences, ...changes };
@@ -85,7 +86,16 @@ export default function Appearance() {
 
                 <Setting
                     title={t('Mode')}
-                    description={t('Saved on this device.')}
+                    description={
+                        theme.alwaysDark
+                            ? t(
+                                  'Saved on this device. :theme is always dark.',
+                                  {
+                                      theme: t(theme.label),
+                                  },
+                              )
+                            : t('Saved on this device.')
+                    }
                 >
                     {() => <AppearanceTabs />}
                 </Setting>
@@ -126,22 +136,27 @@ export default function Appearance() {
                                         : undefined
                                 }
                                 onChange={(ownAccent) => save({ ownAccent })}
+                                isDisabled={Boolean(theme.accent)}
                                 data-test="accent-picker"
                             />
                             <p
                                 className="text-xs text-muted"
                                 aria-live="polite"
                             >
-                                {preferences.ownAccent === null &&
-                                currentOrganization
-                                    ? t("Organization's colour · :color", {
-                                          color: t(
-                                              accentLabel(
-                                                  preferences.organizationAccent,
-                                              ),
-                                          ),
+                                {theme.accent
+                                    ? t(':theme has its own accent colour.', {
+                                          theme: t(theme.label),
                                       })
-                                    : t(accentLabel(preferences.accent))}
+                                    : preferences.ownAccent === null &&
+                                        currentOrganization
+                                      ? t("Organization's colour · :color", {
+                                            color: t(
+                                                accentLabel(
+                                                    preferences.organizationAccent,
+                                                ),
+                                            ),
+                                        })
+                                      : t(accentLabel(preferences.accent))}
                             </p>
                         </div>
                     )}

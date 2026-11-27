@@ -123,3 +123,19 @@ it('lets owners and admins set the organization accent, but not members', functi
         ->assertSessionHasNoErrors();
     expect($organization->refresh()->accent)->toBeNull();
 });
+
+it('renders the terminal theme dark whatever the light or dark setting', function () {
+    $user = User::factory()->create();
+    app(UpdateAppearance::class)->handle($user, ['theme' => Theme::Terminal]);
+
+    $this->actingAs($user->fresh())->withCookie('appearance', 'light')->get(route('appearance.edit'))
+        ->assertSee('class="dark"', false)
+        ->assertSee('data-forced-mode="dark"', false)
+        ->assertSee('data-palette="terminal"', false);
+
+    $this->patch(route('appearance.update'), ['theme' => 'barbie'])->assertSessionHasNoErrors();
+
+    $this->withCookie('appearance', 'light')->get(route('appearance.edit'))
+        ->assertDontSee('data-forced-mode', false)
+        ->assertSee('data-palette="barbie"', false);
+});

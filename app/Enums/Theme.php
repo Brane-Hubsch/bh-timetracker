@@ -18,4 +18,18 @@ enum Theme: string
 
     /** Pure neutral greys and tighter corners. */
     case Graphite = 'graphite';
+
+    /** Green on black with a monospace font, always dark. Has its own accent colour. */
+    case Terminal = 'terminal';
+
+    /** Pink everything, for fun. Has its own accent colour. */
+    case Barbie = 'barbie';
+
+    /**
+     * Whether the theme ignores the light/dark setting and is always dark.
+     */
+    public function isAlwaysDark(): bool
+    {
+        return $this === self::Terminal;
+    }
 }
