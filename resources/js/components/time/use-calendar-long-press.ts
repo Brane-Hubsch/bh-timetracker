@@ -53,6 +53,7 @@ type Press = {
     timeout: number;
     active: boolean;
     range: ReturnType<typeof rangeAtTouch>;
+    snapHaptics?: (start: string, end: string) => void;
 };
 
 export function useCalendarLongPress(
@@ -61,8 +62,10 @@ export function useCalendarLongPress(
     calendarKey: string,
     enabled: boolean,
     onSelect: (start: string, end: string) => void,
+    onArmHaptics: (target: Element, touch: Touch) => Press['snapHaptics'],
 ) {
     const reportTime = useEffectEvent(onSelect);
+    const armHaptics = useEffectEvent(onArmHaptics);
 
     useLayoutEffect(() => {
         const container = containerRef.current;
@@ -91,6 +94,7 @@ export function useCalendarLongPress(
 
             press.range = range;
             if (range) {
+                press.snapHaptics?.(range.start, range.end);
                 api?.select(`${range.start}:00Z`, `${range.end}:00Z`);
             } else {
                 api?.unselect();
@@ -132,6 +136,7 @@ export function useCalendarLongPress(
                 origin,
                 active: false,
                 range: null,
+                snapHaptics: armHaptics(target, origin),
                 timeout: window.setTimeout(() => {
                     if (!press || container.closest('[data-swiping]')) return;
 
@@ -148,7 +153,10 @@ export function useCalendarLongPress(
 
             const touch = event.touches[0];
             if (press.active) {
-                if (event.cancelable) event.preventDefault();
+                // The native switch needs the uncancelled touchmove, and
+                // its touch-action already blocks scrolling on this target.
+                if (!press.snapHaptics && event.cancelable)
+                    event.preventDefault();
                 preview(touch);
             } else if (
                 Math.max(
@@ -204,6 +212,7 @@ export function useCalendarLongPress(
             signal,
         });
         container.addEventListener('touchmove', move, {
+            capture: true,
             passive: false,
             signal,
         });

@@ -8,21 +8,21 @@ type DragGesture = {
     moved: boolean;
 };
 
+function snapGesture(gesture: DragGesture, start: number, end: number) {
+    const previous = gesture.slot;
+    if (previous?.start === start && previous?.end === end) return;
+
+    gesture.slot = { start, end };
+    if (previous) {
+        gesture.switched = !gesture.switched;
+        gesture.moved = true;
+    }
+}
+
 export function useCalendarDragHaptics() {
     const gesture = useRef<DragGesture | null>(null);
 
-    const arm = (event: ReactTouchEvent<HTMLDivElement>) => {
-        const touch = event.touches[0];
-        const control = event.target;
-        if (
-            event.touches.length !== 1 ||
-            !touch ||
-            !(control instanceof HTMLInputElement) ||
-            !control.hasAttribute('data-calendar-haptic-switch')
-        ) {
-            return;
-        }
-
+    const armSwitch = (control: HTMLInputElement, touch: Touch) => {
         const listeners = new AbortController();
         const { signal } = listeners;
         const active: DragGesture = {
@@ -65,9 +65,9 @@ export function useCalendarDragHaptics() {
                 if (!finger) return;
 
                 if (active.slot !== null) {
-                    // FullCalendar has already processed the hit on this target.
-                    // Keep its window listener from cancelling WebKit's native
-                    // switch tracking. This switch handles the gesture itself.
+                    // The calendar has already processed this touch. Keep
+                    // FullCalendar's window listener from cancelling native
+                    // switch tracking.
                     move.stopPropagation();
                 }
                 placeSwitch(finger.clientY, active.switched ? 28 : 8);
@@ -102,6 +102,42 @@ export function useCalendarDragHaptics() {
         };
         control.addEventListener('touchend', finish, { signal });
         control.addEventListener('touchcancel', finish, { signal });
+
+        return active;
+    };
+
+    const arm = (event: ReactTouchEvent<HTMLDivElement>) => {
+        const { touches } = event.nativeEvent;
+        const touch = touches[0];
+        const control = event.target;
+        if (
+            touches.length === 1 &&
+            touch &&
+            control instanceof HTMLInputElement &&
+            control.hasAttribute('data-calendar-haptic-switch')
+        ) {
+            armSwitch(control, touch);
+        }
+    };
+
+    const armSelection = (target: Element, touch: Touch) => {
+        if (
+            !(target instanceof HTMLInputElement) ||
+            !target.hasAttribute('data-calendar-haptic-selection')
+        ) {
+            return;
+        }
+
+        const active = armSwitch(target, touch);
+        return (start: string, end: string) => {
+            if (gesture.current === active) {
+                snapGesture(
+                    active,
+                    Date.parse(`${start}:00Z`),
+                    Date.parse(`${end}:00Z`),
+                );
+            }
+        };
     };
 
     const start = (
@@ -117,16 +153,10 @@ export function useCalendarDragHaptics() {
 
     const snap = (start: Date, end: Date) => {
         const active = gesture.current;
-        if (!active?.slot) return;
-
-        const slot = { start: start.getTime(), end: end.getTime() };
-        if (active.slot.start === slot.start && active.slot.end === slot.end)
-            return;
-
-        active.slot = slot;
-        active.switched = !active.switched;
-        active.moved = true;
+        if (active?.slot) {
+            snapGesture(active, start.getTime(), end.getTime());
+        }
     };
 
-    return { arm, start, snap };
+    return { arm, armSelection, start, snap };
 }
