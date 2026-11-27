@@ -1,11 +1,18 @@
 import { FieldError, Label, TimeField } from '@heroui/react';
 import { Time } from '@internationalized/date';
+import { useRef } from 'react';
+import { TimePicker } from '@/components/form/time-picker';
+import { minutesToTime } from '@/lib/time';
+import { cn } from '@/lib/utils';
 
 type Props = {
     label: string;
+    pickerTitle: string;
     /** Local time as `HH:mm`, or an empty string. */
     value: string;
+    defaultTime?: string;
     onChange: (value: string) => void;
+    onPickerOpenChange?: (open: boolean) => void;
     /** Server-side validation message, shown below the field. */
     error?: string;
     /** Mark the field invalid without a message (e.g. when one message covers several fields). */
@@ -33,8 +40,11 @@ function pad(value: number): string {
  */
 export function TimeInputField({
     label,
+    pickerTitle,
     value,
+    defaultTime = '',
     onChange,
+    onPickerOpenChange,
     error,
     isInvalid,
     isRequired,
@@ -43,9 +53,14 @@ export function TimeInputField({
     isEmbedded,
     'data-test': dataTest,
 }: Props) {
+    const input = useRef<HTMLDivElement>(null);
+    const time = toTimeValue(value);
+    const fallback = toTimeValue(defaultTime);
+
     return (
         <TimeField
-            value={toTimeValue(value)}
+            ref={input}
+            value={time}
             onChange={(time) =>
                 onChange(time ? `${pad(time.hour)}:${pad(time.minute)}` : '')
             }
@@ -61,15 +76,30 @@ export function TimeInputField({
         >
             {!isEmbedded && <Label>{label}</Label>}
             <TimeField.Group
-                className={
-                    isEmbedded
-                        ? 'h-full rounded-none border-0 bg-transparent shadow-none outline-none'
-                        : undefined
-                }
+                className={cn(
+                    'min-w-0 gap-0 pe-0 has-[[data-time-picker-open]]:rounded-lg has-[[data-time-picker-open]]:ring-1 has-[[data-time-picker-open]]:ring-accent has-[[data-time-picker-open]]:ring-inset',
+                    isEmbedded &&
+                        'h-full rounded-none border-0 bg-transparent shadow-none outline-none',
+                )}
             >
-                <TimeField.Input>
+                <TimeField.Input className="min-w-0 flex-1">
                     {(segment) => <TimeField.Segment segment={segment} />}
                 </TimeField.Input>
+                <TimePicker
+                    title={pickerTitle}
+                    mode="clock"
+                    value={time ? time.hour * 60 + time.minute : null}
+                    defaultMinutes={
+                        fallback ? fallback.hour * 60 + fallback.minute : 0
+                    }
+                    onChange={(minutes) => onChange(minutesToTime(minutes))}
+                    onOpenChange={onPickerOpenChange}
+                    onEdit={() =>
+                        input.current
+                            ?.querySelector<HTMLElement>('[role="spinbutton"]')
+                            ?.focus()
+                    }
+                />
             </TimeField.Group>
             <FieldError>{error}</FieldError>
         </TimeField>
