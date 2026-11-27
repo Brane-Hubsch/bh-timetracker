@@ -8,7 +8,7 @@ import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { Button, Popover, Tooltip } from '@heroui/react';
 import { Banknote, CalendarDays, CalendarOff } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
@@ -46,7 +46,7 @@ const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
 const TOUCH_EVENT_DRAG_MIN_DISTANCE = 16;
 const HAPTIC_SWITCH_CLASS =
-    'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 [direction:ltr]';
+    'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 transition-none [direction:ltr]';
 
 function appendHapticSwitch(
     parent: Element,
@@ -281,6 +281,7 @@ export function TimeCalendar({
             : formatDuration(expectedWeekSeconds);
     const isMobile = useMediaQuery('(width < 768px)');
     const dragHaptics = useCalendarDragHaptics();
+    const moveHeldSwitch = useEffectEvent(dragHaptics.moveHeldSwitch);
     const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight(isMobile);
     const calendarRef = useRef<CalendarRef>(null);
@@ -297,11 +298,12 @@ export function TimeCalendar({
         Boolean(containerRef.current?.closest('[data-swiping]'));
     const setEditing = (editing: boolean) =>
         containerRef.current?.toggleAttribute('data-calendar-editing', editing);
-    const trackTouchSlots = (
+    const startDragHaptics = (
         jsEvent: Event,
         start: Date | null,
         end: Date | null,
     ) => {
+        dragHaptics.start(jsEvent.target, start, end);
         // FullCalendar can start a resize on the first touchmove.
         const isTouch =
             typeof TouchEvent !== 'undefined' && jsEvent instanceof TouchEvent;
@@ -309,6 +311,7 @@ export function TimeCalendar({
             isMobile && isAndroidTouch(isTouch) && start && end
                 ? { start: start.getTime(), end: end.getTime() }
                 : null;
+        if (lastTouchSlot.current) vibrateLightly();
     };
 
     useLayoutEffect(() => {
@@ -367,7 +370,9 @@ export function TimeCalendar({
 
                 // FullCalendar starts touch drags on long press with no minimum
                 // distance. Keep finger jitter from crossing a snap boundary.
-                if (event.cancelable) event.preventDefault();
+                // Safari can still track the native switch during this move.
+                if (!moveHeldSwitch(event) && event.cancelable)
+                    event.preventDefault();
                 event.stopPropagation();
             },
             { capture: true, passive: false, signal },
@@ -928,8 +933,7 @@ export function TimeCalendar({
                 }}
                 eventDragStart={({ el, jsEvent, event }) => {
                     eventSelection.pause();
-                    trackTouchSlots(jsEvent, event.start, event.end);
-                    dragHaptics.start(jsEvent.target, event.start, event.end);
+                    startDragHaptics(jsEvent, event.start, event.end);
                     eventDragOrigin.current =
                         typeof TouchEvent !== 'undefined' &&
                         jsEvent instanceof TouchEvent
@@ -1009,8 +1013,7 @@ export function TimeCalendar({
                 }}
                 eventResizeStart={({ el, jsEvent, event }) => {
                     eventSelection.pause();
-                    trackTouchSlots(jsEvent, event.start, event.end);
-                    dragHaptics.start(jsEvent.target, event.start, event.end);
+                    startDragHaptics(jsEvent, event.start, event.end);
                     setEditing(true);
                     const wrapper = el.parentElement;
                     const lane = el.closest<HTMLElement>('[data-date]');
