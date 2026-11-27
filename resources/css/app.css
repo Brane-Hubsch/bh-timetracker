@@ -994,6 +994,12 @@
         overflow-y: auto;
     }
 
+    .time-calendar-scroll:has([data-calendar-haptic-move]) {
+        /* The entry allows native panning before the hold. Once lifted, keep
+           the finger on the switch without cancelling its touch events. */
+        overflow-y: hidden;
+    }
+
     /* Use the day lane's inline start so the divider follows the measured time axis. */
     .time-calendar[data-view='day'] .time-calendar-day::before {
         position: fixed;

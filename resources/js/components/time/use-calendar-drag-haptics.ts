@@ -45,11 +45,16 @@ export function useCalendarDragHaptics() {
         control.style.visibility = 'visible';
         control.style.removeProperty('translate');
 
-        let offset = 0;
-        const placeSwitch = (fingerY: number, distanceFromTop: number) => {
-            const unshiftedTop = control.getBoundingClientRect().top - offset;
-            offset = fingerY - unshiftedTop - distanceFromTop;
-            control.style.translate = `0 ${offset}px`;
+        let offsetX = 0;
+        let offsetY = 0;
+        const placeSwitch = (
+            { clientX, clientY }: Touch,
+            distanceFromTop: number,
+        ) => {
+            const { left, top } = control.getBoundingClientRect();
+            offsetX += clientX - left - SWITCH_SIZE / 2;
+            offsetY += clientY - top - distanceFromTop;
+            control.style.translate = `${offsetX}px ${offsetY}px`;
             // Resolve the new position before WebKit handles this touch.
             control.getBoundingClientRect();
         };
@@ -72,7 +77,7 @@ export function useCalendarDragHaptics() {
                 // Leave room for WebKit's initial drag threshold even if the
                 // finger shifted slightly while the long press was starting.
                 placeSwitch(
-                    finger.clientY,
+                    finger,
                     switched ? SWITCH_ON_OFFSET : SWITCH_OFF_OFFSET,
                 );
 
@@ -82,7 +87,7 @@ export function useCalendarDragHaptics() {
         gesture.current = active;
         // Start on the off side and inside the thumb, before WebKit starts
         // tracking this touch. Updating checked during tracking would stop it.
-        placeSwitch(touch.clientY, SWITCH_OFF_OFFSET);
+        placeSwitch(touch, SWITCH_OFF_OFFSET);
 
         control.addEventListener(
             'touchmove',
@@ -168,13 +173,16 @@ export function useCalendarDragHaptics() {
         target: EventTarget | null,
         start: Date | null,
         end: Date | null,
-    ) => {
+    ): boolean => {
         const active = gesture.current;
-        if (active && active.control === target && start && end) {
-            // The first touchmove tracks this slot for the pickup pulse. If a
-            // resize also snaps on that move, it tracks the new slot once.
-            active.slot = { start: start.getTime(), end: end.getTime() };
-        }
+        if (!active || active.control !== target || !start || !end)
+            return false;
+
+        // The first touchmove tracks this slot for the pickup pulse. If a
+        // resize also snaps on that move, it tracks the new slot once.
+        active.slot = { start: start.getTime(), end: end.getTime() };
+
+        return true;
     };
 
     const snap = (start: Date, end: Date) => {
