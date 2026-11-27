@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 type Props = {
     name: string | null;
     range: string | null;
+    hideRangeOnMobile?: boolean;
     onStep?: (direction: -1 | 1) => void;
     stepLabels?: [previous: string, next: string];
     label?: string;
@@ -31,6 +32,7 @@ type Props = {
 export function PeriodPicker({
     name,
     range,
+    hideRangeOnMobile = false,
     onStep,
     stepLabels,
     label,
@@ -91,7 +93,7 @@ export function PeriodPicker({
                         {name}
                     </span>
                 )}
-                {range && (
+                {range && (!hideRangeOnMobile || isDesktop) && (
                     <span
                         className={cn(
                             'truncate tabular-nums',

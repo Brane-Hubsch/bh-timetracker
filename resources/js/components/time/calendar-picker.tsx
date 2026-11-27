@@ -361,8 +361,9 @@ export function CalendarPicker({
         date: addDays(today, offset),
         value: addDays(currentPeriod, offset),
     }));
+    const selectedPreset = presets.find((preset) => preset.value === value);
     const name =
-        presets.find((preset) => preset.value === value)?.label ??
+        selectedPreset?.label ??
         (isDay
             ? formatDate(date, intlLocale, { weekday: 'long' })
             : t('Week :number', { number: isoWeek(weekStart) }));
@@ -397,6 +398,7 @@ export function CalendarPicker({
         <PeriodPicker
             name={name}
             range={range}
+            hideRangeOnMobile={!isList && selectedPreset !== undefined}
             onStep={(direction) =>
                 onChange(addDays(date, direction * (isDay ? 1 : 7)))
             }
