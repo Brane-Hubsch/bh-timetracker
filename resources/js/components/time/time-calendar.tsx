@@ -6,7 +6,7 @@ import classicTheme from '@fullcalendar/react/themes/classic';
 import timeGridPlugin from '@fullcalendar/react/timegrid';
 import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
-import { Tooltip } from '@heroui/react';
+import { Button, Popover, Tooltip } from '@heroui/react';
 import { Banknote, CalendarDays, CalendarOff } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -38,6 +38,51 @@ import {
 } from './use-calendar-long-press';
 
 const TIMER_EVENT_ID = 'running-timer';
+
+function ExpectedWeekTimeHint({ duration }: { duration: string }) {
+    const { t } = useTranslation();
+    const [isOpen, setIsOpen] = useState(false);
+    const title = t('Expected working time this week: :duration', { duration });
+    const content = (
+        <>
+            <p aria-hidden="true" className="font-semibold">
+                {title}
+            </p>
+            <p className="mt-1 text-muted">
+                {t('Based on the work schedule, excluding holidays.')}
+            </p>
+        </>
+    );
+
+    return (
+        <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+            <Tooltip delay={350} closeDelay={0} isDisabled={isOpen}>
+                <Button
+                    variant="ghost"
+                    aria-label={title}
+                    className="absolute inset-0 h-full w-full min-w-0 rounded-sm p-0 [--button-bg-hover:transparent] [--button-bg-pressed:transparent] focus-visible:ring-inset"
+                />
+                <Tooltip.Content
+                    placement="right"
+                    showArrow
+                    className="w-64 max-w-[calc(100vw-5rem)] break-normal"
+                >
+                    <Tooltip.Arrow />
+                    {content}
+                </Tooltip.Content>
+            </Tooltip>
+            <Popover.Content
+                placement="right"
+                className="w-64 max-w-[calc(100vw-5rem)]"
+            >
+                <Popover.Arrow />
+                <Popover.Dialog aria-label={title} className="p-2 text-xs">
+                    {content}
+                </Popover.Dialog>
+            </Popover.Content>
+        </Popover>
+    );
+}
 
 /**
  * Where the running timer's event ends: now (local wall-clock time), at least 15 minutes after the
@@ -217,6 +262,8 @@ export function TimeCalendar({
     const resizeLane = useRef<HTMLElement | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
+    const [weekNumberHeader, setWeekNumberHeader] =
+        useState<HTMLElement | null>(null);
     const isSwiping = () =>
         Boolean(containerRef.current?.closest('[data-swiping]'));
     const setEditing = (editing: boolean) =>
@@ -306,13 +353,6 @@ export function TimeCalendar({
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
         >
-            {expectedWeekDuration !== null && (
-                <span className="sr-only">
-                    {t('Expected working time this week: :duration', {
-                        duration: expectedWeekDuration,
-                    })}
-                </span>
-            )}
             <FullCalendar
                 ref={calendarRef}
                 key={calendarKey}
@@ -335,17 +375,20 @@ export function TimeCalendar({
                 }
                 weekNumberFormat={{ week: 'short' }}
                 weekNumberHeaderClass="time-calendar-week-number"
+                weekNumberHeaderDidMount={
+                    isPreview ? undefined : ({ el }) => setWeekNumberHeader(el)
+                }
+                weekNumberHeaderWillUnmount={({ el }) =>
+                    setWeekNumberHeader((header) =>
+                        header === el ? null : header,
+                    )
+                }
                 weekNumberHeaderContent={({ text }) => (
                     <span className="flex flex-col items-center gap-1 font-normal text-muted tabular-nums">
                         <span className="text-[11px]/4 opacity-90">{text}</span>
                         {expectedWeekDuration !== null && (
-                            <span className="flex flex-col items-center">
-                                <span className="text-[10px]/3">
-                                    {t('Expected')}
-                                </span>
-                                <span className="text-[11px]/4 font-medium">
-                                    {expectedWeekDuration}
-                                </span>
+                            <span className="text-[11px]/4 font-medium">
+                                {expectedWeekDuration}
                             </span>
                         )}
                     </span>
@@ -843,6 +886,14 @@ export function TimeCalendar({
                     }
                 }}
             />
+            {/* FullCalendar marks custom week-number content as aria-hidden. */}
+            {!isPreview &&
+                weekNumberHeader &&
+                expectedWeekDuration !== null &&
+                createPortal(
+                    <ExpectedWeekTimeHint duration={expectedWeekDuration} />,
+                    weekNumberHeader,
+                )}
             {dayLanes.map((lane) => {
                 const name = holidayByDate.get(lane.dataset.date ?? '');
 

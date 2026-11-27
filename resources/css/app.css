@@ -452,6 +452,7 @@
 }
 
 .time-calendar .time-calendar-week-number {
+    position: relative;
     align-items: center;
     justify-content: center;
 }
