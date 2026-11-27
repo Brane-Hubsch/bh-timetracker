@@ -433,12 +433,12 @@ export function CalendarPicker({
 
                 return (
                     <>
-                        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 max-[359px]:flex-wrap min-[390px]:px-5">
+                        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-separator px-4 py-3 max-md:flex-wrap min-[390px]:px-5">
                             <p
                                 className={cn(
                                     'min-w-0 font-semibold first-letter:uppercase',
                                     compactRange
-                                        ? 'text-xs wrap-anywhere text-foreground min-[360px]:text-sm'
+                                        ? 'text-[19px]/[24px] tracking-tight wrap-anywhere text-foreground'
                                         : 'text-base',
                                 )}
                                 aria-live="polite"
@@ -454,7 +454,7 @@ export function CalendarPicker({
                                     fullRange
                                 )}
                             </p>
-                            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                            <div className="flex shrink-0 items-center gap-1 max-md:ms-auto md:gap-2">
                                 {showToday && (
                                     <Button
                                         variant={isList ? 'secondary' : 'ghost'}
@@ -503,7 +503,7 @@ export function CalendarPicker({
                                 {!isDesktop && (
                                     <Drawer.CloseTrigger
                                         aria-label={t('Close')}
-                                        className="static"
+                                        className="static ms-2 shrink-0"
                                     >
                                         <X className="size-4" aria-hidden />
                                     </Drawer.CloseTrigger>
