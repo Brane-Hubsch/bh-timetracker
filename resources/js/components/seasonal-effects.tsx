@@ -223,6 +223,8 @@ export function SeasonalEffects() {
         }
         const state = blower.current;
         state.x = button.getBoundingClientRect().left;
+        // The keys are read from the window, so the button needs no focus (and no focus ring while driving).
+        button.blur();
         state.direction = -1;
         state.driving = true;
 
