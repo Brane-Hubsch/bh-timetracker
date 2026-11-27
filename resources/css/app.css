@@ -711,6 +711,16 @@
     }
 }
 
+@layer components {
+    .toast {
+        @apply rounded-xl;
+    }
+
+    .toast .toast__title {
+        @apply text-overlay-foreground;
+    }
+}
+
 @media (width < 48rem) {
     :root:has(.mobile-tab-bar) .toast-region--bottom-end {
         bottom: calc(var(--mobile-tab-bar-height) + 1rem);
