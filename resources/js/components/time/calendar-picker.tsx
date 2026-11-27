@@ -27,6 +27,7 @@ type Props = {
     weekStartsOn: number;
     today: string;
     timezone: string;
+    hasMemberPicker: boolean;
     onChange: (date: string) => void;
     onViewChange: (view: CalendarView) => void;
 };
@@ -331,6 +332,7 @@ export function CalendarPicker({
     weekStartsOn,
     today,
     timezone,
+    hasMemberPicker,
     onChange,
     onViewChange,
 }: Props) {
@@ -361,8 +363,9 @@ export function CalendarPicker({
         date: addDays(today, offset),
         value: addDays(currentPeriod, offset),
     }));
+    const selectedPreset = presets.find((preset) => preset.value === value);
     const name =
-        presets.find((preset) => preset.value === value)?.label ??
+        selectedPreset?.label ??
         (isDay
             ? formatDate(date, intlLocale, { weekday: 'long' })
             : t('Week :number', { number: isoWeek(weekStart) }));
@@ -392,11 +395,14 @@ export function CalendarPicker({
         ? formatDate(date, intlLocale, compactFormat)
         : formatDateRange(weekStart, end, intlLocale, compactFormat);
     const label = t(isList ? 'Choose a week' : 'Choose a date or week');
+    const hideRangeOnMobile = !isList && selectedPreset !== undefined;
+    const wideMobileSpacing = isDay || hideRangeOnMobile;
 
     return (
         <PeriodPicker
             name={name}
             range={range}
+            hideRangeOnMobile={hideRangeOnMobile}
             onStep={(direction) =>
                 onChange(addDays(date, direction * (isDay ? 1 : 7)))
             }
@@ -409,7 +415,11 @@ export function CalendarPicker({
             compact
             enclosed
             mobileLabelOnly
-            className="min-w-0"
+            className={cn(
+                'min-w-0',
+                wideMobileSpacing && hasMemberPicker && 'max-md:me-1',
+            )}
+            triggerClassName={wideMobileSpacing ? 'max-md:px-3' : undefined}
             testId="calendar-period-picker"
         >
             {({ isDesktop, dismiss }) => {

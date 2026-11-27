@@ -548,6 +548,7 @@ export default function TimeIndex({
             weekStartsOn={weekStartsOn}
             today={today}
             timezone={timezone}
+            hasMemberPicker={Boolean(memberPicker)}
             onChange={(date) => visit({ date })}
             onViewChange={(view) => visit({ view })}
         />
@@ -593,7 +594,12 @@ export default function TimeIndex({
                         title={pageTitle}
                         actions={
                             <p
-                                className="flex items-baseline gap-1.5 text-xs tabular-nums max-md:text-[13.5px]/[17px]"
+                                className={cn(
+                                    'flex items-baseline gap-1.5 text-xs tabular-nums',
+                                    isList
+                                        ? 'max-md:text-[13.5px]/[17px]'
+                                        : 'max-md:text-[12.5px]/[17px]',
+                                )}
                                 data-test="week-total"
                             >
                                 <span
