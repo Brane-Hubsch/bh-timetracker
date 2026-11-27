@@ -1176,6 +1176,26 @@
         padding-inline-end: 3.25rem;
     }
 
+    .toast:has(.toast__action) {
+        @apply py-1;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+
+        &:not(:has(.toast__indicator)) {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        & .toast__action {
+            @apply h-11 px-2;
+            grid-column: -2;
+            grid-row: 1;
+            --button-bg: transparent;
+            --button-bg-hover: transparent;
+            --button-bg-pressed: transparent;
+            --button-fg: var(--accent);
+        }
+    }
+
     .toast .toast__close-button {
         @apply size-10 border-0 bg-transparent;
         inset-block-start: 50%;

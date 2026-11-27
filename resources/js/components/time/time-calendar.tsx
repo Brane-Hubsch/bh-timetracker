@@ -1102,6 +1102,10 @@ export function TimeCalendar({
                                   tabIndex={-1}
                                   data-calendar-haptic-selection=""
                                   data-test="calendar-create-haptic-switch"
+                                  onMouseDownCapture={(event) =>
+                                      event.stopPropagation()
+                                  }
+                                  onClick={(event) => event.stopPropagation()}
                                   className={cn(
                                       HAPTIC_SWITCH_CLASS,
                                       'z-0 h-full max-w-1/3 pointer-coarse:supports-[-webkit-touch-callout:none]:block',

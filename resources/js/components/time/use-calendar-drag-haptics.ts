@@ -1,11 +1,16 @@
 import { useRef } from 'react';
 import type { TouchEvent as ReactTouchEvent } from 'react';
 
+const SWITCH_SIZE = 40;
+const SWITCH_OFF_OFFSET = 4;
+const SWITCH_ON_OFFSET = SWITCH_SIZE - SWITCH_OFF_OFFSET;
+
+type Slot = { start: number; end: number };
+
 type DragGesture = {
     control: HTMLInputElement;
-    slot: { start: number; end: number } | null;
-    pickupPending: boolean;
-    switched: boolean;
+    slot: Slot | null;
+    trackedSlot: Slot | null;
     moved: boolean;
     trackTouch: (event: TouchEvent) => boolean;
 };
@@ -15,25 +20,24 @@ function snapGesture(gesture: DragGesture, start: number, end: number) {
     if (previous?.start === start && previous?.end === end) return;
 
     gesture.slot = { start, end };
-    if (previous) {
-        // A resize can start and snap on the same touchmove. One switch
-        // transition covers both so the pickup pulse is never cancelled.
-        if (!gesture.pickupPending) gesture.switched = !gesture.switched;
-        gesture.moved = true;
-    }
+    if (previous) gesture.moved = true;
 }
 
 export function useCalendarDragHaptics() {
     const gesture = useRef<DragGesture | null>(null);
 
-    const armSwitch = (control: HTMLInputElement, touch: Touch) => {
+    const armSwitch = (
+        control: HTMLInputElement,
+        touch: Touch,
+        allowReleaseHaptic = false,
+    ) => {
         const listeners = new AbortController();
         const { signal } = listeners;
         control.checked = false;
         // Rotate a horizontal switch. A square keeps the two axes equal even
         // in WebKit versions that measure the transformed bounding box.
-        control.style.width = '40px';
-        control.style.height = '40px';
+        control.style.width = `${SWITCH_SIZE}px`;
+        control.style.height = `${SWITCH_SIZE}px`;
         control.style.maxHeight = 'none';
         control.style.maxWidth = 'none';
         control.style.rotate = '90deg';
@@ -49,11 +53,11 @@ export function useCalendarDragHaptics() {
             // Resolve the new position before WebKit handles this touch.
             control.getBoundingClientRect();
         };
+        let switched = false;
         const active: DragGesture = {
             control,
             slot: null,
-            pickupPending: false,
-            switched: false,
+            trackedSlot: null,
             moved: false,
             trackTouch: ({ touches }) => {
                 const finger = Array.from(touches).find(
@@ -61,11 +65,16 @@ export function useCalendarDragHaptics() {
                 );
                 if (!finger) return false;
 
-                if (active.pickupPending) {
-                    active.pickupPending = false;
-                    active.switched = !active.switched;
+                if (active.slot !== active.trackedSlot) {
+                    active.trackedSlot = active.slot;
+                    switched = !switched;
                 }
-                placeSwitch(finger.clientY, active.switched ? 28 : 8);
+                // Leave room for WebKit's initial drag threshold even if the
+                // finger shifted slightly while the long press was starting.
+                placeSwitch(
+                    finger.clientY,
+                    switched ? SWITCH_ON_OFFSET : SWITCH_OFF_OFFSET,
+                );
 
                 return true;
             },
@@ -73,7 +82,7 @@ export function useCalendarDragHaptics() {
         gesture.current = active;
         // Start on the off side and inside the thumb, before WebKit starts
         // tracking this touch. Updating checked during tracking would stop it.
-        placeSwitch(touch.clientY, 8);
+        placeSwitch(touch.clientY, SWITCH_OFF_OFFSET);
 
         control.addEventListener(
             'touchmove',
@@ -97,7 +106,9 @@ export function useCalendarDragHaptics() {
                 return;
             }
 
-            if (active.slot !== null && !active.moved) end.preventDefault();
+            if (active.slot !== null && !active.moved && !allowReleaseHaptic) {
+                end.preventDefault();
+            }
             listeners.abort();
 
             // Leave the control in place until Safari finishes the native touch.
@@ -141,7 +152,7 @@ export function useCalendarDragHaptics() {
             return;
         }
 
-        const active = armSwitch(target, touch);
+        const active = armSwitch(target, touch, true);
         return (start: string, end: string) => {
             if (gesture.current === active) {
                 snapGesture(
@@ -160,9 +171,9 @@ export function useCalendarDragHaptics() {
     ) => {
         const active = gesture.current;
         if (active && active.control === target && start && end) {
+            // The first touchmove tracks this slot for the pickup pulse. If a
+            // resize also snaps on that move, it tracks the new slot once.
             active.slot = { start: start.getTime(), end: end.getTime() };
-            // Safari's native switch can pulse on the next physical touchmove.
-            active.pickupPending = true;
         }
     };
 
