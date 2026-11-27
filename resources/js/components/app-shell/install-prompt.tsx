@@ -1,9 +1,10 @@
 import { Button, Card } from '@heroui/react';
 import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useId, useState } from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import installIconFace from '@/assets/install-icon-face.svg';
+import installIconHand from '@/assets/install-icon-hand.svg';
 
 const storageKey = 'pwa-install-prompt-next-at';
 const reminderDelay = 30 * 24 * 60 * 60 * 1000;
@@ -118,22 +119,34 @@ export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
         <Card
             aria-labelledby={titleId}
             className={cn(
-                'fixed inset-x-3 z-40 mx-auto max-w-[24rem] rounded-2xl border border-border shadow-lg md:bottom-3',
+                'fixed inset-x-3 bottom-(--install-bottom) z-40 mx-auto max-h-[calc(100dvh-var(--install-bottom)-env(safe-area-inset-top)-0.75rem)] max-w-[24rem] gap-4 overflow-y-auto overscroll-contain rounded-2xl border border-border p-5 text-center shadow-lg md:[--install-bottom:0.75rem]',
                 hasTimer
-                    ? 'bottom-[calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space)+0.75rem)]'
-                    : 'bottom-[calc(var(--mobile-tab-bar-height)+0.75rem)]',
+                    ? '[--install-bottom:calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space)+0.75rem)]'
+                    : '[--install-bottom:calc(var(--mobile-tab-bar-height)+0.75rem)]',
             )}
         >
-            <Card.Header className="flex-row items-center gap-3">
-                <AppLogoIcon size={40} />
-                <div className="min-w-0 space-y-0.5">
+            <Card.Header className="shrink-0 items-center gap-3">
+                <div
+                    className="relative size-[72px] shrink-0"
+                    aria-hidden="true"
+                >
+                    <img src={installIconFace} width={72} height={72} alt="" />
+                    <img
+                        src={installIconHand}
+                        width={72}
+                        height={72}
+                        alt=""
+                        className="absolute inset-0 origin-[50%_57.8125%] motion-safe:animate-install-clock-hand"
+                    />
+                </div>
+                <div className="w-full space-y-1">
                     <Card.Title
                         id={titleId}
-                        className="text-base font-semibold"
+                        className="text-2xl leading-8 font-semibold wrap-anywhere"
                     >
                         {t('Install :app', { app: name })}
                     </Card.Title>
-                    <Card.Description>
+                    <Card.Description className="text-base leading-6">
                         {t('Open the app directly from your home screen.')}
                     </Card.Description>
                 </div>
@@ -141,7 +154,7 @@ export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
             {step === 'instructions' && (
                 <p
                     role="status"
-                    className="rounded-xl bg-surface-secondary px-3 py-2 text-sm"
+                    className="shrink-0 rounded-xl bg-surface-secondary px-3 py-2 text-base"
                 >
                     {/Android/i.test(navigator.userAgent)
                         ? t(
@@ -152,22 +165,24 @@ export function InstallPrompt({ hasTimer }: { hasTimer: boolean }) {
                           )}
                 </p>
             )}
-            <Card.Footer className="flex-wrap gap-2">
+            <Card.Footer className="shrink-0 flex-col gap-2">
                 <Button
-                    size="sm"
-                    className="h-9 px-2"
+                    size="lg"
+                    variant="ghost"
+                    fullWidth
+                    className="min-h-11"
+                    onPress={dismiss}
+                >
+                    {t('Remind me later')}
+                </Button>
+                <Button
+                    size="lg"
+                    fullWidth
+                    className="min-h-11"
                     isPending={isInstalling}
                     onPress={install}
                 >
                     {t('Add to Home Screen')}
-                </Button>
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-9 px-2"
-                    onPress={dismiss}
-                >
-                    {t('Remind me later')}
                 </Button>
             </Card.Footer>
         </Card>
