@@ -158,14 +158,21 @@ export function useCalendarDragHaptics() {
         }
 
         const active = armSwitch(target, touch, true);
-        return (start: string, end: string) => {
-            if (gesture.current === active) {
-                snapGesture(
-                    active,
-                    Date.parse(`${start}:00Z`),
-                    Date.parse(`${end}:00Z`),
-                );
-            }
+        return {
+            snap: (start: string, end: string) => {
+                if (gesture.current === active) {
+                    snapGesture(
+                        active,
+                        Date.parse(`${start}:00Z`),
+                        Date.parse(`${end}:00Z`),
+                    );
+                }
+            },
+            prepareRelease: () => {
+                // End WebKit's drag tracking so the real touchend can toggle
+                // the switch and confirm the selection even after a snap.
+                if (gesture.current === active) target.checked = true;
+            },
         };
     };
 

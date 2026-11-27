@@ -27,13 +27,18 @@ function rangeAtTouch(calendar: HTMLElement, { clientX, clientY }: Touch) {
             layer.classList.contains('time-calendar-slot') &&
             calendar.contains(layer),
     );
-    const time = slot?.dataset.time;
-    if (!time) {
+    if (!slot?.dataset.time) {
         return null;
     }
 
+    const { top, height } = slot.getBoundingClientRect();
+    const slotMinute = timeToMinutes(slot.dataset.time);
+    const centerMinute =
+        clientY < top + height / 2
+            ? slotMinute
+            : slotMinute + CALENDAR_SNAP_MINUTES;
     const startMinute = Math.min(
-        timeToMinutes(time),
+        Math.max(0, centerMinute - BLOCK_MINUTES / 2),
         DAY_MINUTES - BLOCK_MINUTES,
     );
     const endMinute = startMinute + BLOCK_MINUTES;
@@ -50,7 +55,10 @@ type Press = {
     timeout: number;
     active: boolean;
     range: ReturnType<typeof rangeAtTouch>;
-    snapHaptics?: (start: string, end: string) => void;
+    nativeHaptics?: {
+        snap: (start: string, end: string) => void;
+        prepareRelease: () => void;
+    };
 };
 
 export function useCalendarLongPress(
@@ -59,7 +67,7 @@ export function useCalendarLongPress(
     calendarKey: string,
     enabled: boolean,
     onSelect: (start: string, end: string) => void,
-    onArmHaptics: (target: Element, touch: Touch) => Press['snapHaptics'],
+    onArmHaptics: (target: Element, touch: Touch) => Press['nativeHaptics'],
 ) {
     const reportTime = useEffectEvent(onSelect);
     const armHaptics = useEffectEvent(onArmHaptics);
@@ -93,8 +101,8 @@ export function useCalendarLongPress(
             press.range = range;
             if (range) {
                 if (withHaptics) {
-                    if (press.snapHaptics) {
-                        press.snapHaptics(range.start, range.end);
+                    if (press.nativeHaptics) {
+                        press.nativeHaptics.snap(range.start, range.end);
                     } else if (isAndroidTouch(true)) {
                         vibrateLightly();
                     }
@@ -140,7 +148,7 @@ export function useCalendarLongPress(
                 origin,
                 active: false,
                 range: null,
-                snapHaptics: armHaptics(target, origin),
+                nativeHaptics: armHaptics(target, origin),
                 timeout: window.setTimeout(() => {
                     if (!press || container.closest('[data-swiping]')) return;
 
@@ -163,7 +171,7 @@ export function useCalendarLongPress(
             if (press.active) {
                 // The native switch needs the uncancelled touchmove, and
                 // its touch-action already blocks scrolling on this target.
-                if (!press.snapHaptics && event.cancelable)
+                if (!press.nativeHaptics && event.cancelable)
                     event.preventDefault();
                 preview(touch);
             } else if (
@@ -191,20 +199,22 @@ export function useCalendarLongPress(
             }
 
             const range = press?.range;
-            const allowNativeRelease = Boolean(range && press?.snapHaptics);
+            const nativeHaptics = range && press?.nativeHaptics;
             // FullCalendar did not see this touch start. Suppress its emulated
             // mouse events unless Safari needs the native switch release.
-            if (!allowNativeRelease && event.cancelable) event.preventDefault();
+            if (!nativeHaptics && event.cancelable) event.preventDefault();
             finish(Boolean(range));
             if (!range) return;
 
-            if (allowNativeRelease) {
+            if (nativeHaptics) {
+                nativeHaptics.prepareRelease();
                 // Opening the form removes the switch. Give WebKit the touch
-                // default action first, including a stationary hold's click.
+                // default action first.
                 reportFrame = requestAnimationFrame(() =>
                     reportTime(range.start, range.end),
                 );
             } else {
+                if (isAndroidTouch(true)) vibrateLightly();
                 reportTime(range.start, range.end);
             }
         }
@@ -237,7 +247,7 @@ export function useCalendarLongPress(
         container.addEventListener(
             'touchcancel',
             (event) => {
-                if (press?.snapHaptics && event.cancelable) {
+                if (press?.nativeHaptics && event.cancelable) {
                     event.preventDefault();
                 }
                 touchId = null;
