@@ -253,6 +253,10 @@
     padding-inline: var(--time-calendar-entry-padding, 4px) !important;
 }
 
+.time-calendar-event-lifted {
+    --time-calendar-entry-tint: 19%;
+}
+
 /* FullCalendar selects an entry on touch long-press to enable its resize handles. */
 .time-calendar-event-touch-selected:not(:focus-visible) {
     outline-style: none;

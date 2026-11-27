@@ -37,6 +37,7 @@ import {
 } from './use-calendar-long-press';
 
 const TIMER_EVENT_ID = 'running-timer';
+const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
 
 /**
  * Where the running timer's event ends: now (local wall-clock time), at least 15 minutes after the
@@ -370,6 +371,7 @@ export function TimeCalendar({
                     return true;
                 }}
                 editable={!isPreview}
+                eventLongPressDelay={400}
                 eventAllow={() => !isSwiping()}
                 eventMinHeight={0}
                 eventResizableFromStart
@@ -428,6 +430,7 @@ export function TimeCalendar({
                               'time-calendar-event',
                               isSelected &&
                                   'time-calendar-event-touch-selected',
+                              isDragging && LIFTED_EVENT_CLASS,
                               isMirror && 'time-calendar-event-mirror',
                               isMirror &&
                                   isDragging &&
@@ -594,7 +597,7 @@ export function TimeCalendar({
                             className="time-calendar-entry relative size-full overflow-hidden border-l-3 text-xs leading-tight text-foreground"
                             style={{
                                 borderLeftColor: color,
-                                backgroundColor: `color-mix(in oklab, ${color} 14%, var(--fc-classic-background))`,
+                                backgroundColor: `color-mix(in oklab, ${color} var(--time-calendar-entry-tint, 14%), var(--fc-classic-background))`,
                             }}
                         >
                             <div className="time-calendar-entry-layout flex size-full flex-col p-2">
@@ -725,7 +728,11 @@ export function TimeCalendar({
 
                     if (lane && calendar) {
                         const { left, width } = el.getBoundingClientRect();
-                        const { paddingInline } = getComputedStyle(el);
+                        const eventStyle = getComputedStyle(el);
+                        const { paddingInline } = eventStyle;
+                        const background = eventStyle.getPropertyValue(
+                            '--fc-classic-background',
+                        );
                         const offset = left - lane.getBoundingClientRect().left;
 
                         calendar.style.setProperty(
@@ -740,7 +747,12 @@ export function TimeCalendar({
                             '--move-origin-padding',
                             paddingInline,
                         );
-                        // FullCalendar clones this element when dragging outside the grid.
+                        // The floating clone can appear before the grid renders its drag preview.
+                        el.classList.add(LIFTED_EVENT_CLASS);
+                        el.style.setProperty(
+                            '--fc-classic-background',
+                            background,
+                        );
                         el.style.setProperty(
                             '--time-calendar-entry-padding',
                             paddingInline,
@@ -753,6 +765,8 @@ export function TimeCalendar({
                     style?.removeProperty('--move-origin-left');
                     style?.removeProperty('--move-origin-width');
                     style?.removeProperty('--move-origin-padding');
+                    el.classList.remove(LIFTED_EVENT_CLASS);
+                    el.style.removeProperty('--fc-classic-background');
                     el.style.removeProperty('--time-calendar-entry-padding');
                 }}
                 eventDrop={(info) => {
