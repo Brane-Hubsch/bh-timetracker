@@ -7,11 +7,13 @@ export function HapticTap<T extends HTMLElement>({
     children,
     className,
     enabled = true,
+    focusOnTap = true,
     round = false,
 }: {
     children: (ref: RefObject<T | null>) => ReactNode;
     className?: string;
     enabled?: boolean;
+    focusOnTap?: boolean;
     round?: boolean;
 }) {
     const target = useRef<T>(null);
@@ -44,7 +46,9 @@ export function HapticTap<T extends HTMLElement>({
                         round && '[clip-path:circle(50%)]',
                     )}
                     onChange={() => {
-                        target.current?.focus({ preventScroll: true });
+                        if (focusOnTap) {
+                            target.current?.focus({ preventScroll: true });
+                        }
                         target.current?.click();
                     }}
                 />
