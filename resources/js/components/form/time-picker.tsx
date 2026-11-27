@@ -1,5 +1,6 @@
 import { Button, ListBox, Popover } from '@heroui/react';
 import { ChevronDown, Keyboard } from 'lucide-react';
+import type { FocusEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
@@ -16,7 +17,9 @@ type Props = {
     defaultMinutes: number;
     onChange: (minutes: number) => void;
     onOpenChange?: (open: boolean) => void;
+    onEditStart: () => void;
     onEdit: () => void;
+    mobileField?: { value: string; isInvalid?: boolean };
     preview?: (minutes: number) => string | undefined;
 };
 
@@ -29,6 +32,28 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 function rowHeight(list: HTMLDivElement) {
     return list.querySelector<HTMLElement>('[role="option"]')?.offsetHeight;
+}
+
+/** Keep the inline editor out of the mobile tab order until the user chooses to type. */
+export function useTimePickerField() {
+    const isDesktop = useIsDesktop();
+    const [isEditing, setIsEditing] = useState(false);
+
+    return {
+        opensFromField: !isDesktop && !isEditing,
+        startEditing: () => setIsEditing(true),
+        endEditingOnBlur: (event: FocusEvent<HTMLElement>) => {
+            const editor = event.currentTarget;
+            if (!isEditing || editor.contains(event.relatedTarget)) return;
+
+            // Moving between editable clock segments can report a null related target.
+            requestAnimationFrame(() => {
+                if (!editor.contains(editor.ownerDocument.activeElement)) {
+                    setIsEditing(false);
+                }
+            });
+        },
+    };
 }
 
 function TimeColumn({
@@ -159,7 +184,9 @@ export function TimePicker({
     defaultMinutes,
     onChange,
     onOpenChange,
+    onEditStart,
     onEdit,
+    mobileField,
     preview,
 }: Props) {
     const { t } = useTranslation();
@@ -287,11 +314,18 @@ export function TimePicker({
             type="button"
             variant="ghost"
             isIconOnly
-            aria-label={title}
+            aria-label={
+                mobileField?.value ? `${title}, ${mobileField.value}` : title
+            }
             aria-haspopup="dialog"
             aria-expanded={isOpen}
+            aria-invalid={mobileField?.isInvalid || undefined}
             onPress={isDesktop ? undefined : () => changeOpen(true)}
-            className="group/time-trigger h-9 w-8 min-w-0 shrink-0 rounded-field p-0 text-muted [--button-bg-hover:transparent] [--button-bg-pressed:transparent] data-[time-picker-open]:text-accent sm:h-8 sm:w-9"
+            className={cn(
+                'group/time-trigger h-9 w-8 min-w-0 shrink-0 rounded-field p-0 text-muted [--button-bg-hover:transparent] [--button-bg-pressed:transparent] data-[time-picker-open]:text-accent sm:h-8 sm:w-9',
+                mobileField &&
+                    'absolute inset-0 z-10 size-full justify-end pe-1 active:transform-none data-pressed:transform-none sm:size-full sm:pe-1.5',
+            )}
             data-time-picker-open={isOpen || undefined}
         >
             <span
@@ -332,6 +366,9 @@ export function TimePicker({
 
     return (
         <>
+            {mobileField && (
+                <span aria-hidden="true" className="w-8 shrink-0 sm:w-9" />
+            )}
             {trigger}
             <ResponsiveDialog
                 isOpen={isOpen}
@@ -346,7 +383,10 @@ export function TimePicker({
                             variant="ghost"
                             className="h-11 text-accent-soft-foreground"
                             onPress={() => {
-                                flushSync(() => changeOpen(false));
+                                flushSync(() => {
+                                    changeOpen(false);
+                                    onEditStart();
+                                });
                                 onEdit();
                             }}
                         >

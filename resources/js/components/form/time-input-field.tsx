@@ -1,7 +1,7 @@
 import { FieldError, Label, TimeField } from '@heroui/react';
 import { Time } from '@internationalized/date';
 import { useRef } from 'react';
-import { TimePicker } from '@/components/form/time-picker';
+import { TimePicker, useTimePickerField } from '@/components/form/time-picker';
 import { minutesToTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
@@ -54,8 +54,11 @@ export function TimeInputField({
     'data-test': dataTest,
 }: Props) {
     const input = useRef<HTMLDivElement>(null);
+    const { opensFromField, startEditing, endEditingOnBlur } =
+        useTimePickerField();
     const time = toTimeValue(value);
     const fallback = toTimeValue(defaultTime);
+    const invalid = isInvalid ?? Boolean(error);
 
     return (
         <TimeField
@@ -64,9 +67,9 @@ export function TimeInputField({
             onChange={(time) =>
                 onChange(time ? `${pad(time.hour)}:${pad(time.minute)}` : '')
             }
-            isInvalid={isInvalid ?? Boolean(error)}
+            isInvalid={invalid}
             isRequired={isRequired}
-            autoFocus={autoFocus}
+            autoFocus={autoFocus && !opensFromField}
             aria-label={isEmbedded ? label : undefined}
             shouldForceLeadingZeros
             validationBehavior="aria"
@@ -77,14 +80,20 @@ export function TimeInputField({
             {!isEmbedded && <Label>{label}</Label>}
             <TimeField.Group
                 className={cn(
-                    'min-w-0 gap-0 pe-0 has-[[data-time-picker-open]]:rounded-lg has-[[data-time-picker-open]]:ring-1 has-[[data-time-picker-open]]:ring-accent has-[[data-time-picker-open]]:ring-inset',
+                    'relative min-w-0 gap-0 pe-0 has-[[data-time-picker-open]]:rounded-lg has-[[data-time-picker-open]]:ring-1 has-[[data-time-picker-open]]:ring-accent has-[[data-time-picker-open]]:ring-inset',
                     isEmbedded &&
                         'h-full rounded-none border-0 bg-transparent shadow-none outline-none',
                 )}
             >
-                <TimeField.Input className="min-w-0 flex-1">
-                    {(segment) => <TimeField.Segment segment={segment} />}
-                </TimeField.Input>
+                <div
+                    className="contents"
+                    inert={opensFromField}
+                    onBlur={endEditingOnBlur}
+                >
+                    <TimeField.Input className="min-w-0 flex-1">
+                        {(segment) => <TimeField.Segment segment={segment} />}
+                    </TimeField.Input>
+                </div>
                 <TimePicker
                     title={pickerTitle}
                     mode="clock"
@@ -94,9 +103,17 @@ export function TimeInputField({
                     }
                     onChange={(minutes) => onChange(minutesToTime(minutes))}
                     onOpenChange={onPickerOpenChange}
+                    mobileField={
+                        opensFromField
+                            ? { value, isInvalid: invalid }
+                            : undefined
+                    }
+                    onEditStart={startEditing}
                     onEdit={() =>
                         input.current
-                            ?.querySelector<HTMLElement>('[role="spinbutton"]')
+                            ?.querySelector<HTMLElement>(
+                                '[contenteditable="true"]',
+                            )
                             ?.focus()
                     }
                 />
