@@ -4,6 +4,7 @@ import { InstallPrompt } from '@/components/app-shell/install-prompt';
 import { MobilePageHeaderHost } from '@/components/app-shell/mobile-page-header';
 import { SidebarResizeHandle } from '@/components/app-shell/sidebar-resize-handle';
 import { CommandPaletteProvider } from '@/components/command-palette';
+import { SeasonalEffects } from '@/components/seasonal-effects';
 import { MobileBottomNav } from '@/components/app-shell/mobile-navigation';
 import { usePage } from '@inertiajs/react';
 import { useState, type CSSProperties } from 'react';
@@ -108,6 +109,7 @@ export default function AppLayout({
                 <MobileBottomNav className="md:hidden" />
                 <InstallPrompt />
                 <KeyboardShortcutsDialog />
+                <SeasonalEffects />
             </div>
         </CommandPaletteProvider>
     );

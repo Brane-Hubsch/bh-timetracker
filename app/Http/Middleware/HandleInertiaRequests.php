@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\RunningTimer;
 use App\Models\User;
 use App\Support\CurrentOrganization;
+use App\Support\ThemePreferences;
 use App\Support\TimerPresenter;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -55,6 +56,8 @@ class HandleInertiaRequests extends Middleware
             // The person's running timer, in any of their organizations.
             'timer' => fn () => $user && ($timer = RunningTimer::runningFor($user)) ? TimerPresenter::present($timer, $user) : null,
             'can' => fn () => $user && ($organization = $currentOrganization->get()) ? $user->toOrganizationPermissions($organization) : null,
+            // Also read by app.blade.php, so the first paint has the right colours.
+            'theme' => fn () => ThemePreferences::for($user, $user ? $currentOrganization->get() : null),
         ];
     }
 

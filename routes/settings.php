@@ -7,6 +7,7 @@ use App\Http\Controllers\Organizations\OrganizationInvitationController;
 use App\Http\Controllers\Organizations\OrganizationLogoController;
 use App\Http\Controllers\Organizations\OrganizationMemberController;
 use App\Http\Controllers\Settings\AiConnectionController;
+use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\ProfileAvatarController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -39,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('passkeys.rename');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+    Route::patch('settings/appearance', [AppearanceController::class, 'update'])->name('appearance.update');
     Route::inertia('settings/sidebar', 'settings/sidebar')->name('sidebar.edit');
     Route::patch('settings/sidebar/visibility', SidebarVisibilityController::class)->name('sidebar.visibility.update');
     Route::patch('settings/sidebar/order', SidebarOrderController::class)->name('sidebar.order.update');

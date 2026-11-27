@@ -1,5 +1,16 @@
+@php
+    $theme = $page['props']['theme'] ?? [];
+    $alwaysDark = \App\Enums\Theme::tryFrom($theme['theme'] ?? '')?->isAlwaysDark() ?? false;
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html
+    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    @class(['dark' => ($appearance ?? 'system') == 'dark' || $alwaysDark])
+    @if ($alwaysDark) data-forced-mode="dark" @endif
+    data-palette="{{ $theme['theme'] ?? 'standard' }}"
+    data-accent="{{ $theme['accent'] ?? 'violet' }}"
+    data-contrast="{{ ($theme['contrast'] ?? 'system') === 'more' ? 'more' : 'normal' }}"
+>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -35,6 +46,10 @@
                             event.preventDefault();
                         }
                     }, { capture: true, passive: false });
+                }
+
+                if ('{{ $theme['contrast'] ?? 'system' }}' === 'system' && window.matchMedia('(prefers-contrast: more)').matches) {
+                    document.documentElement.dataset.contrast = 'more';
                 }
 
                 const appearance = '{{ $appearance ?? "system" }}';

@@ -37,8 +37,17 @@ const getStoredAppearance = (): Appearance => {
     return (localStorage.getItem('appearance') as Appearance) || 'system';
 };
 
+/** Some themes (Terminal) are always dark; lib/theme.ts marks them on <html>. */
+const isForcedDark = (): boolean =>
+    typeof document !== 'undefined' &&
+    document.documentElement.dataset.forcedMode === 'dark';
+
 const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || (appearance === 'system' && prefersDark());
+    return (
+        isForcedDark() ||
+        appearance === 'dark' ||
+        (appearance === 'system' && prefersDark())
+    );
 };
 
 const applyTheme = (appearance: Appearance): void => {
@@ -69,6 +78,14 @@ const mediaQuery = (): MediaQueryList | null => {
 };
 
 const handleSystemThemeChange = (): void => applyTheme(currentAppearance);
+
+/**
+ * Apply the mode again, e.g. after switching to or from a theme that is always dark.
+ */
+export function refreshAppearance(): void {
+    applyTheme(currentAppearance);
+    notify();
+}
 
 export function initializeTheme(): void {
     if (typeof window === 'undefined') {

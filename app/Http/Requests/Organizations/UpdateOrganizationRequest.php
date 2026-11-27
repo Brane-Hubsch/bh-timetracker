@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests\Organizations;
 
+use App\Enums\Accent;
 use App\Rules\OrganizationName;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class UpdateOrganizationRequest extends FormRequest
 {
@@ -35,13 +37,15 @@ class UpdateOrganizationRequest extends FormRequest
             'workday_hours' => ['sometimes', 'numeric', 'min:1', 'max:24'],
             // Whether members may start and stop a timer.
             'timer_enabled' => ['sometimes', 'boolean'],
+            // Brand accent for members without their own; null is the default violet.
+            'accent' => ['sometimes', 'nullable', Rule::enum(Accent::class)],
         ];
     }
 
     /**
      * The validated attributes for UpdateOrganization.
      *
-     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string, workday_seconds?: int, timer_enabled?: bool}
+     * @return array{name: string, currency: string, default_hourly_rate: int|null, week_starts_on: int, timezone: string, workday_seconds?: int, timer_enabled?: bool, accent?: Accent|null}
      */
     public function settings(): array
     {
@@ -59,6 +63,10 @@ class UpdateOrganizationRequest extends FormRequest
 
         if ($this->has('timer_enabled')) {
             $settings['timer_enabled'] = $this->boolean('timer_enabled');
+        }
+
+        if ($this->has('accent')) {
+            $settings['accent'] = $this->enum('accent', Accent::class);
         }
 
         return $settings;
