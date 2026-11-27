@@ -44,7 +44,7 @@ import {
     weekDates,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { index, list, update } from '@/routes/time';
+import { index, list, reschedule, update } from '@/routes/time';
 import type {
     Absence,
     AbsenceDraft,
@@ -447,16 +447,18 @@ export default function TimeIndex({
         revert: () => void,
     ) =>
         router.patch(
-            update.url({ timeEntry: entry.id }),
-            {
-                user_id: entry.userId,
-                project_id: entry.project.id,
-                description: entry.description,
-                is_billable: entry.isBillable,
-                date: start.slice(0, 10),
-                start: timeOf(start),
-                end: timeOf(end),
-            },
+            (isMobile ? reschedule : update).url({ timeEntry: entry.id }),
+            isMobile
+                ? { start, end }
+                : {
+                      user_id: entry.userId,
+                      project_id: entry.project.id,
+                      description: entry.description,
+                      is_billable: entry.isBillable,
+                      date: start.slice(0, 10),
+                      start: timeOf(start),
+                      end: timeOf(end),
+                  },
             {
                 preserveScroll: true,
                 preserveState: true,

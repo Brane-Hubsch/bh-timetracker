@@ -38,6 +38,8 @@ Route::prefix('{current_organization}')
         Route::post('time', [TimeEntryController::class, 'store'])->name('time.store');
         Route::post('time/copy', [TimeEntryController::class, 'copy'])->name('time.copy');
         Route::patch('time/{timeEntry}', [TimeEntryController::class, 'update'])->name('time.update');
+        Route::patch('time/{timeEntry}/schedule', [TimeEntryController::class, 'reschedule'])->name('time.reschedule');
+        Route::post('time/{timeEntry}/schedule/undo', [TimeEntryController::class, 'undoReschedule'])->middleware('signed:relative')->name('time.undo-reschedule');
         Route::delete('time/{timeEntry}', [TimeEntryController::class, 'destroy'])->name('time.destroy');
         Route::post('time/{timeEntry}/restore', [TimeEntryController::class, 'restore'])->withTrashed()->name('time.restore');
 

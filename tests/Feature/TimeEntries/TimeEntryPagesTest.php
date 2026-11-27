@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Inertia\Inertia;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -437,6 +438,89 @@ it('forbids members to move their own entry to someone else', function () {
     expect($entry->fresh()->user_id)->toBe($this->member->id);
 });
 
+it('undoes a calendar schedule change with the exact original times and keeps other edits', function () {
+    $entry = entryFor($this->member, '2026-11-16 22:45:17', '2026-11-17 01:15:49');
+
+    $this->actingAs($this->member)
+        ->patch(timeRoute('time.reschedule', ['timeEntry' => $entry->id]), [
+            'start' => '2026-11-18T23:45',
+            'end' => '2026-11-19T01:15',
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('toast.undo');
+
+    $undo = Inertia::getFlashed()['toast']['undo'];
+    $moved = $entry->fresh();
+    expect($moved->started_at->toDateTimeString())->toBe('2026-11-18 22:45:00')
+        ->and($moved->ended_at->toDateTimeString())->toBe('2026-11-19 00:15:00')
+        ->and($moved->duration_seconds)->toBe(5400);
+
+    $moved->update(['description' => 'Rättad']);
+    $this->project->forceFill(['archived_at' => now()])->save();
+
+    $this->post($undo)
+        ->assertRedirect()
+        ->assertInertiaFlash('toast.message', __('Time change undone.'));
+
+    $restored = $entry->fresh();
+    expect($restored->started_at->toDateTimeString())->toBe('2026-11-16 22:45:17')
+        ->and($restored->ended_at->toDateTimeString())->toBe('2026-11-17 01:15:49')
+        ->and($restored->duration_seconds)->toBe(9032)
+        ->and($restored->description)->toBe('Rättad');
+});
+
+it('keeps a newer schedule when an older calendar change is undone', function () {
+    $entry = entryFor($this->member);
+    $route = timeRoute('time.reschedule', ['timeEntry' => $entry->id]);
+
+    $this->actingAs($this->member)
+        ->patch($route, ['start' => '2026-11-16T12:00', 'end' => '2026-11-16T13:00'])
+        ->assertInertiaFlash('toast.undo');
+
+    $undo = Inertia::getFlashed()['toast']['undo'];
+
+    $this->patch($route, ['start' => '2026-11-16T13:00', 'end' => '2026-11-16T14:00'])
+        ->assertInertiaFlash('toast.undo');
+
+    $this->post($undo)
+        ->assertRedirect()
+        ->assertInertiaFlash('toast.type', 'warning');
+
+    expect($entry->fresh()->started_at->toDateTimeString())->toBe('2026-11-16 12:00:00');
+});
+
+it('authorizes calendar changes and verifies the undo link', function () {
+    $entry = entryFor($this->member);
+    $route = timeRoute('time.reschedule', ['timeEntry' => $entry->id]);
+    $schedule = ['start' => '2026-11-16T12:00', 'end' => '2026-11-16T13:00'];
+
+    $this->actingAs($this->colleague)->patch($route, $schedule)->assertForbidden();
+
+    $this->actingAs($this->member)->patch($route, $schedule)->assertInertiaFlash('toast.undo');
+
+    $undo = Inertia::getFlashed()['toast']['undo'];
+
+    $this->post($undo.'&from_start=0')->assertForbidden();
+    $this->actingAs($this->colleague)->post($undo)->assertForbidden();
+
+    expect($entry->fresh()->started_at->toDateTimeString())->toBe('2026-11-16 11:00:00');
+});
+
+it('validates the calendar schedule using the full end date', function () {
+    $entry = entryFor($this->member);
+
+    $this->actingAs($this->member)
+        ->patch(timeRoute('time.reschedule', ['timeEntry' => $entry->id]), [
+            'start' => '2026-11-16T12:00',
+            'end' => '2026-11-17T13:00',
+        ])
+        ->assertSessionHasErrors('ended_at')
+        ->assertInertiaFlashMissing('toast.undo');
+
+    expect($entry->fresh()->started_at->toDateTimeString())->toBe('2026-11-16 08:00:00');
+});
+
 it('deletes with an undo link and restores', function () {
     $entry = entryFor($this->member);
 
@@ -473,6 +557,13 @@ it('returns 404 for entries of another organization', function () {
 
     $this->actingAs($this->owner)
         ->patch(timeRoute('time.update', ['timeEntry' => $foreign->id]), timePayload())
+        ->assertNotFound();
+
+    $this->actingAs($this->owner)
+        ->patch(timeRoute('time.reschedule', ['timeEntry' => $foreign->id]), [
+            'start' => '2026-11-16T12:00',
+            'end' => '2026-11-16T13:00',
+        ])
         ->assertNotFound();
 
     $this->actingAs($this->owner)

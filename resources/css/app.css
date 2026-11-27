@@ -692,8 +692,13 @@
 }
 
 @media (width < 768px) {
+    .time-calendar-event-touch-selected:not(.time-calendar-event-lifted) {
+        --time-calendar-entry-tint: 17%;
+    }
+
     /* The touch grip is centered on the edge with a larger, invisible drag target. */
-    .time-calendar-event-touch-selected > .time-calendar-resizer {
+    .time-calendar-event > .time-calendar-resizer {
+        display: block;
         inset-inline: 0;
         width: 44px;
         max-width: 100%;
@@ -704,17 +709,29 @@
         border: 0;
         border-radius: 0;
         background: transparent;
+        opacity: 0;
+        pointer-events: none;
+
+        @media (prefers-reduced-motion: no-preference) {
+            transition: opacity 180ms var(--ease-out-soft);
+        }
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-start {
+    .time-calendar-event-touch-selected > .time-calendar-resizer {
+        opacity: 1;
+        pointer-events: auto;
+        touch-action: none;
+    }
+
+    .time-calendar-event > .time-calendar-resizer-start {
         top: -8px;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-end {
+    .time-calendar-event > .time-calendar-resizer-end {
         bottom: -8px;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer::after {
+    .time-calendar-event > .time-calendar-resizer::after {
         --time-calendar-grip-dot: radial-gradient(
             circle closest-side,
             var(--time-calendar-grip-dot-color) 95%,
@@ -737,11 +754,11 @@
         opacity: 1;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-start::after {
+    .time-calendar-event > .time-calendar-resizer-start::after {
         top: 3px;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-end::after {
+    .time-calendar-event > .time-calendar-resizer-end::after {
         bottom: 3px;
     }
 }
@@ -868,8 +885,8 @@
 }
 
 .time-calendar .time-calendar-slot-label-text {
-    /* FullCalendar sizes a slot from its label: this gives 33px per half hour, as in the design. */
-    margin-block: 0 0.75rem;
+    /* Including FullCalendar's padding and rule, two quarter rows span 33px. */
+    block-size: 11.5px;
     font-size: 0.6875rem;
     line-height: 1.25rem;
     /* With FullCalendar's own 4px: 12px from the edge, 14px to the first day. */
@@ -892,6 +909,10 @@
 .time-calendar .time-calendar-slot-minor {
     border-style: solid;
     border-color: color-mix(in oklab, var(--separator) 45%, transparent);
+}
+
+.time-calendar .time-calendar-slot-quarter {
+    border-color: transparent;
 }
 
 .time-calendar-weekend {
@@ -943,7 +964,7 @@
 
 /* Center on the 1px grid rule. The first label stays inside the scroll area. */
 .time-calendar-slot-label-text-aligned {
-    translate: 0 calc(-50% - 0.5px);
+    translate: 0 calc(-0.625rem - 0.5px);
 }
 
 .time-calendar-day-header {
@@ -1151,6 +1172,25 @@
 }
 
 @media (width < 48rem) {
+    .toast {
+        padding-inline-end: 3.25rem;
+    }
+
+    .toast .toast__close-button {
+        @apply size-10 border-0 bg-transparent;
+        inset-block-start: 50%;
+        inset-inline-end: 0.5rem;
+        translate: 0 -50%;
+    }
+
+    .toast:is([data-frontmost='true'], [data-expanded='true']):not(
+            [data-exiting='true'],
+            [data-hidden='true']
+        )
+        .toast__close-button {
+        @apply pointer-events-auto opacity-100;
+    }
+
     :root:has(.mobile-tab-bar) .toast-region--bottom-end {
         bottom: calc(var(--mobile-tab-bar-height) + 1rem);
 
