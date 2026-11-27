@@ -391,7 +391,7 @@ Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
 - Standardvy: vecka på desktop och dag på mobil. På mobil rullas kalenderns dag- och veckovy mellan den fasta rubrikraden och bottennavigeringen. Rullningsindikatorn håller sig inom samma yta. Sidledes svep byter dag eller vecka, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i kalenderns periodväljare. Lista nås via mobilnavigeringen.
-- Experiment på iPhone: `ios-drag-haptics=1` i kalenderns webbadress gör det möjligt att prova ett haptiskt klick för varje nytt 15-minutersläge när en sparad tidspost flyttas. Samma drag ska fortfarande kunna flytta posten framåt och bakåt. Testas på fysisk enhet innan bredare aktivering.
+- På iPhone med stöd för Safaris inbyggda reglage kan ett långtryck mitt på en sparad tidspost ge ett haptiskt klick vid varje nytt giltigt 15-minutersläge under flytten. Den genomskinliga träffytan är högst 44 × 44 px så att resten av posten går att rulla från.
 - Listvyn redigerar i modal/drawer, inte inline: samma formulär överallt och enklare på mobil.
 - "Duplicera" öppnar ett förifyllt formulär för idag i stället för att skapa en kopia direkt.
 - Datum och tider matas in med webbläsarens inbyggda fält. De följer enhetens språk, vilket ger bra tangentbord på mobil.
