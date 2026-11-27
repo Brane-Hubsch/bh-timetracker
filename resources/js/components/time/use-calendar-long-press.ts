@@ -1,6 +1,7 @@
 import { useEffectEvent, useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
 import type { CalendarRef } from '@fullcalendar/react';
+import type { CalendarApiImpl } from '@fullcalendar/react/protected-api';
 import { addDays, minutesToTime, timeToMinutes } from '@/lib/time';
 
 export const CALENDAR_SLOT_MINUTES = 30;
@@ -69,9 +70,18 @@ export function useCalendarLongPress(
             return;
         }
 
-        const api = calendarRef.current?.getApi();
+        const api = calendarRef.current?.getApi() as
+            | CalendarApiImpl
+            | undefined;
         let press: Press | null = null;
         let touchId: number | null = null;
+
+        function unselectEvent() {
+            // CalendarApi.unselect() only clears date ranges, including the form's draft.
+            if (api?.getCurrentData().eventSelection) {
+                api.dispatch({ type: 'UNSELECT_EVENT' });
+            }
+        }
 
         function preview(touch: Touch) {
             if (!container || !press) return;
@@ -125,6 +135,7 @@ export function useCalendarLongPress(
                 timeout: window.setTimeout(() => {
                     if (!press || container.closest('[data-swiping]')) return;
 
+                    unselectEvent();
                     press.active = true;
                     container.setAttribute('data-calendar-editing', '');
                     preview(origin);
@@ -161,7 +172,12 @@ export function useCalendarLongPress(
             touchId = null;
             if (!press) return;
 
-            if (press.active) preview(touch);
+            if (press.active) {
+                preview(touch);
+            } else {
+                // We also suppress the synthetic click for taps on empty timed cells.
+                unselectEvent();
+            }
 
             const range = press.range;
             finish(Boolean(range));
@@ -170,6 +186,18 @@ export function useCalendarLongPress(
 
         const listeners = new AbortController();
         const { signal } = listeners;
+        window.addEventListener(
+            'click',
+            ({ target }) => {
+                if (
+                    target instanceof Element &&
+                    !target.closest('.time-calendar-event-touch-selected')
+                ) {
+                    unselectEvent();
+                }
+            },
+            { capture: true, signal },
+        );
         container.addEventListener('touchstart', start, {
             capture: true,
             passive: true,
