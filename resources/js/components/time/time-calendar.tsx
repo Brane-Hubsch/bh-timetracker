@@ -45,6 +45,22 @@ const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
 const HAPTIC_SWITCH_CLASS =
     'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 [direction:ltr]';
 
+function appendHapticSwitch(
+    parent: Element,
+    testId: string,
+    className: string,
+) {
+    const control = document.createElement('input');
+    control.type = 'checkbox';
+    control.setAttribute('switch', '');
+    control.setAttribute('aria-hidden', 'true');
+    control.tabIndex = -1;
+    control.dataset.calendarHapticSwitch = '';
+    control.dataset.test = testId;
+    control.className = cn(HAPTIC_SWITCH_CLASS, className);
+    parent.append(control);
+}
+
 function ExpectedWeekTimeHint({ duration }: { duration: string }) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
@@ -369,6 +385,7 @@ export function TimeCalendar({
         calendarKey,
         !isPreview && !hasSelectionDraft,
         onSelect,
+        dragHaptics.armSelection,
     );
 
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
@@ -605,23 +622,21 @@ export function TimeCalendar({
                     )
                         return;
 
+                    appendHapticSwitch(
+                        el,
+                        'calendar-drag-haptic-switch',
+                        'z-0 max-h-1/2 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+                    );
                     // TimeGrid only exposes classes for its resize handles.
                     // Put the switch inside each existing pointer target.
                     for (const handle of el.querySelectorAll(
                         ':scope > .time-calendar-resizer',
                     )) {
-                        const control = document.createElement('input');
-                        control.type = 'checkbox';
-                        control.setAttribute('switch', '');
-                        control.setAttribute('aria-hidden', 'true');
-                        control.tabIndex = -1;
-                        control.dataset.calendarHapticSwitch = '';
-                        control.dataset.test = 'calendar-resize-haptic-switch';
-                        control.className = cn(
-                            HAPTIC_SWITCH_CLASS,
+                        appendHapticSwitch(
+                            handle,
+                            'calendar-resize-haptic-switch',
                             'z-10 max-h-full pointer-coarse:supports-[-webkit-touch-callout:none]:[.time-calendar-event-touch-selected_&]:block',
                         );
-                        handle.append(control);
                     }
                 }}
                 slotLaneClass={(info) =>
@@ -837,23 +852,6 @@ export function TimeCalendar({
                                     {duration}
                                 </div>
                             </div>
-                            {isMobile &&
-                                !isPreview &&
-                                entry &&
-                                !info.isMirror && (
-                                    <input
-                                        type="checkbox"
-                                        {...{ switch: '' }}
-                                        aria-hidden="true"
-                                        tabIndex={-1}
-                                        data-calendar-haptic-switch=""
-                                        data-test="calendar-drag-haptic-switch"
-                                        className={cn(
-                                            HAPTIC_SWITCH_CLASS,
-                                            'max-h-1/2 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
-                                        )}
-                                    />
-                                )}
                         </div>
                     );
                 }}
@@ -1052,6 +1050,34 @@ export function TimeCalendar({
                       )
                     : null;
             })}
+            {isMobile &&
+                !isPreview &&
+                !hasSelectionDraft &&
+                dayLanes.map((lane) => {
+                    // Share the entry layer while staying below its cards.
+                    const eventLayer = lane.querySelector(
+                        ':scope > .time-calendar-event-lane',
+                    );
+
+                    return eventLayer
+                        ? createPortal(
+                              <input
+                                  type="checkbox"
+                                  {...{ switch: '' }}
+                                  aria-hidden="true"
+                                  tabIndex={-1}
+                                  data-calendar-haptic-selection=""
+                                  data-test="calendar-create-haptic-switch"
+                                  className={cn(
+                                      HAPTIC_SWITCH_CLASS,
+                                      'z-0 h-full max-w-1/3 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+                                  )}
+                              />,
+                              eventLayer,
+                              lane.dataset.date,
+                          )
+                        : null;
+                })}
             {floatingAction && (
                 <div className="absolute end-4 bottom-4 z-10 hidden md:flex">
                     {floatingAction}
