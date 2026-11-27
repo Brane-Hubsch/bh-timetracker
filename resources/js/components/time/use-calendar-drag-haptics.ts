@@ -28,6 +28,8 @@ export function useCalendarDragHaptics() {
         control.checked = false;
         control.style.width = '24px';
         control.style.height = '40px';
+        control.style.maxHeight = 'none';
+        control.style.maxWidth = 'none';
         control.style.removeProperty('translate');
 
         let offset = 0;
@@ -76,6 +78,8 @@ export function useCalendarDragHaptics() {
                 if (gesture.current !== active) return;
                 control.style.removeProperty('width');
                 control.style.removeProperty('height');
+                control.style.removeProperty('max-height');
+                control.style.removeProperty('max-width');
                 control.style.removeProperty('translate');
                 gesture.current = null;
             });

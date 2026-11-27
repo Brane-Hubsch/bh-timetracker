@@ -126,7 +126,6 @@ function useTimerEnd(
 }
 
 type Props = {
-    iosDragHaptics?: boolean;
     view: 'week' | 'day';
     date: string;
     weekStartsOn: number;
@@ -244,7 +243,6 @@ export function TimeCalendar({
     colleaguesOff,
     floatingAction,
     isPreview = false,
-    iosDragHaptics = false,
     hasSelectionDraft,
     onSelect,
     onSelectDays,
@@ -778,7 +776,7 @@ export function TimeCalendar({
                                     {duration}
                                 </div>
                             </div>
-                            {iosDragHaptics &&
+                            {isMobile &&
                                 !isPreview &&
                                 entry &&
                                 !info.isMirror && (
@@ -788,7 +786,7 @@ export function TimeCalendar({
                                         aria-hidden="true"
                                         tabIndex={-1}
                                         data-test="calendar-drag-haptic-switch"
-                                        className="absolute start-0 top-0 hidden size-full touch-none appearance-auto opacity-0 [direction:ltr] [writing-mode:vertical-lr] md:hidden pointer-coarse:supports-[-webkit-touch-callout:none]:block"
+                                        className="absolute inset-0 m-auto hidden size-11 max-h-1/2 max-w-full touch-none appearance-auto opacity-0 [direction:ltr] [writing-mode:vertical-lr] pointer-coarse:supports-[-webkit-touch-callout:none]:block"
                                         onTouchStart={dragHaptics.arm}
                                     />
                                 )}
