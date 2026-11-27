@@ -737,6 +737,19 @@ Beställt i efterhand. Semester, VAB och annan frånvaro registreras som egna po
 
 Beställt i efterhand. I dialogerna *Rapportera tid* (även i läget för frånvaro och för den pågående timern) och *Registrera frånvaro* sparar ⌘+Enter (Ctrl+Enter utanför Mac) formuläret, var fokus än är. `ResponsiveDialog` tar emot formulärets id (`submitFormId`). Spara-knappen (och Stoppa i den pågående timern, där ⌘↵ stoppar timern) har `aria-keyshortcuts` och, på dator, en liten hint ("⌘↵" eller "Ctrl ↵", `SubmitShortcutHint`).
 
+### Tillägg efter Fas 6: teman, accentfärg och kontrast (2026-11-27)
+
+Beställt i efterhand. Under *Inställningar → Utseende* väljer var och en hur appen ser ut. Standardutseendet är oförändrat. Designen finns i Figma på sidan "Utseende · Teman (förslag)".
+
+- **Läge:** ljust, mörkt eller enhetens läge, som tidigare. Valet sparas per enhet (cookie och webbläsarens lagring).
+- **Tema** (`users.theme`, `App\Enums\Theme`): Standard (dagens utseende och förval), Sand (varma toner, rundare hörn), Skiffer (svala blågrå toner) och Grafit (neutralt grått, stramare hörn). Varje tema har en ljus och en mörk variant.
+- **Accentfärg** (`users.accent`, `App\Enums\Accent`): violett, blå, turkos, grön, orange, rosa eller neutral. Tomt värde betyder organisationens färg.
+- **Varumärkesfärg per organisation** (`organizations.accent`): ägare och administratörer väljer den i organisationsinställningarna (samma behörighet som övriga inställningar). Den gäller alla medlemmar som inte valt en egen färg. Tomt värde betyder violett.
+- **Kontrast** (`users.contrast`, `App\Enums\ContrastPreference`): enhetens inställning (`prefers-contrast: more`, förval), normal eller hög. Hög kontrast ger tydligare ramar och mörkare dämpad text.
+- **Tillgänglighet:** alla kombinationer är kontrastkontrollerade. Text och dämpad text klarar WCAG AA på alla ytor i båda lägena, och med hög kontrast 7:1 för text och 3:1 för ramar. Knapptext på accentfärgen klarar AA.
+- **Teknik:** färgerna är CSS-variabler i `app.css`, styrda av `data-palette`, `data-accent` och `data-contrast` på `<html>`. Servern sätter attributen i `app.blade.php` från den delade propen `theme` (`App\Support\ThemePreferences`), så sidan inte blinkar vid laddning. Webbläsarens temafärg (`theme-color`) följer accentfärgen. Tema, accentfärg och kontrast sparas på kontot med `App\Actions\Settings\UpdateAppearance` och följer med mellan enheter.
+- **Oförändrat:** PDF-exporter, e-post, logotypen och projektfärgerna behåller sina färger.
+
 ### Tillägg efter Fas 6: kortkommandon (2026-11-26)
 
 Beställt i efterhand, i samma omgång som ⌘↵. Enkla tangenter för det man gör ofta, på dator:

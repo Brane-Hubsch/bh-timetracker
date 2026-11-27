@@ -36,6 +36,8 @@ declare module '@inertiajs/core' {
             can: OrganizationPermissions | null;
             /** The signed-in person's running timer, in any of their organizations. */
             timer: import('@/types/time').RunningTimer | null;
+            /** Theme, accent colour and contrast to render with. */
+            theme: import('@/lib/theme').ThemePreferences;
             [key: string]: unknown;
         };
         flashDataType: {

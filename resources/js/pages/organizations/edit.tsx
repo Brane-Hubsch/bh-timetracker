@@ -15,7 +15,7 @@ import {
 } from '@heroui/react';
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { EllipsisVertical, FileUp, Mail, UserPlus, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import DeleteOrganizationModal from '@/components/delete-organization-modal';
 import { ImageUploadField } from '@/components/form/image-upload-field';
@@ -26,10 +26,12 @@ import { HolidayManager } from '@/components/organizations/holiday-manager';
 import type { OrganizationHoliday } from '@/components/organizations/holiday-manager';
 import InviteMemberModal from '@/components/invite-member-modal';
 import { RateField } from '@/components/rate-field';
+import { AccentPicker } from '@/components/theme-pickers';
 import { useInitials } from '@/hooks/use-initials';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useOverlayData } from '@/hooks/use-overlay-data';
 import { useTranslation } from '@/lib/i18n';
+import type { AccentName } from '@/lib/theme';
 import { index, update } from '@/routes/organizations';
 import { create as createImport } from '@/routes/organizations/import';
 import {
@@ -78,6 +80,10 @@ export default function OrganizationEdit({
     const getInitials = useInitials();
     const [isInviteOpen, setInviteOpen] = useState(false);
     const [timerEnabled, setTimerEnabled] = useState(organization.timerEnabled);
+    const [accent, setAccent] = useState<AccentName | null>(
+        organization.accent,
+    );
+    const accentDescriptionId = useId();
     useOpenFromQuery('invite', () =>
         setInviteOpen(permissions.canCreateInvitation),
     );
@@ -286,6 +292,39 @@ export default function OrganizationEdit({
                                             </ListBox>
                                         </ComboBox.Popover>
                                     </ComboBox>
+                                </div>
+                                <div className="grid gap-2">
+                                    <div className="grid gap-0.5">
+                                        <Label>{t('Brand colour')}</Label>
+                                        <Description id={accentDescriptionId}>
+                                            {t(
+                                                'Accent colour for everyone in the organization who has not chosen their own under Appearance.',
+                                            )}
+                                        </Description>
+                                    </div>
+                                    <input
+                                        type="hidden"
+                                        name="accent"
+                                        value={accent ?? ''}
+                                    />
+                                    <AccentPicker
+                                        aria-label={t('Brand colour')}
+                                        aria-describedby={accentDescriptionId}
+                                        value={accent ?? 'violet'}
+                                        onChange={(value) =>
+                                            setAccent(
+                                                value === 'violet'
+                                                    ? null
+                                                    : value,
+                                            )
+                                        }
+                                        data-test="organization-accent"
+                                    />
+                                    {errors.accent && (
+                                        <p className="text-xs text-danger">
+                                            {errors.accent}
+                                        </p>
+                                    )}
                                 </div>
                                 {/* A switch sends nothing when off, so the value goes in a hidden field. */}
                                 <input

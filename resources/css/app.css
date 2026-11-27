@@ -67,6 +67,198 @@
     --muted: oklch(0.72 0.012 286);
 }
 
+/*
+ * Themes (data-palette), accents (data-accent) and high contrast (data-contrast) on <html>; see
+ * App\Support\ThemePreferences. Standard + violet is the base above. Values are contrast-checked:
+ * text and muted text reach WCAG AA (high contrast: 7:1, borders 3:1) on every surface, in both modes.
+ */
+
+:root:not(.dark)[data-palette='sand'] {
+    --background: oklch(0.962 0.012 80);
+    --surface: oklch(0.993 0.005 85);
+    --surface-secondary: oklch(0.945 0.013 80);
+    --surface-tertiary: oklch(0.928 0.015 78);
+    --overlay: oklch(0.995 0.004 85);
+    --default: oklch(0.93 0.014 78);
+    --field-background: oklch(0.995 0.004 85);
+    --segment: oklch(0.995 0.004 85);
+    --foreground: oklch(0.235 0.018 60);
+    --muted: oklch(0.48 0.022 65);
+    --border: oklch(0.885 0.016 75);
+    --separator: oklch(0.905 0.014 75);
+    --field-border: oklch(0.86 0.018 75);
+    --radius: 0.625rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root.dark[data-palette='sand'] {
+    --background: oklch(0.155 0.008 70);
+    --surface: oklch(0.215 0.01 70);
+    --surface-secondary: oklch(0.255 0.011 70);
+    --surface-tertiary: oklch(0.275 0.012 70);
+    --overlay: oklch(0.225 0.01 70);
+    --default: oklch(0.285 0.012 70);
+    --field-background: oklch(0.185 0.009 70);
+    --segment: oklch(0.39 0.014 70);
+    --foreground: oklch(0.965 0.012 85);
+    --muted: oklch(0.73 0.02 75);
+    --border: oklch(0.3 0.012 70);
+    --separator: oklch(0.27 0.011 70);
+    --field-border: oklch(0.36 0.014 70);
+    --radius: 0.625rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root:not(.dark)[data-palette='slate'] {
+    --background: oklch(0.965 0.008 250);
+    --surface: oklch(0.992 0.003 250);
+    --surface-secondary: oklch(0.945 0.01 250);
+    --surface-tertiary: oklch(0.928 0.012 250);
+    --overlay: oklch(0.992 0.003 250);
+    --default: oklch(0.93 0.012 250);
+    --field-background: oklch(0.992 0.003 250);
+    --segment: oklch(0.992 0.003 250);
+    --foreground: oklch(0.225 0.025 255);
+    --muted: oklch(0.48 0.028 255);
+    --border: oklch(0.885 0.014 250);
+    --separator: oklch(0.905 0.012 250);
+    --field-border: oklch(0.86 0.016 250);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root.dark[data-palette='slate'] {
+    --background: oklch(0.155 0.02 258);
+    --surface: oklch(0.21 0.024 258);
+    --surface-secondary: oklch(0.25 0.026 258);
+    --surface-tertiary: oklch(0.27 0.027 258);
+    --overlay: oklch(0.22 0.025 258);
+    --default: oklch(0.28 0.027 258);
+    --field-background: oklch(0.18 0.022 258);
+    --segment: oklch(0.38 0.03 258);
+    --foreground: oklch(0.965 0.008 250);
+    --muted: oklch(0.73 0.03 255);
+    --border: oklch(0.3 0.026 258);
+    --separator: oklch(0.265 0.025 258);
+    --field-border: oklch(0.37 0.03 258);
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root:not(.dark)[data-palette='graphite'] {
+    --background: oklch(0.985 0 0);
+    --surface: oklch(1 0 0);
+    --surface-secondary: oklch(0.96 0 0);
+    --surface-tertiary: oklch(0.945 0 0);
+    --overlay: oklch(1 0 0);
+    --default: oklch(0.945 0 0);
+    --field-background: oklch(1 0 0);
+    --segment: oklch(1 0 0);
+    --foreground: oklch(0.18 0 0);
+    --muted: oklch(0.47 0 0);
+    --border: oklch(0.88 0 0);
+    --separator: oklch(0.91 0 0);
+    --field-border: oklch(0.84 0 0);
+    --radius: 0.25rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root.dark[data-palette='graphite'] {
+    --background: oklch(0.09 0 0);
+    --surface: oklch(0.165 0 0);
+    --surface-secondary: oklch(0.21 0 0);
+    --surface-tertiary: oklch(0.23 0 0);
+    --overlay: oklch(0.18 0 0);
+    --default: oklch(0.24 0 0);
+    --field-background: oklch(0.13 0 0);
+    --segment: oklch(0.36 0 0);
+    --foreground: oklch(0.97 0 0);
+    --muted: oklch(0.72 0 0);
+    --border: oklch(0.26 0 0);
+    --separator: oklch(0.22 0 0);
+    --field-border: oklch(0.34 0 0);
+    --radius: 0.25rem;
+    --default-foreground: var(--foreground);
+    --segment-foreground: var(--foreground);
+    --field-foreground: var(--foreground);
+}
+
+:root:not(.dark)[data-accent='blue'] {
+    --accent: oklch(0.53 0.2 258);
+}
+
+:root.dark[data-accent='blue'] {
+    --accent: oklch(0.7 0.15 252);
+    --accent-foreground: oklch(0.16 0.03 252);
+}
+
+:root:not(.dark)[data-accent='teal'] {
+    --accent: oklch(0.5 0.085 200);
+}
+
+:root.dark[data-accent='teal'] {
+    --accent: oklch(0.75 0.12 195);
+    --accent-foreground: oklch(0.16 0.03 195);
+}
+
+:root:not(.dark)[data-accent='green'] {
+    --accent: oklch(0.5 0.13 150);
+}
+
+:root.dark[data-accent='green'] {
+    --accent: oklch(0.74 0.17 150);
+    --accent-foreground: oklch(0.16 0.03 150);
+}
+
+:root:not(.dark)[data-accent='orange'] {
+    --accent: oklch(0.545 0.155 45);
+}
+
+:root.dark[data-accent='orange'] {
+    --accent: oklch(0.75 0.15 58);
+    --accent-foreground: oklch(0.16 0.03 58);
+}
+
+:root:not(.dark)[data-accent='pink'] {
+    --accent: oklch(0.56 0.22 355);
+}
+
+:root.dark[data-accent='pink'] {
+    --accent: oklch(0.73 0.16 355);
+    --accent-foreground: oklch(0.16 0.03 355);
+}
+
+:root:not(.dark)[data-accent='neutral'] {
+    --accent: oklch(0.26 0 0);
+}
+
+:root.dark[data-accent='neutral'] {
+    --accent: oklch(0.92 0 0);
+    --accent-foreground: oklch(0.16 0.03 0);
+}
+
+:root:not(.dark)[data-contrast='more'] {
+    --muted: oklch(0.4 0.01 286);
+    --border: oklch(0.62 0.01 286);
+    --separator: oklch(0.7 0.01 286);
+    --field-border: oklch(0.55 0.01 286);
+}
+
+:root.dark[data-contrast='more'] {
+    --muted: oklch(0.82 0.01 286);
+    --border: oklch(0.6 0.01 286);
+    --separator: oklch(0.5 0.01 286);
+    --field-border: oklch(0.65 0.01 286);
+}
+
 @media (width < 48rem) {
     :is(.modal__close-trigger, .drawer__close-trigger) {
         @apply min-h-9 min-w-9 rounded-full bg-default;
