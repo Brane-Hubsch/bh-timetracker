@@ -701,9 +701,9 @@
         background-color: var(--surface);
     }
 
-    /* Match the dark calendar when rubber-band scrolling exposes the page canvas. */
-    :root.dark:has(.time-calendar),
-    :root.dark:has(.time-calendar) body {
+    /* Match the dark app background when rubber-band scrolling exposes the page canvas. */
+    :root.dark:has(.mobile-tab-bar),
+    :root.dark:has(.mobile-tab-bar) body {
         background-color: var(--background);
     }
 
