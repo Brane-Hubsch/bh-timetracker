@@ -1,3 +1,4 @@
+import { Label, Switch } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useId, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -10,6 +11,10 @@ import {
     ThemePicker,
 } from '@/components/theme-pickers';
 import { useTranslation } from '@/lib/i18n';
+import {
+    setSeasonalEffectsEnabled,
+    useSeasonalEffectsEnabled,
+} from '@/lib/seasonal-effects';
 import { applyThemePreferences, themeFor } from '@/lib/theme';
 import type { ThemePreferences } from '@/lib/theme';
 import {
@@ -46,6 +51,7 @@ export default function Appearance() {
     const { theme: saved, currentOrganization } = usePage().props;
     const [preferences, setPreferences] = useState<ThemePreferences>(saved);
     const theme = themeFor(preferences.theme);
+    const seasonalEffects = useSeasonalEffectsEnabled();
 
     const save = (changes: Partial<ThemePreferences>) => {
         const next = { ...preferences, ...changes };
@@ -159,6 +165,30 @@ export default function Appearance() {
                                       : t(accentLabel(preferences.accent))}
                             </p>
                         </div>
+                    )}
+                </Setting>
+
+                <Setting
+                    title={t('Seasonal effects')}
+                    description={t(
+                        "Snow in December and fireworks from New Year's Eve until 7 January. Saved in this browser and not shown if your device asks for reduced motion.",
+                    )}
+                >
+                    {(descriptionId) => (
+                        <Switch
+                            isSelected={seasonalEffects}
+                            onChange={setSeasonalEffectsEnabled}
+                            aria-describedby={descriptionId}
+                            className="w-fit"
+                            data-test="seasonal-effects-switch"
+                        >
+                            <Switch.Content>
+                                <Switch.Control>
+                                    <Switch.Thumb />
+                                </Switch.Control>
+                                <Label>{t('Show seasonal effects')}</Label>
+                            </Switch.Content>
+                        </Switch>
                     )}
                 </Setting>
 
