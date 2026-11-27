@@ -688,12 +688,6 @@
     }
 }
 
-@media (display-mode: standalone) {
-    :root {
-        touch-action: pan-x pan-y;
-    }
-}
-
 @media (width < 48rem) and (display-mode: standalone) {
     :root {
         --mobile-tab-bar-inset: calc(var(--mobile-bottom-inset) - 0.625rem);
