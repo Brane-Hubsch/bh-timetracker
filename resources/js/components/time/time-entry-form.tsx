@@ -795,13 +795,7 @@ export function TimeEntryForm({
                             />
 
                             <div className="grid gap-2">
-                                <div
-                                    className={cn(
-                                        'grid gap-3 md:grid-cols-[9rem_15.25rem_minmax(0,1fr)]',
-                                        isNewEntry &&
-                                            'max-md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]',
-                                    )}
-                                >
+                                <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3 md:grid-cols-[9rem_15.25rem_minmax(0,1fr)]">
                                     <DatePickerField
                                         label={t('Date')}
                                         value={current.date}
@@ -809,11 +803,7 @@ export function TimeEntryForm({
                                         relativeLabel={dateLabel}
                                         error={errors.date}
                                         isRequired
-                                        className={
-                                            isNewEntry
-                                                ? 'w-full max-md:col-span-2'
-                                                : undefined
-                                        }
+                                        className="w-full max-md:col-span-2"
                                         data-test="time-entry-date"
                                     />
                                     <FieldPair
