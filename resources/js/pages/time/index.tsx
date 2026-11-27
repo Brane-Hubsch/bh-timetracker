@@ -502,6 +502,7 @@ export default function TimeIndex({
             className={cn(
                 'w-fit max-w-full min-w-0 gap-0',
                 mobileAvatar && 'order-last shrink-0',
+                view === 'day' && 'max-md:ms-1',
             )}
             triggerClassName={cn(
                 'h-9 items-center rounded-full bg-surface py-0 ps-[calc(--spacing(1.5)-var(--border-width-field))] pe-3 shadow-none',
