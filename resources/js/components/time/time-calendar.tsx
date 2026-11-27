@@ -36,12 +36,12 @@ import { useCalendarDragHaptics } from './use-calendar-drag-haptics';
 import {
     CALENDAR_SNAP_MINUTES,
     CALENDAR_SLOT_MINUTES,
-    CALENDAR_TOUCH_MOVE_TOLERANCE,
     useCalendarLongPress,
 } from './use-calendar-long-press';
 
 const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
+const TOUCH_EVENT_DRAG_MIN_DISTANCE = 16;
 const HAPTIC_SWITCH_CLASS =
     'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 [direction:ltr]';
 
@@ -354,7 +354,7 @@ export function TimeCalendar({
                     Math.max(
                         Math.abs(touch.clientX - origin.clientX),
                         Math.abs(touch.clientY - origin.clientY),
-                    ) >= CALENDAR_TOUCH_MOVE_TOLERANCE
+                    ) >= TOUCH_EVENT_DRAG_MIN_DISTANCE
                 ) {
                     eventDragOrigin.current = null;
 

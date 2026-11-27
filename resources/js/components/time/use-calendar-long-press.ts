@@ -6,7 +6,7 @@ import { addDays, minutesToTime, timeToMinutes } from '@/lib/time';
 
 export const CALENDAR_SLOT_MINUTES = 30;
 export const CALENDAR_SNAP_MINUTES = 15;
-export const CALENDAR_TOUCH_MOVE_TOLERANCE = 8;
+const CALENDAR_TOUCH_MOVE_TOLERANCE = 8;
 
 const HOLD_DELAY = 500;
 const BLOCK_MINUTES = 60;
