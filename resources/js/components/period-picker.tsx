@@ -21,6 +21,7 @@ type Props = {
     /** Move the step buttons into the mobile panel header. */
     mobileStepInPanel?: boolean;
     className?: string;
+    triggerClassName?: string;
     testId: string;
     children: (context: {
         isDesktop: boolean;
@@ -39,6 +40,7 @@ export function PeriodPicker({
     mobileLabelOnly = false,
     mobileStepInPanel = false,
     className,
+    triggerClassName,
     testId,
     children,
 }: Props) {
@@ -70,6 +72,7 @@ export function PeriodPicker({
                     'max-md:h-[38px] max-md:border max-md:border-border max-md:bg-surface',
                 mobileLabelOnly && 'max-md:px-1.5',
                 mobileStepInPanel && 'max-md:min-h-0 max-md:px-3',
+                triggerClassName,
             )}
             data-test={testId}
         >

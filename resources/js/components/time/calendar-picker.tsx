@@ -410,6 +410,7 @@ export function CalendarPicker({
             enclosed
             mobileLabelOnly
             className="min-w-0"
+            triggerClassName={isDay ? 'max-md:px-3' : undefined}
             testId="calendar-period-picker"
         >
             {({ isDesktop, dismiss }) => {
