@@ -177,6 +177,7 @@ export default function TimeIndex({
         isMobile && view === 'week' && !periodUrl.searchParams.has('view');
     const pageTitle = t(isList ? 'List' : 'Calendar');
 
+    const reportFab = useRef<HTMLButtonElement>(null);
     const [draft, setDraft] = useState<TimeEntryDraft | null>(null);
     const [isCopyOpen, setCopyOpen] = useState(false);
     const [absenceDraft, setAbsenceDraft] = useState<AbsenceDraft | null>(null);
@@ -735,15 +736,45 @@ export default function TimeIndex({
                 )}
             >
                 {!copyInToolbar && copyPeriodButton}
-                <Button
-                    isIconOnly
-                    aria-label={t('Report time')}
-                    className="size-12 rounded-full shadow-lg"
-                    onPress={() => openReport('time')}
-                    data-test="new-time-fab"
-                >
-                    <Plus aria-hidden="true" className="size-6" />
-                </Button>
+                <div className="relative">
+                    <Button
+                        ref={reportFab}
+                        isIconOnly
+                        aria-label={t('Report time')}
+                        className="size-12 rounded-full shadow-lg"
+                        onPress={({ pointerType }) => {
+                            if (
+                                !isList &&
+                                pointerType === 'touch' &&
+                                /Android/i.test(navigator.userAgent)
+                            ) {
+                                navigator.vibrate?.(10);
+                            }
+
+                            openReport('time');
+                        }}
+                        data-test="new-time-fab"
+                    >
+                        <Plus aria-hidden="true" className="size-6" />
+                    </Button>
+                    {!isList && (
+                        // iOS plays switch haptics for a real tap. Keep the
+                        // HeroUI button as the keyboard and screen reader target.
+                        <input
+                            type="checkbox"
+                            {...{ switch: '' }}
+                            aria-hidden="true"
+                            tabIndex={-1}
+                            className="absolute inset-0 hidden size-full appearance-auto opacity-0 [clip-path:circle(50%)] pointer-coarse:supports-[-webkit-touch-callout:none]:block"
+                            onChange={() => {
+                                reportFab.current?.focus({
+                                    preventScroll: true,
+                                });
+                                openReport('time');
+                            }}
+                        />
+                    )}
+                </div>
             </div>
 
             <TimeEntryForm
