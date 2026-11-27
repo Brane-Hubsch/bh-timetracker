@@ -82,8 +82,8 @@ export function TimeEntryList({
             );
 
             if (header !== shadowedHeader) {
-                shadowedHeader?.removeAttribute('data-stuck');
-                header?.setAttribute('data-stuck', '');
+                shadowedHeader?.removeAttribute('data-time-day-stuck');
+                header?.setAttribute('data-time-day-stuck', '');
                 shadowedHeader = header;
             }
         };
@@ -105,7 +105,7 @@ export function TimeEntryList({
             if (frame !== undefined) {
                 cancelAnimationFrame(frame);
             }
-            shadowedHeader?.removeAttribute('data-stuck');
+            shadowedHeader?.removeAttribute('data-time-day-stuck');
         };
     }, [
         absences,
@@ -159,7 +159,7 @@ export function TimeEntryList({
                         className="md:grid md:gap-2"
                         data-test="time-day"
                     >
-                        <header className="max-md:sticky max-md:top-(--mobile-page-header-visible-height) max-md:z-10 max-md:bg-surface max-md:px-4 max-md:py-1.5 max-md:data-[stuck]:shadow-[0_1px_4px_#0000000a] md:space-y-2 md:px-1">
+                        <header className="max-md:sticky max-md:top-(--mobile-page-header-visible-height) max-md:z-10 max-md:bg-surface max-md:px-4 max-md:py-1.5 max-md:data-[time-day-stuck]:shadow-[0_1px_4px_#0000000a] md:space-y-2 md:px-1">
                             <div className="flex items-start justify-between gap-2 text-[13px]/[18px] md:text-sm">
                                 <h2 className="font-semibold first-letter:uppercase md:font-medium">
                                     {date === today
