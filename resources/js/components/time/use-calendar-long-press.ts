@@ -6,9 +6,9 @@ import { addDays, minutesToTime, timeToMinutes } from '@/lib/time';
 
 export const CALENDAR_SLOT_MINUTES = 30;
 export const CALENDAR_SNAP_MINUTES = 15;
+export const CALENDAR_TOUCH_MOVE_TOLERANCE = 8;
 
 const HOLD_DELAY = 500;
-const MOVE_TOLERANCE = 8;
 const BLOCK_MINUTES = 60;
 const DAY_MINUTES = 24 * 60;
 
@@ -154,7 +154,7 @@ export function useCalendarLongPress(
                 Math.max(
                     Math.abs(touch.clientX - press.origin.clientX),
                     Math.abs(touch.clientY - press.origin.clientY),
-                ) >= MOVE_TOLERANCE
+                ) >= CALENDAR_TOUCH_MOVE_TOLERANCE
             ) {
                 finish();
             }

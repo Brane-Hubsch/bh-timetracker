@@ -34,6 +34,7 @@ import type {
 import {
     CALENDAR_SNAP_MINUTES,
     CALENDAR_SLOT_MINUTES,
+    CALENDAR_TOUCH_MOVE_TOLERANCE,
     useCalendarLongPress,
 } from './use-calendar-long-press';
 
@@ -261,6 +262,7 @@ export function TimeCalendar({
     const calendarRef = useRef<CalendarRef>(null);
     const calendarKey = `${view}-${date}`;
     const resizeLane = useRef<HTMLElement | null>(null);
+    const eventDragOrigin = useRef<Touch | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
     const [weekNumberHeader, setWeekNumberHeader] =
@@ -306,6 +308,31 @@ export function TimeCalendar({
 
         const listeners = new AbortController();
         const { signal } = listeners;
+        containerRef.current?.addEventListener(
+            'touchmove',
+            (event) => {
+                const origin = eventDragOrigin.current;
+                const touch = event.touches[0];
+                if (!origin || touch?.identifier !== origin.identifier) return;
+
+                if (
+                    Math.max(
+                        Math.abs(touch.clientX - origin.clientX),
+                        Math.abs(touch.clientY - origin.clientY),
+                    ) >= CALENDAR_TOUCH_MOVE_TOLERANCE
+                ) {
+                    eventDragOrigin.current = null;
+
+                    return;
+                }
+
+                // FullCalendar starts touch drags on long press with no minimum
+                // distance. Keep finger jitter from crossing a snap boundary.
+                if (event.cancelable) event.preventDefault();
+                event.stopPropagation();
+            },
+            { capture: true, passive: false, signal },
+        );
         window.addEventListener('keydown', cancelSelection, {
             capture: true,
             signal,
@@ -797,7 +824,12 @@ export function TimeCalendar({
                         onEdit(entry);
                     }
                 }}
-                eventDragStart={({ el }) => {
+                eventDragStart={({ el, jsEvent }) => {
+                    eventDragOrigin.current =
+                        typeof TouchEvent !== 'undefined' &&
+                        jsEvent instanceof TouchEvent
+                            ? (jsEvent.touches[0] ?? null)
+                            : null;
                     if (!isSwiping()) {
                         setEditing(true);
                     }
@@ -838,6 +870,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventDragStop={({ el }) => {
+                    eventDragOrigin.current = null;
                     setEditing(false);
                     const style = containerRef.current?.style;
                     style?.removeProperty('--move-origin-left');

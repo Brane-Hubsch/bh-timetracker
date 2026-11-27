@@ -415,13 +415,25 @@
     }
 
     .time-calendar-event-touch-selected > .time-calendar-resizer::after {
+        --time-calendar-grip-dot: radial-gradient(
+            circle closest-side,
+            rgb(0 0 0 / 70%) 95%,
+            transparent
+        );
+
         width: 28px;
         max-width: 100%;
         height: 10px;
         box-sizing: border-box;
         border: 0;
         border-radius: 5px;
-        background: var(--fc-event-color);
+        background:
+            var(--time-calendar-grip-dot) calc(50% - 4px) center / 2px 2px
+                no-repeat,
+            var(--time-calendar-grip-dot) center / 2px 2px no-repeat,
+            var(--time-calendar-grip-dot) calc(50% + 4px) center / 2px 2px
+                no-repeat,
+            var(--fc-event-color);
         opacity: 1;
     }
 
