@@ -494,6 +494,15 @@
     --time-calendar-holiday-space: 2rem;
 }
 
+/* Keep iOS text selection from taking over a long press on the time grid. */
+@media (any-pointer: coarse) {
+    .time-calendar-body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
 /* The time grid's scroll canvas is shared by the lanes, hour labels and now indicator. */
 .time-calendar[data-holidays]
     .time-calendar-body
