@@ -715,7 +715,7 @@
 @media (width < 48rem) and (display-mode: browser) {
     :root {
         --mobile-tab-height: 3rem;
-        --mobile-tab-bar-inset: env(safe-area-inset-bottom);
+        --mobile-tab-bar-inset: calc(1px + env(safe-area-inset-bottom));
     }
 
     .mobile-tab-bar > :is(a, button) {
