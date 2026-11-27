@@ -174,6 +174,8 @@ export default function TimeIndex({
     const isList = view === 'list';
     const periodKey = `${view}-${weekStart}-${view === 'day' ? date : ''}`;
     const periodUrl = new URL(url, 'http://localhost');
+    const iosDragHaptics =
+        periodUrl.searchParams.get('ios-drag-haptics') === '1';
     const needsMobileDay =
         isMobile && view === 'week' && !periodUrl.searchParams.has('view');
     const pageTitle = t(isList ? 'List' : 'Calendar');
@@ -713,7 +715,11 @@ export default function TimeIndex({
                                 );
                             }}
                         >
-                            <TimeCalendar {...calendarProps} view={view} />
+                            <TimeCalendar
+                                {...calendarProps}
+                                view={view}
+                                iosDragHaptics={iosDragHaptics}
+                            />
                         </CalendarSwipe>
                     ) : (
                         <TimeCalendar

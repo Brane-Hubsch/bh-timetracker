@@ -32,6 +32,7 @@ import type {
     RunningTimer,
     TimeEntry,
 } from '@/types';
+import { useCalendarDragHaptics } from './use-calendar-drag-haptics';
 import {
     CALENDAR_SNAP_MINUTES,
     CALENDAR_SLOT_MINUTES,
@@ -126,6 +127,7 @@ function useTimerEnd(
 }
 
 type Props = {
+    iosDragHaptics?: boolean;
     view: 'week' | 'day';
     date: string;
     weekStartsOn: number;
@@ -243,6 +245,7 @@ export function TimeCalendar({
     colleaguesOff,
     floatingAction,
     isPreview = false,
+    iosDragHaptics = false,
     hasSelectionDraft,
     onSelect,
     onSelectDays,
@@ -258,6 +261,7 @@ export function TimeCalendar({
             ? null
             : formatDuration(expectedWeekSeconds);
     const isMobile = useMediaQuery('(width < 768px)');
+    const dragHaptics = useCalendarDragHaptics();
     const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight(isMobile);
     const calendarRef = useRef<CalendarRef>(null);
@@ -392,7 +396,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-background"
+            className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-(--mobile-scroll-background)"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
         >
@@ -496,9 +500,13 @@ export function TimeCalendar({
                     if (isSwiping()) {
                         return false;
                     }
+                    if (slot.allDay) {
+                        return true;
+                    }
 
+                    dragHaptics.snap(slot.start);
                     const previous = lastTouchSlot.current;
-                    if (previous && !slot.allDay) {
+                    if (previous) {
                         const start = slot.start.getTime();
                         const end = slot.end.getTime();
 
@@ -507,7 +515,6 @@ export function TimeCalendar({
                             vibrateLightly();
                         }
                     }
-
                     return true;
                 }}
                 eventMinHeight={0}
@@ -801,6 +808,20 @@ export function TimeCalendar({
                                     {duration}
                                 </div>
                             </div>
+                            {iosDragHaptics &&
+                                !isPreview &&
+                                entry &&
+                                !info.isMirror && (
+                                    <input
+                                        type="checkbox"
+                                        {...{ switch: '' }}
+                                        aria-hidden="true"
+                                        tabIndex={-1}
+                                        data-test="calendar-drag-haptic-switch"
+                                        className="absolute start-0 top-0 hidden size-full touch-none appearance-auto opacity-0 [direction:ltr] [writing-mode:vertical-lr] md:hidden pointer-coarse:supports-[-webkit-touch-callout:none]:block"
+                                        onTouchStart={dragHaptics.arm}
+                                    />
+                                )}
                         </div>
                     );
                 }}
@@ -858,6 +879,7 @@ export function TimeCalendar({
                 }}
                 eventDragStart={({ el, jsEvent, event }) => {
                     trackTouchSlots(jsEvent, event.start, event.end);
+                    dragHaptics.start(jsEvent.target, event.start);
                     eventDragOrigin.current =
                         typeof TouchEvent !== 'undefined' &&
                         jsEvent instanceof TouchEvent
