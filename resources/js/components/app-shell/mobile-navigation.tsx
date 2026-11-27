@@ -188,7 +188,7 @@ export function MobileBottomNav({ className }: { className?: string }) {
                                 {isVisible('Search') && (
                                     <button
                                         type="button"
-                                        className="mb-3 flex min-h-11 items-center gap-2 rounded-lg bg-background px-3 text-sm text-muted shadow-[inset_0_1px_3px_#0000000d] focus-visible:outline-focus"
+                                        className="mt-1 mb-3 flex min-h-11 items-center gap-2 rounded-lg bg-background px-3 text-sm text-muted shadow-[inset_0_1px_3px_#0000000d] focus-visible:outline-focus"
                                         onClick={() => {
                                             closeMore();
                                             openSearch();
