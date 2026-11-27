@@ -51,7 +51,7 @@ export default function AppLayout({
     return (
         <CommandPaletteProvider>
             <div
-                className="min-h-svh bg-background"
+                className="min-h-svh bg-background dark:max-md:bg-(--mobile-scroll-background)"
                 style={
                     { '--sidebar-width': `${sidebarWidth}px` } as CSSProperties
                 }
@@ -72,7 +72,7 @@ export default function AppLayout({
                             'mx-auto w-full px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8',
                             WIDTHS[width],
                             compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12',
-                            'max-md:has-[.mobile-page-header-spacer]:min-h-svh max-md:has-[.mobile-page-header-spacer]:bg-surface max-md:has-[.mobile-page-header-spacer]:px-0 max-md:has-[.mobile-page-header-spacer]:pt-0 dark:max-md:has-[.mobile-page-header-spacer]:bg-background',
+                            'max-md:has-[.mobile-page-header-spacer]:min-h-svh max-md:has-[.mobile-page-header-spacer]:bg-surface max-md:has-[.mobile-page-header-spacer]:px-0 max-md:has-[.mobile-page-header-spacer]:pt-0 dark:max-md:has-[.mobile-page-header-spacer]:bg-(--mobile-scroll-background)',
                             hasTimer
                                 ? 'pb-[calc(var(--mobile-tab-bar-height)+6.4375rem)] max-md:has-[.mobile-page-header-spacer]:pb-[calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space))]'
                                 : 'pb-[calc(var(--mobile-tab-bar-height)+3.4375rem)] max-md:has-[.mobile-page-header-spacer]:pb-(--mobile-tab-bar-height)',

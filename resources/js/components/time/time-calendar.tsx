@@ -377,7 +377,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-background"
+            className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-(--mobile-scroll-background)"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
         >

@@ -252,7 +252,7 @@
     }
 
     .dark .time-calendar {
-        --fc-classic-background: var(--background);
+        --fc-classic-background: var(--mobile-scroll-background);
     }
 }
 
@@ -784,6 +784,7 @@
         );
         --mobile-page-header-height: calc(3.5rem + env(safe-area-inset-top));
         --mobile-page-header-visible-height: 0px;
+        --mobile-scroll-background: var(--background);
         --mobile-timer-space: 3.0625rem;
     }
 
@@ -839,10 +840,14 @@
         background-color: var(--surface);
     }
 
-    /* Match the dark app background when rubber-band scrolling exposes the page canvas. */
+    :root.dark:has(.mobile-tab-bar) {
+        --mobile-scroll-background: #101012;
+    }
+
+    /* Match the scroll background when rubber-band scrolling exposes the page canvas. */
     :root.dark:has(.mobile-tab-bar),
     :root.dark:has(.mobile-tab-bar) body {
-        background-color: var(--background);
+        background-color: var(--mobile-scroll-background);
     }
 
     :root:has(.mobile-tab-bar):not(:has(.drawer__dialog--fullscreen)):has(
