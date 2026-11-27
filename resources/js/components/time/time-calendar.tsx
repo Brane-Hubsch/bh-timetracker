@@ -46,7 +46,7 @@ const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
 const TOUCH_EVENT_DRAG_MIN_DISTANCE = 16;
 const HAPTIC_SWITCH_CLASS =
-    'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 transition-none [direction:ltr]';
+    'absolute inset-0 m-auto hidden size-11 max-w-full appearance-auto opacity-0 transition-none [direction:ltr]';
 
 function appendHapticSwitch(
     parent: Element,
@@ -71,7 +71,7 @@ function mountCreationHapticSwitch(eventLayer: Element) {
     const control = appendHapticSwitch(
         eventLayer,
         'calendar-create-haptic-switch',
-        'z-0 h-full w-1/3 max-md:pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+        'z-0 h-full w-1/3 touch-pan-y touch-pinch-zoom max-md:pointer-coarse:supports-[-webkit-touch-callout:none]:block',
         'selection',
     );
     const resetSwitch = () => {
@@ -628,13 +628,7 @@ export function TimeCalendar({
                         color: 'transparent',
                     })),
                 ]}
-                eventClass={({
-                    event,
-                    isSelected,
-                    isMirror,
-                    isDragging,
-                    isResizing,
-                }) =>
+                eventClass={({ event, isMirror, isDragging, isResizing }) =>
                     event.allDay
                         ? 'time-calendar-absence'
                         : cn(
@@ -642,7 +636,7 @@ export function TimeCalendar({
                               !isMirror &&
                                   byId.has(event.id) &&
                                   'time-calendar-saved-event',
-                              isSelected &&
+                              eventSelection.selectedId === event.id &&
                                   'time-calendar-event-touch-selected',
                               isDragging && LIFTED_EVENT_CLASS,
                               isMirror && 'time-calendar-event-mirror',
@@ -978,10 +972,13 @@ export function TimeCalendar({
                             ? (jsEvent.touches[0] ?? null)
                             : null;
                     if (!isSwiping()) {
+                        if (isMobile && eventDragOrigin.current) {
+                            eventSelection.select(event.id);
+                        }
                         setEditing(true);
                         if (startDragHaptics(jsEvent, event.start, event.end)) {
                             containerRef.current?.setAttribute(
-                                'data-calendar-haptic-move',
+                                'data-calendar-native-drag',
                                 '',
                             );
                         }
@@ -1027,7 +1024,7 @@ export function TimeCalendar({
                     unmovedTouchDrag.current = eventDragOrigin.current !== null;
                     eventDragOrigin.current = null;
                     containerRef.current?.removeAttribute(
-                        'data-calendar-haptic-move',
+                        'data-calendar-native-drag',
                     );
                     setEditing(false);
                     eventSelection.resume();

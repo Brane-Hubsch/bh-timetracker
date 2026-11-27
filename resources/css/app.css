@@ -572,7 +572,7 @@
     opacity: 1;
 }
 
-/* FullCalendar's event selection enables touch resize handles. */
+/* Let the selected card and its resize handles provide the touch highlight. */
 .time-calendar-event-touch-selected:not(:focus-visible) {
     outline-style: none;
 }
@@ -988,9 +988,9 @@
 }
 
 @media (width < 48rem) {
-    .app-page-scroll:has([data-calendar-haptic-move]) {
-        /* The entry allows native panning before the hold. Once lifted, keep
-           the finger on the switch without cancelling its touch events. */
+    .app-page-scroll:has([data-calendar-native-drag]) {
+        /* Allow panning until the hold, then let Safari track the switch
+           without scrolling or cancelling its touch events. */
         overflow-y: hidden;
     }
 

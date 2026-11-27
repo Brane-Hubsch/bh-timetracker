@@ -120,6 +120,7 @@ export function useCalendarLongPress(
             window.clearTimeout(press.timeout);
             if (press.active) {
                 container?.removeAttribute('data-calendar-editing');
+                container?.removeAttribute('data-calendar-native-drag');
                 if (!keepPreview) api?.unselect();
             }
             press = null;
@@ -156,6 +157,9 @@ export function useCalendarLongPress(
                     unselectEvent();
                     press.active = true;
                     container.setAttribute('data-calendar-editing', '');
+                    if (press.nativeHaptics) {
+                        container.setAttribute('data-calendar-native-drag', '');
+                    }
                     preview(origin);
                 }, HOLD_DELAY),
             };

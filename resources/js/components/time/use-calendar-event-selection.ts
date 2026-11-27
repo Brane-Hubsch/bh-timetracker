@@ -1,15 +1,21 @@
 import type { CalendarRef, EventClickInfo } from '@fullcalendar/react';
 import { getElEventRange } from '@fullcalendar/react/protected-api';
 import type { CalendarApiImpl } from '@fullcalendar/react/protected-api';
-import { useCallback, useEffectEvent, useLayoutEffect, useRef } from 'react';
+import {
+    useCallback,
+    useEffectEvent,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from 'react';
 import type { RefObject } from 'react';
+import { flushSync } from 'react-dom';
 import { CALENDAR_TOUCH_MOVE_TOLERANCE } from './use-calendar-long-press';
 
 export const CALENDAR_EVENT_LONG_PRESS_DELAY = 400;
 const EVENT_SELECTION_TIMEOUT = 5000;
 const RESIZE_HANDLE = '.time-calendar-resizer';
 const TIME_EVENT = '.time-calendar-saved-event';
-const SELECTED_EVENT = '.time-calendar-event-touch-selected';
 
 export function useCalendarEventSelection(
     containerRef: RefObject<HTMLDivElement | null>,
@@ -18,26 +24,23 @@ export function useCalendarEventSelection(
     enabled: boolean,
     onEdit: (id: string) => void,
 ) {
+    const [selection, setSelection] = useState<{
+        calendarKey: string;
+        entryId: string;
+    } | null>(null);
+    const selectedId =
+        enabled && selection?.calendarKey === calendarKey
+            ? selection.entryId
+            : null;
     const timeout = useRef<number | undefined>(undefined);
     const edit = useEffectEvent(onEdit);
     const pause = useCallback(() => window.clearTimeout(timeout.current), []);
-    const select = useCallback(
-        (instanceId: string) => {
-            const api = calendarRef.current?.getApi() as
-                | CalendarApiImpl
-                | undefined;
-            if (!api || api.getCurrentData().eventSelection === instanceId)
-                return false;
-
-            // FullCalendar requires its own event selection for touch resizing.
-            api.dispatch({ type: 'SELECT_EVENT', eventInstanceId: instanceId });
-
-            return true;
-        },
-        [calendarRef],
-    );
+    const select = (entryId: string) => setSelection({ calendarKey, entryId });
+    const selectFromTouch = useEffectEvent(select);
+    const getSelectedId = useEffectEvent(() => selectedId);
     const dismiss = useCallback(() => {
         pause();
+        setSelection(null);
         const api = calendarRef.current?.getApi() as
             | CalendarApiImpl
             | undefined;
@@ -68,7 +71,7 @@ export function useCalendarEventSelection(
             origin: Touch;
             started: number;
             element: HTMLElement;
-            tap?: { entryId: string; instanceId: string; wasSelected: boolean };
+            tap?: { entryId: string; wasSelected: boolean };
         } | null = null;
 
         window.addEventListener(
@@ -114,21 +117,44 @@ export function useCalendarEventSelection(
                 const element = target.closest<HTMLElement>(TIME_EVENT);
                 if (!element) return;
 
-                const selected = element.matches(SELECTED_EVENT);
-                if (selected) pause();
                 const range = getElEventRange(element);
+                if (!range?.instance) return;
+
+                const entryId = range.def.publicId;
+                const selected = entryId === getSelectedId();
+                const handle = target.closest(RESIZE_HANDLE);
+                if (selected) pause();
+
+                const api = calendarRef.current?.getApi() as
+                    | CalendarApiImpl
+                    | undefined;
+                const resizeInstanceId =
+                    selected && handle ? range.instance.instanceId : '';
+                // Touch resizing requires FullCalendar's selection. On the
+                // card body that selection would skip the long-press delay.
+                if (
+                    api &&
+                    api.getCurrentData().eventSelection !== resizeInstanceId
+                ) {
+                    flushSync(() => {
+                        api.dispatch(
+                            resizeInstanceId
+                                ? {
+                                      type: 'SELECT_EVENT',
+                                      eventInstanceId: resizeInstanceId,
+                                  }
+                                : { type: 'UNSELECT_EVENT' },
+                        );
+                    });
+                }
+
                 press = {
                     origin: touches[0],
                     started: event.timeStamp,
                     element,
-                    tap:
-                        range?.instance && !target.closest(RESIZE_HANDLE)
-                            ? {
-                                  entryId: range.def.publicId,
-                                  instanceId: range.instance.instanceId,
-                                  wasSelected: selected,
-                              }
-                            : undefined,
+                    tap: handle
+                        ? undefined
+                        : { entryId, wasSelected: selected },
                 };
             },
             observe,
@@ -179,7 +205,7 @@ export function useCalendarEventSelection(
             if (!shortTap) return;
 
             if (!tap.wasSelected) {
-                select(tap.instanceId);
+                selectFromTouch(tap.entryId);
                 return;
             }
 
@@ -215,9 +241,17 @@ export function useCalendarEventSelection(
             listeners.abort();
             pause();
         };
-    }, [calendarKey, containerRef, dismiss, enabled, pause, resume, select]);
+    }, [
+        calendarKey,
+        calendarRef,
+        containerRef,
+        dismiss,
+        enabled,
+        pause,
+        resume,
+    ]);
 
-    function handleClick({ el, jsEvent }: EventClickInfo): boolean {
+    function handleClick({ el, event, jsEvent }: EventClickInfo): boolean {
         if (!enabled) return false;
         if (
             jsEvent.target instanceof Element &&
@@ -226,8 +260,8 @@ export function useCalendarEventSelection(
             return true;
         }
 
-        const instanceId = getElEventRange(el)?.instance?.instanceId;
-        if (jsEvent.detail !== 0 && instanceId && select(instanceId)) {
+        if (jsEvent.detail !== 0 && selectedId !== event.id) {
+            select(event.id);
             resume();
 
             return true;
@@ -239,5 +273,5 @@ export function useCalendarEventSelection(
         return false;
     }
 
-    return { handleClick, pause, resume };
+    return { selectedId, select, handleClick, pause, resume };
 }

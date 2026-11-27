@@ -289,10 +289,16 @@ export default function TimeIndex({
         }
 
         let frame = 0;
+        const interaction = new AbortController();
         const stop = () => {
             resizeObserver.disconnect();
             markerObserver.disconnect();
             cancelAnimationFrame(frame);
+            interaction.abort();
+        };
+        const keepScrollPosition = () => {
+            didSetMobileScroll.current = true;
+            stop();
         };
         const scheduleScroll = () => {
             if (frame) {
@@ -324,13 +330,24 @@ export default function TimeIndex({
                         top - scrollRegion.getBoundingClientRect().top - offset;
                 }
 
-                didSetMobileScroll.current = true;
-                stop();
+                keepScrollPosition();
             });
         };
 
         const resizeObserver = new ResizeObserver(scheduleScroll);
         const markerObserver = new MutationObserver(scheduleScroll);
+        // An initial anchor can arrive after the user has already started panning.
+        const observe = {
+            capture: true,
+            passive: true,
+            signal: interaction.signal,
+        };
+        scrollRegion.addEventListener(
+            'touchstart',
+            keepScrollPosition,
+            observe,
+        );
+        scrollRegion.addEventListener('wheel', keepScrollPosition, observe);
         resizeObserver.observe(scrollRegion);
         const body = grid.querySelector('.time-calendar-body');
         if (body) {
