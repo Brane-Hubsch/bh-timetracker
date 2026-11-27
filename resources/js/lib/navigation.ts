@@ -25,6 +25,7 @@ type NavigationProps = Pick<
 
 type NavigationEntry = {
     title: string;
+    page: string;
     route: (slug: string) => NonNullable<InertiaLinkProps['href']>;
     icon: LucideIcon;
     exact?: boolean;
@@ -35,27 +36,47 @@ type NavigationEntry = {
 const navigationEntries: readonly NavigationEntry[] = [
     {
         title: 'Calendar',
+        page: 'time/index',
         route: timeCalendar,
         icon: CalendarDays,
         exact: true,
     },
-    { title: 'List', route: timeList, icon: List, exact: true },
-    { title: 'Reports', route: reports, icon: ChartColumn },
-    { title: 'Projects', route: projects, icon: FolderKanban },
+    {
+        title: 'List',
+        page: 'time/index',
+        route: timeList,
+        icon: List,
+        exact: true,
+    },
+    {
+        title: 'Reports',
+        page: 'reports/summary',
+        route: reports,
+        icon: ChartColumn,
+    },
+    {
+        title: 'Projects',
+        page: 'projects/index',
+        route: projects,
+        icon: FolderKanban,
+    },
     {
         title: 'Clients',
+        page: 'clients/index',
         route: clients,
         icon: Briefcase,
         isVisible: ({ can }) => Boolean(can?.canManageClients),
     },
     {
         title: 'Tags',
+        page: 'tags/index',
         route: tags,
         icon: Tags,
         isVisible: ({ can }) => Boolean(can?.canManageTags),
     },
     {
         title: 'Team',
+        page: 'team/index',
         route: team,
         icon: UsersRound,
         isVisible: ({ currentOrganization }) =>
@@ -68,6 +89,7 @@ export const mainNavigationOrder = navigationEntries.map(({ title }) => title);
 export type MainNavItem = {
     /** Translation key (English source string). */
     title: string;
+    page: string;
     href: NonNullable<InertiaLinkProps['href']>;
     icon: LucideIcon;
     isActive?: boolean;
@@ -87,11 +109,12 @@ export function useMainNavigation(): MainNavItem[] {
 
     return navigationEntries
         .filter((entry) => !entry.isVisible || entry.isVisible(props))
-        .map(({ title, route, icon, exact }) => {
+        .map(({ title, page, route, icon, exact }) => {
             const href = route(slug);
 
             return {
                 title,
+                page,
                 href,
                 icon,
                 isActive: exact ? isCurrentUrl(href) : undefined,
