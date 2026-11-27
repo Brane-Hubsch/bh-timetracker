@@ -965,6 +965,11 @@
 }
 
 @media (width < 48rem) {
+    /* The pinned day header covers the top bar's downward shadow. */
+    :root:has([data-time-day-stuck]) .mobile-page-header {
+        box-shadow: none;
+    }
+
     :root:has(.mobile-tab-bar) #nprogress .bar {
         top: var(--mobile-page-header-visible-height);
         overflow: clip;
