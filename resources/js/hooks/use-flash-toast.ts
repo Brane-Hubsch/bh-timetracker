@@ -18,6 +18,7 @@ export function useFlashToast(): void {
             }
 
             const undo = data.undo;
+            let isUndoing = false;
             const options = undo
                 ? {
                       actionProps: {
@@ -25,12 +26,23 @@ export function useFlashToast(): void {
                               document.documentElement.lang || 'sv',
                               'Undo',
                           ),
-                          onPress: () =>
+                          onPress: () => {
+                              if (isUndoing) return;
+
+                              isUndoing = true;
                               router.post(
                                   undo,
                                   {},
-                                  { preserveScroll: true, preserveState: true },
-                              ),
+                                  {
+                                      preserveScroll: true,
+                                      preserveState: true,
+                                      onSuccess: () => toast.close(toastId),
+                                      onFinish: () => {
+                                          isUndoing = false;
+                                      },
+                                  },
+                              );
+                          },
                           variant: 'tertiary' as const,
                       },
                   }
@@ -43,7 +55,7 @@ export function useFlashToast(): void {
                 error: (message: string) => toast.danger(message, options),
             }[data.type];
 
-            show(data.message);
+            const toastId = show(data.message);
         });
     }, []);
 
