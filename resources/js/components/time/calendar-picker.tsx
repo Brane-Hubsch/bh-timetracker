@@ -465,7 +465,7 @@ export function CalendarPicker({
                                         options={[
                                             { id: 'day', label: t('Day') },
                                             { id: 'week', label: t('Week') },
-                                            ...(!isDesktop
+                                            ...(isList && !isDesktop
                                                 ? [
                                                       {
                                                           id: 'list' as const,
