@@ -52,47 +52,42 @@ function appendHapticSwitch(
     parent: Element,
     testId: string,
     className: string,
+    kind: 'selection' | 'switch' = 'switch',
 ) {
     const control = document.createElement('input');
     control.type = 'checkbox';
     control.setAttribute('switch', '');
     control.setAttribute('aria-hidden', 'true');
     control.tabIndex = -1;
-    control.dataset.calendarHapticSwitch = '';
+    control.setAttribute(`data-calendar-haptic-${kind}`, '');
     control.dataset.test = testId;
     control.className = cn(HAPTIC_SWITCH_CLASS, className);
     parent.append(control);
+
+    return control;
 }
 
-function CalendarCreationHapticSwitch() {
-    const [touchSequence, setTouchSequence] = useState(0);
+function mountCreationHapticSwitch(eventLayer: Element) {
+    const control = appendHapticSwitch(
+        eventLayer,
+        'calendar-create-haptic-switch',
+        'z-0 h-full w-1/3 max-md:pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+        'selection',
+    );
     const resetSwitch = () => {
         // WebKit's hold timer can retain the first touch coordinates for this
         // input. Replace it after the native release or cancellation finishes.
         requestAnimationFrame(() => {
-            setTouchSequence((sequence) => sequence + 1);
+            if (!control.isConnected) return;
+
+            control.remove();
+            mountCreationHapticSwitch(eventLayer);
         });
     };
-
-    return (
-        <input
-            key={touchSequence}
-            type="checkbox"
-            {...{ switch: '' }}
-            aria-hidden="true"
-            tabIndex={-1}
-            data-calendar-haptic-selection=""
-            data-test="calendar-create-haptic-switch"
-            onTouchEnd={resetSwitch}
-            onTouchCancel={resetSwitch}
-            onMouseDownCapture={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-            className={cn(
-                HAPTIC_SWITCH_CLASS,
-                'z-0 h-full w-1/3 max-md:pointer-coarse:supports-[-webkit-touch-callout:none]:block',
-            )}
-        />
-    );
+    control.addEventListener('touchend', resetSwitch);
+    control.addEventListener('touchcancel', resetSwitch);
+    control.addEventListener('mousedown', (event) => event.stopPropagation());
+    control.addEventListener('click', (event) => event.stopPropagation());
 }
 
 function ExpectedWeekTimeHint({ duration }: { duration: string }) {
@@ -468,6 +463,7 @@ export function TimeCalendar({
             className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-(--mobile-scroll-background)"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
+            data-calendar-selection-draft={hasSelectionDraft || undefined}
         >
             <FullCalendar
                 ref={calendarRef}
@@ -715,9 +711,17 @@ export function TimeCalendar({
                         ? 'time-calendar-day time-calendar-weekend'
                         : 'time-calendar-day'
                 }
-                dayLaneDidMount={({ el }) =>
-                    setDayLanes((lanes) => [...lanes, el])
-                }
+                dayLaneDidMount={({ el }) => {
+                    setDayLanes((lanes) => [...lanes, el]);
+                    if (isPreview) return;
+
+                    // Install the native input with the lane so the first touch
+                    // can target it, like the controls on saved entries.
+                    const eventLayer = el.querySelector(
+                        ':scope > .time-calendar-event-lane',
+                    );
+                    if (eventLayer) mountCreationHapticSwitch(eventLayer);
+                }}
                 dayLaneWillUnmount={({ el }) =>
                     setDayLanes((lanes) => lanes.filter((lane) => lane !== el))
                 }
@@ -1127,22 +1131,6 @@ export function TimeCalendar({
                       )
                     : null;
             })}
-            {!isPreview &&
-                !hasSelectionDraft &&
-                dayLanes.map((lane) => {
-                    // Share the entry layer while staying below its cards.
-                    const eventLayer = lane.querySelector(
-                        ':scope > .time-calendar-event-lane',
-                    );
-
-                    return eventLayer
-                        ? createPortal(
-                              <CalendarCreationHapticSwitch />,
-                              eventLayer,
-                              lane.dataset.date,
-                          )
-                        : null;
-                })}
             {floatingAction && (
                 <div className="absolute end-4 bottom-4 z-10 hidden md:flex">
                     {floatingAction}
