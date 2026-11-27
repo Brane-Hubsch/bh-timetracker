@@ -141,7 +141,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 ### 4.5 Tidrapportering
 
-**Snabbinmatning (formulär)** – datum, start–slut *eller* start + varaktighet ("1,5", "1:30", "90m" ska alla fungera), projekt (sökbar väljare med senast använda först), beskrivning, debiterbar. Smarta förval: start = slut på dagens senaste post.
+**Snabbinmatning (formulär)** – datum, start–slut *eller* start + varaktighet ("1,5", "1:30", "90m" ska alla fungera), projekt (sökbar väljare med senast använda först; sökningen matchar även kundnamnet, så en kund listar sina projekt), beskrivning, debiterbar. Smarta förval: start = slut på dagens senaste post.
 
 **Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 

@@ -105,7 +105,7 @@ function ProjectInput({
     return (
         <ComboBox.InputGroup>
             <Input
-                placeholder={t('Search projects')}
+                placeholder={t('Search projects or clients')}
                 autoFocus={autoFocus}
                 className={
                     showProject
@@ -161,6 +161,10 @@ export function ProjectPicker({
     const isDesktop = useIsDesktop();
     const { contains } = useFilter({ sensitivity: 'base' });
     const [query, setQuery] = useState('');
+    // Match the client too, so searching for a client lists its projects.
+    const matches = (project: ProjectOption) =>
+        contains(project.label, query) ||
+        (project.clientName !== null && contains(project.clientName, query));
     const selectedProject = projects.find((project) => project.value === value);
     const selectedDescriptionId = useId();
     const selectedDescription = selectedProject
@@ -177,9 +181,7 @@ export function ProjectPicker({
             ? t('There are no projects.')
             : t('No projects match your search.');
     const createLabel = t('Create one');
-    const showCreate =
-        Boolean(createProjectUrl) &&
-        !projects.some((project) => contains(project.label, query));
+    const showCreate = Boolean(createProjectUrl) && !projects.some(matches);
     // The filter receives text only. Give the action its own value, even if a project has the same name.
     let createOptionText = createLabel;
     while (projects.some((project) => project.label === createOptionText)) {
@@ -195,6 +197,8 @@ export function ProjectPicker({
               .filter((project) => !recentIds.includes(project.value))
               .sort((a, b) => a.label.localeCompare(b.label))
         : projects.filter((project) => !project.isRecent);
+    const recentMatches = recent.filter(matches);
+    const otherMatches = others.filter(matches);
     // On mobile, focusing the search opens the keyboard over the shortcuts; let people tap one instead.
     const focusSearch = autoFocus && (isDesktop || recent.length === 0);
 
@@ -220,9 +224,9 @@ export function ProjectPicker({
                         setQuery('');
                     }
                 }}
-                defaultFilter={(text, input) =>
-                    (showCreate && text === createOptionText) ||
-                    contains(text, input)
+                // The filter only sees an item's text, so the lists below are filtered by `matches`.
+                defaultFilter={(text) =>
+                    text !== createOptionText || showCreate
                 }
                 data-test="project-picker"
             >
@@ -267,10 +271,10 @@ export function ProjectPicker({
                             </div>
                         )}
                     >
-                        {recent.length > 0 && (
+                        {recentMatches.length > 0 && (
                             <ListBox.Section>
                                 <Header>{t('Recently used')}</Header>
-                                {recent.map((project) => (
+                                {recentMatches.map((project) => (
                                     <ProjectItem
                                         key={project.value}
                                         project={project}
@@ -278,12 +282,12 @@ export function ProjectPicker({
                                 ))}
                             </ListBox.Section>
                         )}
-                        {others.length > 0 && (
+                        {otherMatches.length > 0 && (
                             <ListBox.Section>
-                                {recent.length > 0 && (
+                                {recentMatches.length > 0 && (
                                     <Header>{t('All projects')}</Header>
                                 )}
-                                {others.map((project) => (
+                                {otherMatches.map((project) => (
                                     <ProjectItem
                                         key={project.value}
                                         project={project}
