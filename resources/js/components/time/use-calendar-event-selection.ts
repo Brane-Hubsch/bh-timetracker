@@ -44,8 +44,12 @@ export function useCalendarEventSelection(
         const capture = { capture: true, signal };
         const observe = { ...capture, passive: true };
         const isEditing = () => container.hasAttribute('data-calendar-editing');
-        let press: { origin: Touch; started: number; entryId?: string } | null =
-            null;
+        let press: {
+            origin: Touch;
+            started: number;
+            element: HTMLElement;
+            entryId?: string;
+        } | null = null;
 
         container.addEventListener(
             'touchstart',
@@ -60,6 +64,7 @@ export function useCalendarEventSelection(
                 press = {
                     origin: touches[0],
                     started: event.timeStamp,
+                    element: selected,
                     entryId: target.closest(RESIZE_HANDLE)
                         ? undefined
                         : getElEventRange(selected)?.def.publicId,
@@ -94,7 +99,7 @@ export function useCalendarEventSelection(
             )
                 return;
 
-            const { entryId, started } = press;
+            const { element, entryId, started } = press;
             press = null;
             if (!isEditing()) resume();
             if (
@@ -107,6 +112,8 @@ export function useCalendarEventSelection(
 
             // FullCalendar starts a drag immediately on a selected event, which can suppress its click.
             if (event.cancelable) event.preventDefault();
+            // The edit sheet restores focus to the active element when it closes.
+            element.blur();
             dismiss();
             edit(entryId);
         };
@@ -165,6 +172,7 @@ export function useCalendarEventSelection(
             return true;
         }
 
+        if (jsEvent.detail > 0) el.blur();
         dismiss();
 
         return false;
