@@ -692,8 +692,13 @@
 }
 
 @media (width < 768px) {
+    .time-calendar-event-touch-selected:not(.time-calendar-event-lifted) {
+        --time-calendar-entry-tint: 17%;
+    }
+
     /* The touch grip is centered on the edge with a larger, invisible drag target. */
-    .time-calendar-event-touch-selected > .time-calendar-resizer {
+    .time-calendar-event > .time-calendar-resizer {
+        display: block;
         inset-inline: 0;
         width: 44px;
         max-width: 100%;
@@ -704,17 +709,29 @@
         border: 0;
         border-radius: 0;
         background: transparent;
+        opacity: 0;
+        pointer-events: none;
+
+        @media (prefers-reduced-motion: no-preference) {
+            transition: opacity 180ms var(--ease-out-soft);
+        }
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-start {
+    .time-calendar-event-touch-selected > .time-calendar-resizer {
+        opacity: 1;
+        pointer-events: auto;
+        touch-action: none;
+    }
+
+    .time-calendar-event > .time-calendar-resizer-start {
         top: -8px;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-end {
+    .time-calendar-event > .time-calendar-resizer-end {
         bottom: -8px;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer::after {
+    .time-calendar-event > .time-calendar-resizer::after {
         --time-calendar-grip-dot: radial-gradient(
             circle closest-side,
             var(--time-calendar-grip-dot-color) 95%,
@@ -737,11 +754,11 @@
         opacity: 1;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-start::after {
+    .time-calendar-event > .time-calendar-resizer-start::after {
         top: 3px;
     }
 
-    .time-calendar-event-touch-selected > .time-calendar-resizer-end::after {
+    .time-calendar-event > .time-calendar-resizer-end::after {
         bottom: 3px;
     }
 }
@@ -1151,6 +1168,25 @@
 }
 
 @media (width < 48rem) {
+    .toast {
+        padding-inline-end: 3.25rem;
+    }
+
+    .toast .toast__close-button {
+        @apply size-10 border-0 bg-transparent;
+        inset-block-start: 50%;
+        inset-inline-end: 0.5rem;
+        translate: 0 -50%;
+    }
+
+    .toast:is([data-frontmost='true'], [data-expanded='true']):not(
+            [data-exiting='true'],
+            [data-hidden='true']
+        )
+        .toast__close-button {
+        @apply pointer-events-auto opacity-100;
+    }
+
     :root:has(.mobile-tab-bar) .toast-region--bottom-end {
         bottom: calc(var(--mobile-tab-bar-height) + 1rem);
 

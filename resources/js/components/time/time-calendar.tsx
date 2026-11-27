@@ -34,6 +34,10 @@ import type {
 } from '@/types';
 import { useCalendarDragHaptics } from './use-calendar-drag-haptics';
 import {
+    CALENDAR_EVENT_LONG_PRESS_DELAY,
+    useCalendarEventSelection,
+} from './use-calendar-event-selection';
+import {
     CALENDAR_SNAP_MINUTES,
     CALENDAR_SLOT_MINUTES,
     useCalendarLongPress,
@@ -284,6 +288,7 @@ export function TimeCalendar({
     const calendarKey = `${view}-${date}`;
     const resizeLane = useRef<HTMLElement | null>(null);
     const eventDragOrigin = useRef<Touch | null>(null);
+    const unmovedTouchDrag = useRef(false);
     const lastTouchSlot = useRef<{ start: number; end: number } | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
@@ -389,6 +394,16 @@ export function TimeCalendar({
     );
 
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
+    const eventSelection = useCalendarEventSelection(
+        containerRef,
+        calendarRef,
+        calendarKey,
+        isMobile && !isPreview,
+        (id) => {
+            const entry = byId.get(id);
+            if (entry) onEdit(entry);
+        },
+    );
     const holidayByDate = new Map(
         holidays.map(({ date, name }) => [date, name]),
     );
@@ -513,7 +528,7 @@ export function TimeCalendar({
                     return true;
                 }}
                 editable={!isPreview}
-                eventLongPressDelay={400}
+                eventLongPressDelay={CALENDAR_EVENT_LONG_PRESS_DELAY}
                 eventAllow={(slot) => {
                     if (isSwiping()) {
                         return false;
@@ -903,11 +918,12 @@ export function TimeCalendar({
 
                     const entry = byId.get(info.event.id);
 
-                    if (entry) {
+                    if (entry && !eventSelection.handleClick(info)) {
                         onEdit(entry);
                     }
                 }}
                 eventDragStart={({ el, jsEvent, event }) => {
+                    eventSelection.pause();
                     trackTouchSlots(jsEvent, event.start, event.end);
                     dragHaptics.start(jsEvent.target, event.start, event.end);
                     eventDragOrigin.current =
@@ -956,8 +972,10 @@ export function TimeCalendar({
                 }}
                 eventDragStop={({ el }) => {
                     lastTouchSlot.current = null;
+                    unmovedTouchDrag.current = eventDragOrigin.current !== null;
                     eventDragOrigin.current = null;
                     setEditing(false);
+                    eventSelection.resume();
                     const style = containerRef.current?.style;
                     style?.removeProperty('--move-origin-left');
                     style?.removeProperty('--move-origin-width');
@@ -967,6 +985,13 @@ export function TimeCalendar({
                     el.style.removeProperty('--time-calendar-entry-padding');
                 }}
                 eventDrop={(info) => {
+                    // Layout shifts can change the hit underneath a stationary touch.
+                    if (unmovedTouchDrag.current) {
+                        info.revert();
+
+                        return;
+                    }
+
                     const entry = byId.get(info.event.id);
 
                     if (entry && info.event.start && info.event.end) {
@@ -979,6 +1004,7 @@ export function TimeCalendar({
                     }
                 }}
                 eventResizeStart={({ el, jsEvent, event }) => {
+                    eventSelection.pause();
                     trackTouchSlots(jsEvent, event.start, event.end);
                     dragHaptics.start(jsEvent.target, event.start, event.end);
                     setEditing(true);
@@ -1001,6 +1027,7 @@ export function TimeCalendar({
                 eventResizeStop={() => {
                     lastTouchSlot.current = null;
                     setEditing(false);
+                    eventSelection.resume();
                     resizeLane.current?.style.removeProperty(
                         '--resize-origin-top',
                     );

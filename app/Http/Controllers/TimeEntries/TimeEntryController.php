@@ -5,6 +5,7 @@ namespace App\Http\Controllers\TimeEntries;
 use App\Actions\TimeEntries\CopyTimeEntries;
 use App\Actions\TimeEntries\CreateTimeEntry;
 use App\Actions\TimeEntries\DeleteTimeEntry;
+use App\Actions\TimeEntries\RescheduleTimeEntry;
 use App\Actions\TimeEntries\RestoreTimeEntry;
 use App\Actions\TimeEntries\UpdateTimeEntry;
 use App\Enums\AbsenceType;
@@ -12,6 +13,7 @@ use App\Enums\OrganizationPermission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimeEntries\CopyTimeEntriesRequest;
 use App\Http\Requests\TimeEntries\TimeEntryRequest;
+use App\Http\Requests\TimeEntries\TimeEntryScheduleRequest;
 use App\Models\Absence;
 use App\Models\Holiday;
 use App\Models\Membership;
@@ -191,6 +193,51 @@ class TimeEntryController extends Controller
         $updateTimeEntry->handle($timeEntry, $data);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Time updated.')]);
+
+        return back();
+    }
+
+    public function reschedule(TimeEntryScheduleRequest $request, #[CurrentUser] User $user, TimeEntry $timeEntry, RescheduleTimeEntry $rescheduleTimeEntry): RedirectResponse
+    {
+        Gate::authorize('update', $timeEntry);
+
+        [$start, $end] = $request->times($user->timezone);
+        $previous = $rescheduleTimeEntry->handle($timeEntry, $start, $end);
+        $toast = ['type' => 'success', 'message' => __('Time updated.')];
+
+        if ($previous !== null) {
+            $toast['undo'] = URL::temporarySignedRoute('time.undo-reschedule', now()->addMinutes(5), [
+                'current_organization' => $this->currentOrganization->getOrFail()->slug,
+                'timeEntry' => $timeEntry->id,
+                'from_start' => $previous[0]->getTimestamp(),
+                'from_end' => $previous[1]->getTimestamp(),
+                'to_start' => $start->getTimestamp(),
+                'to_end' => $end->getTimestamp(),
+            ], absolute: false);
+        }
+
+        Inertia::flash('toast', $toast);
+
+        return back();
+    }
+
+    public function undoReschedule(Request $request, TimeEntry $timeEntry, RescheduleTimeEntry $rescheduleTimeEntry): RedirectResponse
+    {
+        Gate::authorize('update', $timeEntry);
+
+        $result = $rescheduleTimeEntry->handle(
+            $timeEntry,
+            CarbonImmutable::createFromTimestampUTC((int) $request->query('from_start')),
+            CarbonImmutable::createFromTimestampUTC((int) $request->query('from_end')),
+            [
+                CarbonImmutable::createFromTimestampUTC((int) $request->query('to_start')),
+                CarbonImmutable::createFromTimestampUTC((int) $request->query('to_end')),
+            ],
+        );
+
+        Inertia::flash('toast', $result === null
+            ? ['type' => 'warning', 'message' => __('The time has changed again and could not be undone.')]
+            : ['type' => 'success', 'message' => __('Time change undone.')]);
 
         return back();
     }
