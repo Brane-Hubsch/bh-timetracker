@@ -121,7 +121,7 @@ export function ReportLayout({
                         </div>
                         <SegmentedControl
                             aria-label={t('Report type')}
-                            className="grid-cols-[1.25fr_1fr_1fr] [&_.toggle-button]:h-9 [&_.toggle-button]:text-[clamp(0.8125rem,4vw,0.96875rem)]"
+                            className="grid-cols-[1.25fr_1fr_1fr] [&_.toggle-button]:h-9"
                             fullWidth
                             options={[
                                 { id: 'summary', label: titles.summary },
