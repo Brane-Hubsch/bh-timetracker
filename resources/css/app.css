@@ -253,8 +253,10 @@
     padding-inline: var(--time-calendar-entry-padding, 4px) !important;
 }
 
-.time-calendar-event-lifted {
+.time-calendar-event.time-calendar-event-lifted {
     --time-calendar-entry-tint: 19%;
+    /* The classic theme fades desktop drag previews, which washes out the lift tint. */
+    opacity: 1;
 }
 
 /* FullCalendar selects an entry on touch long-press to enable its resize handles. */
