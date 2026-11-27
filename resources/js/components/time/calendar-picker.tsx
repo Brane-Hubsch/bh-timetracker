@@ -454,7 +454,11 @@ export function CalendarPicker({
                                 {(!isList || !isDesktop) && (
                                     <SegmentedControl<CalendarView>
                                         aria-label={t('View')}
-                                        className="max-md:gap-0 max-md:p-[3px] max-md:[&>button]:px-2.5 max-md:[&>button[data-selected=true]]:bg-accent-soft max-md:[&>button[data-selected=true]]:shadow-none"
+                                        className={cn(
+                                            !isList &&
+                                                'bg-transparent! inset-ring inset-ring-border',
+                                            'max-md:gap-0 max-md:p-[3px] max-md:[&>button]:px-2.5 max-md:[&>button[data-selected=true]]:bg-accent-soft max-md:[&>button[data-selected=true]]:shadow-none',
+                                        )}
                                         value={view}
                                         onChange={(view) => {
                                             if (!isDesktop) {
