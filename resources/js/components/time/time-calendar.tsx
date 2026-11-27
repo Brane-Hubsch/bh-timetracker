@@ -64,6 +64,37 @@ function appendHapticSwitch(
     parent.append(control);
 }
 
+function CalendarCreationHapticSwitch() {
+    const [touchSequence, setTouchSequence] = useState(0);
+    const resetSwitch = () => {
+        // WebKit's hold timer can retain the first touch coordinates for this
+        // input. Replace it after the native release or cancellation finishes.
+        requestAnimationFrame(() => {
+            setTouchSequence((sequence) => sequence + 1);
+        });
+    };
+
+    return (
+        <input
+            key={touchSequence}
+            type="checkbox"
+            {...{ switch: '' }}
+            aria-hidden="true"
+            tabIndex={-1}
+            data-calendar-haptic-selection=""
+            data-test="calendar-create-haptic-switch"
+            onTouchEnd={resetSwitch}
+            onTouchCancel={resetSwitch}
+            onMouseDownCapture={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            className={cn(
+                HAPTIC_SWITCH_CLASS,
+                'z-0 h-full max-w-1/3 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+            )}
+        />
+    );
+}
+
 function ExpectedWeekTimeHint({ duration }: { duration: string }) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
@@ -1095,22 +1126,7 @@ export function TimeCalendar({
 
                     return eventLayer
                         ? createPortal(
-                              <input
-                                  type="checkbox"
-                                  {...{ switch: '' }}
-                                  aria-hidden="true"
-                                  tabIndex={-1}
-                                  data-calendar-haptic-selection=""
-                                  data-test="calendar-create-haptic-switch"
-                                  onMouseDownCapture={(event) =>
-                                      event.stopPropagation()
-                                  }
-                                  onClick={(event) => event.stopPropagation()}
-                                  className={cn(
-                                      HAPTIC_SWITCH_CLASS,
-                                      'z-0 h-full max-w-1/3 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
-                                  )}
-                              />,
+                              <CalendarCreationHapticSwitch />,
                               eventLayer,
                               lane.dataset.date,
                           )
