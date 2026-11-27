@@ -502,7 +502,7 @@ export function CalendarPicker({
                                 {!isDesktop && (
                                     <Drawer.CloseTrigger
                                         aria-label={t('Close')}
-                                        className="static size-9 rounded-full bg-transparent hover:bg-transparent"
+                                        className="static"
                                     >
                                         <X className="size-4" aria-hidden />
                                     </Drawer.CloseTrigger>

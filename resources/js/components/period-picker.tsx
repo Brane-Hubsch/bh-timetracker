@@ -207,14 +207,12 @@ export function PeriodPicker({
                                         ) : (
                                             <Drawer.CloseTrigger
                                                 aria-label={t('Close')}
-                                                className="static size-10 rounded-full bg-transparent hover:bg-transparent"
+                                                className="static size-10"
                                             >
-                                                <span className="grid size-6 place-items-center rounded-full bg-default">
-                                                    <span
-                                                        aria-hidden="true"
-                                                        className="report-period-icon report-period-icon--close"
-                                                    />
-                                                </span>
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="report-period-icon report-period-icon--close"
+                                                />
                                             </Drawer.CloseTrigger>
                                         )}
                                     </Drawer.Header>

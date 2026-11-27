@@ -27,7 +27,7 @@ type Props = {
     containerClassName?: string;
 };
 
-/** Dialog title and a plain close button, as in the TimeReport design. */
+/** Desktop dialogs use a plain close button. */
 const closeClassName =
     'size-8 rounded-lg bg-transparent text-foreground hover:bg-default';
 
@@ -171,7 +171,7 @@ export function ResponsiveDialog({
                                 {headerContent}
                                 {closeInHeader && (
                                     <Drawer.CloseTrigger
-                                        className={headerCloseClassName}
+                                        className="static shrink-0 text-foreground"
                                         aria-label={t('Close')}
                                     />
                                 )}

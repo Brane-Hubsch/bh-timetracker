@@ -67,6 +67,19 @@
     --muted: oklch(0.72 0.012 286);
 }
 
+@media (width < 48rem) {
+    :is(.modal__close-trigger, .drawer__close-trigger) {
+        @apply min-h-9 min-w-9 rounded-full bg-default;
+
+        @media (hover: hover) {
+            &:hover,
+            &[data-hovered='true'] {
+                @apply bg-default-hover;
+            }
+        }
+    }
+}
+
 @media (hover: hover) {
     .sidebar-resize-handle:hover::before {
         background-color: color-mix(
