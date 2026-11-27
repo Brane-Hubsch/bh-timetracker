@@ -934,9 +934,10 @@
     scrollbar-color: var(--scrollbar-color);
 }
 
-/* Keep iOS text selection from taking over a long press on the time grid. */
+/* A long press on the grid can select nearby text in the fixed mobile bars. */
 @media (any-pointer: coarse) {
-    .time-calendar-body {
+    .time-calendar,
+    :root:has(.time-calendar) :is(.mobile-page-header, .mobile-tab-bar) {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
