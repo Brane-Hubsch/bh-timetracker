@@ -868,9 +868,9 @@
 }
 
 .time-calendar .time-calendar-slot-label-text {
-    margin-block: 0 0.5rem;
+    /* FullCalendar sizes a slot from its label: this gives 33px per half hour, as in the design. */
+    margin-block: 0 0.75rem;
     font-size: 0.6875rem;
-    /* FullCalendar sizes a slot from its label: this gives 29px per half hour, as in the design. */
     line-height: 1.25rem;
     /* With FullCalendar's own 4px: 12px from the edge, 14px to the first day. */
     padding-inline: 0.5rem 0.625rem;
