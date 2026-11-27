@@ -42,14 +42,14 @@ const TIMER_EVENT_ID = 'running-timer';
 function ExpectedWeekTimeHint({ duration }: { duration: string }) {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
-    const title = t('Expected working time this week: :duration', { duration });
+    const title = t('Expected time: :duration', { duration });
     const content = (
         <>
             <p aria-hidden="true" className="font-semibold">
                 {title}
             </p>
             <p className="mt-1 text-muted">
-                {t('Based on the work schedule, excluding holidays.')}
+                {t('Schedule excluding holidays.')}
             </p>
         </>
     );
@@ -65,7 +65,7 @@ function ExpectedWeekTimeHint({ duration }: { duration: string }) {
                 <Tooltip.Content
                     placement="right"
                     showArrow
-                    className="w-64 max-w-[calc(100vw-5rem)] break-normal"
+                    className="w-max max-w-[calc(100vw-5rem)] break-normal"
                 >
                     <Tooltip.Arrow />
                     {content}
@@ -73,7 +73,7 @@ function ExpectedWeekTimeHint({ duration }: { duration: string }) {
             </Tooltip>
             <Popover.Content
                 placement="right"
-                className="w-64 max-w-[calc(100vw-5rem)]"
+                className="w-max max-w-[calc(100vw-5rem)]"
             >
                 <Popover.Arrow />
                 <Popover.Dialog aria-label={title} className="p-2 text-xs">
