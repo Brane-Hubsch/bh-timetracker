@@ -2,6 +2,7 @@ import { useEffectEvent, useLayoutEffect } from 'react';
 import type { RefObject } from 'react';
 import type { CalendarRef } from '@fullcalendar/react';
 import type { CalendarApiImpl } from '@fullcalendar/react/protected-api';
+import { isAndroidTouch, vibrateLightly } from '@/lib/haptics';
 import { addDays, minutesToTime, timeToMinutes } from '@/lib/time';
 
 export const CALENDAR_SNAP_MINUTES = 15;
@@ -74,6 +75,7 @@ export function useCalendarLongPress(
             | undefined;
         let press: Press | null = null;
         let touchId: number | null = null;
+        let reportFrame = 0;
 
         function unselectEvent() {
             // CalendarApi.unselect() only clears date ranges, including the form's draft.
@@ -82,7 +84,7 @@ export function useCalendarLongPress(
             }
         }
 
-        function preview(touch: Touch) {
+        function preview(touch: Touch, withHaptics = true) {
             if (!container || !press) return;
 
             const range = rangeAtTouch(container, touch);
@@ -90,7 +92,13 @@ export function useCalendarLongPress(
 
             press.range = range;
             if (range) {
-                press.snapHaptics?.(range.start, range.end);
+                if (withHaptics) {
+                    if (press.snapHaptics) {
+                        press.snapHaptics(range.start, range.end);
+                    } else if (isAndroidTouch(true)) {
+                        vibrateLightly();
+                    }
+                }
                 api?.select(`${range.start}:00Z`, `${range.end}:00Z`);
             } else {
                 api?.unselect();
@@ -147,7 +155,11 @@ export function useCalendarLongPress(
         function move(event: TouchEvent) {
             if (!press) return;
 
-            const touch = event.touches[0];
+            const touch = Array.from(event.touches).find(
+                ({ identifier }) => identifier === touchId,
+            );
+            if (!touch) return;
+
             if (press.active) {
                 // The native switch needs the uncancelled touchmove, and
                 // its touch-action already blocks scrolling on this target.
@@ -170,22 +182,31 @@ export function useCalendarLongPress(
             );
             if (!touch) return;
 
-            // FullCalendar did not see this touch start, so it would treat the
-            // browser's emulated mouse events as a separate range selection.
-            if (event.cancelable) event.preventDefault();
             touchId = null;
-            if (!press) return;
-
-            if (press.active) {
-                preview(touch);
-            } else {
+            if (press?.active) {
+                preview(touch, false);
+            } else if (press) {
                 // We also suppress the synthetic click for taps on empty timed cells.
                 unselectEvent();
             }
 
-            const range = press.range;
+            const range = press?.range;
+            const allowNativeRelease = Boolean(range && press?.snapHaptics);
+            // FullCalendar did not see this touch start. Suppress its emulated
+            // mouse events unless Safari needs the native switch release.
+            if (!allowNativeRelease && event.cancelable) event.preventDefault();
             finish(Boolean(range));
-            if (range) reportTime(range.start, range.end);
+            if (!range) return;
+
+            if (allowNativeRelease) {
+                // Opening the form removes the switch. Give WebKit the touch
+                // default action first, including a stationary hold's click.
+                reportFrame = requestAnimationFrame(() =>
+                    reportTime(range.start, range.end),
+                );
+            } else {
+                reportTime(range.start, range.end);
+            }
         }
 
         const listeners = new AbortController();
@@ -215,7 +236,10 @@ export function useCalendarLongPress(
         container.addEventListener('touchend', end, { passive: false, signal });
         container.addEventListener(
             'touchcancel',
-            () => {
+            (event) => {
+                if (press?.snapHaptics && event.cancelable) {
+                    event.preventDefault();
+                }
                 touchId = null;
                 finish();
             },
@@ -257,6 +281,7 @@ export function useCalendarLongPress(
 
         return () => {
             listeners.abort();
+            cancelAnimationFrame(reportFrame);
             finish();
         };
     }, [containerRef, calendarRef, calendarKey, enabled]);
