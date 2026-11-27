@@ -377,7 +377,7 @@ export function GroupTable({
                                                         aria-hidden="true"
                                                     >
                                                         <span
-                                                            className="block h-full origin-left animate-grow-x rounded-full bg-accent motion-safe:transition-[width] motion-safe:duration-300"
+                                                            className="block h-full rounded-full bg-accent motion-safe:transition-[width] motion-safe:duration-300"
                                                             style={{
                                                                 width: `${Math.min(1, share(line.seconds)) * 100}%`,
                                                                 backgroundColor:

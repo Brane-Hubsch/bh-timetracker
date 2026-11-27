@@ -624,15 +624,12 @@ export default function TimeIndex({
                     </div>
                 </MobilePageHeader>
 
-                {/* Fades in when the week, day or view changes (not after saving an entry). */}
                 <div
                     key={`${view}-${weekStart}-${view === 'day' ? date : ''}`}
                     ref={calendarGrid}
-                    className={cn(
-                        'md:animate-fade-in',
-                        isList &&
-                            'mx-auto w-full max-md:motion-safe:animate-fade-in md:max-w-[76rem]',
-                    )}
+                    className={
+                        isList ? 'mx-auto w-full md:max-w-[76rem]' : undefined
+                    }
                 >
                     {view === 'list' ? (
                         <TimeEntryList
