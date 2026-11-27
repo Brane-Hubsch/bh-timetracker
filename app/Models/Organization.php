@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\GeneratesUniqueOrganizationSlugs;
+use App\Enums\Accent;
 use App\Enums\OrganizationRole;
 use App\Services\Images\ImageStorage;
 use Database\Factories\OrganizationFactory;
@@ -26,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property bool $team_enabled
  * @property bool $timer_enabled Whether members may use the timer
  * @property int $workday_seconds Length of a full working day (a full day of absence counts as this)
+ * @property Accent|null $accent Brand accent colour for members without their own; null is violet
  * @property string|null $logo_path Uploaded logo (directory in ImageStorage)
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -37,7 +39,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Project> $projects
  * @property-read Collection<int, Holiday> $holidays
  */
-#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path', 'workday_seconds', 'team_enabled', 'timer_enabled'])]
+#[Fillable(['name', 'slug', 'currency', 'default_hourly_rate', 'week_starts_on', 'timezone', 'logo_path', 'workday_seconds', 'team_enabled', 'timer_enabled', 'accent'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -159,6 +161,7 @@ class Organization extends Model
             'workday_seconds' => 'integer',
             'team_enabled' => 'boolean',
             'timer_enabled' => 'boolean',
+            'accent' => Accent::class,
         ];
     }
 
