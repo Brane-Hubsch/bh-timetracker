@@ -561,6 +561,7 @@
                 var(--mobile-tab-bar-height)
         );
         overflow-y: auto;
+        scrollbar-color: var(--muted) transparent;
     }
 
     /* Use the day lane's inline start so the divider follows the measured time axis. */
