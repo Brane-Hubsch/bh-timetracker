@@ -10,6 +10,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { type CSSProperties, useState } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { TextInputField } from '@/components/form/text-input-field';
 import Heading from '@/components/heading';
@@ -386,22 +387,22 @@ export default function TagsIndex({ tags }: Props) {
                                 />
                             </SideDrawerBody>
                             <SideDrawerFooter>
-                                <Button
+                                <HapticButton
                                     type="button"
                                     slot="close"
                                     variant="tertiary"
-                                    className="max-md:flex-1"
+                                    containerClassName="max-md:flex-1"
                                 >
                                     {t('Cancel')}
-                                </Button>
-                                <Button
+                                </HapticButton>
+                                <HapticButton
                                     type="submit"
                                     isPending={processing}
-                                    className="max-md:flex-1"
+                                    containerClassName="max-md:flex-1"
                                     data-test="save-tag-button"
                                 >
                                     {t('Save')}
-                                </Button>
+                                </HapticButton>
                             </SideDrawerFooter>
                         </>
                     )}
@@ -415,20 +416,21 @@ export default function TagsIndex({ tags }: Props) {
                 mobileClassName={`${keyboardFooterClass} [&_[data-slot=drawer-footer]]:mt-3 [&_[data-slot=drawer-heading]]:text-[17px]/[21px]`}
                 footer={
                     <>
-                        <Button
+                        <HapticButton
                             slot="close"
                             variant="tertiary"
-                            className="max-md:flex-1"
+                            containerClassName="max-md:flex-1"
                         >
                             {t('Cancel')}
-                        </Button>
-                        <Button
+                        </HapticButton>
+                        <HapticButton
                             type="submit"
                             form={RENAME_FORM}
-                            className="max-md:flex-1"
+                            haptic={!mergeTarget}
+                            containerClassName="max-md:flex-1"
                         >
                             {mergeTarget ? t('Merge') : t('Save')}
-                        </Button>
+                        </HapticButton>
                     </>
                 }
             >

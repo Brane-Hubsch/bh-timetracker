@@ -22,7 +22,7 @@ import {
 } from '@/components/form/submit-shortcut';
 import { TagInput } from '@/components/form/tag-input';
 import { TimeInputField } from '@/components/form/time-input-field';
-import { HapticTap } from '@/components/haptic-tap';
+import { HapticButton } from '@/components/haptic-button';
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { ABSENCE_FORM_ID, AbsenceForm } from '@/components/time/absence-dialog';
 import type { AbsenceOptions } from '@/components/time/absence-dialog';
@@ -658,7 +658,7 @@ export function TimeEntryForm({
                     <div className="ml-auto flex gap-2">
                         {isTimer ? (
                             <>
-                                <Button
+                                <HapticButton
                                     type="submit"
                                     form={FORM_ID}
                                     variant="tertiary"
@@ -666,7 +666,7 @@ export function TimeEntryForm({
                                     data-test="timer-save"
                                 >
                                     {t('Save')}
-                                </Button>
+                                </HapticButton>
                                 <Button
                                     onPress={stopTimerFromForm}
                                     isPending={processing}
@@ -679,34 +679,23 @@ export function TimeEntryForm({
                             </>
                         ) : (
                             <>
-                                <Button slot="close" variant="tertiary">
+                                <HapticButton slot="close" variant="tertiary">
                                     {t('Cancel')}
-                                </Button>
-                                <HapticTap<HTMLButtonElement>
-                                    enabled={!processing}
+                                </HapticButton>
+                                <HapticButton
+                                    type="submit"
+                                    form={isAbsence ? ABSENCE_FORM_ID : FORM_ID}
+                                    isPending={processing}
+                                    aria-keyshortcuts={SUBMIT_SHORTCUT}
+                                    data-test={
+                                        isAbsence
+                                            ? 'absence-save'
+                                            : 'time-entry-save'
+                                    }
                                 >
-                                    {(ref) => (
-                                        <Button
-                                            ref={ref}
-                                            type="submit"
-                                            form={
-                                                isAbsence
-                                                    ? ABSENCE_FORM_ID
-                                                    : FORM_ID
-                                            }
-                                            isPending={processing}
-                                            aria-keyshortcuts={SUBMIT_SHORTCUT}
-                                            data-test={
-                                                isAbsence
-                                                    ? 'absence-save'
-                                                    : 'time-entry-save'
-                                            }
-                                        >
-                                            {t('Save')}
-                                            <SubmitShortcutHint />
-                                        </Button>
-                                    )}
-                                </HapticTap>
+                                    {t('Save')}
+                                    <SubmitShortcutHint />
+                                </HapticButton>
                             </>
                         )}
                     </div>

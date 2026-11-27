@@ -2,6 +2,7 @@ import { Button, Chip, Dropdown, Label, Modal } from '@heroui/react';
 import { Form } from '@inertiajs/react';
 import { EllipsisVertical, KeyRound } from 'lucide-react';
 import { useState } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { TextInputField } from '@/components/form/text-input-field';
 import { useTranslation } from '@/lib/i18n';
@@ -114,15 +115,18 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                                         />
                                     </Modal.Body>
                                     <Modal.Footer>
-                                        <Button slot="close" variant="tertiary">
+                                        <HapticButton
+                                            slot="close"
+                                            variant="tertiary"
+                                        >
                                             {t('Cancel')}
-                                        </Button>
-                                        <Button
+                                        </HapticButton>
+                                        <HapticButton
                                             type="submit"
                                             isPending={processing}
                                         >
                                             {t('Save')}
-                                        </Button>
+                                        </HapticButton>
                                     </Modal.Footer>
                                 </>
                             )}

@@ -12,6 +12,7 @@ import { router, useForm } from '@inertiajs/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { FileTrigger } from 'react-aria-components';
+import { HapticButton } from '@/components/haptic-button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { ACCEPTED_IMAGE_TYPES } from '@/components/form/image-upload-field';
 import { SelectField } from '@/components/form/select-field';
@@ -47,8 +48,9 @@ const DAYS = [
     ['Sunday', 'Sun'],
 ] as const;
 
+const footerButtonLayoutClassName = 'max-md:min-w-0 max-md:flex-1';
 const footerButtonClassName =
-    'max-md:min-w-0 max-md:flex-1 max-md:px-1 max-md:leading-tight max-md:whitespace-normal';
+    'max-md:min-w-0 max-md:px-1 max-md:leading-tight max-md:whitespace-normal';
 
 type Props = {
     isOpen: boolean;
@@ -589,32 +591,35 @@ export function MemberDrawer({
                         )}
                     </SideDrawerBody>
                     <SideDrawerFooter>
-                        <Button
+                        <HapticButton
                             type="button"
                             slot="close"
+                            haptic={!member.isDeactivated}
                             variant="tertiary"
+                            containerClassName={footerButtonLayoutClassName}
                             className={footerButtonClassName}
                         >
                             {member.isDeactivated ? t('Close') : t('Cancel')}
-                        </Button>
+                        </HapticButton>
                         {member.isDeactivated ? (
                             <Button
                                 type="button"
                                 isPending={changingStatus}
                                 onPress={changeStatus}
-                                className={footerButtonClassName}
+                                className={`${footerButtonLayoutClassName} ${footerButtonClassName}`}
                             >
                                 {t('Reactivate member')}
                             </Button>
                         ) : (
-                            <Button
+                            <HapticButton
                                 type="submit"
                                 isPending={form.processing}
                                 isDisabled={!form.isDirty || changingAvatar}
+                                containerClassName={footerButtonLayoutClassName}
                                 className={footerButtonClassName}
                             >
                                 {t('Save changes')}
-                            </Button>
+                            </HapticButton>
                         )}
                     </SideDrawerFooter>
                 </form>

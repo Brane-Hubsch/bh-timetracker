@@ -1,5 +1,6 @@
 import { Button, Modal } from '@heroui/react';
 import { Form } from '@inertiajs/react';
+import { HapticButton } from '@/components/haptic-button';
 import { TextInputField } from '@/components/form/text-input-field';
 import { useTranslation } from '@/lib/i18n';
 import { store } from '@/routes/organizations';
@@ -47,9 +48,12 @@ export default function CreateOrganizationModal({
                                     />
                                 </Modal.Body>
                                 <Modal.Footer>
-                                    <Button slot="close" variant="tertiary">
+                                    <HapticButton
+                                        slot="close"
+                                        variant="tertiary"
+                                    >
                                         {t('Cancel')}
-                                    </Button>
+                                    </HapticButton>
                                     <Button
                                         type="submit"
                                         isPending={processing}

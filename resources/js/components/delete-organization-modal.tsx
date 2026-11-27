@@ -1,6 +1,7 @@
 import { AlertDialog, Button } from '@heroui/react';
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
+import { HapticButton } from '@/components/haptic-button';
 import { TextInputField } from '@/components/form/text-input-field';
 import { useTranslation } from '@/lib/i18n';
 import { destroy } from '@/routes/organizations';
@@ -65,9 +66,12 @@ export default function DeleteOrganizationModal({
                                     />
                                 </AlertDialog.Body>
                                 <AlertDialog.Footer>
-                                    <Button slot="close" variant="tertiary">
+                                    <HapticButton
+                                        slot="close"
+                                        variant="tertiary"
+                                    >
                                         {t('Cancel')}
-                                    </Button>
+                                    </HapticButton>
                                     <Button
                                         type="submit"
                                         variant="danger"
