@@ -8,6 +8,10 @@ declare global {
     interface Window {
         /** Fades out the startup splash once it has shown for its minimum time (splash.blade.php). */
         hideSplash?: () => void;
+        /** Mobile browser installation event retained by the initial HTML. */
+        pwaInstallPrompt?: Event & {
+            prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
+        };
     }
 }
 

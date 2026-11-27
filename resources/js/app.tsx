@@ -31,10 +31,9 @@ router.on('finish', ({ detail: { visit } }) => {
     }
 });
 
-const appName = import.meta.env.VITE_APP_NAME || 'BH Timetracker';
-
 void createInertiaApp({
-    title: (title) => (title ? `${title} – ${appName}` : appName),
+    title: (title, page) =>
+        [page.props.name, title].filter(Boolean).join(' | '),
     layout: (name) => {
         switch (true) {
             case name.startsWith('auth/'):

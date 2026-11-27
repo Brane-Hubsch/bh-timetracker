@@ -60,5 +60,5 @@ export default function MagicLink({ token, isValid, email }: Props) {
 }
 
 MagicLink.layout = {
-    title: 'Sign in to BH Timetracker',
+    title: 'Sign in to :app',
 };

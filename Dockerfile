@@ -53,10 +53,6 @@ RUN npm ci --no-audit --no-fund
 
 COPY --chown=www-data:www-data . .
 
-# Public values only: everything prefixed VITE_ ends up in the browser bundle.
-ARG VITE_APP_NAME="BH Timetracker"
-ENV VITE_APP_NAME=${VITE_APP_NAME}
-
 RUN composer dump-autoload --no-dev --optimize \
     && npm run build
 

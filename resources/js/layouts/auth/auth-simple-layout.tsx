@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { useTranslation } from '@/lib/i18n';
 import { home } from '@/routes';
@@ -10,6 +10,7 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     const { t } = useTranslation();
+    const { name } = usePage().props;
 
     return (
         <main className="flex min-h-svh flex-col items-center justify-center bg-background p-4 sm:p-10">
@@ -23,7 +24,7 @@ export default function AuthSimpleLayout({
                     <div className="space-y-2 text-center">
                         {title && (
                             <h1 className="text-xl font-semibold">
-                                {t(title)}
+                                {t(title, { app: name })}
                             </h1>
                         )}
                         {description && (

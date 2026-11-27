@@ -7,6 +7,7 @@ use App\Notifications\Auth\MagicLinkNotification;
 use App\Notifications\Organizations\OrganizationInvitation as OrganizationInvitationNotification;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Vite;
+use Inertia\Testing\AssertableInertia as Assert;
 
 it('sends Swedish, branded sign-in emails', function () {
     $user = User::factory()->create(['name' => 'Maja Medlem']);
@@ -38,9 +39,13 @@ it('sends Swedish invitation emails', function () {
 });
 
 it('ships a web app manifest with its icons', function () {
-    $response = $this->get('/site.webmanifest')
+    config(['app.name' => 'Example Tracker']);
+
+    $response = $this->get(route('pwa.manifest', absolute: false))
         ->assertOk()
         ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJsonPath('name', 'Example Tracker')
+        ->assertJsonPath('short_name', 'Example Tracker')
         ->assertJsonPath('start_url', '/')
         ->assertJsonPath('scope', '/')
         ->assertJsonPath('lang', 'sv')
@@ -66,7 +71,10 @@ it('ships a web app manifest with its icons', function () {
 
     $login = $this->get('/login')
         ->assertSee('rel="manifest" href="/site.webmanifest"', false)
-        ->assertSee('name="theme-color"', false);
+        ->assertSee('name="theme-color"', false)
+        ->assertSee('name="apple-mobile-web-app-title" content="Example Tracker"', false)
+        ->assertSee('<title>Example Tracker</title>', false)
+        ->assertInertia(fn (Assert $page) => $page->where('name', 'Example Tracker'));
 
     foreach ([120, 152, 167, 180] as $size) {
         $url = Vite::asset("resources/app-icons/apple-touch-{$size}.png");

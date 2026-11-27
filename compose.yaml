@@ -15,7 +15,7 @@
 name: bh-timetracker
 
 x-app-environment: &app-environment
-    APP_NAME: ${APP_NAME:-BH Timetracker}
+    APP_NAME: ${APP_NAME:-TimeTracker}
     APP_ENV: production
     APP_KEY: ${APP_KEY:?Generate one with php artisan key:generate --show}
     APP_DEBUG: ${APP_DEBUG:-false}
@@ -87,8 +87,6 @@ x-app: &app
     build:
         context: .
         target: production
-        args:
-            VITE_APP_NAME: ${APP_NAME:-BH Timetracker}
     restart: unless-stopped
     environment: *app-environment
     volumes:
