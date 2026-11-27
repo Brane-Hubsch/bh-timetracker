@@ -246,6 +246,7 @@
 
 @media (width < 768px) {
     .time-calendar {
+        --time-calendar-grip-dot-color: white;
         /* Hold space for the 48 half-hour rows while a new day is measured. */
         min-height: calc(48 * 1.8125rem);
         overflow-anchor: none;
@@ -253,6 +254,7 @@
 
     .dark .time-calendar {
         --fc-classic-background: var(--background);
+        --time-calendar-grip-dot-color: rgb(0 0 0 / 70%);
     }
 }
 
@@ -417,7 +419,7 @@
     .time-calendar-event-touch-selected > .time-calendar-resizer::after {
         --time-calendar-grip-dot: radial-gradient(
             circle closest-side,
-            rgb(0 0 0 / 70%) 95%,
+            var(--time-calendar-grip-dot-color) 95%,
             transparent
         );
 
