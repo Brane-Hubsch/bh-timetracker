@@ -3,7 +3,7 @@ import type { TouchEvent as ReactTouchEvent } from 'react';
 
 type DragGesture = {
     control: HTMLInputElement;
-    slot: number | null;
+    slot: { start: number; end: number } | null;
     switched: boolean;
     moved: boolean;
 };
@@ -11,11 +11,18 @@ type DragGesture = {
 export function useCalendarDragHaptics() {
     const gesture = useRef<DragGesture | null>(null);
 
-    const arm = (event: ReactTouchEvent<HTMLInputElement>) => {
+    const arm = (event: ReactTouchEvent<HTMLDivElement>) => {
         const touch = event.touches[0];
-        if (event.touches.length !== 1 || !touch) return;
+        const control = event.target;
+        if (
+            event.touches.length !== 1 ||
+            !touch ||
+            !(control instanceof HTMLInputElement) ||
+            !control.hasAttribute('data-calendar-haptic-switch')
+        ) {
+            return;
+        }
 
-        const control: HTMLInputElement = event.currentTarget;
         const listeners = new AbortController();
         const { signal } = listeners;
         const active: DragGesture = {
@@ -26,10 +33,15 @@ export function useCalendarDragHaptics() {
         };
         gesture.current = active;
         control.checked = false;
-        control.style.width = '24px';
+        // Rotate a horizontal switch. A square keeps the two axes equal even
+        // in WebKit versions that measure the transformed bounding box.
+        control.style.width = '40px';
         control.style.height = '40px';
         control.style.maxHeight = 'none';
         control.style.maxWidth = 'none';
+        control.style.rotate = '90deg';
+        // FullCalendar hides the dragged source while it renders the mirror.
+        control.style.visibility = 'visible';
         control.style.removeProperty('translate');
 
         let offset = 0;
@@ -37,6 +49,8 @@ export function useCalendarDragHaptics() {
             const unshiftedTop = control.getBoundingClientRect().top - offset;
             offset = fingerY - unshiftedTop - distanceFromTop;
             control.style.translate = `0 ${offset}px`;
+            // Resolve the new position before WebKit handles this touch.
+            control.getBoundingClientRect();
         };
         // Start on the off side and inside the thumb, before WebKit starts
         // tracking this touch. Updating checked during tracking would stop it.
@@ -80,7 +94,9 @@ export function useCalendarDragHaptics() {
                 control.style.removeProperty('height');
                 control.style.removeProperty('max-height');
                 control.style.removeProperty('max-width');
+                control.style.removeProperty('rotate');
                 control.style.removeProperty('translate');
+                control.style.removeProperty('visibility');
                 gesture.current = null;
             });
         };
@@ -88,17 +104,24 @@ export function useCalendarDragHaptics() {
         control.addEventListener('touchcancel', finish, { signal });
     };
 
-    const start = (target: EventTarget | null, date: Date | null) => {
+    const start = (
+        target: EventTarget | null,
+        start: Date | null,
+        end: Date | null,
+    ) => {
         const active = gesture.current;
-        if (active && active.control === target && date) {
-            active.slot = date.getTime();
+        if (active && active.control === target && start && end) {
+            active.slot = { start: start.getTime(), end: end.getTime() };
         }
     };
 
-    const snap = (date: Date) => {
+    const snap = (start: Date, end: Date) => {
         const active = gesture.current;
-        const slot = date.getTime();
-        if (!active || active.slot === null || active.slot === slot) return;
+        if (!active?.slot) return;
+
+        const slot = { start: start.getTime(), end: end.getTime() };
+        if (active.slot.start === slot.start && active.slot.end === slot.end)
+            return;
 
         active.slot = slot;
         active.switched = !active.switched;
