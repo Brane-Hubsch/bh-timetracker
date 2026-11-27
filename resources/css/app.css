@@ -988,24 +988,7 @@
 }
 
 @media (width < 48rem) {
-    /* The fixed bars sit outside the calendar's native scroll area. */
-    main:has(.time-calendar-scroll) {
-        padding-block-end: var(--mobile-tab-bar-height);
-    }
-
-    .time-calendar-scroll {
-        block-size: calc(
-            100dvh -
-                max(
-                    var(--mobile-page-header-height),
-                    var(--mobile-page-header-visible-height)
-                ) -
-                var(--mobile-tab-bar-height)
-        );
-        overflow-y: auto;
-    }
-
-    .time-calendar-scroll:has([data-calendar-native-drag]) {
+    .app-page-scroll:has([data-calendar-native-drag]) {
         /* Allow panning until the hold, then let Safari track the switch
            without scrolling or cancelling its touch events. */
         overflow-y: hidden;

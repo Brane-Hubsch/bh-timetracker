@@ -1,5 +1,5 @@
 import { CalendarDays, CalendarOff, Clock } from 'lucide-react';
-import { useLayoutEffect, type RefObject } from 'react';
+import { useLayoutEffect } from 'react';
 import { ProjectDot } from '@/components/project-dot';
 import {
     MobileTimeEntryRow,
@@ -24,9 +24,7 @@ type Props = {
     absences: Absence[];
     colleaguesOff: ColleagueOff[];
     holidays: CalendarHoliday[];
-    pageHeaderRef: RefObject<HTMLDivElement | null>;
     isMobile: boolean;
-    hasTimer: boolean;
     onSwipe: (direction: -1 | 1, onFinish: () => void) => void;
     onSwipeIntent: (direction: -1 | 1) => void;
     onEdit: (entry: TimeEntry) => void;
@@ -44,9 +42,7 @@ export function TimeEntryList({
     absences,
     colleaguesOff,
     holidays,
-    pageHeaderRef,
     isMobile,
-    hasTimer,
     onSwipe,
     onSwipeIntent,
     onEdit,
@@ -62,7 +58,8 @@ export function TimeEntryList({
 
     useLayoutEffect(() => {
         const list = track.current;
-        if (!isMobile || !list) {
+        const scrollRegion = list?.closest<HTMLElement>('[scroll-region]');
+        if (!isMobile || !list || !scrollRegion) {
             return;
         }
 
@@ -74,11 +71,9 @@ export function TimeEntryList({
 
         const update = () => {
             frame = undefined;
-            const top = pageHeaderRef.current?.getBoundingClientRect().bottom;
+            const top = scrollRegion.getBoundingClientRect().top;
             const header = headers.find(
-                (day) =>
-                    top !== undefined &&
-                    Math.abs(day.getBoundingClientRect().top - top) <= 0.5,
+                (day) => Math.abs(day.getBoundingClientRect().top - top) <= 0.5,
             );
 
             if (header !== shadowedHeader) {
@@ -92,15 +87,15 @@ export function TimeEntryList({
         };
 
         update();
-        window.addEventListener('scroll', scheduleUpdate, { passive: true });
+        scrollRegion.addEventListener('scroll', scheduleUpdate, {
+            passive: true,
+        });
         const observer = new ResizeObserver(scheduleUpdate);
         observer.observe(list);
-        if (pageHeaderRef.current) {
-            observer.observe(pageHeaderRef.current, { box: 'border-box' });
-        }
+        observer.observe(scrollRegion, { box: 'border-box' });
 
         return () => {
-            window.removeEventListener('scroll', scheduleUpdate);
+            scrollRegion.removeEventListener('scroll', scheduleUpdate);
             observer.disconnect();
             if (frame !== undefined) {
                 cancelAnimationFrame(frame);
@@ -114,7 +109,6 @@ export function TimeEntryList({
         entries,
         holidays,
         isMobile,
-        pageHeaderRef,
         today,
         track,
     ]);
@@ -159,7 +153,7 @@ export function TimeEntryList({
                         className="md:grid md:gap-2"
                         data-test="time-day"
                     >
-                        <header className="max-md:sticky max-md:top-(--mobile-page-header-visible-height) max-md:z-10 max-md:bg-surface max-md:px-4 max-md:py-1.5 max-md:data-[time-day-stuck]:shadow-[0_1px_4px_#0000000a] md:space-y-2 md:px-1">
+                        <header className="max-md:sticky max-md:top-0 max-md:z-10 max-md:bg-surface max-md:px-4 max-md:py-1.5 max-md:data-[time-day-stuck]:shadow-[0_1px_4px_#0000000a] md:space-y-2 md:px-1">
                             <div className="flex items-start justify-between gap-2 text-[13px]/[18px] md:text-sm">
                                 <h2 className="font-semibold first-letter:uppercase md:font-medium">
                                     {date === today
@@ -299,12 +293,7 @@ export function TimeEntryList({
     return (
         <div
             {...viewportProps}
-            className={cn(
-                'max-md:touch-pan-y max-md:touch-pinch-zoom max-md:overflow-x-clip',
-                hasTimer
-                    ? 'max-md:min-h-[calc(100svh-var(--mobile-page-header-visible-height)-var(--mobile-tab-bar-height)-var(--mobile-timer-space))]'
-                    : 'max-md:min-h-[calc(100svh-var(--mobile-page-header-visible-height)-var(--mobile-tab-bar-height))]',
-            )}
+            className="max-md:min-h-full max-md:touch-pan-y max-md:touch-pinch-zoom max-md:overflow-x-clip"
         >
             {list}
         </div>

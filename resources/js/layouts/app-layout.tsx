@@ -7,7 +7,7 @@ import { CommandPaletteProvider } from '@/components/command-palette';
 import { SeasonalEffects } from '@/components/seasonal-effects';
 import { MobileBottomNav } from '@/components/app-shell/mobile-navigation';
 import { usePage } from '@inertiajs/react';
-import { useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useState, type CSSProperties } from 'react';
 import {
     RunningTimerCard,
     useTimerTitle,
@@ -49,10 +49,32 @@ export default function AppLayout({
     useKeyboardShortcuts();
     const hasTimer = Boolean(usePage().props.timer);
 
+    useLayoutEffect(() => {
+        if (!mobileHeaderHost) {
+            return;
+        }
+
+        const rootStyle = document.documentElement.style;
+        const measure = () => {
+            rootStyle.setProperty(
+                '--mobile-page-header-visible-height',
+                `${mobileHeaderHost.getBoundingClientRect().height}px`,
+            );
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(mobileHeaderHost, { box: 'border-box' });
+
+        return () => {
+            observer.disconnect();
+            rootStyle.removeProperty('--mobile-page-header-visible-height');
+        };
+    }, [mobileHeaderHost]);
+
     return (
         <CommandPaletteProvider>
             <div
-                className="min-h-svh bg-background dark:max-md:bg-(--mobile-scroll-background)"
+                className="bg-background max-md:flex max-md:h-dvh max-md:flex-col max-md:overflow-clip md:min-h-svh dark:max-md:bg-(--mobile-scroll-background)"
                 style={
                     { '--sidebar-width': `${sidebarWidth}px` } as CSSProperties
                 }
@@ -63,20 +85,21 @@ export default function AppLayout({
                     onResize={setSidebarWidth}
                 />
 
-                <div className="md:pl-(--sidebar-width)">
+                <div className="group/page max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col md:pl-(--sidebar-width)">
                     <div
                         ref={setMobileHeaderHost}
-                        className="fixed inset-x-0 top-0 z-20 bg-surface md:hidden"
+                        className="relative z-20 shrink-0 bg-surface md:hidden"
                     />
                     <main
+                        scroll-region=""
                         className={cn(
-                            'mx-auto w-full px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8',
+                            'app-page-scroll mx-auto w-full px-4 pt-[calc(1rem+env(safe-area-inset-top))] max-md:min-h-0 max-md:flex-1 max-md:overflow-y-auto md:px-8',
                             WIDTHS[width],
                             compact ? 'md:pt-5 md:pb-4' : 'md:pt-8 md:pb-12',
-                            'max-md:has-[.mobile-page-header-spacer]:min-h-svh max-md:has-[.mobile-page-header-spacer]:bg-surface max-md:has-[.mobile-page-header-spacer]:px-0 max-md:has-[.mobile-page-header-spacer]:pt-0 dark:max-md:has-[.mobile-page-header-spacer]:bg-(--mobile-scroll-background)',
+                            'max-md:group-has-[.mobile-page-header]/page:bg-surface max-md:group-has-[.mobile-page-header]/page:px-0 max-md:group-has-[.mobile-page-header]/page:pt-0 dark:max-md:group-has-[.mobile-page-header]/page:bg-(--mobile-scroll-background)',
                             hasTimer
-                                ? 'pb-[calc(var(--mobile-tab-bar-height)+6.4375rem)] max-md:has-[.mobile-page-header-spacer]:pb-[calc(var(--mobile-tab-bar-height)+var(--mobile-timer-space))]'
-                                : 'pb-[calc(var(--mobile-tab-bar-height)+3.4375rem)] max-md:has-[.mobile-page-header-spacer]:pb-(--mobile-tab-bar-height)',
+                                ? 'max-md:pb-[6.4375rem] max-md:group-has-[.mobile-page-header]/page:pb-(--mobile-timer-space)'
+                                : 'max-md:pb-[3.4375rem] max-md:group-has-[.mobile-page-header]/page:pb-0',
                         )}
                     >
                         {breadcrumbs.length > 1 && (

@@ -35,7 +35,6 @@ import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { normalizeTagName } from '@/lib/tags';
 import { formatDate } from '@/lib/time';
-import { cn } from '@/lib/utils';
 import { destroy, store, update } from '@/routes/tags';
 
 type OrganizationTag = {
@@ -78,7 +77,7 @@ const keyboardFooterClass = 'in-data-keyboard-open:pb-2';
 export default function TagsIndex({ tags }: Props) {
     const { t, tc, intlLocale } = useTranslation();
     const isDesktop = useIsDesktop();
-    const { auth, timer } = usePage().props;
+    const { auth } = usePage().props;
     const order = useColumnOrder({
         storageKey: `timereport:tag-list-column-order:${auth.user.id}`,
         defaultOrder: defaultColumnOrder,
@@ -134,12 +133,7 @@ export default function TagsIndex({ tags }: Props) {
             <Head title={t('Tags')} />
 
             <div
-                className={cn(
-                    'flex flex-col md:grid md:grid-cols-1 md:gap-6',
-                    timer
-                        ? 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height)-var(--mobile-timer-space))]'
-                        : 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height))]',
-                )}
+                className="flex flex-col max-md:min-h-full md:grid md:grid-cols-1 md:gap-6"
                 data-test="tag-manager"
             >
                 {isDesktop ? (

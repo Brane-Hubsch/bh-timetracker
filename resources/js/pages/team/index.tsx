@@ -63,7 +63,7 @@ export default function TeamIndex({
     filters,
 }: Props) {
     const { t, tc, intlLocale } = useTranslation();
-    const { auth, timer } = usePage().props;
+    const { auth } = usePage().props;
     const isDesktop = useIsDesktop();
     const [isInviteOpen, setInviteOpen] = useState(false);
     const { current, search, isOpen, changeOpen, apply, changeSearch } =
@@ -118,14 +118,7 @@ export default function TeamIndex({
     return (
         <>
             <Head title={t('Team')} />
-            <div
-                className={cn(
-                    'flex flex-col md:grid md:gap-6',
-                    timer
-                        ? 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height)-var(--mobile-timer-space))]'
-                        : 'max-md:min-h-[calc(100svh-var(--mobile-tab-bar-height))]',
-                )}
-            >
+            <div className="flex flex-col max-md:min-h-full md:grid md:gap-6">
                 {isDesktop ? (
                     <>
                         <Heading
