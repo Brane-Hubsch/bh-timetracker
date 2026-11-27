@@ -303,7 +303,7 @@ export function TimeCalendar({
         start: Date | null,
         end: Date | null,
     ) => {
-        dragHaptics.start(jsEvent.target, start, end);
+        const nativeSwitch = dragHaptics.start(jsEvent.target, start, end);
         // FullCalendar can start a resize on the first touchmove.
         const isTouch =
             typeof TouchEvent !== 'undefined' && jsEvent instanceof TouchEvent;
@@ -312,6 +312,8 @@ export function TimeCalendar({
                 ? { start: start.getTime(), end: end.getTime() }
                 : null;
         if (lastTouchSlot.current) vibrateLightly();
+
+        return nativeSwitch;
     };
 
     useLayoutEffect(() => {
@@ -646,7 +648,7 @@ export function TimeCalendar({
                     appendHapticSwitch(
                         el,
                         'calendar-drag-haptic-switch',
-                        'z-0 max-h-1/2 pointer-coarse:supports-[-webkit-touch-callout:none]:block',
+                        'z-0 size-full touch-pan-y touch-pinch-zoom pointer-coarse:supports-[-webkit-touch-callout:none]:block',
                     );
                     // TimeGrid only exposes classes for its resize handles.
                     // Put the switch inside each existing pointer target.
@@ -933,7 +935,6 @@ export function TimeCalendar({
                 }}
                 eventDragStart={({ el, jsEvent, event }) => {
                     eventSelection.pause();
-                    startDragHaptics(jsEvent, event.start, event.end);
                     eventDragOrigin.current =
                         typeof TouchEvent !== 'undefined' &&
                         jsEvent instanceof TouchEvent
@@ -941,6 +942,12 @@ export function TimeCalendar({
                             : null;
                     if (!isSwiping()) {
                         setEditing(true);
+                        if (startDragHaptics(jsEvent, event.start, event.end)) {
+                            containerRef.current?.setAttribute(
+                                'data-calendar-haptic-move',
+                                '',
+                            );
+                        }
                     }
                     const lane = el.closest('.time-calendar-event-lane');
                     const calendar = containerRef.current;
@@ -982,6 +989,9 @@ export function TimeCalendar({
                     lastTouchSlot.current = null;
                     unmovedTouchDrag.current = eventDragOrigin.current !== null;
                     eventDragOrigin.current = null;
+                    containerRef.current?.removeAttribute(
+                        'data-calendar-haptic-move',
+                    );
                     setEditing(false);
                     eventSelection.resume();
                     const style = containerRef.current?.style;
