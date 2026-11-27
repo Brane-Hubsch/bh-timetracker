@@ -715,8 +715,8 @@ export function TimeCalendar({
                             }}
                         >
                             <div className="time-calendar-entry-layout flex size-full flex-col p-2">
-                                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
-                                    <div className="shrink-0 truncate font-semibold">
+                                <div className="time-calendar-entry-content flex min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                                    <div className="time-calendar-entry-title shrink-0 truncate font-semibold">
                                         {title || range}
                                     </div>
                                     {entry?.description && (
@@ -765,7 +765,7 @@ export function TimeCalendar({
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex h-3.5 shrink-0 items-center justify-end gap-0.5 text-[11px]/3.5 font-medium text-muted tabular-nums">
+                                <div className="time-calendar-entry-duration flex h-3.5 shrink-0 items-center justify-end gap-0.5 text-[11px]/3.5 font-medium text-muted tabular-nums">
                                     {entry?.isBillable && (
                                         <Banknote
                                             role="img"
