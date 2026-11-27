@@ -197,6 +197,7 @@ Se avsnitt 6.
 - Rapporter under 768 px har en fast rubrikrad med rapporttyp och, där det finns, periodväljare och filterbottenark. Listor och diagram går kant i kant och exporten ligger sist.
 - Touchvänliga tidsväljare, inga hover-beroende funktioner.
 - PWA-manifest + ikon så att appen kan läggas på hemskärmen (ingen offline-funktion i v1).
+- Nypzoom är avstängd i den installerade webbappen. Scroll fungerar som vanligt i båda lägena och nypzoom fungerar i webbläsaren.
 - Sid- och flikbyten visas direkt. Dialoger, bottenark och andra överlägg behåller sin rörelse. I den installerade mobilappen förladdas de synliga navigationslänkarna och deras siddata sparas kort i minnet.
 
 ## 5. Teknisk arkitektur

@@ -8,9 +8,24 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="Tid">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Apply the installed app's viewport limits and system appearance before rendering. --}}
         <script>
             (function() {
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true;
+
+                if (isStandalone) {
+                    const viewport = document.querySelector('meta[name="viewport"]');
+                    viewport.content += ', maximum-scale=1, user-scalable=no';
+
+                    // A blocked pinch should not be treated as a tap on a control.
+                    document.addEventListener('touchstart', (event) => {
+                        if (event.touches.length > 1) {
+                            event.preventDefault();
+                        }
+                    }, { capture: true, passive: false });
+                }
+
                 const appearance = '{{ $appearance ?? "system" }}';
 
                 if (appearance === 'system') {
