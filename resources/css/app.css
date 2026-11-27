@@ -451,6 +451,11 @@
     }
 }
 
+.time-calendar .time-calendar-week-number {
+    align-items: center;
+    justify-content: center;
+}
+
 .time-calendar .time-calendar-slot-label {
     border-color: transparent;
     color: var(--muted);

@@ -20,6 +20,7 @@ import {
     formatDate,
     formatDuration,
     fromCalendarDate,
+    isoWeek,
     timeOf,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -315,6 +316,17 @@ export function TimeCalendar({
                 headerToolbar={false}
                 // The day view's date and total are in the page header above.
                 dayHeaders={view === 'week'}
+                weekNumbers={view === 'week'}
+                weekNumberCalculation={(day) =>
+                    isoWeek(fromCalendarDate(day).slice(0, 10))
+                }
+                weekNumberFormat={{ week: 'short' }}
+                weekNumberHeaderClass="time-calendar-week-number"
+                weekNumberHeaderContent={({ text }) => (
+                    <span className="block text-[11px]/4 font-normal text-muted tabular-nums opacity-90">
+                        {text}
+                    </span>
+                )}
                 borderless
                 allDaySlot={showAbsenceRow}
                 allDayHeaderClass="items-center justify-center"
