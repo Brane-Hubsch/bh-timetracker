@@ -151,7 +151,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 **Kalendervy** (veckovy är standard)
 - Plusknappen förifyller starttiden med början av den aktuella timmen i användarens tidszon. Varaktigheten hämtas från den senaste tidsposten som användaren sparade via plusknappen i den aktuella organisationen och webbläsaren. Sluttiden räknas ut från starttiden och varaktigheten. Samma förval gäller på dator och mobil.
 - På breda skärmar delar kalenderrubriken och periodens totalsumma rad med personväljaren, periodväljaren och plusknappen. Periodväljaren använder samma komponent som i rapporterna och visar periodens namn bredvid datumen. Pilarna stegar en dag eller vecka enligt vald vy.
-- Väljaren visar vald period i huvudet, med Idag för att öppna den aktuella dagen eller veckan. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare.
+- Väljaren visar vald period i huvudet. Idag visas i huvudet när ett annat datum är valt i dagvyn. I veckovyn används snabbvalet Denna vecka. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare.
 - På mobil ligger Igår, Idag och I morgon på en rad i dagväljaren. Svep åt vänster över månadsrutnätet för nästa månad och åt höger för föregående, eller använd månadspilarna.
 - Ett sidledes svep över kalendern på mobil byter dag i dagvyn och vecka i veckovyn.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.

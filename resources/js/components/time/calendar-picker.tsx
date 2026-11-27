@@ -337,6 +337,7 @@ export function CalendarPicker({
     const { t, intlLocale } = useTranslation();
     const isDay = view === 'day';
     const isList = view === 'list';
+    const showToday = isList || (isDay && date !== today);
     const value = isDay ? date : weekStart;
     const currentPeriod = isDay
         ? today
@@ -443,19 +444,21 @@ export function CalendarPicker({
                                 )}
                             </p>
                             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                                <Button
-                                    variant={isList ? 'secondary' : 'ghost'}
-                                    size="sm"
-                                    className={
-                                        isList
-                                            ? undefined
-                                            : 'bg-transparent! text-accent'
-                                    }
-                                    aria-label={t('Go to today')}
-                                    onPress={() => select(today)}
-                                >
-                                    {t('Today')}
-                                </Button>
+                                {showToday && (
+                                    <Button
+                                        variant={isList ? 'secondary' : 'ghost'}
+                                        size="sm"
+                                        className={
+                                            isList
+                                                ? undefined
+                                                : 'bg-transparent! text-accent'
+                                        }
+                                        aria-label={t('Go to today')}
+                                        onPress={() => select(today)}
+                                    >
+                                        {t('Today')}
+                                    </Button>
+                                )}
                                 {(!isList || !isDesktop) && (
                                     <SegmentedControl<CalendarView>
                                         aria-label={t('View')}
