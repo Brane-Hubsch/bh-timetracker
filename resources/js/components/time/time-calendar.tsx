@@ -81,6 +81,7 @@ type Props = {
     view: 'week' | 'day';
     date: string;
     weekStartsOn: number;
+    expectedWeekSeconds: number | null;
     timezone: string;
     entries: TimeEntry[];
     holidays: CalendarHoliday[];
@@ -186,6 +187,7 @@ export function TimeCalendar({
     view,
     date,
     weekStartsOn,
+    expectedWeekSeconds,
     timezone,
     entries,
     holidays,
@@ -203,6 +205,10 @@ export function TimeCalendar({
     onChange,
 }: Props) {
     const { t, locale, intlLocale } = useTranslation();
+    const expectedWeekDuration =
+        expectedWeekSeconds === null
+            ? null
+            : formatDuration(expectedWeekSeconds);
     const isMobile = useMediaQuery('(width < 768px)');
     const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight(isMobile);
@@ -300,6 +306,13 @@ export function TimeCalendar({
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
         >
+            {expectedWeekDuration !== null && (
+                <span className="sr-only">
+                    {t('Expected working time this week: :duration', {
+                        duration: expectedWeekDuration,
+                    })}
+                </span>
+            )}
             <FullCalendar
                 ref={calendarRef}
                 key={calendarKey}
@@ -323,8 +336,18 @@ export function TimeCalendar({
                 weekNumberFormat={{ week: 'short' }}
                 weekNumberHeaderClass="time-calendar-week-number"
                 weekNumberHeaderContent={({ text }) => (
-                    <span className="block text-[11px]/4 font-normal text-muted tabular-nums opacity-90">
-                        {text}
+                    <span className="flex flex-col items-center gap-1 font-normal text-muted tabular-nums">
+                        <span className="text-[11px]/4 opacity-90">{text}</span>
+                        {expectedWeekDuration !== null && (
+                            <span className="flex flex-col items-center">
+                                <span className="text-[10px]/3">
+                                    {t('Expected')}
+                                </span>
+                                <span className="text-[11px]/4 font-medium">
+                                    {expectedWeekDuration}
+                                </span>
+                            </span>
+                        )}
                     </span>
                 )}
                 borderless

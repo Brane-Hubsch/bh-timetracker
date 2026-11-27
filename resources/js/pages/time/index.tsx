@@ -90,7 +90,12 @@ type Props = {
 
 type CalendarPreview = Pick<
     Props,
-    'date' | 'entries' | 'absences' | 'colleaguesOff' | 'calendarHolidays'
+    | 'date'
+    | 'entries'
+    | 'absences'
+    | 'colleaguesOff'
+    | 'calendarHolidays'
+    | 'expectedWeekSeconds'
 >;
 
 export default function TimeIndex({
@@ -411,6 +416,7 @@ export default function TimeIndex({
                                   absences,
                                   colleaguesOff,
                                   calendarHolidays,
+                                  expectedWeekSeconds,
                               } = props;
                               setPreviews((previous) => ({
                                   from: url,
@@ -423,6 +429,7 @@ export default function TimeIndex({
                                           absences,
                                           colleaguesOff,
                                           calendarHolidays,
+                                          expectedWeekSeconds,
                                       },
                                   },
                               }));
@@ -549,6 +556,7 @@ export default function TimeIndex({
     const calendarProps: Omit<ComponentProps<typeof TimeCalendar>, 'view'> = {
         date,
         weekStartsOn,
+        expectedWeekSeconds,
         timezone,
         entries,
         holidays: calendarHolidays,
@@ -592,8 +600,6 @@ export default function TimeIndex({
                                     className={cn(
                                         'font-medium text-muted',
                                         view === 'day' && 'max-md:font-normal',
-                                        expectedWeekSeconds !== null &&
-                                            'max-md:sr-only',
                                     )}
                                 >
                                     {view === 'day'
@@ -610,16 +616,6 @@ export default function TimeIndex({
                                         view === 'day' ? dayTotal : weekTotal,
                                     )}
                                 </span>
-                                {expectedWeekSeconds !== null && (
-                                    <span className="font-medium whitespace-nowrap text-muted">
-                                        {t('of :expected', {
-                                            expected:
-                                                formatDuration(
-                                                    expectedWeekSeconds,
-                                                ),
-                                        })}
-                                    </span>
-                                )}
                             </p>
                         }
                     />
@@ -686,6 +682,10 @@ export default function TimeIndex({
                                         {...calendarProps}
                                         view={view}
                                         date={nextDate}
+                                        expectedWeekSeconds={
+                                            adjacent?.expectedWeekSeconds ??
+                                            null
+                                        }
                                         entries={adjacent?.entries ?? entries}
                                         absences={
                                             adjacent?.absences ?? absences
