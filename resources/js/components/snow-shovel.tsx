@@ -12,7 +12,7 @@ function ShovelDrawing() {
             fill="none"
             aria-hidden="true"
             // Inline, because the button styles shrink icons to 16 px.
-            style={{ width: 40, height: 100 }}
+            style={{ width: 24, height: 60 }}
         >
             <path
                 fillRule="evenodd"
@@ -54,7 +54,7 @@ export function SnowShovel({
             aria-pressed={isShovelling}
             onPress={() => onChange(!isShovelling)}
             className={cn(
-                'fixed right-6 bottom-0 z-40 h-auto w-auto min-w-0 origin-bottom rotate-12 rounded-md bg-transparent p-0 transition-[opacity,transform] duration-200 hover:-translate-y-1 hover:rotate-6 hover:bg-transparent',
+                'fixed right-4 bottom-0 z-40 h-auto w-auto min-w-0 origin-bottom rotate-12 rounded-md bg-transparent p-0 transition-[opacity,transform] duration-200 hover:-translate-y-1 hover:rotate-6 hover:bg-transparent',
                 isShovelling && 'opacity-40',
             )}
             data-test="snow-shovel"

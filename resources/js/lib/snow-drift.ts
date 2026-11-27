@@ -93,6 +93,42 @@ export class SnowDrift {
         }
     }
 
+    /**
+     * The snowblower eats the snow in front of it (`frontX` is its front edge, `direction` 1 for right,
+     * -1 for left) and sprays it high out of the chute at (`chuteX`, `chuteY`), backwards.
+     */
+    blow(
+        frontX: number,
+        direction: 1 | -1,
+        chuteX: number,
+        chuteY: number,
+    ): void {
+        const first = this.column(Math.min(frontX, frontX + direction * 14));
+        const last = this.column(Math.max(frontX, frontX + direction * 14));
+        let eaten = 0;
+
+        // The auger clears down to the ground.
+        for (let column = first; column <= last; column++) {
+            eaten += this.depths[column];
+            this.depths[column] = 0;
+        }
+
+        // A stream of small clumps carrying the eaten snow.
+        const clumps = Math.min(
+            Math.ceil(eaten / 3),
+            MAX_THROWN - this.thrown.length,
+        );
+        for (let index = 0; index < clumps; index++) {
+            this.thrown.push({
+                x: chuteX + (Math.random() - 0.5) * 4,
+                y: chuteY,
+                vx: -direction * (2.5 + Math.random() * 4),
+                vy: -(7 + Math.random() * 4),
+                amount: eaten / clumps,
+            });
+        }
+    }
+
     /** Let thrown snow fly and land, and loose snow slide down slopes. */
     update(step: number, width: number, height: number): void {
         for (let index = this.thrown.length - 1; index >= 0; index--) {
@@ -171,10 +207,13 @@ export class SnowDrift {
         }
 
         context.fillStyle = fill;
+        context.beginPath();
         for (const snow of this.thrown) {
-            const size = 2 + Math.min(snow.amount, 4);
-            context.fillRect(snow.x - size / 2, snow.y - size / 2, size, size);
+            const radius = 1 + Math.min(snow.amount, 3) / 2;
+            context.moveTo(snow.x + radius, snow.y);
+            context.arc(snow.x, snow.y, radius, 0, Math.PI * 2);
         }
+        context.fill();
     }
 
     /** The drift's surface as a smooth curve through the column tops. */

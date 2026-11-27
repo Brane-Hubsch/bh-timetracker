@@ -259,6 +259,7 @@
     "Drag or use the arrow keys to adjust by 15 minutes.": "Dra eller använd piltangenterna för att justera i steg om 15 minuter.",
     "Drag or use the arrow keys to adjust by one day.": "Dra eller använd piltangenterna för att justera en dag i taget.",
     "Drag the field label sideways to adjust in 15-minute steps.": "Dra fältrubriken i sidled för att justera i steg om 15 minuter.",
+    "Drive the snowblower with the arrow keys": "Kör snöslungan med piltangenterna",
     "Drop the CSV file here, or": "Släpp CSV-filen här, eller",
     "Duplicate": "Duplicera",
     "Duration": "Tid",
@@ -541,6 +542,7 @@
     "Page not found": "Sidan finns inte",
     "Pagination": "Sidnumrering",
     "Parental leave": "Föräldraledig",
+    "Park the snowblower": "Parkera snöslungan",
     "Passkey actions": "Åtgärder för passkey",
     "Passkey name": "Namn på passkey",
     "Passkey renamed.": "Passkeyn har bytt namn.",
@@ -901,5 +903,6 @@
     "Your running timer has no project. Stop or discard it first.": "Din pågående timer saknar projekt. Stoppa eller släng den först.",
     "Your sign-in link for :app": "Din inloggningslänk till :app",
     "… and :count more.": "… och :count till.",
+    "← → to drive · Esc to stop": "← → kör · Esc slutar",
     "↑↓ to move, Enter to run, Esc to close": "↑↓ för att välja, Enter för att köra, Esc för att stänga"
 }

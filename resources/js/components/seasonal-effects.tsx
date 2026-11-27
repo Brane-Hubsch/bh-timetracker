@@ -5,6 +5,13 @@ import {
 } from '@/lib/seasonal-effects';
 import type { SeasonalEffects as Effects } from '@/lib/seasonal-effects';
 import { SnowDrift } from '@/lib/snow-drift';
+import {
+    SNOW_BLOWER_CHUTE,
+    SNOW_BLOWER_HEIGHT,
+    SNOW_BLOWER_WIDTH,
+    SnowBlower,
+    SnowBlowerHint,
+} from '@/components/snow-blower';
 import { SnowShovel } from '@/components/snow-shovel';
 
 type Flake = {
@@ -167,8 +174,17 @@ export function SeasonalEffects() {
     const canShovel = useFinePointer();
     const hasDrift = active && snow && canShovel;
     const [drift] = useState(() => new SnowDrift());
-    const [isShovelling, setShovelling] = useState(false);
-    const shovelling = isShovelling && hasDrift;
+    const [tool, setTool] = useState<'shovel' | 'blower' | null>(null);
+    const shovelling = tool === 'shovel' && hasDrift;
+    const driving = tool === 'blower' && hasDrift;
+    const blowerButton = useRef<HTMLButtonElement>(null);
+    const blower = useRef({
+        driving: false,
+        x: 0,
+        direction: -1 as 1 | -1,
+        left: false,
+        right: false,
+    });
 
     useEffect(() => {
         if (!shovelling) {
@@ -185,7 +201,7 @@ export function SeasonalEffects() {
         };
         const onKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                setShovelling(false);
+                setTool(null);
             }
         };
         window.addEventListener('pointermove', onMove, { passive: true });
@@ -197,6 +213,65 @@ export function SeasonalEffects() {
             window.removeEventListener('keydown', onKey);
         };
     }, [shovelling, drift]);
+
+    // Drive the snowblower with the arrow keys. They are taken before the page's own shortcuts
+    // (e.g. previous/next week), except while typing in a field.
+    useEffect(() => {
+        const button = blowerButton.current;
+        if (!driving || !button) {
+            return;
+        }
+        const state = blower.current;
+        state.x = button.getBoundingClientRect().left;
+        state.direction = -1;
+        state.driving = true;
+
+        const isTyping = (target: EventTarget | null) =>
+            target instanceof HTMLElement &&
+            (target.isContentEditable ||
+                ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setTool(null);
+                return;
+            }
+            if (!event.key.startsWith('Arrow') || isTyping(event.target)) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            if (event.key === 'ArrowLeft') {
+                state.left = true;
+            } else if (event.key === 'ArrowRight') {
+                state.right = true;
+            }
+        };
+        const onKeyUp = (event: KeyboardEvent) => {
+            if (event.key === 'ArrowLeft') {
+                state.left = false;
+            } else if (event.key === 'ArrowRight') {
+                state.right = false;
+            }
+        };
+        const onBlur = () => {
+            state.left = false;
+            state.right = false;
+        };
+        window.addEventListener('keydown', onKeyDown, { capture: true });
+        window.addEventListener('keyup', onKeyUp, { capture: true });
+        window.addEventListener('blur', onBlur);
+
+        return () => {
+            state.driving = false;
+            onBlur();
+            button.style.removeProperty('left');
+            button.style.removeProperty('right');
+            button.style.removeProperty('--facing');
+            window.removeEventListener('keydown', onKeyDown, { capture: true });
+            window.removeEventListener('keyup', onKeyUp, { capture: true });
+            window.removeEventListener('blur', onBlur);
+        };
+    }, [driving]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -327,6 +402,38 @@ export function SeasonalEffects() {
                 }
                 context.globalAlpha = 1;
 
+                const state = blower.current;
+                const button = blowerButton.current;
+                if (hasDrift && state.driving && button) {
+                    const move = (state.right ? 1 : 0) - (state.left ? 1 : 0);
+                    if (move !== 0) {
+                        state.direction = move > 0 ? 1 : -1;
+                    }
+                    state.x = Math.max(
+                        0,
+                        Math.min(
+                            width - SNOW_BLOWER_WIDTH,
+                            state.x + move * 2.5 * step,
+                        ),
+                    );
+                    button.style.left = `${state.x}px`;
+                    button.style.right = 'auto';
+                    button.style.setProperty(
+                        '--facing',
+                        String(state.direction),
+                    );
+
+                    const facingRight = state.direction === 1;
+                    drift.blow(
+                        facingRight ? state.x + SNOW_BLOWER_WIDTH : state.x,
+                        state.direction,
+                        facingRight
+                            ? state.x + SNOW_BLOWER_CHUTE.x
+                            : state.x + SNOW_BLOWER_WIDTH - SNOW_BLOWER_CHUTE.x,
+                        height - SNOW_BLOWER_HEIGHT + SNOW_BLOWER_CHUTE.y,
+                    );
+                }
+
                 if (hasDrift) {
                     drift.update(step, width, height);
                     drift.draw(context, width, height, isDark);
@@ -417,10 +524,22 @@ export function SeasonalEffects() {
                 data-test="seasonal-effects"
             />
             {hasDrift && (
-                <SnowShovel
-                    isShovelling={shovelling}
-                    onChange={setShovelling}
-                />
+                <>
+                    {driving && <SnowBlowerHint />}
+                    <SnowBlower
+                        isDriving={driving}
+                        onChange={(isDriving) =>
+                            setTool(isDriving ? 'blower' : null)
+                        }
+                        buttonRef={blowerButton}
+                    />
+                    <SnowShovel
+                        isShovelling={shovelling}
+                        onChange={(isShovelling) =>
+                            setTool(isShovelling ? 'shovel' : null)
+                        }
+                    />
+                </>
             )}
         </>
     );
