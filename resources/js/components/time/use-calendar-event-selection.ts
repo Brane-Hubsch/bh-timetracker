@@ -8,7 +8,7 @@ import { CALENDAR_TOUCH_MOVE_TOLERANCE } from './use-calendar-long-press';
 export const CALENDAR_EVENT_LONG_PRESS_DELAY = 400;
 const EVENT_SELECTION_TIMEOUT = 5000;
 const RESIZE_HANDLE = '.time-calendar-resizer';
-const TIME_EVENT = '.time-calendar-event';
+const TIME_EVENT = '.time-calendar-saved-event';
 const SELECTED_EVENT = '.time-calendar-event-touch-selected';
 
 export function useCalendarEventSelection(
@@ -21,6 +21,21 @@ export function useCalendarEventSelection(
     const timeout = useRef<number | undefined>(undefined);
     const edit = useEffectEvent(onEdit);
     const pause = useCallback(() => window.clearTimeout(timeout.current), []);
+    const select = useCallback(
+        (instanceId: string) => {
+            const api = calendarRef.current?.getApi() as
+                | CalendarApiImpl
+                | undefined;
+            if (!api || api.getCurrentData().eventSelection === instanceId)
+                return false;
+
+            // FullCalendar requires its own event selection for touch resizing.
+            api.dispatch({ type: 'SELECT_EVENT', eventInstanceId: instanceId });
+
+            return true;
+        },
+        [calendarRef],
+    );
     const dismiss = useCallback(() => {
         pause();
         const api = calendarRef.current?.getApi() as
@@ -53,10 +68,25 @@ export function useCalendarEventSelection(
             origin: Touch;
             started: number;
             element: HTMLElement;
-            entryId?: string;
+            tap?: { entryId: string; instanceId: string; wasSelected: boolean };
         } | null = null;
 
-        window.addEventListener('pointerdown', resetReleaseClick, observe);
+        window.addEventListener(
+            'pointerdown',
+            ({ target }) => {
+                resetReleaseClick();
+                if (
+                    !isEditing() &&
+                    !(
+                        target instanceof Element &&
+                        container.contains(target.closest(TIME_EVENT))
+                    )
+                ) {
+                    dismiss();
+                }
+            },
+            observe,
+        );
         window.addEventListener('keydown', resetReleaseClick, observe);
         window.addEventListener(
             'click',
@@ -77,20 +107,27 @@ export function useCalendarEventSelection(
             (event) => {
                 resetReleaseClick();
                 const { target, touches } = event;
-                if (touches.length !== 1 || !(target instanceof Element))
+                if (touches.length !== 1 || !(target instanceof Element)) {
+                    if (press) press.tap = undefined;
                     return;
+                }
                 const element = target.closest<HTMLElement>(TIME_EVENT);
                 if (!element) return;
 
                 const selected = element.matches(SELECTED_EVENT);
                 if (selected) pause();
+                const range = getElEventRange(element);
                 press = {
                     origin: touches[0],
                     started: event.timeStamp,
                     element,
-                    entryId:
-                        selected && !target.closest(RESIZE_HANDLE)
-                            ? getElEventRange(element)?.def.publicId
+                    tap:
+                        range?.instance && !target.closest(RESIZE_HANDLE)
+                            ? {
+                                  entryId: range.def.publicId,
+                                  instanceId: range.instance.instanceId,
+                                  wasSelected: selected,
+                              }
                             : undefined,
                 };
             },
@@ -99,7 +136,7 @@ export function useCalendarEventSelection(
         window.addEventListener(
             'touchmove',
             ({ touches }) => {
-                if (!press?.entryId) return;
+                if (!press?.tap) return;
                 const { origin } = press;
                 const touch = touches[0];
                 if (
@@ -109,7 +146,7 @@ export function useCalendarEventSelection(
                         Math.abs(touch.clientY - origin.clientY),
                     ) >= CALENDAR_TOUCH_MOVE_TOLERANCE
                 ) {
-                    press.entryId = undefined;
+                    press.tap = undefined;
                 }
             },
             observe,
@@ -123,28 +160,33 @@ export function useCalendarEventSelection(
             )
                 return;
 
-            const { element, entryId, started } = press;
+            const { element, tap, started } = press;
             press = null;
             const editing = isEditing();
             if (!editing) resume();
             if (event.type !== 'touchend') return;
 
-            const editOnTap =
-                entryId &&
+            const shortTap =
+                tap &&
                 event.timeStamp - started < CALENDAR_EVENT_LONG_PRESS_DELAY &&
                 !container.closest('[data-swiping]');
-            if (!editing && !editOnTap) return;
 
-            // A drag release can generate a click from Safari's native switch.
-            // A short tap on an already selected event opens the sheet here.
+            // Safari can emit a separate click from the native haptic switch.
+            // Handle the gesture once here before any compatibility click.
             ignoreReleaseClick = true;
-            if (event.cancelable) event.preventDefault();
-            if (!editOnTap) return;
+            if ((editing || shortTap) && event.cancelable)
+                event.preventDefault();
+            if (!shortTap) return;
+
+            if (!tap.wasSelected) {
+                select(tap.instanceId);
+                return;
+            }
 
             // The edit sheet restores focus to the active element when it closes.
             element.blur();
             dismiss();
-            edit(entryId);
+            edit(tap.entryId);
         };
         window.addEventListener('touchend', finishTouch, {
             ...capture,
@@ -162,7 +204,7 @@ export function useCalendarEventSelection(
                             (target.contains(container) ||
                                 container.contains(target))))
                 ) {
-                    if (press) press.entryId = undefined;
+                    if (press) press.tap = undefined;
                     dismiss();
                 }
             },
@@ -173,7 +215,7 @@ export function useCalendarEventSelection(
             listeners.abort();
             pause();
         };
-    }, [calendarKey, containerRef, dismiss, enabled, pause, resume]);
+    }, [calendarKey, containerRef, dismiss, enabled, pause, resume, select]);
 
     function handleClick({ el, jsEvent }: EventClickInfo): boolean {
         if (!enabled) return false;
@@ -184,18 +226,8 @@ export function useCalendarEventSelection(
             return true;
         }
 
-        const api = calendarRef.current?.getApi() as
-            | CalendarApiImpl
-            | undefined;
         const instanceId = getElEventRange(el)?.instance?.instanceId;
-        // FullCalendar requires its own event selection for touch resizing.
-        if (
-            jsEvent.detail !== 0 &&
-            api &&
-            instanceId &&
-            api.getCurrentData().eventSelection !== instanceId
-        ) {
-            api.dispatch({ type: 'SELECT_EVENT', eventInstanceId: instanceId });
+        if (jsEvent.detail !== 0 && instanceId && select(instanceId)) {
             resume();
 
             return true;

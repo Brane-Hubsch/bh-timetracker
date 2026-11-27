@@ -157,7 +157,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - Ett sidledes svep över kalendern på mobil byter dag i dagvyn och vecka i veckovyn.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - På pekskärm skapar ett långtryck i tom tidsyta ett entimmesblock med fingret nära blockets mitt, avrundat till närmaste kvart. Flytta blocket i 15-minuterssteg och släpp för att öppna Rapportera tid med vald dag, start- och sluttid. Vid dygnets kanter ryms hela blocket i dagen.
-- Dra för att flytta, dra i kant för att ändra längd, klicka för att redigera.
+- På desktop kan du dra för att flytta, dra i kanten för att ändra längd och klicka för att redigera.
 - Poster färgas efter projekt. Dagssummor i kolumnhuvud, veckosumma i toppen. ISO-veckonumret visas centrerat i en dämpad ton ovanför timskalan i veckovyn.
 - "Kopiera föregående vecka" (som utkast som användaren bekräftar).
 - Admin kan växla till att se/rapportera åt en annan medlem.
@@ -392,7 +392,7 @@ Avvikelser och förtydliganden:
 
 - FullCalendar-spiken gick bra, så ingen egen veckovy behövs. Kalendern är stylad med HeroUI:s CSS-variabler.
 - Standardvy: vecka på desktop och dag på mobil. På mobil rullas kalenderns dag- och veckovy mellan den fasta rubrikraden och bottennavigeringen. Rullningsindikatorn håller sig inom samma yta. Sidledes svep byter dag eller vecka, även när svepet börjar på en tidspost. Vid överskrollning fortsätter dagvyns bakgrund och timskalans lodräta linje både uppåt och nedåt. Dag och Vecka kan väljas i kalenderns periodväljare. Lista nås via mobilnavigeringen.
-- På mobil markerar ett kort tryck tidsposten och visar draghandtagen. Efter att en tidspost har flyttats är den fortfarande markerad med handtagen synliga. Ett nytt kort tryck på den markerade posten öppnar redigeringen.
+- På mobil markerar första trycket tidsposten och tonar in draghandtagen. Ett nytt tryck på samma markerade post öppnar Rapportera tid. Markeringen försvinner vid skroll, tryck utanför posten eller efter fem sekunders inaktivitet. Den ligger kvar under och efter en flytt tills något av detta händer.
 - På mobil ger ett direkt tryck ett lätt haptiskt klick vid flikbyte, öppning av Mer eller kalenderns datumväljare och vid tryck på Spara i tidrapporteringen där enheten stöder det. Den aktiva fliken ger ingen puls. Android med stöd för vibration ger också en kort puls när förhandsvisningen skapas vid långtryck, när den släpps och varje gång förhandsvisningen, en flytt eller en längdändring snäpper till ett nytt giltigt 15-minutersläge.
 - På stödda mobiler känns en kort puls när en tidspost lyfts för flytt eller när man börjar dra i start- eller sluthandtaget. Flytten kan startas med långtryck på hela postens yta och ger en puls vid varje nytt giltigt 15-minutersläge, även när man drar tillbaka. På iPhone används samma inbyggda Safari-reglage som för handtagen. Greppets puls ges vid första fingerrörelsen efter att greppet aktiverats.
 - På iPhone med stöd för Safaris inbyggda reglage kan man också känna ett klick vid varje nytt giltigt 15-minutersläge vid ändring av start eller slut och när förhandsvisningen flyttas vid långtryck på en tom tid. Förhandsvisningens första klick kommer när fingret börjar röra sig efter långtrycket. Släppet ger ett klick när Rapportera tid öppnas, även efter ett stilla långtryck. Börja i den mittersta tredjedelen av dagkolumnen vid långtryck på en tom tid.
