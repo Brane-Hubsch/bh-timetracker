@@ -321,7 +321,7 @@ export function TimeCalendar({
                     isoWeek(fromCalendarDate(day).slice(0, 10))
                 }
                 weekNumberFormat={{ week: 'long' }}
-                weekNumberHeaderClass="items-center justify-center"
+                weekNumberHeaderClass="time-calendar-week-number"
                 weekNumberHeaderContent={({ text }) => (
                     <span className="block text-[11px]/4 font-normal text-muted tabular-nums opacity-90">
                         {text}
