@@ -1176,6 +1176,20 @@
         padding-inline-end: 3.25rem;
     }
 
+    .toast:has(.toast__action) {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+
+        &:not(:has(.toast__indicator)) {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        & .toast__action {
+            grid-column: -2;
+            grid-row: 1;
+        }
+    }
+
     .toast .toast__close-button {
         @apply size-10 border-0 bg-transparent;
         inset-block-start: 50%;
