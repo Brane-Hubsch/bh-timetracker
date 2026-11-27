@@ -1,7 +1,7 @@
 import { Description, InputGroup, Label, TextField } from '@heroui/react';
 import type { ReactNode } from 'react';
 import { useRef } from 'react';
-import { TimePicker } from '@/components/form/time-picker';
+import { TimePicker, useTimePickerField } from '@/components/form/time-picker';
 import { formatDuration, parseDuration } from '@/lib/time';
 
 type Props = {
@@ -36,14 +36,17 @@ export function DurationInputField({
     'data-test': dataTest,
 }: Props) {
     const input = useRef<HTMLInputElement>(null);
+    const { opensFromField, startEditing, endEditingOnBlur } =
+        useTimePickerField();
     const seconds = parseDuration(value);
+    const invalid = Boolean(error);
 
     return (
         <TextField
             name={name}
             value={value}
             onChange={onChange}
-            isInvalid={Boolean(error)}
+            isInvalid={invalid}
             validationBehavior="aria"
             className={className}
         >
@@ -51,14 +54,20 @@ export function DurationInputField({
             {visibleLabel}
             <InputGroup
                 fullWidth
-                className="h-[2.625rem] has-[[data-time-picker-open]]:border-accent sm:h-[2.375rem]"
+                className="relative h-[2.625rem] has-[[data-time-picker-open]]:border-accent sm:h-[2.375rem]"
             >
-                <InputGroup.Input
-                    ref={input}
-                    className="min-w-0 pe-0 max-sm:ps-2 max-sm:text-sm"
-                    placeholder={placeholder}
-                    data-test={dataTest}
-                />
+                <div
+                    className="contents"
+                    inert={opensFromField}
+                    onBlur={endEditingOnBlur}
+                >
+                    <InputGroup.Input
+                        ref={input}
+                        className="min-w-0 pe-0 max-sm:ps-2 max-sm:text-sm"
+                        placeholder={placeholder}
+                        data-test={dataTest}
+                    />
+                </div>
                 <InputGroup.Suffix className="gap-0 border-0 p-0">
                     {suffix && (
                         <span
@@ -77,6 +86,12 @@ export function DurationInputField({
                             onChange(formatDuration(minutes * 60))
                         }
                         onOpenChange={onPickerOpenChange}
+                        mobileField={
+                            opensFromField
+                                ? { value, isInvalid: invalid }
+                                : undefined
+                        }
+                        onEditStart={startEditing}
                         onEdit={() => input.current?.focus()}
                         preview={preview}
                     />
