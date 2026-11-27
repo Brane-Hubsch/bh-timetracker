@@ -1,6 +1,5 @@
 import { createInertiaApp, router } from '@inertiajs/react';
 import { AppProviders } from '@/components/providers/app-providers';
-import { SeasonalEffects } from '@/components/seasonal-effects';
 import { initializeTheme } from '@/hooks/use-appearance';
 import {
     applyThemePreferences,
@@ -62,12 +61,7 @@ void createInertiaApp({
     withApp(app, { page }) {
         currentOrganizationSlug = page.props.currentOrganization?.slug;
 
-        return (
-            <AppProviders locale={page.props.locale}>
-                {app}
-                <SeasonalEffects />
-            </AppProviders>
-        );
+        return <AppProviders locale={page.props.locale}>{app}</AppProviders>;
     },
     progress: {
         color: '#7c3aed',

@@ -4,6 +4,8 @@ import {
     useSeasonalEffectsEnabled,
 } from '@/lib/seasonal-effects';
 import type { SeasonalEffects as Effects } from '@/lib/seasonal-effects';
+import { SnowDrift } from '@/lib/snow-drift';
+import { SnowShovel } from '@/components/snow-shovel';
 
 type Flake = {
     x: number;
@@ -116,6 +118,25 @@ function useReducedMotion(): boolean {
     return reduced;
 }
 
+/** Only devices with a mouse get the snow drift and the shovel. */
+function useFinePointer(): boolean {
+    const [fine, setFine] = useState(
+        () =>
+            typeof window !== 'undefined' &&
+            window.matchMedia('(hover: hover) and (pointer: fine)').matches,
+    );
+
+    useEffect(() => {
+        const query = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const onChange = () => setFine(query.matches);
+        query.addEventListener('change', onChange);
+
+        return () => query.removeEventListener('change', onChange);
+    }, []);
+
+    return fine;
+}
+
 /** Re-check the date every hour, so the effects start and stop around midnight. */
 function useSeason(): Effects {
     const [season, setSeason] = useState(() => seasonalEffectsOn(new Date()));
@@ -134,7 +155,8 @@ function useSeason(): Effects {
 
 /**
  * Decorative snow and fireworks on a canvas behind dialogs. It never takes clicks, pauses while the tab is
- * hidden and is not shown when the device asks for reduced motion.
+ * hidden and is not shown when the device asks for reduced motion. On devices with a mouse the snow
+ * settles at the bottom, and the shovel in the corner clears it.
  */
 export function SeasonalEffects() {
     const enabled = useSeasonalEffectsEnabled();
@@ -142,6 +164,39 @@ export function SeasonalEffects() {
     const { snow, fireworks } = useSeason();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const active = enabled && !reducedMotion && (snow || fireworks);
+    const canShovel = useFinePointer();
+    const hasDrift = active && snow && canShovel;
+    const [drift] = useState(() => new SnowDrift());
+    const [isShovelling, setShovelling] = useState(false);
+    const shovelling = isShovelling && hasDrift;
+
+    useEffect(() => {
+        if (!shovelling) {
+            return;
+        }
+        const root = document.documentElement;
+        root.classList.add('is-shovelling');
+        let lastX: number | null = null;
+
+        const onMove = (event: PointerEvent) => {
+            const dx = lastX === null ? 0 : event.clientX - lastX;
+            lastX = event.clientX;
+            drift.shovel(event.clientX, event.clientY, dx, window.innerHeight);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setShovelling(false);
+            }
+        };
+        window.addEventListener('pointermove', onMove, { passive: true });
+        window.addEventListener('keydown', onKey);
+
+        return () => {
+            root.classList.remove('is-shovelling');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('keydown', onKey);
+        };
+    }, [shovelling, drift]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -169,6 +224,7 @@ export function SeasonalEffects() {
             canvas.width = Math.round(width * ratio);
             canvas.height = Math.round(height * ratio);
             context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            drift.resize(width);
 
             if (snow) {
                 const count = Math.min(
@@ -238,7 +294,16 @@ export function SeasonalEffects() {
                         step;
 
                     const margin = flake.radius * 3;
-                    if (flake.y - margin > height) {
+                    if (
+                        hasDrift &&
+                        flake.y >= height - drift.depthAt(flake.x)
+                    ) {
+                        drift.land(flake.x, flake.radius);
+                        Object.assign(
+                            flake,
+                            createFlake(width, height, false, flake.depth),
+                        );
+                    } else if (flake.y - margin > height) {
                         Object.assign(
                             flake,
                             createFlake(width, height, false, flake.depth),
@@ -261,6 +326,11 @@ export function SeasonalEffects() {
                     );
                 }
                 context.globalAlpha = 1;
+
+                if (hasDrift) {
+                    drift.update(step, width, height);
+                    drift.draw(context, width, height, isDark);
+                }
             }
 
             if (fireworks) {
@@ -332,18 +402,26 @@ export function SeasonalEffects() {
             window.removeEventListener('resize', resize);
             document.removeEventListener('visibilitychange', onVisibility);
         };
-    }, [active, snow, fireworks]);
+    }, [active, snow, fireworks, hasDrift, drift]);
 
     if (!active) {
         return null;
     }
 
     return (
-        <canvas
-            ref={canvasRef}
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0 z-40 size-full"
-            data-test="seasonal-effects"
-        />
+        <>
+            <canvas
+                ref={canvasRef}
+                aria-hidden="true"
+                className="pointer-events-none fixed inset-0 z-40 size-full"
+                data-test="seasonal-effects"
+            />
+            {hasDrift && (
+                <SnowShovel
+                    isShovelling={shovelling}
+                    onChange={setShovelling}
+                />
+            )}
+        </>
     );
 }
