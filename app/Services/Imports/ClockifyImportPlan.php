@@ -455,7 +455,7 @@ final class ClockifyImportPlan
                     'projectKey' => $project['key'],
                     'userId' => $user->id,
                     'name' => $user->name,
-                    'avatar' => $user->avatar,
+                    'avatar' => $user->avatarForMembership(),
                     'entries' => count($pairs[$rateKey]),
                     'seconds' => array_sum($pairs[$rateKey]),
                     'defaultRate' => $defaultRate,

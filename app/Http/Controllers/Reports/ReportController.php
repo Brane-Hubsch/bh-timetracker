@@ -151,7 +151,7 @@ class ReportController extends Controller
                     'label' => $membership->isDeactivated()
                         ? __(':name (inactive)', ['name' => $member->name])
                         : $member->name,
-                    'avatar' => $member->avatar,
+                    'avatar' => $member->avatarForMembership($membership),
                     'isInactive' => $membership->isDeactivated(),
                 ];
             })

@@ -104,7 +104,7 @@ class TimeEntryPresenter
             ->map(fn (User $member) => [
                 'value' => (string) $member->id,
                 'label' => $member->name,
-                'avatar' => $member->avatar,
+                'avatar' => $member->avatarForMembership(),
             ])
             ->values()
             ->all();

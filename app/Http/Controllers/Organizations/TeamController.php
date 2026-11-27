@@ -49,7 +49,7 @@ class TeamController extends Controller
                     'id' => $member->user_id,
                     'name' => $member->user->name,
                     'email' => $member->user->email,
-                    'avatar' => $member->avatarUrl() ?? $member->user->avatar,
+                    'avatar' => $member->user->avatarForMembership($member),
                     'role' => $member->role->value,
                     'roleLabel' => $member->role->label(),
                     'isDeactivated' => $member->isDeactivated(),
