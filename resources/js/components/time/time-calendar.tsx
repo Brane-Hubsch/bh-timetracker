@@ -904,6 +904,12 @@ export function TimeCalendar({
                     const entry = byId.get(info.event.id);
 
                     if (entry) {
+                        // The mobile sheet restores focus to the active element when it closes.
+                        // Release pointer focus before opening it so the event has no focus ring on return.
+                        if (isMobile && info.jsEvent.detail > 0) {
+                            info.el.blur();
+                        }
+
                         onEdit(entry);
                     }
                 }}
