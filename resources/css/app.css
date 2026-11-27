@@ -1151,6 +1151,25 @@
 }
 
 @media (width < 48rem) {
+    .toast {
+        padding-inline-end: 3.25rem;
+    }
+
+    .toast .toast__close-button {
+        @apply size-10 border-0 bg-transparent;
+        inset-block-start: 50%;
+        inset-inline-end: 0.5rem;
+        translate: 0 -50%;
+    }
+
+    .toast:is([data-frontmost='true'], [data-expanded='true']):not(
+            [data-exiting='true'],
+            [data-hidden='true']
+        )
+        .toast__close-button {
+        @apply pointer-events-auto opacity-100;
+    }
+
     :root:has(.mobile-tab-bar) .toast-region--bottom-end {
         bottom: calc(var(--mobile-tab-bar-height) + 1rem);
 

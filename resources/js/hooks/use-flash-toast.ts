@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { translate } from '@/lib/i18n';
 import type { FlashToast } from '@/types/ui';
 
+const SUCCESS_TOAST_TIMEOUT = 5000;
+
 /**
  * Show `Inertia::flash('toast', [...])` messages from the backend, and network errors, as HeroUI toasts.
  */
@@ -37,7 +39,11 @@ export function useFlashToast(): void {
                 : undefined;
 
             const show = {
-                success: (message: string) => toast.success(message, options),
+                success: (message: string) =>
+                    toast.success(message, {
+                        ...options,
+                        timeout: SUCCESS_TOAST_TIMEOUT,
+                    }),
                 info: (message: string) => toast.info(message, options),
                 warning: (message: string) => toast.warning(message, options),
                 error: (message: string) => toast.danger(message, options),
