@@ -711,7 +711,30 @@
     }
 }
 
+@layer components {
+    .toast {
+        @apply rounded-xl;
+    }
+
+    .toast .toast__title {
+        @apply text-overlay-foreground;
+    }
+}
+
 @media (width < 48rem) {
+    :root:has(.mobile-tab-bar) .toast-region--bottom-end {
+        bottom: calc(var(--mobile-tab-bar-height) + 1rem);
+
+        /* Keep the snackbar above the tab bar throughout its slide. */
+        & .toast:is([data-entering='true'], [data-exiting='true']) {
+            --toast-enter: -0.75rem;
+        }
+
+        & .toast[data-entering='true'] {
+            opacity: 0;
+        }
+    }
+
     /* Safari uses the page background to extend the surface into its system bars. */
     :root:has(.mobile-tab-bar),
     :root:has(.mobile-tab-bar) body {

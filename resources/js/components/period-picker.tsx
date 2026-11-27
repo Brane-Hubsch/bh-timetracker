@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 type Props = {
     name: string | null;
     range: string | null;
+    hideRangeOnMobile?: boolean;
     onStep?: (direction: -1 | 1) => void;
     stepLabels?: [previous: string, next: string];
     label?: string;
@@ -21,6 +22,7 @@ type Props = {
     /** Move the step buttons into the mobile panel header. */
     mobileStepInPanel?: boolean;
     className?: string;
+    triggerClassName?: string;
     testId: string;
     children: (context: {
         isDesktop: boolean;
@@ -31,6 +33,7 @@ type Props = {
 export function PeriodPicker({
     name,
     range,
+    hideRangeOnMobile = false,
     onStep,
     stepLabels,
     label,
@@ -39,6 +42,7 @@ export function PeriodPicker({
     mobileLabelOnly = false,
     mobileStepInPanel = false,
     className,
+    triggerClassName,
     testId,
     children,
 }: Props) {
@@ -70,6 +74,7 @@ export function PeriodPicker({
                     'max-md:h-[38px] max-md:border max-md:border-border max-md:bg-surface',
                 mobileLabelOnly && 'max-md:px-1.5',
                 mobileStepInPanel && 'max-md:min-h-0 max-md:px-3',
+                triggerClassName,
             )}
             data-test={testId}
         >
@@ -91,7 +96,7 @@ export function PeriodPicker({
                         {name}
                     </span>
                 )}
-                {range && (
+                {range && (!hideRangeOnMobile || isDesktop) && (
                     <span
                         className={cn(
                             'truncate tabular-nums',
