@@ -46,7 +46,7 @@ const TIMER_EVENT_ID = 'running-timer';
 const LIFTED_EVENT_CLASS = 'time-calendar-event-lifted';
 const TOUCH_EVENT_DRAG_MIN_DISTANCE = 16;
 const HAPTIC_SWITCH_CLASS =
-    'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 [direction:ltr]';
+    'absolute inset-0 m-auto hidden size-11 max-w-full touch-none appearance-auto opacity-0 transition-none [direction:ltr]';
 
 function appendHapticSwitch(
     parent: Element,
