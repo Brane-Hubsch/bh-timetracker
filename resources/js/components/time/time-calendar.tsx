@@ -421,15 +421,6 @@ export function TimeCalendar({
         return () => listeners.abort();
     }, [containerRef, isPreview]);
 
-    useCalendarLongPress(
-        containerRef,
-        calendarRef,
-        calendarKey,
-        !isPreview && !hasSelectionDraft,
-        onSelect,
-        dragHaptics.armSelection,
-    );
-
     const byId = new Map(entries.map((entry) => [String(entry.id), entry]));
     const eventSelection = useCalendarEventSelection(
         containerRef,
@@ -440,6 +431,14 @@ export function TimeCalendar({
             const entry = byId.get(id);
             if (entry) onEdit(entry);
         },
+    );
+    useCalendarLongPress(
+        containerRef,
+        calendarRef,
+        calendarKey,
+        !isPreview && !hasSelectionDraft,
+        onSelect,
+        dragHaptics.armSelection,
     );
     const holidayByDate = new Map(
         holidays.map(({ date, name }) => [date, name]),
@@ -465,7 +464,7 @@ export function TimeCalendar({
     return (
         <div
             ref={containerRef}
-            onTouchStart={dragHaptics.arm}
+            onTouchStartCapture={dragHaptics.arm}
             className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-(--mobile-scroll-background)"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
