@@ -291,13 +291,15 @@ export function TimePicker({
             aria-haspopup="dialog"
             aria-expanded={isOpen}
             onPress={isDesktop ? undefined : () => changeOpen(true)}
-            className="h-9 w-8 min-w-0 shrink-0 rounded-field p-0 text-muted data-[time-picker-open]:text-accent sm:h-8 sm:w-9"
+            className="group/time-trigger h-9 w-8 min-w-0 shrink-0 rounded-field p-0 text-muted [--button-bg-hover:transparent] [--button-bg-pressed:transparent] data-[time-picker-open]:text-accent sm:h-8 sm:w-9"
             data-time-picker-open={isOpen || undefined}
         >
-            <ChevronDown
+            <span
                 aria-hidden="true"
-                className={cn('size-4', isOpen && 'rotate-180')}
-            />
+                className="pointer-events-none grid size-6 place-items-center rounded-lg transition-colors group-hover/time-trigger:bg-default group-data-pressed/time-trigger:bg-default motion-reduce:transition-none"
+            >
+                <ChevronDown className={cn('size-4', isOpen && 'rotate-180')} />
+            </span>
         </Button>
     );
 
