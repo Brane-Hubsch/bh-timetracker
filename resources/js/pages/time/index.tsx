@@ -639,6 +639,7 @@ export default function TimeIndex({
                             absences={absences}
                             colleaguesOff={colleaguesOff}
                             holidays={calendarHolidays}
+                            pageHeaderRef={calendarHeader}
                             isMobile={isMobile}
                             hasTimer={Boolean(timer)}
                             onSwipe={swipeToPeriod}
