@@ -533,10 +533,7 @@
         linear-gradient(var(--danger-soft), var(--danger-soft)), var(--surface);
 
     @media (width < 48rem) {
-        inset-block-start: calc(
-            var(--mobile-page-header-height) +
-                var(--time-calendar-holiday-space) + 0.75rem
-        );
+        inset-block-start: calc(var(--time-calendar-holiday-space) + 0.75rem);
     }
 }
 
@@ -555,10 +552,27 @@
 }
 
 @media (width < 48rem) {
+    /* The fixed bars sit outside the calendar's native scroll area. */
+    main:has(.time-calendar-scroll) {
+        padding-block-end: var(--mobile-tab-bar-height);
+    }
+
+    .time-calendar-scroll {
+        block-size: calc(
+            100dvh -
+                max(
+                    var(--mobile-page-header-height),
+                    var(--mobile-page-header-visible-height)
+                ) -
+                var(--mobile-tab-bar-height)
+        );
+        overflow-y: auto;
+    }
+
     /* Use the day lane's inline start so the divider follows the measured time axis. */
     .time-calendar[data-view='day'] .time-calendar-day::before {
         position: fixed;
-        inset-block: var(--mobile-page-header-height)
+        inset-block: var(--mobile-page-header-visible-height)
             var(--mobile-tab-bar-height);
         margin-inline-start: -1px;
         width: 1px;
