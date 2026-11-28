@@ -63,11 +63,7 @@ export function DatePickerField({
             {!isEmbedded && <Label>{label}</Label>}
             <DateField.Group
                 fullWidth
-                className={
-                    isEmbedded
-                        ? 'h-full rounded-none border-0 bg-transparent shadow-none outline-none'
-                        : 'relative'
-                }
+                className={isEmbedded ? 'paired-field-control' : 'relative'}
             >
                 <DateField.Input
                     className={

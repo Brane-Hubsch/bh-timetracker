@@ -57,6 +57,54 @@ it('rejects unknown themes, accents and contrast values', function () {
     expect($user->refresh()->theme)->toBe(Theme::Standard);
 });
 
+it('saves a custom accent on the account and uses it before JavaScript loads', function () {
+    $user = User::factory()->create();
+    $organization = $user->currentOrganization;
+    $organization->update(['accent' => Accent::Green]);
+
+    $this->actingAs($user)->from(route('appearance.edit'))
+        ->patch(route('appearance.update'), ['accent' => '#3478CC'])
+        ->assertRedirect(route('appearance.edit'))
+        ->assertSessionHasNoErrors();
+
+    $this->patch(route('appearance.update'), ['contrast' => 'more'])->assertSessionHasNoErrors();
+
+    expect($user->refresh()->accent)->toBe('#3478cc');
+    expect($organization->refresh()->accent)->toBe(Accent::Green);
+
+    $this->get(route('appearance.edit'))
+        ->assertSee('data-accent="#3478cc"', false)
+        ->assertSee('style="--custom-accent: #3478cc"', false)
+        ->assertSee('name="theme-color" content="#3478cc"', false)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('theme.accent', '#3478cc')
+            ->where('theme.ownAccent', '#3478cc')
+            ->where('theme.organizationAccent', 'green'));
+
+    $this->patch(route('appearance.update'), ['accent' => null])->assertSessionHasNoErrors();
+
+    $this->get(route('appearance.edit'))
+        ->assertDontSee('--custom-accent:', false)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('theme.accent', 'green')
+            ->where('theme.ownAccent', null));
+});
+
+it('rejects malformed custom accents without changing the saved colour', function (mixed $accent) {
+    $user = User::factory()->create();
+    app(UpdateAppearance::class)->handle($user, ['accent' => '#3478cc']);
+
+    $this->actingAs($user)->patch(route('appearance.update'), ['accent' => $accent])
+        ->assertSessionHasErrors('accent');
+
+    expect($user->refresh()->accent)->toBe('#3478cc');
+})->with([
+    'unexpanded hex' => '#abc',
+    'alpha channel' => '#3478ccff',
+    'arbitrary CSS' => '#3478cc; color: red',
+    'array' => [['#3478cc']],
+]);
+
 it('uses the current organization accent unless the user picked their own', function () {
     $user = User::factory()->create();
     $createOrganization = app(CreateOrganization::class);
@@ -117,6 +165,8 @@ it('lets owners and admins set the organization accent, but not members', functi
     expect($organization->refresh()->accent)->toBe(Accent::Orange);
 
     $this->patch(route('organizations.update', $organization), [...$settings, 'accent' => 'gold'])
+        ->assertSessionHasErrors('accent');
+    $this->patch(route('organizations.update', $organization), [...$settings, 'accent' => '#3478cc'])
         ->assertSessionHasErrors('accent');
 
     $this->patch(route('organizations.update', $organization), [...$settings, 'accent' => null])

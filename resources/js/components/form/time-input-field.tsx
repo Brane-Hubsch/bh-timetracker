@@ -80,9 +80,10 @@ export function TimeInputField({
             {!isEmbedded && <Label>{label}</Label>}
             <TimeField.Group
                 className={cn(
-                    'relative min-w-0 gap-0 pe-0 has-[[data-time-picker-open]]:rounded-lg has-[[data-time-picker-open]]:ring-1 has-[[data-time-picker-open]]:ring-accent has-[[data-time-picker-open]]:ring-inset',
-                    isEmbedded &&
-                        'h-full rounded-none border-0 bg-transparent shadow-none outline-none',
+                    'relative min-w-0 gap-0 pe-0',
+                    isEmbedded
+                        ? 'paired-field-control'
+                        : 'has-[[data-time-picker-open]]:rounded-lg has-[[data-time-picker-open]]:ring-1 has-[[data-time-picker-open]]:ring-accent has-[[data-time-picker-open]]:ring-inset',
                 )}
             >
                 <div

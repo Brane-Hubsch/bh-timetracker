@@ -3,6 +3,10 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import AppearanceTabs from '@/components/appearance-tabs';
+import {
+    CustomColorPanel,
+    CustomColorSwatch,
+} from '@/components/custom-color-picker';
 import Heading from '@/components/heading';
 import {
     AccentPicker,
@@ -10,12 +14,18 @@ import {
     ContrastPicker,
     ThemePicker,
 } from '@/components/theme-pickers';
+import { useAppearance } from '@/hooks/use-appearance';
 import { useTranslation } from '@/lib/i18n';
 import {
     setSeasonalEffectsEnabled,
     useSeasonalEffectsEnabled,
 } from '@/lib/seasonal-effects';
-import { applyThemePreferences, themeFor } from '@/lib/theme';
+import {
+    accentColorsFor,
+    applyThemePreferences,
+    isCustomAccent,
+    themeFor,
+} from '@/lib/theme';
 import type { ThemePreferences } from '@/lib/theme';
 import {
     edit as editAppearance,
@@ -50,8 +60,13 @@ export default function Appearance() {
     const { t } = useTranslation();
     const { theme: saved, currentOrganization } = usePage().props;
     const [preferences, setPreferences] = useState<ThemePreferences>(saved);
+    const [isCustomExpanded, setIsCustomExpanded] = useState(false);
+    const customPanelId = useId();
+    const { resolvedAppearance } = useAppearance();
     const theme = themeFor(preferences.theme);
     const seasonalEffects = useSeasonalEffectsEnabled();
+    const customPanelVisible = isCustomExpanded && !theme.accent;
+    const accentColor = accentColorsFor(preferences.accent)[resolvedAppearance];
 
     const save = (changes: Partial<ThemePreferences>) => {
         const next = { ...preferences, ...changes };
@@ -74,6 +89,10 @@ export default function Appearance() {
         router.patch(updateAppearance.url(), data, {
             preserveScroll: true,
             preserveState: true,
+            onError: () => {
+                setPreferences(saved);
+                applyThemePreferences(saved);
+            },
         });
     };
 
@@ -114,7 +133,10 @@ export default function Appearance() {
                         <ThemePicker
                             value={preferences.theme}
                             accent={preferences.accent}
-                            onChange={(theme) => save({ theme })}
+                            onChange={(theme) => {
+                                setIsCustomExpanded(false);
+                                save({ theme });
+                            }}
                             aria-describedby={descriptionId}
                         />
                     )}
@@ -132,19 +154,50 @@ export default function Appearance() {
                 >
                     {(descriptionId) => (
                         <div className="grid gap-2">
-                            <AccentPicker
-                                aria-label={t('Accent colour')}
-                                aria-describedby={descriptionId}
-                                value={preferences.ownAccent}
-                                organizationAccent={
-                                    currentOrganization
-                                        ? preferences.organizationAccent
-                                        : undefined
-                                }
-                                onChange={(ownAccent) => save({ ownAccent })}
-                                isDisabled={Boolean(theme.accent)}
-                                data-test="accent-picker"
-                            />
+                            <div className="flex items-start gap-2">
+                                <AccentPicker
+                                    aria-label={t('Accent colour')}
+                                    aria-describedby={descriptionId}
+                                    value={preferences.ownAccent}
+                                    organizationAccent={
+                                        currentOrganization
+                                            ? preferences.organizationAccent
+                                            : undefined
+                                    }
+                                    onChange={(ownAccent) => {
+                                        setIsCustomExpanded(false);
+                                        save({ ownAccent });
+                                    }}
+                                    isDisabled={Boolean(theme.accent)}
+                                    data-test="accent-picker"
+                                />
+                                <CustomColorSwatch
+                                    value={accentColor}
+                                    panelId={customPanelId}
+                                    isSelected={isCustomAccent(
+                                        preferences.ownAccent,
+                                    )}
+                                    isExpanded={customPanelVisible}
+                                    isDisabled={Boolean(theme.accent)}
+                                    className="size-10 shrink-0 rounded-full p-[3px] data-[selected=true]:border-accent"
+                                    onPress={() =>
+                                        setIsCustomExpanded(!isCustomExpanded)
+                                    }
+                                />
+                            </div>
+                            {customPanelVisible && (
+                                <CustomColorPanel
+                                    id={customPanelId}
+                                    initialValue={accentColor}
+                                    onCommit={(ownAccent) => {
+                                        if (
+                                            ownAccent !== preferences.ownAccent
+                                        ) {
+                                            save({ ownAccent });
+                                        }
+                                    }}
+                                />
+                            )}
                             <p
                                 className="text-xs text-muted"
                                 aria-live="polite"
@@ -162,7 +215,11 @@ export default function Appearance() {
                                                 ),
                                             ),
                                         })
-                                      : t(accentLabel(preferences.accent))}
+                                      : isCustomAccent(preferences.accent)
+                                        ? t('Custom colour · :color', {
+                                              color: preferences.accent,
+                                          })
+                                        : t(accentLabel(preferences.accent))}
                             </p>
                         </div>
                     )}

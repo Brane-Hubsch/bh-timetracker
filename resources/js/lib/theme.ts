@@ -19,14 +19,16 @@ export type AccentName =
     | 'orange'
     | 'pink'
     | 'neutral';
+export type HexColor = `#${string}`;
+export type AccentColor = AccentName | HexColor;
 export type ContrastPreference = 'system' | 'normal' | 'more';
 
 export type ThemePreferences = {
     theme: ThemeName;
     /** The colour in use: the person's own, else the organization's. */
-    accent: AccentName;
+    accent: AccentColor;
     /** The person's own accent, or null to follow the organization. */
-    ownAccent: AccentName | null;
+    ownAccent: AccentColor | null;
     organizationAccent: AccentName;
     contrast: ContrastPreference;
 };
@@ -208,6 +210,16 @@ export const ACCENTS: {
     { id: 'neutral', label: 'Neutral', light: '#242424', dark: '#e4e4e4' },
 ];
 
+export function isCustomAccent(accent: AccentColor | null): accent is HexColor {
+    return accent?.startsWith('#') ?? false;
+}
+
+export function accentColorsFor(accent: AccentColor) {
+    return isCustomAccent(accent)
+        ? { light: accent, dark: accent }
+        : (ACCENTS.find(({ id }) => id === accent) ?? ACCENTS[0]);
+}
+
 export const DEFAULT_THEME_PREFERENCES: ThemePreferences = {
     theme: 'standard',
     accent: 'violet',
@@ -243,6 +255,11 @@ export function applyThemePreferences(preferences: ThemePreferences): void {
     root.dataset.palette = preferences.theme;
     root.dataset.accent = preferences.accent;
     root.dataset.contrast = isHighContrast ? 'more' : 'normal';
+    if (isCustomAccent(preferences.accent)) {
+        root.style.setProperty('--custom-accent', preferences.accent);
+    } else {
+        root.style.removeProperty('--custom-accent');
+    }
 
     if ((root.dataset.forcedMode === 'dark') !== Boolean(theme.alwaysDark)) {
         if (theme.alwaysDark) {
@@ -253,11 +270,10 @@ export function applyThemePreferences(preferences: ThemePreferences): void {
         refreshAppearance();
     }
 
-    const accent =
-        theme.accent ?? ACCENTS.find(({ id }) => id === preferences.accent);
+    const accent = theme.accent ?? accentColorsFor(preferences.accent);
     const themeColor = document.querySelector('meta[name="theme-color"]');
 
-    if (accent && themeColor) {
+    if (themeColor) {
         themeColor.setAttribute(
             'content',
             theme.alwaysDark ? theme.dark.background : accent.light,

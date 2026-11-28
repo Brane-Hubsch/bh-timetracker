@@ -7,6 +7,26 @@
 /* Dark mode is toggled with the `.dark` class on <html> (see use-appearance.tsx). HeroUI reads it too. */
 @custom-variant dark (&:is(.dark *));
 
+@utility paired-field-control {
+    @apply h-full rounded-sm border-0 bg-transparent shadow-none ring-0 outline-none;
+
+    .field-pair > :first-child & {
+        @apply rounded-s-[calc(var(--radius-field)-var(--border-width-field))];
+    }
+
+    .field-pair > :last-child & {
+        @apply rounded-e-[calc(var(--radius-field)-var(--border-width-field))];
+    }
+
+    &:is(:focus-within, :has([aria-expanded='true'])) {
+        @apply outline-2 -outline-offset-2 outline-focus outline-solid;
+
+        &[data-invalid='true'] {
+            @apply outline-danger;
+        }
+    }
+}
+
 @theme {
     /* Motion: short, eased, and never in the way. */
     --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -243,6 +263,67 @@
 :root.dark[data-accent='neutral'] {
     --accent: oklch(0.92 0 0);
     --accent-foreground: oklch(0.16 0.03 0);
+}
+
+/* Keep the chosen colour when it has enough contrast for text on the theme's
+ * surfaces. Otherwise mix towards black or white in linear RGB. The weighted
+ * channels are the WCAG relative luminance, which is linear in this space. */
+:root:not(.dark)[data-accent^='#'] {
+    --custom-accent-luminance-limit: 0.13;
+    --accent: color(
+        from var(--custom-accent) srgb-linear
+            calc(
+                r * var(--custom-accent-luminance-limit) /
+                    max(
+                        var(--custom-accent-luminance-limit),
+                        0.2126 * r + 0.7152 * g + 0.0722 * b
+                    )
+            )
+            calc(
+                g * var(--custom-accent-luminance-limit) /
+                    max(
+                        var(--custom-accent-luminance-limit),
+                        0.2126 * r + 0.7152 * g + 0.0722 * b
+                    )
+            )
+            calc(
+                b * var(--custom-accent-luminance-limit) /
+                    max(
+                        var(--custom-accent-luminance-limit),
+                        0.2126 * r + 0.7152 * g + 0.0722 * b
+                    )
+            )
+    );
+    --accent-foreground: white;
+}
+
+:root.dark[data-accent^='#'] {
+    --custom-accent-inverse-luminance-limit: 0.56;
+    --accent: color(
+        from var(--custom-accent) srgb-linear
+            calc(
+                1 - (1 - r) * var(--custom-accent-inverse-luminance-limit) /
+                    max(
+                        var(--custom-accent-inverse-luminance-limit),
+                        1 - 0.2126 * r - 0.7152 * g - 0.0722 * b
+                    )
+            )
+            calc(
+                1 - (1 - g) * var(--custom-accent-inverse-luminance-limit) /
+                    max(
+                        var(--custom-accent-inverse-luminance-limit),
+                        1 - 0.2126 * r - 0.7152 * g - 0.0722 * b
+                    )
+            )
+            calc(
+                1 - (1 - b) * var(--custom-accent-inverse-luminance-limit) /
+                    max(
+                        var(--custom-accent-inverse-luminance-limit),
+                        1 - 0.2126 * r - 0.7152 * g - 0.0722 * b
+                    )
+            )
+    );
+    --accent-foreground: black;
 }
 
 :root:not(.dark)[data-contrast='more'] {

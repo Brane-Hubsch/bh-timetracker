@@ -18,7 +18,10 @@ class AppearanceUpdateRequest extends FormRequest
         return [
             'theme' => ['sometimes', 'required', Rule::enum(Theme::class)],
             // Null follows the organization's colour.
-            'accent' => ['sometimes', 'nullable', Rule::enum(Accent::class)],
+            'accent' => ['sometimes', 'nullable', 'string', Rule::anyOf([
+                [Rule::enum(Accent::class)],
+                ['regex:/\A#[0-9a-f]{6}\z/i'],
+            ])],
             'contrast' => ['sometimes', 'required', Rule::enum(ContrastPreference::class)],
         ];
     }
@@ -26,7 +29,7 @@ class AppearanceUpdateRequest extends FormRequest
     /**
      * The sent preferences for UpdateAppearance.
      *
-     * @return array{theme?: Theme, accent?: Accent|null, contrast?: ContrastPreference}
+     * @return array{theme?: Theme, accent?: Accent|string|null, contrast?: ContrastPreference}
      */
     public function preferences(): array
     {
@@ -37,7 +40,8 @@ class AppearanceUpdateRequest extends FormRequest
         }
 
         if ($this->has('accent')) {
-            $preferences['accent'] = $this->enum('accent', Accent::class);
+            $accent = $this->validated('accent');
+            $preferences['accent'] = is_string($accent) ? (Accent::tryFrom($accent) ?? strtolower($accent)) : null;
         }
 
         if ($this->has('contrast')) {
