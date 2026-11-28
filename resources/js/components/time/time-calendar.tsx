@@ -542,8 +542,7 @@ export function TimeCalendar({
                                 className="size-3"
                             />
                         </Tooltip.Trigger>
-                        <Tooltip.Content placement="right" showArrow>
-                            <Tooltip.Arrow />
+                        <Tooltip.Content placement="right">
                             {absenceLabel}
                         </Tooltip.Content>
                     </Tooltip>
