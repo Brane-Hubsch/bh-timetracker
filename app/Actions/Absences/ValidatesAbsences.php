@@ -8,6 +8,8 @@ use App\Models\Organization;
 use App\Models\User;
 use App\Support\AbsenceTime;
 use App\Support\HolidayDates;
+use Closure;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -15,6 +17,19 @@ use Illuminate\Validation\ValidationException;
  */
 trait ValidatesAbsences
 {
+    /**
+     * @param  Closure(): Absence  $write
+     */
+    protected function writeAbsence(Organization $organization, Closure $write): Absence
+    {
+        return DB::transaction(function () use ($organization, $write): Absence {
+            // Serialize writes that can introduce an overlap, even when no absence exists yet.
+            Organization::query()->whereKey($organization->id)->lockForUpdate()->firstOrFail();
+
+            return $write();
+        });
+    }
+
     /**
      * @throws ValidationException
      */

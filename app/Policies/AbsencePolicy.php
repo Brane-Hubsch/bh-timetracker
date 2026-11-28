@@ -28,6 +28,11 @@ class AbsencePolicy
         return $this->ownsOrManages($user, $absence);
     }
 
+    public function restore(User $user, Absence $absence): bool
+    {
+        return $this->ownsOrManages($user, $absence);
+    }
+
     /**
      * Whether the user may register and see the given member's absence in the organization.
      */

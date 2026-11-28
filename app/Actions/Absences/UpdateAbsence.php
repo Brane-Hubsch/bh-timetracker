@@ -17,18 +17,26 @@ class UpdateAbsence
      */
     public function handle(Absence $absence, AbsenceData $data): Absence
     {
-        $user = $this->validateAbsence($absence->organization, $data, $absence);
-        $note = trim((string) $data->note);
+        return $this->writeAbsence($absence->organization, function () use ($absence, $data): Absence {
+            Absence::query()
+                ->forOrganization($absence->organization)
+                ->where('user_id', $absence->user_id)
+                ->lockForUpdate()
+                ->findOrFail($absence->id, ['id']);
 
-        $absence->update([
-            'user_id' => $user->id,
-            'type' => $data->type,
-            'starts_on' => $data->startsOn->toDateString(),
-            'ends_on' => $data->endsOn->toDateString(),
-            'seconds_per_day' => $data->secondsPerDay,
-            'note' => $note === '' ? null : $note,
-        ]);
+            $user = $this->validateAbsence($absence->organization, $data, $absence);
+            $note = trim((string) $data->note);
 
-        return $absence;
+            $absence->update([
+                'user_id' => $user->id,
+                'type' => $data->type,
+                'starts_on' => $data->startsOn->toDateString(),
+                'ends_on' => $data->endsOn->toDateString(),
+                'seconds_per_day' => $data->secondsPerDay,
+                'note' => $note === '' ? null : $note,
+            ]);
+
+            return $absence;
+        });
     }
 }
