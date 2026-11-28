@@ -251,7 +251,7 @@
 :root:not(.dark)[data-accent^='#'] {
     --custom-accent-luminance-limit: 0.13;
     --accent: color(
-        srgb-linear from var(--custom-accent)
+        from var(--custom-accent) srgb-linear
             calc(
                 r * var(--custom-accent-luminance-limit) /
                     max(
@@ -280,7 +280,7 @@
 :root.dark[data-accent^='#'] {
     --custom-accent-inverse-luminance-limit: 0.56;
     --accent: color(
-        srgb-linear from var(--custom-accent)
+        from var(--custom-accent) srgb-linear
             calc(
                 1 - (1 - r) * var(--custom-accent-inverse-luminance-limit) /
                     max(

@@ -1,7 +1,6 @@
 import { ToggleButton, ToggleButtonGroup } from '@heroui/react';
 import type { Key } from '@heroui/react';
 import { Building2 } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useTranslation } from '@/lib/i18n';
@@ -156,7 +155,6 @@ export function AccentPicker({
     value,
     onChange,
     organizationAccent,
-    customSwatch,
     'aria-label': ariaLabel,
     'aria-describedby': describedBy,
     'data-test': dataTest,
@@ -165,7 +163,6 @@ export function AccentPicker({
     value: AccentColor | null;
     onChange: (accent: AccentName | null) => void;
     organizationAccent?: AccentName;
-    customSwatch?: ReactNode;
     isDisabled?: boolean;
     'aria-label': string;
     'aria-describedby'?: string;
@@ -242,7 +239,6 @@ export function AccentPicker({
                     />
                 </ToggleButton>
             ))}
-            {customSwatch}
         </ToggleButtonGroup>
     );
 }

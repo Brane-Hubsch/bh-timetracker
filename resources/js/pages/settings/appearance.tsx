@@ -154,39 +154,37 @@ export default function Appearance() {
                 >
                     {(descriptionId) => (
                         <div className="grid gap-2">
-                            <AccentPicker
-                                aria-label={t('Accent colour')}
-                                aria-describedby={descriptionId}
-                                value={preferences.ownAccent}
-                                organizationAccent={
-                                    currentOrganization
-                                        ? preferences.organizationAccent
-                                        : undefined
-                                }
-                                onChange={(ownAccent) => {
-                                    setIsCustomExpanded(false);
-                                    save({ ownAccent });
-                                }}
-                                customSwatch={
-                                    <CustomColorSwatch
-                                        value={accentColor}
-                                        panelId={customPanelId}
-                                        isSelected={isCustomAccent(
-                                            preferences.ownAccent,
-                                        )}
-                                        isExpanded={customPanelVisible}
-                                        isDisabled={Boolean(theme.accent)}
-                                        className="size-10 rounded-full p-[3px] data-[selected=true]:border-accent"
-                                        onPress={() =>
-                                            setIsCustomExpanded(
-                                                !isCustomExpanded,
-                                            )
-                                        }
-                                    />
-                                }
-                                isDisabled={Boolean(theme.accent)}
-                                data-test="accent-picker"
-                            />
+                            <div className="flex items-start gap-2">
+                                <AccentPicker
+                                    aria-label={t('Accent colour')}
+                                    aria-describedby={descriptionId}
+                                    value={preferences.ownAccent}
+                                    organizationAccent={
+                                        currentOrganization
+                                            ? preferences.organizationAccent
+                                            : undefined
+                                    }
+                                    onChange={(ownAccent) => {
+                                        setIsCustomExpanded(false);
+                                        save({ ownAccent });
+                                    }}
+                                    isDisabled={Boolean(theme.accent)}
+                                    data-test="accent-picker"
+                                />
+                                <CustomColorSwatch
+                                    value={accentColor}
+                                    panelId={customPanelId}
+                                    isSelected={isCustomAccent(
+                                        preferences.ownAccent,
+                                    )}
+                                    isExpanded={customPanelVisible}
+                                    isDisabled={Boolean(theme.accent)}
+                                    className="size-10 shrink-0 rounded-full p-[3px] data-[selected=true]:border-accent"
+                                    onPress={() =>
+                                        setIsCustomExpanded(!isCustomExpanded)
+                                    }
+                                />
+                            </div>
                             {customPanelVisible && (
                                 <CustomColorPanel
                                     id={customPanelId}
