@@ -199,10 +199,10 @@ export default function TimeIndex({
     const showsToday = view === 'day' ? date === today : dates.includes(today);
     const reportDate =
         (isMobile && view === 'day') || !dates.includes(today) ? date : today;
-    const openReport = (mode: TimeReportMode) =>
+    const openReport = (mode: TimeReportMode, day = reportDate) =>
         setDraft(
             newPlusDraft(
-                newDraft(reportDate, entries, member.id),
+                newDraft(day, entries, member.id),
                 mode,
                 timezone,
                 plusDurationKey,
@@ -619,6 +619,7 @@ export default function TimeIndex({
         colleaguesOff,
         floatingAction: copyPeriodButton,
         hasSelectionDraft: draft?.openedFrom === 'calendar',
+        onReportDay: openReport,
         onSelectDays: newAbsence,
         onEditAbsence: (absence) => setAbsenceDraft(draftFromAbsence(absence)),
         timer: timerHere,

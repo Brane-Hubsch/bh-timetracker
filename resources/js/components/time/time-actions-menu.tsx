@@ -1,12 +1,42 @@
-import { Button, Dropdown, Label } from '@heroui/react';
+import { Button, Dropdown, Label, Tooltip } from '@heroui/react';
 import { CalendarOff, Clock, Play, Plus } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type { TimeReportMode } from '@/types';
 
-type Props = {
+type TimeActionHandlers = {
     onStartTimer?: () => void;
     onReport: (mode: TimeReportMode) => void;
+};
+
+function timeActions({ onStartTimer, onReport }: TimeActionHandlers) {
+    return [
+        ...(onStartTimer
+            ? [
+                  {
+                      id: 'start-timer',
+                      label: 'Start timer',
+                      Icon: Play,
+                      run: onStartTimer,
+                  },
+              ]
+            : []),
+        {
+            id: 'report-time',
+            label: 'Report time',
+            Icon: Clock,
+            run: () => onReport('time'),
+        },
+        {
+            id: 'report-absence',
+            label: 'Report absence',
+            Icon: CalendarOff,
+            run: () => onReport('absence'),
+        },
+    ];
+}
+
+type Props = TimeActionHandlers & {
     placement: 'top end' | 'bottom end';
     className?: string;
     isDisabled?: boolean;
@@ -47,28 +77,52 @@ export function TimeActionsMenu({
             {trigger}
             <Dropdown.Popover placement={placement} offset={8} className="w-56">
                 <Dropdown.Menu aria-label={label}>
-                    {onStartTimer && (
-                        <Dropdown.Item id="start-timer" onAction={onStartTimer}>
-                            <Play aria-hidden="true" className="size-4" />
-                            <Label>{t('Start timer')}</Label>
-                        </Dropdown.Item>
+                    {timeActions({ onStartTimer, onReport }).map(
+                        ({ id, label, Icon, run }) => (
+                            <Dropdown.Item key={id} id={id} onAction={run}>
+                                <Icon aria-hidden="true" className="size-4" />
+                                <Label>{t(label)}</Label>
+                            </Dropdown.Item>
+                        ),
                     )}
-                    <Dropdown.Item
-                        id="report-time"
-                        onAction={() => onReport('time')}
-                    >
-                        <Clock aria-hidden="true" className="size-4" />
-                        <Label>{t('Report time')}</Label>
-                    </Dropdown.Item>
-                    <Dropdown.Item
-                        id="report-absence"
-                        onAction={() => onReport('absence')}
-                    >
-                        <CalendarOff aria-hidden="true" className="size-4" />
-                        <Label>{t('Report absence')}</Label>
-                    </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown.Popover>
         </Dropdown>
+    );
+}
+
+export function CalendarDayActions({
+    dateLabel,
+    onReport,
+}: Pick<TimeActionHandlers, 'onReport'> & { dateLabel: string }) {
+    const { t } = useTranslation();
+
+    return (
+        <div
+            role="group"
+            aria-label={dateLabel}
+            className="time-calendar-day-actions"
+        >
+            {timeActions({ onReport }).map(({ id, label, Icon, run }) => (
+                <Tooltip key={id} delay={350} closeDelay={0}>
+                    <Button
+                        isIconOnly
+                        variant="ghost"
+                        size="sm"
+                        aria-label={t(label)}
+                        className="group size-6 min-w-0 rounded-md p-0 text-muted hover:text-foreground focus-visible:ring-inset"
+                        onPress={run}
+                    >
+                        <Icon
+                            aria-hidden="true"
+                            className="size-3 opacity-35 group-hover:opacity-100 group-focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-160 motion-safe:ease-out-soft"
+                        />
+                    </Button>
+                    <Tooltip.Content placement="bottom">
+                        {t(label)}
+                    </Tooltip.Content>
+                </Tooltip>
+            ))}
+        </div>
     );
 }

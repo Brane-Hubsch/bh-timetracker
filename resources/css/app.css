@@ -1111,6 +1111,52 @@
     font-weight: inherit;
 }
 
+@media (width >= 48rem) {
+    .time-calendar-day-header:has(.time-calendar-day-actions) {
+        position: relative;
+        container-type: inline-size;
+    }
+
+    .time-calendar-day-actions {
+        position: absolute;
+        inset-block-start: 0.25rem;
+        inset-inline: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .time-calendar-day-actions {
+            transition: opacity 220ms var(--ease-out-soft);
+        }
+    }
+
+    @media (hover: hover) {
+        .time-calendar-day-header:hover > .time-calendar-day-actions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+
+    .time-calendar-day-header:focus-within > .time-calendar-day-actions {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    @container (width < 5rem) {
+        .time-calendar-day-actions {
+            inset-block-start: 0;
+            inset-inline: 0;
+        }
+
+        .time-calendar-day-label {
+            padding-block-start: 1.5rem;
+        }
+    }
+}
+
 .time-calendar-empty-day-total {
     opacity: 0.865;
 
