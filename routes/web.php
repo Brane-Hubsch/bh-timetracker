@@ -50,6 +50,7 @@ Route::prefix('{current_organization}')
         Route::delete('timer', [TimerController::class, 'destroy'])->name('timer.discard');
         Route::patch('absences/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
         Route::delete('absences/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
+        Route::post('absences/{absence}/restore', [AbsenceController::class, 'restore'])->withTrashed()->name('absences.restore');
 
         Route::get('command-palette', CommandPaletteController::class)->name('command-palette');
 

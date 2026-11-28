@@ -65,8 +65,61 @@ it('updates and deletes absence for those allowed', function () {
 
     $this->delete(route('absences.destroy', [$this->slug, $owners]))->assertForbidden();
     $this->delete(route('absences.destroy', [$this->slug, $own]))->assertRedirect();
-    expect($own->fresh())->toBeNull()
-        ->and($owners->fresh())->not->toBeNull();
+    $this->assertSoftDeleted($own);
+    $this->assertNotSoftDeleted($owners);
+});
+
+it('restores the same absence from the delete toast for the member or an owner', function (string $actor) {
+    $absence = Absence::factory()->by($this->member, $this->organization)->create([
+        'type' => AbsenceType::ChildCare,
+        'seconds_per_day' => 16200,
+        'note' => 'Halvdagar',
+    ]);
+    $calendar = route('time.index', [$this->slug, 'date' => '2026-11-24', 'user' => $this->member->id]);
+    $undo = route('absences.restore', [$this->slug, $absence]);
+
+    $this->actingAs($this->{$actor})->from($calendar)
+        ->delete(route('absences.destroy', [$this->slug, $absence]))
+        ->assertRedirect($calendar)
+        ->assertInertiaFlash('toast.undo', $undo);
+    $this->get($calendar)->assertInertia(fn (Assert $page) => $page->where('absences', []));
+
+    $this->from($calendar)->post($undo)
+        ->assertRedirect($calendar)
+        ->assertInertiaFlash('toast.message', __('Absence restored.'));
+    $this->get($calendar)->assertInertia(fn (Assert $page) => $page
+        ->has('absences', 1)
+        ->where('absences.0.id', $absence->id)
+        ->where('absences.0.type', 'child_care')
+        ->where('absences.0.startsOn', $absence->starts_on->toDateString())
+        ->where('absences.0.endsOn', $absence->ends_on->toDateString())
+        ->where('absences.0.secondsPerDay', 16200)
+        ->where('absences.0.note', 'Halvdagar'));
+
+    $this->post($undo)->assertRedirect();
+    $this->assertNotSoftDeleted($absence);
+})->with(['member', 'owner']);
+
+it('warns when new absence overlaps the one being restored', function () {
+    $absence = Absence::factory()->by($this->member, $this->organization)->create();
+    $this->actingAs($this->member)->delete(route('absences.destroy', [$this->slug, $absence]))->assertRedirect();
+    $this->post(route('absences.store', $this->slug), ($this->payload)())->assertSessionHasNoErrors();
+
+    $this->post(route('absences.restore', [$this->slug, $absence]))
+        ->assertRedirect()
+        ->assertInertiaFlash('toast.type', 'warning')
+        ->assertInertiaFlash('toast.message', __(':name already has an absence in this period.', ['name' => $this->member->name]));
+
+    $this->assertSoftDeleted($absence);
+    expect(Absence::query()->forOrganization($this->organization)->count())->toBe(1);
+});
+
+it('does not let a member restore someone else’s absence in the same organization', function () {
+    $absence = Absence::factory()->by($this->owner, $this->organization)->create();
+    $absence->delete();
+
+    $this->actingAs($this->member)->post(route('absences.restore', [$this->slug, $absence]))->assertForbidden();
+    $this->assertSoftDeleted($absence);
 });
 
 it('does not reach another organization\'s absence', function () {
@@ -76,7 +129,10 @@ it('does not reach another organization\'s absence', function () {
     $this->actingAs($this->owner)->delete(route('absences.destroy', [$this->slug, $foreign]))->assertNotFound();
     $this->patch(route('absences.update', [$this->slug, $foreign]), ($this->payload)())->assertNotFound();
 
-    expect($foreign->fresh())->not->toBeNull();
+    $this->assertNotSoftDeleted($foreign);
+    $foreign->delete();
+    $this->post(route('absences.restore', [$this->slug, $foreign]))->assertNotFound();
+    $this->assertSoftDeleted($foreign);
 });
 
 it('shows the member\'s absence in the calendar, and colleagues only as off', function () {
