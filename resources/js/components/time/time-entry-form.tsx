@@ -422,9 +422,12 @@ export function TimeEntryForm({
     const memberId = String(current?.userId ?? '');
     const member = members.find((option) => option.value === memberId);
     const isSelf = current?.userId === auth.user.id;
+    const canContinueWithTimer = timerEnabled && isSelf;
+    const hasActions = canContinueWithTimer || Boolean(onDuplicate && current);
     const memberName = isSelf ? auth.user.name : member?.label;
     const memberAvatar = isSelf ? auth.user.avatar : member?.avatar;
     const canChangeMember = members.length > 1 && !isTimer;
+    const memberControlSize = isEditing ? 'size-10 md:size-9' : 'size-9';
     const memberLabel = memberName
         ? t('Reporting for :name', { name: memberName })
         : t('Member');
@@ -433,6 +436,7 @@ export function TimeEntryForm({
             name={memberName}
             src={memberAvatar}
             title={memberLabel}
+            className={isEditing ? 'size-full' : undefined}
         />
     );
 
@@ -444,7 +448,10 @@ export function TimeEntryForm({
                     type="button"
                     variant="ghost"
                     isIconOnly
-                    className="size-9 min-w-0 shrink-0 rounded-full p-0"
+                    className={cn(
+                        'min-w-0 shrink-0 rounded-full p-0',
+                        memberControlSize,
+                    )}
                     aria-label={
                         memberName
                             ? t('Change member (:name)', {
@@ -501,7 +508,10 @@ export function TimeEntryForm({
             </Dropdown>
         ) : (
             <span
-                className="flex size-9 items-center justify-center"
+                className={cn(
+                    'flex shrink-0 items-center justify-center',
+                    memberControlSize,
+                )}
                 role="img"
                 aria-label={memberLabel}
             >
@@ -597,14 +607,34 @@ export function TimeEntryForm({
             desktopClassName="sm:max-w-xl"
             containerClassName={isEditing ? 'overlay-fade' : undefined}
             footer={
-                <div className="flex w-full items-center gap-2">
+                <div
+                    className={cn(
+                        'flex w-full items-center gap-2',
+                        isEditing && 'max-[359px]:gap-1',
+                    )}
+                >
                     {memberPicker}
                     {isEditing && (
+                        <Button
+                            type="button"
+                            variant="danger-soft"
+                            isIconOnly
+                            className="shrink-0"
+                            aria-label={t('Delete')}
+                            isDisabled={processing}
+                            onPress={remove}
+                            data-test="time-entry-delete"
+                        >
+                            <Trash2 className="size-4" />
+                        </Button>
+                    )}
+                    {isEditing && hasActions && (
                         <Dropdown onOpenChange={setIsActionsMenuOpen}>
                             <Button
                                 type="button"
                                 variant="tertiary"
                                 isIconOnly
+                                className="shrink-0"
                                 aria-label={t('Time entry actions')}
                                 data-test="time-entry-actions"
                             >
@@ -618,7 +648,7 @@ export function TimeEntryForm({
                                     aria-label={t('Time entry actions')}
                                     className="gap-0"
                                 >
-                                    {timerEnabled && isSelf && (
+                                    {canContinueWithTimer && (
                                         <Dropdown.Item
                                             id="continue"
                                             textValue={t(
@@ -651,17 +681,6 @@ export function TimeEntryForm({
                                             <Label>{t('Duplicate')}</Label>
                                         </Dropdown.Item>
                                     )}
-                                    <Dropdown.Item
-                                        id="delete"
-                                        textValue={t('Delete')}
-                                        onAction={remove}
-                                        variant="danger"
-                                        className="px-3"
-                                        data-test="time-entry-delete"
-                                    >
-                                        <Trash2 className="size-4 shrink-0 text-danger" />
-                                        <Label>{t('Delete')}</Label>
-                                    </Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown.Popover>
                         </Dropdown>
@@ -677,7 +696,12 @@ export function TimeEntryForm({
                             <Trash2 className="size-4" />
                         </Button>
                     )}
-                    <div className="ml-auto flex gap-2">
+                    <div
+                        className={cn(
+                            'ml-auto flex gap-2',
+                            isEditing && 'max-[359px]:[&>button]:px-3',
+                        )}
+                    >
                         {isTimer ? (
                             <>
                                 <HapticButton
