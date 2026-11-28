@@ -246,7 +246,7 @@ export function useSwipeNavigation({
                 }
             },
             onTouchEndCapture: end,
-            onTouchCancelCapture: (event: TouchEvent<HTMLDivElement>) => {
+            onTouchCancelCapture: (event: ReactTouchEvent<HTMLDivElement>) => {
                 if (event.bubbles && gesture.current) settle();
             },
         },
