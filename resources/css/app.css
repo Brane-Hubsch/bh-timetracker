@@ -979,10 +979,10 @@
 }
 
 .time-calendar-empty-day-total {
-    opacity: 0.9;
+    opacity: 0.875;
 
     :where(.dark) & {
-        opacity: 0.8;
+        opacity: 0.75;
     }
 
     :where([data-contrast='more']) & {
