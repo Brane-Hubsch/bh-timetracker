@@ -1252,6 +1252,7 @@
             1px + var(--mobile-tab-height) + var(--mobile-tab-bar-inset)
         );
         --mobile-page-header-height: calc(3.5rem + env(safe-area-inset-top));
+        --mobile-page-header-top-padding: 0.3125rem;
         --mobile-page-header-visible-height: 0px;
         --mobile-scroll-background: var(--background);
         --mobile-timer-space: 3.0625rem;
@@ -1270,6 +1271,24 @@
 
     .mobile-tab-bar > :is(a, button) {
         padding-top: 4px;
+    }
+
+    :root[data-ios-browser] {
+        --mobile-page-header-height: calc(
+            3.5rem - 3px + env(safe-area-inset-top)
+        );
+        --mobile-page-header-top-padding: calc(0.3125rem - 3px);
+
+        .mobile-tab-bar {
+            /* Give Safari a viewport-attached surface for its toolbar tint. */
+            position: sticky;
+            bottom: 0;
+        }
+
+        .mobile-tab-bar > div > :is(a, button) {
+            /* Offset the centered contents by 3px without resizing the tabs. */
+            padding-top: 6px;
+        }
     }
 }
 
@@ -1356,6 +1375,13 @@
     :root.dark:has(.mobile-tab-bar),
     :root.dark:has(.mobile-tab-bar) body {
         background-color: var(--mobile-scroll-background);
+    }
+
+    @media (display-mode: browser) {
+        :root[data-ios-browser]:has(.mobile-tab-bar),
+        :root[data-ios-browser]:has(.mobile-tab-bar) body {
+            background-color: var(--surface);
+        }
     }
 
     :root:has(.mobile-tab-bar):not(:has(.drawer__dialog--fullscreen)):has(
