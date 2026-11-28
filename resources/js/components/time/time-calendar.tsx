@@ -39,6 +39,7 @@ import {
 } from './use-calendar-event-selection';
 import {
     CALENDAR_SNAP_MINUTES,
+    CALENDAR_TOUCH_MOVE_TOLERANCE,
     useCalendarLongPress,
 } from './use-calendar-long-press';
 
@@ -323,9 +324,29 @@ export function TimeCalendar({
     }, [hasSelectionDraft, isPreview]);
 
     useLayoutEffect(() => {
-        if (isPreview) {
+        const calendar = containerRef.current;
+        if (isPreview || !calendar) {
             return;
         }
+
+        let pendingPress: Touch | null = null;
+        const cancelPendingPress = () => {
+            const touch = pendingPress;
+            pendingPress = null;
+            if (!touch || calendar.hasAttribute('data-calendar-editing')) {
+                return;
+            }
+
+            // FullCalendar listens for touchcancel on the original target.
+            // End its pending drag without ending the ancestor's swipe.
+            // WebKit can reject constructing a TouchEvent with a native Touch.
+            touch.target.dispatchEvent(
+                Object.assign(new Event('touchcancel'), {
+                    touches: [],
+                    changedTouches: [touch],
+                }),
+            );
+        };
 
         const cancelSelection = (event: KeyboardEvent) => {
             if (event.key !== 'Escape' || selection.current !== 'selecting') {
@@ -340,19 +361,49 @@ export function TimeCalendar({
 
         // FullCalendar commits on mouseup or touchend before the event reaches window.
         const finishSelection = () => {
+            pendingPress = null;
             if (selection.current !== 'idle') {
-                containerRef.current?.removeAttribute('data-calendar-editing');
+                calendar.removeAttribute('data-calendar-editing');
             }
             selection.current = 'idle';
         };
 
         const listeners = new AbortController();
         const { signal } = listeners;
-        containerRef.current?.addEventListener(
+        calendar.addEventListener(
+            'touchstart',
+            ({ target, touches }) => {
+                if (touches.length !== 1) {
+                    cancelPendingPress();
+                } else if (
+                    !calendar.hasAttribute('data-calendar-editing') &&
+                    target instanceof Element &&
+                    !target.closest('.time-calendar-resizer')
+                ) {
+                    pendingPress = touches[0];
+                }
+            },
+            { passive: true, signal },
+        );
+        calendar.addEventListener(
             'touchmove',
             (event) => {
-                const origin = eventDragOrigin.current;
                 const touch = event.touches[0];
+                if (pendingPress) {
+                    if (calendar.hasAttribute('data-calendar-editing')) {
+                        pendingPress = null;
+                    } else if (
+                        touch?.identifier === pendingPress.identifier &&
+                        Math.max(
+                            Math.abs(touch.clientX - pendingPress.clientX),
+                            Math.abs(touch.clientY - pendingPress.clientY),
+                        ) >= CALENDAR_TOUCH_MOVE_TOLERANCE
+                    ) {
+                        cancelPendingPress();
+                    }
+                }
+
+                const origin = eventDragOrigin.current;
                 if (!origin || touch?.identifier !== origin.identifier) return;
 
                 if (
