@@ -720,7 +720,10 @@ export function TimeEntryForm({
                                 type: 'vacation',
                                 startsOn: current.date,
                                 endsOn: current.date,
-                                hoursPerDay: '',
+                                hoursPerDay:
+                                    source?.openedFrom === 'calendar'
+                                        ? durationOf(source)
+                                        : '',
                                 note: '',
                             }}
                             userId={current.userId}

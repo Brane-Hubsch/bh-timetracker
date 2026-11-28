@@ -298,12 +298,13 @@ export function AbsenceForm({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-8 gap-1.5 rounded-full border border-separator px-3 text-xs font-medium text-foreground"
+                            aria-pressed={values.type === value}
+                            className="group h-8 gap-1.5 rounded-full border border-separator px-3 text-xs font-medium text-foreground aria-pressed:bg-accent-soft aria-pressed:data-hovered:bg-accent-soft-hover"
                             onPress={() => changeType(value)}
                         >
                             <span
                                 aria-hidden="true"
-                                className="size-2 shrink-0 rounded-full border border-muted"
+                                className="size-2 shrink-0 rounded-full border border-muted group-aria-pressed:border-accent group-aria-pressed:bg-accent"
                             />
                             {label}
                         </Button>
