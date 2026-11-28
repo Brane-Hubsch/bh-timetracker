@@ -2,9 +2,11 @@ import faceUrl from '@/assets/install-icon-face.svg';
 import handUrl from '@/assets/install-icon-hand.svg';
 
 const ICON_SIZE = 32;
-const FRAME_COUNT = 24;
-const FRAME_INTERVAL_MS = 60;
-const SAVE_DURATION_MS = 850;
+const SAVE_FRAME_COUNT = 10;
+// Chromium coalesces tab UI updates over 200 ms. Hold each angle long enough to be painted.
+const SAVE_FRAME_INTERVAL_MS = 240;
+const TIMER_FRAME_COUNT = 24;
+const TIMER_FRAME_INTERVAL_MS = 60;
 const TIMER_REVOLUTION_MS = 2400;
 
 async function loadImage(url: string) {
@@ -28,26 +30,30 @@ async function loadFrameRenderer() {
         loadImage(faceUrl),
         loadImage(handUrl),
     ]);
-    const frames: string[] = [];
+    const frames = new Map<number, string>();
     // The pivot is the bottom of the T's stem in the 72 px artwork.
     const pivotX = ICON_SIZE / 2;
     const pivotY = (41.625 / 72) * ICON_SIZE;
 
     return (turn: number) => {
-        const frame = Math.round(turn * FRAME_COUNT) % FRAME_COUNT;
+        const cached = frames.get(turn);
 
-        if (!frames[frame]) {
-            context.clearRect(0, 0, ICON_SIZE, ICON_SIZE);
-            context.drawImage(face, 0, 0, ICON_SIZE, ICON_SIZE);
-            context.save();
-            context.translate(pivotX, pivotY);
-            context.rotate((frame / FRAME_COUNT) * Math.PI * 2);
-            context.drawImage(hand, -pivotX, -pivotY, ICON_SIZE, ICON_SIZE);
-            context.restore();
-            frames[frame] = canvas.toDataURL();
+        if (cached) {
+            return cached;
         }
 
-        return frames[frame];
+        context.clearRect(0, 0, ICON_SIZE, ICON_SIZE);
+        context.drawImage(face, 0, 0, ICON_SIZE, ICON_SIZE);
+        context.save();
+        context.translate(pivotX, pivotY);
+        context.rotate(turn * Math.PI * 2);
+        context.drawImage(hand, -pivotX, -pivotY, ICON_SIZE, ICON_SIZE);
+        context.restore();
+
+        const url = canvas.toDataURL();
+        frames.set(turn, url);
+
+        return url;
     };
 }
 
@@ -59,12 +65,6 @@ export function createFaviconAnimation() {
     animatedIcon.type = 'image/png';
     animatedIcon.sizes.add(`${ICON_SIZE}x${ICON_SIZE}`);
 
-    const saveEffect = new KeyframeEffect(null, [], {
-        duration: SAVE_DURATION_MS,
-        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-        fill: 'both',
-    });
-    const saveAnimation = new Animation(saveEffect);
     let renderer: ReturnType<typeof loadFrameRenderer> | undefined;
     let timerRunning = false;
     let pendingSaves = 0;
@@ -96,13 +96,11 @@ export function createFaviconAnimation() {
             return;
         }
 
-        let startedAt = performance.now();
+        const startedAt = performance.now();
+        let saveFrame = 0;
 
         const update = () => {
-            const now = performance.now();
-            let elapsed = now - startedAt;
-
-            if (!timerRunning && elapsed >= SAVE_DURATION_MS) {
+            if (!timerRunning && saveFrame === SAVE_FRAME_COUNT) {
                 pendingSaves -= 1;
 
                 if (pendingSaves === 0) {
@@ -110,18 +108,19 @@ export function createFaviconAnimation() {
                     return;
                 }
 
-                startedAt = now;
-                elapsed = 0;
+                saveFrame = 0;
             }
 
-            let turn = (elapsed % TIMER_REVOLUTION_MS) / TIMER_REVOLUTION_MS;
-
-            if (!timerRunning) {
-                saveAnimation.currentTime = elapsed;
-                turn = saveEffect.getComputedTiming().progress ?? 0;
-            }
-
-            const url = render(turn);
+            const frameCount = timerRunning
+                ? TIMER_FRAME_COUNT
+                : SAVE_FRAME_COUNT;
+            const frame = timerRunning
+                ? Math.round(
+                      ((performance.now() - startedAt) / TIMER_REVOLUTION_MS) *
+                          frameCount,
+                  ) % frameCount
+                : saveFrame++;
+            const url = render(frame / frameCount);
 
             if (animatedIcon.href !== url) {
                 animatedIcon.href = url;
@@ -135,9 +134,7 @@ export function createFaviconAnimation() {
 
             timeout = window.setTimeout(
                 update,
-                timerRunning
-                    ? FRAME_INTERVAL_MS
-                    : Math.min(FRAME_INTERVAL_MS, SAVE_DURATION_MS - elapsed),
+                timerRunning ? TIMER_FRAME_INTERVAL_MS : SAVE_FRAME_INTERVAL_MS,
             );
         };
 
