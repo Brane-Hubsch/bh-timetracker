@@ -1079,7 +1079,7 @@
 
     @media (prefers-reduced-motion: no-preference) {
         .time-calendar-day-actions {
-            transition: opacity 160ms var(--ease-out-soft);
+            transition: opacity 220ms var(--ease-out-soft);
         }
     }
 

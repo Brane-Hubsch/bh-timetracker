@@ -115,7 +115,7 @@ export function CalendarDayActions({
                     >
                         <Icon
                             aria-hidden="true"
-                            className="size-3.5 opacity-35 group-hover:opacity-100 group-focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-160 motion-safe:ease-out-soft"
+                            className="size-3 opacity-35 group-hover:opacity-100 group-focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-160 motion-safe:ease-out-soft"
                         />
                     </Button>
                     <Tooltip.Content placement="left">
