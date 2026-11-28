@@ -179,6 +179,7 @@ export function useCalendarEventSelection(
         );
         const finishTouch = (event: TouchEvent) => {
             if (
+                !event.bubbles ||
                 !press ||
                 !Array.from(event.changedTouches).some(
                     (touch) => touch.identifier === press?.origin.identifier,

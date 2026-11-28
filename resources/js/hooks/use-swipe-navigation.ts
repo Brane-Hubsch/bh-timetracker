@@ -155,8 +155,6 @@ export function useSwipeNavigation({
             }
 
             current.horizontal = true;
-            // FullCalendar defers touch editing until a long press. A swipe
-            // that has already won the gesture must not commit such an edit.
             viewport.dataset.swiping = 'true';
         }
 
@@ -248,8 +246,8 @@ export function useSwipeNavigation({
                 }
             },
             onTouchEndCapture: end,
-            onTouchCancelCapture: () => {
-                if (gesture.current) settle();
+            onTouchCancelCapture: (event: TouchEvent<HTMLDivElement>) => {
+                if (event.bubbles && gesture.current) settle();
             },
         },
     };
