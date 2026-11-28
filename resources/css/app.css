@@ -1059,6 +1059,22 @@
     font-weight: inherit;
 }
 
+.time-calendar-empty-day-total {
+    opacity: 0.865;
+
+    :where(.dark) & {
+        opacity: 0.74;
+    }
+
+    :where([data-contrast='more']) & {
+        opacity: 1;
+    }
+
+    @media (prefers-contrast: more) {
+        opacity: 1;
+    }
+}
+
 /* In the day view the whole grid is "today"; the accent date in the header is enough. */
 .time-calendar[data-view='day'] {
     --fc-classic-today: transparent;
