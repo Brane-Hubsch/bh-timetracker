@@ -16,6 +16,7 @@ import {
 import { ResponsiveDialog } from '@/components/responsive-dialog';
 import { SegmentedControl } from '@/components/segmented-control';
 import { ScrubLabel, TimeScrubLabel } from '@/components/time/time-scrub-label';
+import { useFormErrors } from '@/hooks/use-form-errors';
 import { useOverlayData } from '@/hooks/use-overlay-data';
 import { formatHours } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -198,10 +199,23 @@ export function AbsenceForm({
     const errorId = useId();
     const [values, setValues] = useState(draft);
     const [isPartial, setPartial] = useState(draft.hoursPerDay !== '');
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const { errors, setErrors, clearErrors } = useFormErrors();
+    const selectedUserId = userId ?? values.userId;
+    const [previousUserId, setPreviousUserId] = useState(selectedUserId);
+
+    if (selectedUserId !== previousUserId) {
+        setPreviousUserId(selectedUserId);
+        clearErrors('user_id', 'starts_on');
+    }
+
     const set = (changes: Partial<AbsenceDraft>) =>
         setValues((current) => ({ ...current, ...changes }));
-    const changeType = (type: AbsenceDraft['type']) => set({ type });
+    const changeType = (type: AbsenceDraft['type']) => {
+        if (type !== values.type) {
+            clearErrors('type');
+            set({ type });
+        }
+    };
     const typeSuggestions = [
         ...new Set([
             ...recentAbsenceTypes,
@@ -211,12 +225,28 @@ export function AbsenceForm({
         .slice(0, 10)
         .map((value) => absenceTypes.find((option) => option.value === value))
         .filter((option) => option !== undefined);
-    const changeStart = (startsOn: string) =>
-        set({
-            startsOn,
+    const changeStart = (startsOn: string) => {
+        if (startsOn !== values.startsOn) {
+            clearErrors('starts_on', 'ends_on');
             // Advance the end if the new start would leave it behind.
-            endsOn: startsOn > values.endsOn ? startsOn : values.endsOn,
-        });
+            set({
+                startsOn,
+                endsOn: startsOn > values.endsOn ? startsOn : values.endsOn,
+            });
+        }
+    };
+    const changeEnd = (endsOn: string) => {
+        if (endsOn !== values.endsOn) {
+            clearErrors('starts_on', 'ends_on');
+            set({ endsOn });
+        }
+    };
+    const changeHours = (hoursPerDay: string) => {
+        if (hoursPerDay !== values.hoursPerDay) {
+            clearErrors('hours_per_day');
+            set({ hoursPerDay });
+        }
+    };
 
     const days =
         values.startsOn && values.endsOn && values.startsOn <= values.endsOn
@@ -227,27 +257,23 @@ export function AbsenceForm({
         : workdaySeconds;
     const adjustHours = (offset: number) => {
         const seconds = (secondsPerDay ?? 0) + offset * 60;
-        set({
-            hoursPerDay:
-                offset === 0 || (!values.hoursPerDay && seconds <= 0)
-                    ? values.hoursPerDay
-                    : formatHoursPerDay(
-                          Math.min(
-                              MAX_MINUTES_PER_DAY * 60,
-                              Math.max(
-                                  Math.min(secondsPerDay || 60, 60),
-                                  seconds,
-                              ),
-                          ),
+        changeHours(
+            offset === 0 || (!values.hoursPerDay && seconds <= 0)
+                ? values.hoursPerDay
+                : formatHoursPerDay(
+                      Math.min(
+                          MAX_MINUTES_PER_DAY * 60,
+                          Math.max(Math.min(secondsPerDay || 60, 60), seconds),
                       ),
-        });
+                  ),
+        );
     };
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
 
         const data = {
-            user_id: userId ?? values.userId,
+            user_id: selectedUserId,
             type: values.type,
             starts_on: values.startsOn,
             ends_on: values.endsOn,
@@ -316,7 +342,10 @@ export function AbsenceForm({
                 <SegmentedControl
                     aria-label={t('Extent')}
                     value={isPartial ? 'hours' : 'days'}
-                    onChange={(extent) => setPartial(extent === 'hours')}
+                    onChange={(extent) => {
+                        clearErrors('hours_per_day');
+                        setPartial(extent === 'hours');
+                    }}
                     className="w-fit"
                     options={[
                         { id: 'days', label: t('Full days') },
@@ -358,13 +387,11 @@ export function AbsenceForm({
                                         draft.endsOn,
                                         offset,
                                     );
-                                    set({
-                                        endsOn:
-                                            offset !== 0 &&
-                                            endsOn < values.startsOn
-                                                ? values.startsOn
-                                                : endsOn,
-                                    });
+                                    changeEnd(
+                                        offset !== 0 && endsOn < values.startsOn
+                                            ? values.startsOn
+                                            : endsOn,
+                                    );
                                 }}
                             />
                         }
@@ -389,7 +416,7 @@ export function AbsenceForm({
                             <DatePickerField
                                 label={t('To')}
                                 value={values.endsOn}
-                                onChange={(endsOn) => set({ endsOn })}
+                                onChange={changeEnd}
                                 error={errors.ends_on}
                                 errorId={
                                     errors.ends_on
@@ -425,7 +452,7 @@ export function AbsenceForm({
                         label={t('Hours per day')}
                         pickerTitle={t('Hours per day')}
                         value={values.hoursPerDay}
-                        onChange={(hoursPerDay) => set({ hoursPerDay })}
+                        onChange={changeHours}
                         onPickerOpenChange={onTimePickerOpenChange}
                         preview={(minutes) =>
                             days > 0 && minutes > 0
@@ -467,7 +494,10 @@ export function AbsenceForm({
 
             <TextField
                 value={values.note}
-                onChange={(note) => set({ note })}
+                onChange={(note) => {
+                    clearErrors('note');
+                    set({ note });
+                }}
                 isInvalid={Boolean(errors.note)}
                 className="w-full"
             >
