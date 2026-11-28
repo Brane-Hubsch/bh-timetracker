@@ -119,10 +119,10 @@ export function createCanvasRenderer(
             const length = Math.hypot(nx, ny, nz) || 1;
             const facing = nz < 0 ? -1 / length : 1 / length;
             const light = (nx * -0.51 + ny * 0.63 + nz * 0.59) * facing;
-            const lit = Math.max(0, Math.min(1, (light + 0.08) / 0.46));
-            const red = faces[face + 3] * (0.66 + 0.36 * lit) * 255;
-            const green = faces[face + 4] * (0.62 + 0.4 * lit) * 255;
-            const blue = faces[face + 5] * (0.82 + 0.18 * lit) * 255;
+            const lit = Math.max(0, Math.min(1, (light + 0.45) / 1.4));
+            const red = faces[face + 3] * (0.62 + 0.42 * lit) * 255;
+            const green = faces[face + 4] * (0.6 + 0.43 * lit) * 255;
+            const blue = faces[face + 5] * (0.8 + 0.2 * lit) * 255;
             const color = `rgb(${Math.min(255, red)}, ${Math.min(255, green)}, ${Math.min(255, blue)})`;
             context.fillStyle = color;
             context.strokeStyle = color;
@@ -172,16 +172,12 @@ export function createCanvasRenderer(
     const drawDrift = (simulation: Simulation, isDark: boolean) => {
         const depths = simulation.drift.depths;
         const y = (column: number) => height - depths[column];
+        // Straight edges between knots a few columns apart, like the faceted drift the shaders draw.
         const trace = () => {
-            context.lineTo(0, y(0));
-            for (let column = 1; column < depths.length; column++) {
-                context.quadraticCurveTo(
-                    (column - 1) * COLUMN_WIDTH,
-                    y(column - 1),
-                    (column - 0.5) * COLUMN_WIDTH,
-                    (y(column - 1) + y(column)) / 2,
-                );
+            for (let column = 0; column < depths.length; column += 7) {
+                context.lineTo(column * COLUMN_WIDTH, y(column));
             }
+            context.lineTo(width, y(depths.length - 1));
         };
         const shade = context.createLinearGradient(
             0,

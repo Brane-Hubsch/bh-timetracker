@@ -139,9 +139,8 @@ async function start(
     started = performance.now();
     post({ type: 'ready', backend: backend ?? 'canvas2d' });
     setRunning(wanted);
-    // The snowman and the tools are built once the snow is falling. Where every triangle is painted
-    // by the canvas they get fewer of them.
-    renderer.setModels(buildSnowModels(backend === 'webgpu' ? 1 : 0.5));
+    // The snowman and the tools are built once the snow is falling.
+    renderer.setModels(buildSnowModels());
     post({ type: 'tools' });
 }
 

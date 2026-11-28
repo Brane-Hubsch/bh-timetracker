@@ -161,11 +161,12 @@ fn fragment(in: ParticleOut) -> @location(0) vec4f {
         // Brightest when the flat side turns towards the viewer.
         alpha = max(shape, glow) * (0.72 + 0.4 * in.facing) * mix(0.85, 1.0, dark);
     } else if (kind < 2.5) {
-        // Thrown snow: small soft lumps, lit from above.
-        let across = in.uv.y;
-        let light = clamp(0.62 - across * 0.45, 0.0, 1.0);
-        color = mix(mix(vec3f(0.6, 0.68, 0.8), vec3f(0.7, 0.79, 0.92), dark), vec3f(1.0), light);
-        alpha = 1.0 - smoothstep(0.3, 1.0, radius);
+        // Thrown snow: small tumbling chunks, cut like the rest, with a lit and a shaded face.
+        let chunk = abs(in.uv.x) * 0.85 + abs(in.uv.y) * 1.15;
+        let lit = step(0.0, in.uv.x * 0.6 - in.uv.y);
+        color = mix(mix(vec3f(0.69, 0.77, 0.9), vec3f(0.64, 0.74, 0.93), dark), vec3f(1.0), lit);
+        color = mix(color, vec3f(0.56, 0.64, 0.78), (1.0 - dark) * (1.0 - lit) * 0.35);
+        alpha = 1.0 - smoothstep(0.92 - pixel * 1.5, 0.92, chunk);
     } else if (kind < 3.5) {
         // Powder hanging in the air.
         color = mix(vec3f(0.7, 0.76, 0.85), vec3f(1.0), dark);
@@ -214,49 +215,72 @@ fn depthOf(column: i32) -> f32 {
     ).r;
 }
 
+// The drift is cut into facets: its surface is a row of straight edges between knots a few columns
+// apart, and the snow below is three rows of triangles.
+const KNOT = 7.0;
+
+// The surface at a knot, evened out over the columns around it.
+fn knot(index: i32) -> f32 {
+    let column = index * i32(KNOT);
+    return (depthOf(column - 2) + depthOf(column) * 2.0 + depthOf(column + 2)) * 0.25;
+}
+
+// A point inside the snow under the middle of the edge that starts at a knot.
+fn inner(index: i32) -> f32 {
+    let depth = (knot(index) + knot(index + 1)) * 0.5;
+    return depth * (0.42 + 0.2 * hash21(vec2f(f32(index), 3.7)));
+}
+
 @fragment
 fn fragment(in: DriftOut) -> @location(0) vec4f {
-    // A cubic B-spline through the columns gives a smooth surface and a smooth slope.
-    let position = in.point.x / globals.columnWidth;
-    let column = i32(floor(position));
+    let width = KNOT * globals.columnWidth;
+    let position = in.point.x / width;
+    let cell = i32(floor(position));
     let t = fract(position);
-    let t2 = t * t;
-    let t3 = t2 * t;
-    let a = depthOf(column - 1);
-    let b = depthOf(column);
-    let c = depthOf(column + 1);
-    let d = depthOf(column + 2);
-    let depth = (a * (1.0 - 3.0 * t + 3.0 * t2 - t3)
-        + b * (3.0 * t3 - 6.0 * t2 + 4.0)
-        + c * (-3.0 * t3 + 3.0 * t2 + 3.0 * t + 1.0)
-        + d * t3) / 6.0;
-    let slope = (-a * (1.0 - t) * (1.0 - t)
-        + b * (3.0 * t2 - 4.0 * t)
-        + c * (-3.0 * t2 + 2.0 * t + 1.0)
-        + d * t2) / (2.0 * globals.columnWidth);
-
-    // Distance below the surface, measured across the slope.
-    let inside = (depth - (globals.size.y - in.point.y)) / sqrt(1.0 + slope * slope);
+    let height = globals.size.y - in.point.y;
+    let left = knot(cell);
+    let right = knot(cell + 1);
+    let depth = mix(left, right, t);
+    let slope = (right - left) / width;
+    let inside = (depth - height) / sqrt(1.0 + slope * slope);
     let coverage = clamp(inside * globals.ratio + 0.5, 0.0, 1.0) * smoothstep(0.0, 1.5, depth);
     if (coverage <= 0.0) {
         discard;
     }
 
-    let dark = globals.dark;
-    // The light comes from the upper left: sides that rise to the right face it.
-    // Single flakes leave the surface slightly rough; the light follows the broader shape.
-    let broad = (depthOf(column + 4) - depthOf(column - 3)) / (7.0 * globals.columnWidth);
-    let lit = clamp(0.56 + mix(slope, broad, 0.75) * 0.9, 0.0, 1.0);
-    let deepness = clamp(inside / 24.0, 0.0, 1.0);
-    let shade = mix(vec3f(0.75, 0.82, 0.92), vec3f(0.66, 0.76, 0.92), dark);
-    let bright = mix(vec3f(0.95, 0.97, 1.0), vec3f(1.0), dark);
-    let deep = mix(vec3f(0.77, 0.84, 0.93), vec3f(0.58, 0.69, 0.87), dark);
-    var color = mix(mix(shade, bright, lit), deep, deepness * 0.9);
+    // Which triangle is this? "facet" identifies it, "tilt" is how it leans and "row" how deep it is.
+    let middle = inner(cell);
+    let valley = mix(mix(left, middle, t * 2.0), mix(middle, right, t * 2.0 - 1.0), step(0.5, t));
+    var facet = vec2f(f32(cell), 0.0);
+    var tilt = slope;
+    var row = 0.0;
+    if (height < valley) {
+        // Under the surface triangles: one that stands on the row of inner points, or one below it.
+        let near = cell + i32(step(0.5, t));
+        let offset = t - step(0.5, t);
+        let before = inner(near - 1);
+        let after = inner(near);
+        let ridge = mix(before, after, offset + 0.5);
+        if (height > ridge) {
+            facet = vec2f(f32(near), 1.0);
+            tilt = (after - before) / width;
+            row = 1.0;
+        } else {
+            let wedge = mix(before, after, step(0.0, offset)) * abs(offset) * 2.0;
+            let pointed = step(wedge, height);
+            facet = vec2f(mix(f32(cell), f32(near), pointed), 2.0 + pointed);
+            tilt = (after - before) / width * (1.0 - pointed);
+            row = 2.0;
+        }
+    }
 
-    // Powder along the crest catches the light.
-    color += vec3f(0.07) * (1.0 - smoothstep(0.0, 3.5, inside)) * lit;
-    color += (hash21(floor(in.point * globals.ratio)) - 0.5) * 0.028;
-    color += sparkle(in.point) * (1.0 - deepness * 0.6) * (0.35 + 0.65 * lit);
+    let dark = globals.dark;
+    // The light comes from the upper left: faces that rise to the right turn towards it.
+    let lit = clamp(0.58 + tilt * 1.1 + (hash21(facet) - 0.5) * 0.3 - row * 0.13, 0.0, 1.0);
+    let shade = mix(vec3f(0.72, 0.8, 0.93), vec3f(0.55, 0.66, 0.9), dark);
+    let bright = mix(vec3f(0.97, 0.98, 1.0), vec3f(1.0), dark);
+    var color = mix(shade, bright, lit);
+    color += sparkle(in.point) * (1.0 - row * 0.3) * (0.35 + 0.65 * lit);
 
     // The snowman's shadow falls to the right of it.
     let across = (in.point.x - globals.snowman.x - 16.0 * globals.snowman.y) / 30.0;
@@ -313,8 +337,7 @@ fn fragment(in: OutlineOut) -> @location(0) vec4f {
 /**
  * The snowman and the tools are small models, each drawn into a multisampled texture of its own (so the
  * edges are smooth without multisampling the whole page) and then placed on the page as a sprite.
- * They are shaded like soft toys: a gentle step from light to lavender shade, a bright rim and no
- * hard facets.
+ * They are low-poly: every face is flat and gets one tone, from lavender shade to full light.
  */
 export const MODEL_SHADER = /* wgsl */ `
 struct Model {
@@ -363,6 +386,7 @@ fn hash21(point: vec2f) -> f32 {
 
 @fragment
 fn fragment(in: ModelOut) -> @location(0) vec4f {
+    // Every face is flat: one normal, one tone.
     var normal = normalize(in.normal);
     if (normal.z < 0.0) {
         normal = -normal;
@@ -373,29 +397,21 @@ fn fragment(in: ModelOut) -> @location(0) vec4f {
     let light = vec3f(-0.51, 0.63, 0.59);
     let facing = dot(normal, light);
 
-    // One soft step from light to shade; the shade is tinted, never grey.
-    let lit = smoothstep(-0.08, 0.38, facing);
+    // From tinted shade to full light, so neighbouring faces differ; the shade is never grey.
+    let lit = smoothstep(-0.45, 0.95, facing);
     let shade = mix(
-        mix(vec3f(0.66, 0.6, 0.8), vec3f(0.56, 0.54, 0.8), dark),
-        mix(vec3f(0.76, 0.84, 0.97), vec3f(0.62, 0.72, 0.95), dark),
+        mix(vec3f(0.6, 0.55, 0.76), vec3f(0.5, 0.49, 0.75), dark),
+        mix(vec3f(0.7, 0.79, 0.96), vec3f(0.56, 0.67, 0.93), dark),
         snow,
     );
-    var color = in.color.rgb * mix(shade, vec3f(1.03, 1.02, 0.99), lit);
-    // A touch more light where the surface turns fully towards it.
-    color += in.color.rgb * 0.07 * smoothstep(0.72, 0.95, facing);
-    // Light from the sky along the upper edge, and from the snow underneath.
-    let edge = pow(1.0 - normal.z, 3.0);
-    color += vec3f(0.92, 0.96, 1.0) * edge * smoothstep(-0.3, 0.7, normal.y - normal.x * 0.4) * 0.3;
-    color += vec3f(0.07, 0.09, 0.15) * max(-normal.y, 0.0) * (1.0 - snow);
-    // A round highlight on painted plastic and on the eyes.
-    let highlight = pow(max(dot(normal, normalize(light + vec3f(0.0, 0.0, 1.0))), 0.0), 38.0);
-    color += vec3f(0.5) * highlight * glossy;
-
-    // Packed snow glitters.
-    let cell = floor(in.point.xy / 4.0);
-    let twinkle = pow(max(0.0, sin(hash21(cell) * 40.0 + model.look.w * (0.8 + hash21(cell + 3.1) * 1.6))), 22.0);
-    let grain = smoothstep(1.3, 0.0, length(in.point.xy - (cell + 0.5) * 4.0)) * step(0.72, hash21(cell + 7.3));
-    color += vec3f(twinkle * grain * 0.6 * lit) * snow;
+    var color = in.color.rgb * mix(shade, vec3f(1.04, 1.03, 1.0), lit);
+    // Faces that look up catch the sky; faces that look down, the snow.
+    color += vec3f(0.05, 0.06, 0.08) * max(normal.y, 0.0);
+    color += vec3f(0.05, 0.07, 0.12) * max(-normal.y, 0.0) * (1.0 - snow);
+    // Painted plastic and eyes glint on the faces turned to the light.
+    color += vec3f(0.22) * pow(max(dot(normal, normalize(light + vec3f(0.0, 0.0, 1.0))), 0.0), 12.0) * glossy;
+    // No two faces of hand-packed snow are quite the same white.
+    color *= 1.0 + (hash21(normal.xy * 91.7 + normal.z * 13.3) - 0.5) * 0.05 * snow;
 
     return vec4f(clamp(color, vec3f(0.0), vec3f(1.0)), 1.0);
 }
@@ -427,7 +443,7 @@ fn vertex(@builtin(vertex_index) index: u32) -> SpriteOut {
     return out;
 }
 
-// The model with a soft coloured outline, like a sticker, and a faint shadow behind it.
+// The model with a thin dark edge, so pale faces stand out from a pale page, and a faint shadow.
 @fragment
 fn fragment(in: SpriteOut) -> @location(0) vec4f {
     let texel = sprite.rect.w * globals.ratio;
@@ -438,13 +454,13 @@ fn fragment(in: SpriteOut) -> @location(0) vec4f {
     var outline = 0.0;
     var shadow = 0.0;
     for (var tap = 0; tap < 8; tap++) {
-        outline = max(outline, textureSampleLevel(image, filtering, in.uv + around[tap] * texel * 1.3, 0.0).a);
+        outline = max(outline, textureSampleLevel(image, filtering, in.uv + around[tap] * texel * 0.9, 0.0).a);
         shadow += textureSampleLevel(image, filtering, in.uv + (around[tap] * 3.0 + vec2f(-2.5, -4.0)) * texel, 0.0).a;
     }
     let model = textureSampleLevel(image, filtering, in.uv, 0.0);
     let ink = mix(vec3f(0.33, 0.27, 0.42), vec3f(0.13, 0.11, 0.2), globals.dark);
     var result = premultiplied(vec3f(0.1, 0.1, 0.2), shadow / 8.0 * mix(0.14, 0.3, globals.dark));
-    result = premultiplied(ink, outline * 0.8) + result * (1.0 - outline * 0.8);
+    result = premultiplied(ink, outline * 0.55) + result * (1.0 - outline * 0.55);
     return model + result * (1.0 - model.a);
 }
 `;

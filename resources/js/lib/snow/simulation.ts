@@ -623,8 +623,8 @@ export class Simulation {
 
         const jet = 500;
         const backwards = -blower.direction;
-        // The snow itself: many small lumps, fastest and densest in the middle of the jet.
-        const pieces = Math.max(1, Math.ceil(thrown / 1.5));
+        // The snow itself: many small chunks, fastest and densest in the middle of the jet.
+        const pieces = Math.max(1, Math.ceil(thrown / 3));
         for (let piece = 0; piece < pieces; piece++) {
             const off = Math.random() + Math.random() + Math.random() - 1.5;
             const angle = blower.elevation + off * 0.13;
@@ -726,10 +726,9 @@ export class Simulation {
                 vy += GRAVITY * dt - vy * slowed;
                 x += vx * dt;
                 y += vy * dt;
-                size = 1 + Math.sqrt(amount) * 0.85;
-                // A lump in flight is drawn out along its path, like a short exposure.
-                turn = Math.atan2(vy, vx);
-                stretch = 1 + Math.min(1.4, Math.hypot(vx, vy) * 0.003);
+                size = 1.8 + Math.sqrt(amount) * 1.1;
+                // Each chunk tumbles at its own pace.
+                turn = age * (5 + drag * 6) + amount * 9;
                 const ground =
                     height - (this.interactive ? drift.depthAt(x) : 0);
                 let overSnowman = false;
