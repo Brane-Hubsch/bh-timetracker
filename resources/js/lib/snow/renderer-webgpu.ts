@@ -1,6 +1,19 @@
 import { COLUMN_WIDTH, MAX_DEPTH } from './drift';
+import {
+    MODEL_MAX_PARTS,
+    MODEL_VERTEX_BYTES,
+    SPRITE_DEPTH,
+    SPRITE_HALF,
+} from './models';
+import type { SnowModel, ToolPose } from './models';
 import type { SnowRenderer } from './renderer';
-import { DRIFT_SHADER, PARTICLE_SHADER, SNOWMAN_SHADER } from './shaders';
+import {
+    DRIFT_SHADER,
+    MODEL_SHADER,
+    PARTICLE_SHADER,
+    SNOWMAN_SHADER,
+    SPRITE_SHADER,
+} from './shaders';
 import { INSTANCE_FLOATS } from './simulation';
 import type { Simulation } from './simulation';
 
@@ -11,6 +24,27 @@ const VERTEX = 0x20;
 const UNIFORM = 0x40;
 const TEXTURE_BINDING = 0x04;
 const TEXTURE_COPY_DST = 0x02;
+const RENDER_ATTACHMENT = 0x10;
+const SPRITE_FORMAT = 'rgba8unorm';
+const SPRITE_SAMPLES = 4;
+/** A model's matrices followed by one vec4 of settings. */
+const MODEL_FLOATS = MODEL_MAX_PARTS * 16 + 4;
+
+/** A tool's model on the GPU, with the texture it is drawn into before it is placed on the page. */
+type Sprite = {
+    vertices: GPUBuffer;
+    vertexCount: number;
+    uniforms: Float32Array;
+    uniformBuffer: GPUBuffer;
+    modelBinding: GPUBindGroup;
+    rect: Float32Array;
+    rectBuffer: GPUBuffer;
+    target: GPUTexture | null;
+    resolved: GPUTexture | null;
+    depth: GPUTexture | null;
+    pageBinding: GPUBindGroup | null;
+    drawn: boolean;
+};
 
 const BLENDING = {
     color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha' },
@@ -46,7 +80,7 @@ export async function createWebGpuRenderer(
     context.configure({ device, format, alphaMode: 'premultiplied' });
 
     device.pushErrorScope('validation');
-    const pipeline = (code: string, buffers: object[]) => {
+    const pipeline = (code: string, buffers: object[], extra: object = {}) => {
         const module = device.createShaderModule({ code });
 
         return device.createRenderPipeline({
@@ -58,8 +92,40 @@ export async function createWebGpuRenderer(
                 targets: [{ format, blend: BLENDING }],
             },
             primitive: { topology: 'triangle-list' },
+            ...extra,
         });
     };
+    const spritePipeline = pipeline(SPRITE_SHADER, []);
+    const modelModule = device.createShaderModule({ code: MODEL_SHADER });
+    const modelPipeline = device.createRenderPipeline({
+        layout: 'auto',
+        vertex: {
+            module: modelModule,
+            entryPoint: 'vertex',
+            buffers: [
+                {
+                    arrayStride: MODEL_VERTEX_BYTES,
+                    attributes: [
+                        { shaderLocation: 0, offset: 0, format: 'snorm16x4' },
+                        { shaderLocation: 1, offset: 8, format: 'snorm8x4' },
+                        { shaderLocation: 2, offset: 12, format: 'unorm8x4' },
+                    ],
+                },
+            ],
+        },
+        fragment: {
+            module: modelModule,
+            entryPoint: 'fragment',
+            targets: [{ format: SPRITE_FORMAT }],
+        },
+        primitive: { topology: 'triangle-list' },
+        depthStencil: {
+            format: 'depth24plus',
+            depthWriteEnabled: true,
+            depthCompare: 'less',
+        },
+        multisample: { count: SPRITE_SAMPLES },
+    });
     const snowmanPipeline = pipeline(SNOWMAN_SHADER, []);
     const driftPipeline = pipeline(DRIFT_SHADER, []);
     const particlePipeline = pipeline(PARTICLE_SHADER, [
@@ -97,10 +163,130 @@ export async function createWebGpuRenderer(
     let depthColumns = 0;
     let instanceBuffer: GPUBuffer | null = null;
     let instanceCapacity = 0;
+    const sampler = device.createSampler({
+        magFilter: 'linear',
+        minFilter: 'linear',
+    });
+    let sprites: { shovel: Sprite; blower: Sprite } | null = null;
+    let spriteSide = 0;
     let destroyed = false;
     let width = 1;
     let height = 1;
     let ratio = 1;
+
+    const createSprite = (model: SnowModel): Sprite => {
+        const vertices = device.createBuffer({
+            size: model.data.byteLength,
+            usage: VERTEX | COPY_DST,
+        });
+        device.queue.writeBuffer(vertices, 0, model.data);
+        const uniformBuffer = device.createBuffer({
+            size: MODEL_FLOATS * 4,
+            usage: UNIFORM | COPY_DST,
+        });
+
+        return {
+            vertices,
+            vertexCount: model.vertexCount,
+            uniforms: new Float32Array(MODEL_FLOATS),
+            uniformBuffer,
+            modelBinding: device.createBindGroup({
+                layout: modelPipeline.getBindGroupLayout(0),
+                entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+            }),
+            rect: new Float32Array(4),
+            rectBuffer: device.createBuffer({
+                size: 16,
+                usage: UNIFORM | COPY_DST,
+            }),
+            target: null,
+            resolved: null,
+            depth: null,
+            pageBinding: null,
+            drawn: false,
+        };
+    };
+
+    /** Draw a posed model into its own texture; it is placed on the page in the main pass. */
+    const drawSprite = (
+        encoder: GPUCommandEncoder,
+        sprite: Sprite,
+        pose: ToolPose,
+        isDark: boolean,
+    ) => {
+        sprite.drawn = pose.visible;
+        if (!pose.visible) {
+            return;
+        }
+        const side = Math.round(SPRITE_HALF * 2 * ratio);
+        if (!sprite.target || side !== spriteSide) {
+            sprite.target?.destroy();
+            sprite.resolved?.destroy();
+            sprite.depth?.destroy();
+            sprite.target = device.createTexture({
+                size: [side, side],
+                format: SPRITE_FORMAT,
+                usage: RENDER_ATTACHMENT,
+                sampleCount: SPRITE_SAMPLES,
+            });
+            sprite.depth = device.createTexture({
+                size: [side, side],
+                format: 'depth24plus',
+                usage: RENDER_ATTACHMENT,
+                sampleCount: SPRITE_SAMPLES,
+            });
+            sprite.resolved = device.createTexture({
+                size: [side, side],
+                format: SPRITE_FORMAT,
+                usage: RENDER_ATTACHMENT | TEXTURE_BINDING,
+            });
+            sprite.pageBinding = device.createBindGroup({
+                layout: spritePipeline.getBindGroupLayout(0),
+                entries: [
+                    { binding: 0, resource: { buffer: globalsBuffer } },
+                    { binding: 1, resource: { buffer: sprite.rectBuffer } },
+                    { binding: 2, resource: sprite.resolved.createView() },
+                    { binding: 3, resource: sampler },
+                ],
+            });
+        }
+        if (!sprite.target || !sprite.resolved || !sprite.depth) {
+            return;
+        }
+        sprite.uniforms.set(pose.matrices);
+        sprite.uniforms[MODEL_MAX_PARTS * 16] = SPRITE_HALF;
+        sprite.uniforms[MODEL_MAX_PARTS * 16 + 1] = SPRITE_DEPTH;
+        sprite.uniforms[MODEL_MAX_PARTS * 16 + 2] = isDark ? 1 : 0;
+        device.queue.writeBuffer(sprite.uniformBuffer, 0, sprite.uniforms);
+        // Whole device pixels, so the sprite is not blurred when it is placed.
+        sprite.rect[0] = Math.round(pose.x * ratio) / ratio;
+        sprite.rect[1] = Math.round(pose.y * ratio) / ratio;
+        sprite.rect[2] = side / ratio / 2;
+        device.queue.writeBuffer(sprite.rectBuffer, 0, sprite.rect);
+
+        const pass = encoder.beginRenderPass({
+            colorAttachments: [
+                {
+                    view: sprite.target.createView(),
+                    resolveTarget: sprite.resolved.createView(),
+                    clearValue: { r: 0, g: 0, b: 0, a: 0 },
+                    loadOp: 'clear',
+                    storeOp: 'discard',
+                },
+            ],
+            depthStencilAttachment: {
+                view: sprite.depth.createView(),
+                depthClearValue: 1,
+                depthLoadOp: 'clear',
+                depthStoreOp: 'discard',
+            },
+        });
+        pass.setPipeline(modelPipeline);
+        pass.setBindGroup(0, sprite.modelBinding);
+        pass.setVertexBuffer(0, sprite.vertices);
+        pass.draw(sprite.vertexCount);
+        pass.end();
+    };
 
     void device.lost.then(() => {
         if (!destroyed) {
@@ -115,6 +301,13 @@ export async function createWebGpuRenderer(
             ratio = newRatio;
             canvas.width = Math.max(1, Math.round(width * ratio));
             canvas.height = Math.max(1, Math.round(height * ratio));
+        },
+
+        setModels(models) {
+            sprites = {
+                shovel: createSprite(models.shovel),
+                blower: createSprite(models.blower),
+            };
         },
 
         render(simulation: Simulation, time: number, isDark: boolean) {
@@ -188,6 +381,21 @@ export async function createWebGpuRenderer(
             device.queue.writeBuffer(globalsBuffer, 0, globals);
 
             const encoder = device.createCommandEncoder();
+            if (sprites && simulation.interactive) {
+                drawSprite(
+                    encoder,
+                    sprites.blower,
+                    simulation.blowerPose,
+                    isDark,
+                );
+                drawSprite(
+                    encoder,
+                    sprites.shovel,
+                    simulation.shovelPose,
+                    isDark,
+                );
+                spriteSide = Math.round(SPRITE_HALF * 2 * ratio);
+            }
             const pass = encoder.beginRenderPass({
                 colorAttachments: [
                     {
@@ -203,6 +411,16 @@ export async function createWebGpuRenderer(
                     pass.setPipeline(snowmanPipeline);
                     pass.setBindGroup(0, snowmanBinding);
                     pass.draw(6);
+                }
+                // The tools stand in the snow: the drift is drawn in front of them.
+                for (const sprite of sprites
+                    ? [sprites.blower, sprites.shovel]
+                    : []) {
+                    if (sprite.drawn && sprite.pageBinding) {
+                        pass.setPipeline(spritePipeline);
+                        pass.setBindGroup(0, sprite.pageBinding);
+                        pass.draw(6);
+                    }
                 }
                 pass.setPipeline(driftPipeline);
                 pass.setBindGroup(0, driftBinding);

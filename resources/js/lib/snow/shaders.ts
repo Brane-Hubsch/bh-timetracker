@@ -161,15 +161,19 @@ fn fragment(in: ParticleOut) -> @location(0) vec4f {
         // Brightest when the flat side turns towards the viewer.
         alpha = max(shape, glow) * (0.72 + 0.4 * in.facing) * mix(0.85, 1.0, dark);
     } else if (kind < 2.5) {
-        // Thrown snow: small lit lumps.
-        let light = clamp(0.6 - in.uv.y * 0.5 - in.uv.x * 0.3, 0.0, 1.0);
-        color = mix(vec3f(0.72, 0.8, 0.91), vec3f(1.0), light);
-        color = mix(color, vec3f(0.6, 0.68, 0.8), (1.0 - dark) * smoothstep(0.5, 1.0, radius) * 0.45);
-        alpha = 1.0 - smoothstep(0.45, 1.0, radius);
+        // Thrown snow: small soft lumps, lit from above.
+        let across = in.uv.y;
+        let light = clamp(0.62 - across * 0.45, 0.0, 1.0);
+        color = mix(mix(vec3f(0.6, 0.68, 0.8), vec3f(0.7, 0.79, 0.92), dark), vec3f(1.0), light);
+        alpha = 1.0 - smoothstep(0.3, 1.0, radius);
     } else if (kind < 3.5) {
         // Powder hanging in the air.
         color = mix(vec3f(0.7, 0.76, 0.85), vec3f(1.0), dark);
         alpha = exp(-radius * radius * 3.0) * (1.0 - smoothstep(0.75, 1.0, radius)) * mix(0.7, 1.0, dark);
+    } else if (kind > 4.5) {
+        // Powder in the snowblower's jet: a soft streak along its path.
+        color = mix(vec3f(0.66, 0.73, 0.83), vec3f(1.0), dark);
+        alpha = exp(-radius * radius * 2.6) * (1.0 - smoothstep(0.7, 1.0, radius)) * mix(0.85, 1.0, dark);
     } else {
         // A glint: a four-pointed star.
         color = mix(vec3f(0.98, 0.72, 0.2), vec3f(1.0, 0.93, 0.7), dark);
@@ -507,5 +511,96 @@ fn fragment(in: SnowmanOut) -> @location(0) vec4f {
     }
 
     return result;
+}
+`;
+
+/**
+ * The tools are low-poly models, each drawn into a small multisampled texture of its own (so the edges
+ * are smooth without multisampling the whole page) and then placed on the page as a sprite.
+ */
+export const MODEL_SHADER = /* wgsl */ `
+struct Model {
+    // one matrix per part: model position to CSS pixels around the middle of the sprite
+    parts: array<mat4x4f, 8>,
+    // half the sprite's side, depth range, dark theme (0 or 1)
+    look: vec4f,
+};
+
+@group(0) @binding(0) var<uniform> model: Model;
+
+struct ModelOut {
+    @builtin(position) position: vec4f,
+    @location(0) normal: vec3f,
+    @location(1) color: vec3f,
+};
+
+@vertex
+fn vertex(
+    // position as a fraction of the model's extent, and the part index
+    @location(0) place: vec4f,
+    @location(1) normal: vec4f,
+    @location(2) color: vec4f,
+) -> ModelOut {
+    let part = model.parts[u32(round(place.w * 32767.0))];
+    let point = part * vec4f(place.xyz, 1.0);
+    var out: ModelOut;
+    out.position = vec4f(
+        point.xy / model.look.x,
+        0.5 - point.z / model.look.y,
+        1.0,
+    );
+    out.normal = (part * vec4f(normal.xyz, 0.0)).xyz;
+    out.color = color.rgb;
+    return out;
+}
+
+@fragment
+fn fragment(in: ModelOut) -> @location(0) vec4f {
+    var normal = normalize(in.normal);
+    // Thin parts (the blade, the housing) are seen from both sides.
+    if (normal.z < 0.0) {
+        normal = -normal;
+    }
+    let light = vec3f(-0.51, 0.63, 0.59);
+    let diffuse = max(dot(normal, light), 0.0);
+    // Cool light from the sky and the snow, warm light from the lamp side.
+    let ambient = mix(vec3f(0.5, 0.53, 0.6), vec3f(0.4, 0.45, 0.58), model.look.z);
+    var color = in.color * (ambient + vec3f(0.72, 0.7, 0.66) * diffuse);
+    color += vec3f(0.16) * pow(max(dot(normal, normalize(light + vec3f(0.0, 0.0, 1.0))), 0.0), 24.0);
+    // A dusting of snow on what faces the sky.
+    color = mix(color, vec3f(0.95, 0.97, 1.0), smoothstep(0.82, 1.0, normal.y) * 0.3);
+    return vec4f(clamp(color, vec3f(0.0), vec3f(1.0)), 1.0);
+}
+`;
+
+export const SPRITE_SHADER = /* wgsl */ `
+${COMMON}
+
+struct Sprite {
+    // middle on the page and half the side, in CSS pixels
+    rect: vec4f,
+};
+
+@group(0) @binding(1) var<uniform> sprite: Sprite;
+@group(0) @binding(2) var image: texture_2d<f32>;
+@group(0) @binding(3) var filtering: sampler;
+
+struct SpriteOut {
+    @builtin(position) position: vec4f,
+    @location(0) uv: vec2f,
+};
+
+@vertex
+fn vertex(@builtin(vertex_index) index: u32) -> SpriteOut {
+    let uv = corner(index);
+    var out: SpriteOut;
+    out.position = toClip(sprite.rect.xy + (uv * 2.0 - 1.0) * sprite.rect.z);
+    out.uv = uv;
+    return out;
+}
+
+@fragment
+fn fragment(in: SpriteOut) -> @location(0) vec4f {
+    return textureSample(image, filtering, in.uv);
 }
 `;

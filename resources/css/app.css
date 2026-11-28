@@ -1527,29 +1527,8 @@
     }
 }
 
-/* December's snow (components/seasonal): the hand holds the shovel while shovelling, and the snowblower
-   shakes and turns its auger while it is driven. */
+/* December's snow (components/seasonal): the hand holds the shovel while shovelling. */
 .is-shovelling,
 .is-shovelling * {
     cursor: grabbing !important;
-}
-
-.snow-blower-running {
-    animation: snow-blower-shake 90ms linear infinite;
-}
-
-.snow-blower-auger {
-    animation: snow-blower-auger 260ms linear infinite;
-}
-
-@keyframes snow-blower-shake {
-    50% {
-        transform: translateY(0.5px);
-    }
-}
-
-@keyframes snow-blower-auger {
-    to {
-        transform: translateX(12px);
-    }
 }

@@ -1,3 +1,4 @@
+import { loadSnowModels } from './models';
 import type { FromWorker, SnowBackend, ToWorker } from './protocol';
 import type { SnowRenderer } from './renderer';
 import { createCanvasRenderer } from './renderer-canvas';
@@ -27,6 +28,7 @@ let frame = 0;
 let last = 0;
 let started = 0;
 let lastPointerAt = 0;
+let lastShovelAt = 0;
 /** A running average of the time between frames, to notice a struggling device. */
 let pace = 16.7;
 let slowFor = 0;
@@ -137,6 +139,18 @@ async function start(
     started = performance.now();
     post({ type: 'ready', backend: backend ?? 'canvas2d' });
     setRunning(wanted);
+    // The tools' models follow; the snow does not wait for them.
+    const drawsWith = renderer;
+    void loadSnowModels()
+        .then((models) => {
+            if (renderer === drawsWith) {
+                renderer.setModels(models);
+                post({ type: 'tools' });
+            }
+        })
+        .catch(() => {
+            // Without the models there is snow but nothing to move it with.
+        });
 }
 
 scope.onmessage = ({ data }) => {
@@ -176,6 +190,17 @@ scope.onmessage = ({ data }) => {
             const now = performance.now();
             simulation.pointer(data.x, data.y, (now - lastPointerAt) / 1000);
             lastPointerAt = now;
+            break;
+        }
+        case 'shovel': {
+            const now = performance.now();
+            simulation.setShovel(
+                data.x,
+                data.y,
+                data.angle,
+                (now - lastShovelAt) / 1000,
+            );
+            lastShovelAt = now;
             break;
         }
         case 'blower':

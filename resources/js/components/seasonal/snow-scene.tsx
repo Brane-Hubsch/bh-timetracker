@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SnowBlower } from '@/components/seasonal/snow-blower';
 import { SnowGameHud } from '@/components/seasonal/snow-game-hud';
-import {
-    CarriedShovel,
-    SHOVEL_GRIP,
-    SnowShovel,
-} from '@/components/seasonal/snow-shovel';
+import { SnowShovel } from '@/components/seasonal/snow-shovel';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useStoredValue, writeStoredValue } from '@/hooks/use-stored-value';
-import { SNOW_BLOWER, SNOW_SHOVEL } from '@/lib/snow/geometry';
+import { SNOW_BLOWER } from '@/lib/snow/geometry';
 import { snowHost } from '@/lib/snow/host';
 import type { SnowTool } from '@/lib/snow/protocol';
 import { cn } from '@/lib/utils';
@@ -28,17 +24,16 @@ const isTyping = (target: EventTarget | null) =>
  */
 export default function SnowScene() {
     const host = snowHost();
-    const { backend, game } = useSyncExternalStore(
+    const { backend, hasTools, game } = useSyncExternalStore(
         host.subscribe,
         host.getStatus,
         host.getStatus,
     );
     const interactive = useMediaQuery('(hover: hover) and (pointer: fine)');
     const container = useRef<HTMLDivElement>(null);
-    const carried = useRef<HTMLDivElement>(null);
     const blowerButton = useRef<HTMLButtonElement>(null);
     const [picked, setTool] = useState<SnowTool>(null);
-    const canPlay = interactive && backend !== null;
+    const canPlay = interactive && backend !== null && hasTools;
     const tool = canPlay ? picked : null;
     const best = Number(useStoredValue(BEST_TIME_KEY)) || null;
     // The record as it was when this snowman was finished, to tell a new one from an old one.
@@ -77,13 +72,12 @@ export default function SnowScene() {
     }, [beaten]);
 
     // Moving the mouse stirs the falling snow. With the shovel in hand, it hangs from the pointer and
-    // swings behind it, and the edge of its blade is what digs.
+    // swings behind it; the worker draws it and lets the edge of its blade dig.
     useEffect(() => {
         if (!canPlay) {
             return;
         }
         const shovelling = tool === 'shovel';
-        const shovel = carried.current;
         let pointerX = 0;
         let pointerY = 0;
         let seen = false;
@@ -111,7 +105,7 @@ export default function SnowScene() {
             frame = window.requestAnimationFrame(swingShovel);
             const dt = Math.min((now - last) / 1000, 0.05);
             last = now;
-            if (!seen || !shovel || dt <= 0) {
+            if (!seen || dt <= 0) {
                 return;
             }
             speed += ((pointerX - lastX) / dt - speed) * Math.min(1, dt * 14);
@@ -121,14 +115,7 @@ export default function SnowScene() {
             swing += ((rest - angle) * 130 - swing * 15) * dt;
             angle += swing * dt;
 
-            const edgeX = pointerX - Math.sin(angle) * SNOW_SHOVEL.length;
-            const edgeY = Math.min(
-                window.innerHeight - 1,
-                pointerY + Math.cos(angle) * SNOW_SHOVEL.length,
-            );
-            shovel.style.opacity = '1';
-            shovel.style.transform = `translate(${pointerX - SHOVEL_GRIP.x}px, ${pointerY - SHOVEL_GRIP.y}px) rotate(${angle}rad)`;
-            host.pointer(edgeX, edgeY);
+            host.shovel(pointerX, pointerY, angle);
         };
 
         window.addEventListener('pointermove', onMove, { passive: true });
@@ -143,9 +130,6 @@ export default function SnowScene() {
             document.documentElement.classList.remove('is-shovelling');
             window.removeEventListener('pointermove', onMove);
             window.removeEventListener('keydown', onKey);
-            if (shovel) {
-                shovel.style.opacity = '0';
-            }
         };
     }, [host, canPlay, tool]);
 
@@ -226,15 +210,6 @@ export default function SnowScene() {
 
             button.style.left = `${x}px`;
             button.style.right = 'auto';
-            button.style.setProperty('--facing', String(direction));
-            button.style.setProperty(
-                '--wheel',
-                `${(direction * x * 180) / (Math.PI * 13)}deg`,
-            );
-            button.style.setProperty(
-                '--chute',
-                `${(elevation * 180) / Math.PI - 90}deg`,
-            );
             host.blower({ x, direction, elevation, speed });
         };
 
@@ -245,15 +220,9 @@ export default function SnowScene() {
 
         return () => {
             window.cancelAnimationFrame(frame);
-            for (const property of [
-                'left',
-                'right',
-                '--facing',
-                '--chute',
-                '--wheel',
-            ]) {
-                button.style.removeProperty(property);
-            }
+            // Back to the parked spot.
+            button.style.left = '';
+            button.style.right = `${SNOW_BLOWER.parkedRight}px`;
             window.removeEventListener('keydown', onKeyDown, { capture: true });
             window.removeEventListener('keyup', onKeyUp, { capture: true });
             window.removeEventListener('blur', release);
@@ -295,7 +264,6 @@ export default function SnowScene() {
                             setTool(isShovelling ? 'shovel' : null)
                         }
                     />
-                    <CarriedShovel ref={carried} />
                 </>
             )}
         </>

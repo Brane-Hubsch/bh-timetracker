@@ -43,10 +43,14 @@ export type ToWorker =
     | { type: 'running'; running: boolean }
     | { type: 'tool'; tool: SnowTool }
     | { type: 'pointer'; x: number; y: number }
+    /** The shovel in the hand: where its grip is and how it hangs (radians, clockwise). */
+    | { type: 'shovel'; x: number; y: number; angle: number }
     | ({ type: 'blower' } & BlowerInput)
     | { type: 'rebuild' };
 
 export type FromWorker =
     | { type: 'ready'; backend: SnowBackend }
+    /** The models of the tools are loaded, so the tools can be shown and used. */
+    | { type: 'tools' }
     | { type: 'game'; game: SnowGame }
     | { type: 'failed'; backend: SnowBackend | null };

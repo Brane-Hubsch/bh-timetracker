@@ -1,13 +1,62 @@
 import { COLUMN_WIDTH, MAX_DEPTH } from './drift';
 import { SNOWMAN_RADII, snowmanCentres } from './geometry';
+import { MODEL_VERTEX_BYTES } from './models';
+import type { SnowModel, ToolPose } from './models';
 import type { SnowRenderer } from './renderer';
 import {
     INSTANCE_FLOATS,
     KIND_CLUMP,
     KIND_MIST,
     KIND_SPARKLE,
+    KIND_SPRAY,
 } from './simulation';
 import type { Simulation } from './simulation';
+
+/** A model unpacked for drawing triangle by triangle. */
+type Mesh = {
+    triangles: number;
+    /** Per vertex: x, y, z as a fraction of the extent. */
+    positions: Float32Array;
+    parts: Uint8Array;
+    /** Per triangle: the normal, then the colour (0 to 1). */
+    faces: Float32Array;
+    /** Scratch space: projected x, y and depth per vertex, and the drawing order. */
+    projected: Float32Array;
+    depth: Float32Array;
+    order: Uint16Array;
+};
+
+function unpack(model: SnowModel): Mesh {
+    const view = new DataView(model.data);
+    const triangles = model.vertexCount / 3;
+    const mesh: Mesh = {
+        triangles,
+        positions: new Float32Array(model.vertexCount * 3),
+        parts: new Uint8Array(model.vertexCount),
+        faces: new Float32Array(triangles * 6),
+        projected: new Float32Array(model.vertexCount * 3),
+        depth: new Float32Array(triangles),
+        order: new Uint16Array(triangles),
+    };
+    for (let vertex = 0; vertex < model.vertexCount; vertex++) {
+        const at = vertex * MODEL_VERTEX_BYTES;
+        for (let axis = 0; axis < 3; axis++) {
+            mesh.positions[vertex * 3 + axis] =
+                view.getInt16(at + axis * 2, true) / 32767;
+        }
+        mesh.parts[vertex] = view.getInt16(at + 6, true);
+        if (vertex % 3 === 0) {
+            const face = (vertex / 3) * 6;
+            for (let axis = 0; axis < 3; axis++) {
+                mesh.faces[face + axis] = view.getInt8(at + 8 + axis) / 127;
+                mesh.faces[face + 3 + axis] =
+                    view.getUint8(at + 12 + axis) / 255;
+            }
+        }
+    }
+
+    return mesh;
+}
 
 /**
  * A plain 2D canvas drawing of the same simulation, for browsers without WebGPU: round flakes, a shaded
@@ -22,6 +71,78 @@ export function createCanvasRenderer(
     }
     let width = 1;
     let height = 1;
+    let meshes: { shovel: Mesh; blower: Mesh } | null = null;
+
+    /** The low-poly tools, painted back to front as flat triangles. */
+    const drawModel = (mesh: Mesh, pose: ToolPose, isDark: boolean) => {
+        if (!pose.visible) {
+            return;
+        }
+        const { positions, parts, faces, projected, depth, order } = mesh;
+        const matrices = pose.matrices;
+        for (let vertex = 0; vertex < parts.length; vertex++) {
+            const m = parts[vertex] * 16;
+            const x = positions[vertex * 3];
+            const y = positions[vertex * 3 + 1];
+            const z = positions[vertex * 3 + 2];
+            for (let axis = 0; axis < 3; axis++) {
+                projected[vertex * 3 + axis] =
+                    matrices[m + axis] * x +
+                    matrices[m + 4 + axis] * y +
+                    matrices[m + 8 + axis] * z +
+                    matrices[m + 12 + axis];
+            }
+        }
+        for (let triangle = 0; triangle < mesh.triangles; triangle++) {
+            order[triangle] = triangle;
+            depth[triangle] =
+                projected[triangle * 9 + 2] +
+                projected[triangle * 9 + 5] +
+                projected[triangle * 9 + 8];
+        }
+        order.sort((a, b) => depth[a] - depth[b]);
+
+        const ambient = isDark ? 0.46 : 0.52;
+        for (const triangle of order) {
+            const at = triangle * 9;
+            const m = parts[triangle * 3] * 16;
+            const face = triangle * 6;
+            // The normal turned like its part (the matrices only rotate and scale evenly).
+            let nx = 0;
+            let ny = 0;
+            let nz = 0;
+            for (let axis = 0; axis < 3; axis++) {
+                const normal = faces[face + axis];
+                nx += matrices[m + axis * 4] * normal;
+                ny += matrices[m + axis * 4 + 1] * normal;
+                nz += matrices[m + axis * 4 + 2] * normal;
+            }
+            const length = Math.hypot(nx, ny, nz) || 1;
+            const facing = nz < 0 ? -1 / length : 1 / length;
+            const light = Math.max(
+                0,
+                (nx * -0.51 + ny * 0.63 + nz * 0.59) * facing,
+            );
+            const shade = (ambient + 0.7 * light) * 255;
+            const color = `rgb(${Math.min(255, faces[face + 3] * shade)}, ${Math.min(255, faces[face + 4] * shade)}, ${Math.min(255, faces[face + 5] * shade)})`;
+            context.fillStyle = color;
+            context.strokeStyle = color;
+            context.beginPath();
+            context.moveTo(pose.x + projected[at], pose.y - projected[at + 1]);
+            context.lineTo(
+                pose.x + projected[at + 3],
+                pose.y - projected[at + 4],
+            );
+            context.lineTo(
+                pose.x + projected[at + 6],
+                pose.y - projected[at + 7],
+            );
+            context.closePath();
+            context.fill();
+            // A hairline in the same colour closes the seams between neighbouring triangles.
+            context.stroke();
+        }
+    };
 
     const circle = (x: number, y: number, radius: number) => {
         context.moveTo(x + radius, y);
@@ -233,10 +354,23 @@ export function createCanvasRenderer(
             context.setTransform(ratio, 0, 0, ratio, 0, 0);
         },
 
+        setModels(models) {
+            meshes = {
+                shovel: unpack(models.shovel),
+                blower: unpack(models.blower),
+            };
+        },
+
         render(simulation, _time, isDark) {
             context.clearRect(0, 0, width, height);
             if (simulation.interactive) {
                 drawSnowman(simulation, isDark);
+                if (meshes) {
+                    context.lineWidth = 0.6;
+                    context.lineJoin = 'round';
+                    drawModel(meshes.blower, simulation.blowerPose, isDark);
+                    drawModel(meshes.shovel, simulation.shovelPose, isDark);
+                }
                 drawDrift(simulation, isDark);
             }
 
@@ -250,7 +384,7 @@ export function createCanvasRenderer(
                 if (kind === KIND_CLUMP) {
                     context.fillStyle = isDark ? '#f1f5f9' : '#dfe7f2';
                     radius = instances[at + 2] * 0.8;
-                } else if (kind === KIND_MIST) {
+                } else if (kind === KIND_MIST || kind === KIND_SPRAY) {
                     context.fillStyle = `rgba(${flake}, ${alpha * 0.4})`;
                 } else if (kind === KIND_SPARKLE) {
                     context.fillStyle = `rgba(250, 190, 60, ${alpha})`;

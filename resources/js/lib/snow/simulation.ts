@@ -1,12 +1,18 @@
 import { COLUMN_WIDTH, Drift } from './drift';
 import {
-    chuteMouth,
     SNOW_BLOWER,
     SNOW_SHOVEL,
     SNOWMAN_RADII,
     snowmanCentres,
     snowmanGrowth,
 } from './geometry';
+import {
+    blowerYaw,
+    createPose,
+    poseBlower,
+    poseShovel,
+    wheelSpin,
+} from './models';
 import type { BlowerInput, SnowGame, SnowTool } from './protocol';
 import { noise, vortexFade, Wind } from './wind';
 
@@ -21,9 +27,11 @@ export const KIND_CRYSTAL = 1;
 export const KIND_CLUMP = 2;
 export const KIND_MIST = 3;
 export const KIND_SPARKLE = 4;
+/** Fine snow in the snowblower's jet, drawn as soft streaks. */
+export const KIND_SPRAY = 5;
 
 const MAX_FLAKES = 900;
-const MAX_PARTICLES = 2600;
+const MAX_PARTICLES = 4200;
 const GRAVITY = 900;
 /** Snow that lands on the drift per flake, relative to its area. */
 const SETTLING = 2;
@@ -34,7 +42,7 @@ const THROWING_SPEED = 170;
 /** Snow the snowblower can throw per second, in square pixels. */
 const BLOWER_CAPACITY = 2400;
 
-const PARTICLE_FLOATS = 8;
+const PARTICLE_FLOATS = 9;
 const P_X = 0;
 const P_Y = 1;
 const P_VX = 2;
@@ -43,6 +51,8 @@ const P_AMOUNT = 4;
 const P_AGE = 5;
 const P_LIFE = 6;
 const P_KIND = 7;
+/** How quickly the air slows it down; light snow hangs and drifts, heavy lumps fly on. */
+const P_DRAG = 8;
 
 export type SnowmanLook = {
     x: number;
@@ -77,6 +87,9 @@ export class Simulation {
     };
     /** Set when the page should hear about the game. */
     gameChanged = false;
+    /** The tools as the renderer should draw them. */
+    readonly shovelPose = createPose();
+    readonly blowerPose = createPose();
 
     /** Snow settles at the bottom and can be moved (devices with a mouse). */
     interactive = false;
@@ -104,6 +117,12 @@ export class Simulation {
     private tool: SnowTool = null;
     private blower: BlowerInput | null = null;
     private hopper = 0;
+    private readonly mouth = { x: 0, y: 0 };
+    private blowerTurn = blowerYaw(-1);
+    private wheel = 0;
+    private blowerLift = 0;
+    private auger = 0;
+    private carried: { x: number; y: number; angle: number } | null = null;
     private pointerX = -1000;
     private pointerY = -1000;
     private pointerVx = 0;
@@ -153,9 +172,26 @@ export class Simulation {
     setTool(tool: SnowTool): void {
         this.tool = this.interactive ? tool : null;
         this.pointerSeen = false;
+        this.carried = null;
         if (tool !== 'blower') {
             this.blower = null;
         }
+    }
+
+    /**
+     * The shovel in the hand: its grip is at (x, y) and it hangs at `angle` (clockwise, 0 is straight
+     * down). The edge of its blade digs where it passes through the drift.
+     */
+    setShovel(x: number, y: number, angle: number, dt: number): void {
+        if (this.tool !== 'shovel') {
+            return;
+        }
+        this.carried = { x, y, angle };
+        this.pointer(
+            x - Math.sin(angle) * SNOW_SHOVEL.length,
+            Math.min(this.height - 1, y + Math.cos(angle) * SNOW_SHOVEL.length),
+            dt,
+        );
     }
 
     setBlower(blower: BlowerInput): void {
@@ -202,10 +238,7 @@ export class Simulation {
         this.gameChanged = true;
     }
 
-    /**
-     * The pointer moved. With the shovel in hand this is the edge of its blade, which digs where it
-     * passes through the drift.
-     */
+    /** The pointer moved (with the shovel in hand: the edge of its blade), stirring the flakes. */
     pointer(x: number, y: number, dt: number): void {
         const elapsed = Math.max(dt, 0.004);
         const seen = this.pointerSeen;
@@ -235,6 +268,7 @@ export class Simulation {
         this.instanceCount = 0;
         this.stepFlakes(dt);
         if (this.interactive) {
+            this.stepTools(dt);
             this.stepBlower(dt);
             this.stepDrift(dt);
         }
@@ -376,7 +410,7 @@ export class Simulation {
             dt,
             (x) => wind.groundAt(x),
             (x, speed, amount) => {
-                if (Math.random() < amount * 90 * this.quality) {
+                if (Math.random() < amount * 30 * this.quality) {
                     this.spawn(
                         KIND_MIST,
                         x,
@@ -479,6 +513,57 @@ export class Simulation {
         }
     }
 
+    /** Where the tools are and how they stand, for the renderer and for the snow they move. */
+    private stepTools(dt: number): void {
+        const { width, height } = this;
+        const parked = SNOW_SHOVEL.parked;
+        if (this.carried) {
+            poseShovel(
+                this.shovelPose,
+                this.carried.x,
+                this.carried.y,
+                this.carried.angle,
+            );
+        } else {
+            // Stuck in the drift, with half the blade showing.
+            const x = width - parked.right;
+            poseShovel(
+                this.shovelPose,
+                x,
+                height - this.drift.depthAt(x) - parked.above,
+                parked.angle,
+            );
+        }
+
+        const blower = this.blower;
+        const direction = blower?.direction ?? -1;
+        const speed = blower?.speed ?? 0;
+        // It turns round rather than flipping over.
+        this.blowerTurn +=
+            (blowerYaw(direction) - this.blowerTurn) * (1 - Math.exp(-dt * 9));
+        this.wheel += wheelSpin(speed * direction) * dt;
+        if (blower) {
+            this.auger += dt * 13;
+        }
+        const x =
+            blower?.x ?? width - SNOW_BLOWER.parkedRight - SNOW_BLOWER.width;
+        // The wheels stand on the snow under them: on top of the drift when parked, down in the
+        // track it has cleared when it drives.
+        const under = this.drift.depthAt(x + SNOW_BLOWER.width / 2) * 0.8;
+        this.blowerLift += (under - this.blowerLift) * (1 - Math.exp(-dt * 8));
+        const mouth = poseBlower(this.blowerPose, {
+            x,
+            ground: height - this.blowerLift,
+            yaw: this.blowerTurn,
+            elevation: blower?.elevation ?? SNOW_BLOWER.defaultElevation,
+            wheel: this.wheel,
+            auger: this.auger,
+            shake: blower ? Math.sin(this.time * 75) * 0.45 : 0,
+        });
+        this.mouth.x = mouth.x;
+        this.mouth.y = mouth.y;
+    }
+
     private stepBlower(dt: number): void {
         const blower = this.blower;
         if (!blower) {
@@ -486,10 +571,10 @@ export class Simulation {
 
             return;
         }
-        const { drift, height } = this;
+        const { drift, mouth } = this;
         const { width, intake } = SNOW_BLOWER;
         const front =
-            blower.direction === 1 ? blower.x + width - 6 : blower.x + 6;
+            blower.direction === 1 ? blower.x + width - 4 : blower.x + 4;
         const first = drift.column(
             Math.min(front, front + blower.direction * intake),
         );
@@ -503,22 +588,24 @@ export class Simulation {
         if (this.hopper <= 0.5) {
             return;
         }
-        const thrown = Math.min(this.hopper, BLOWER_CAPACITY * dt);
+        // The impeller's blades send the snow out in quick pulses.
+        const pulse = 0.72 + 0.28 * Math.sin(this.time * 80);
+        const thrown = Math.min(this.hopper, BLOWER_CAPACITY * dt * pulse);
         this.hopper -= thrown;
         this.snowMoved();
 
-        const mouth = chuteMouth(
-            blower.x,
-            blower.direction,
-            blower.elevation,
-            height,
-        );
-        const pieces = Math.max(1, Math.ceil(thrown / 3.2));
+        const jet = 500;
+        const backwards = -blower.direction;
+        // The snow itself: many small lumps, fastest and densest in the middle of the jet.
+        const pieces = Math.max(1, Math.ceil(thrown / 1.5));
         for (let piece = 0; piece < pieces; piece++) {
-            const angle = blower.elevation + (Math.random() - 0.5) * 0.13;
-            const power = 500 * (0.9 + Math.random() * 0.16);
-            const vx =
-                -blower.direction * Math.cos(angle) * power + blower.speed;
+            const off = Math.random() + Math.random() + Math.random() - 1.5;
+            const angle = blower.elevation + off * 0.13;
+            const power =
+                jet *
+                (1 - Math.abs(off) * 0.22) *
+                (0.93 + Math.random() * 0.12);
+            const vx = backwards * Math.cos(angle) * power + blower.speed;
             const vy = -Math.sin(angle) * power;
             // Spread along the stream, so it does not come out in bursts.
             const head = Math.random() * dt;
@@ -529,17 +616,28 @@ export class Simulation {
                 vx,
                 vy,
                 thrown / pieces,
+                0,
+                0.15 + Math.random() ** 2 * 1.3,
             );
         }
-        if (Math.random() < dt * 40) {
+        // Powder torn loose by the air: it leaves with the jet, slows down quickly and hangs as a
+        // cloud that drifts with the wind.
+        const powder = Math.ceil((thrown / 2.6) * this.quality);
+        for (let puff = 0; puff < powder; puff++) {
+            const angle = blower.elevation + (Math.random() - 0.5) * 0.34;
+            const power = jet * (0.45 + Math.random() * 0.55);
+            const head = Math.random() * dt;
+            const vx = backwards * Math.cos(angle) * power + blower.speed;
+            const vy = -Math.sin(angle) * power;
             this.spawn(
-                KIND_MIST,
-                mouth.x,
-                mouth.y,
-                -blower.direction * Math.cos(blower.elevation) * 130,
-                -Math.sin(blower.elevation) * 130,
-                0.8,
-                0.8 + Math.random() * 0.6,
+                KIND_SPRAY,
+                mouth.x + vx * head,
+                mouth.y + vy * head,
+                vx,
+                vy,
+                0.5 + Math.random() * 0.5,
+                0.7 + Math.random() * 1.1,
+                1.6 + Math.random() * 2.6,
             );
         }
     }
@@ -552,6 +650,7 @@ export class Simulation {
         vy: number,
         amount: number,
         life = 0,
+        drag = 0.35,
     ): void {
         if (this.particleCount >= MAX_PARTICLES) {
             return;
@@ -566,6 +665,7 @@ export class Simulation {
         particles[at + P_AGE] = 0;
         particles[at + P_LIFE] = life;
         particles[at + P_KIND] = kind;
+        particles[at + P_DRAG] = drag;
     }
 
     private stepParticles(dt: number): void {
@@ -573,6 +673,7 @@ export class Simulation {
         const snowman = this.snowman;
         // Thrown snow counts when it falls inside the outline of the finished snowman.
         const outline = snowmanCentres([1, 1, 1]);
+        const breeze = wind.direction * 70;
 
         for (let index = this.particleCount - 1; index >= 0; index--) {
             const at = index * PARTICLE_FLOATS;
@@ -584,16 +685,24 @@ export class Simulation {
             const amount = particles[at + P_AMOUNT];
             const age = (particles[at + P_AGE] += dt);
             const life = particles[at + P_LIFE];
+            const drag = particles[at + P_DRAG];
             let gone = false;
             let alpha = 1;
             let size = 1;
+            let turn = 0;
+            let stretch = 1;
 
             if (kind === KIND_CLUMP) {
-                vy += GRAVITY * dt;
-                vx *= Math.exp(-dt * 0.35);
+                // Air resistance: towards the speed of the wind, the lighter the lump the sooner.
+                const slowed = 1 - Math.exp(-dt * drag);
+                vx += (breeze - vx) * slowed;
+                vy += GRAVITY * dt - vy * slowed;
                 x += vx * dt;
                 y += vy * dt;
-                size = 1.3 + Math.sqrt(amount) * 0.95;
+                size = 1 + Math.sqrt(amount) * 0.85;
+                // A lump in flight is drawn out along its path, like a short exposure.
+                turn = Math.atan2(vy, vx);
+                stretch = 1 + Math.min(1.4, Math.hypot(vx, vy) * 0.003);
                 const ground =
                     height - (this.interactive ? drift.depthAt(x) : 0);
                 let overSnowman = false;
@@ -630,6 +739,23 @@ export class Simulation {
                         );
                     }
                 }
+            } else if (kind === KIND_SPRAY) {
+                wind.sample(x, y);
+                const slowed = 1 - Math.exp(-dt * drag);
+                vx += (wind.u - vx) * slowed;
+                vy += (wind.v + 46 - vy) * slowed + 120 * dt;
+                x += vx * dt;
+                y += vy * dt;
+                const fade = age / life;
+                gone =
+                    fade >= 1 ||
+                    y > height - (this.interactive ? drift.depthAt(x) : 0);
+                // Dense and narrow at the chute, thinning into a wide veil.
+                alpha =
+                    amount * 0.36 * (1 - fade) ** 1.5 * Math.min(1, age * 30);
+                size = 2 + fade * 11;
+                turn = Math.atan2(vy, vx);
+                stretch = 1 + Math.min(3, Math.hypot(vx, vy) * 0.007);
             } else if (kind === KIND_MIST) {
                 wind.sample(x, y);
                 const ease = 1 - Math.exp(-dt * 3.2);
@@ -639,8 +765,8 @@ export class Simulation {
                 y += vy * dt;
                 const fade = age / life;
                 gone = fade >= 1 || y > height;
-                alpha = amount * 0.13 * Math.sin(Math.min(1, fade) * Math.PI);
-                size = 4 + fade * 10;
+                alpha = amount * 0.11 * Math.sin(Math.min(1, fade) * Math.PI);
+                size = 3 + fade * 7;
             } else {
                 vy += 160 * dt;
                 vx *= Math.exp(-dt * 1.5);
@@ -669,8 +795,8 @@ export class Simulation {
             instances[to + 1] = y;
             instances[to + 2] = size;
             instances[to + 3] = alpha;
-            instances[to + 4] = kind === KIND_SPARKLE ? age * 2 : 0;
-            instances[to + 5] = 1;
+            instances[to + 4] = kind === KIND_SPARKLE ? age * 2 : turn;
+            instances[to + 5] = stretch;
             instances[to + 6] = kind;
             instances[to + 7] = amount;
         }
@@ -679,7 +805,7 @@ export class Simulation {
     /** Thrown snow hit the snowman and becomes part of it. */
     private pack(amount: number, vx: number): void {
         // A wider screen holds more snow, so the snowman asks for more.
-        const needed = Math.max(3000, Math.min(5000, this.width * 3.2));
+        const needed = Math.max(3400, Math.min(5800, this.width * 3.8));
         this.progress += amount / needed;
         this.leanSpeed += clampSpeed(vx, 400) * 0.012;
         if (this.progress >= 1 && this.phase !== 'done') {

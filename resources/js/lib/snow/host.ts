@@ -15,6 +15,8 @@ import type {
 export type SnowStatus = {
     /** Null until the first frame can be drawn. */
     backend: SnowBackend | null;
+    /** The shovel and the snowblower are drawn and can be used. */
+    hasTools: boolean;
     game: SnowGame;
 };
 
@@ -35,7 +37,11 @@ function viewport(): { width: number; height: number; ratio: number } {
 class SnowHost {
     private canvas: HTMLCanvasElement | null = null;
     private worker: Worker | null = null;
-    private status: SnowStatus = { backend: null, game: IDLE_GAME };
+    private status: SnowStatus = {
+        backend: null,
+        hasTools: false,
+        game: IDLE_GAME,
+    };
     private readonly listeners = new Set<() => void>();
     private interactive = false;
     private mounted = 0;
@@ -93,6 +99,10 @@ class SnowHost {
         this.send({ type: 'pointer', x, y });
     }
 
+    shovel(x: number, y: number, angle: number): void {
+        this.send({ type: 'shovel', x, y, angle });
+    }
+
     blower(input: BlowerInput): void {
         this.send({ type: 'blower', ...input });
     }
@@ -140,6 +150,8 @@ class SnowHost {
             }
             if (data.type === 'ready') {
                 this.update({ backend: data.backend });
+            } else if (data.type === 'tools') {
+                this.update({ hasTools: true });
             } else if (data.type === 'game') {
                 this.update({ game: data.game });
             } else {
@@ -168,7 +180,7 @@ class SnowHost {
 
     /** WebGPU can fail after it looked fine (a lost device, a driver bug): try once more without it. */
     private fail(retryWithCanvas: boolean): void {
-        this.update({ backend: null, game: IDLE_GAME });
+        this.update({ backend: null, hasTools: false, game: IDLE_GAME });
         if (retryWithCanvas && !this.triedCanvas) {
             this.triedCanvas = true;
             this.start(true);

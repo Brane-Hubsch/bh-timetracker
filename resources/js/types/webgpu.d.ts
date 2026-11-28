@@ -23,7 +23,12 @@ interface GPUDevice {
         size: [number, number];
         format: string;
         usage: number;
+        sampleCount?: number;
     }): GPUTexture;
+    createSampler(descriptor: {
+        magFilter: 'linear' | 'nearest';
+        minFilter: 'linear' | 'nearest';
+    }): GPUSampler;
     createBindGroup(descriptor: {
         layout: GPUBindGroupLayout;
         entries: { binding: number; resource: object }[];
@@ -38,7 +43,7 @@ interface GPUQueue {
     writeBuffer(
         buffer: GPUBuffer,
         bufferOffset: number,
-        data: Float32Array,
+        data: Float32Array | ArrayBuffer,
         dataOffset?: number,
         size?: number,
     ): void;
@@ -69,6 +74,10 @@ interface GPUBindGroup {
     readonly label: string;
 }
 
+interface GPUSampler {
+    readonly label: string;
+}
+
 interface GPUBuffer {
     destroy(): void;
 }
@@ -90,10 +99,17 @@ interface GPUCommandEncoder {
     beginRenderPass(descriptor: {
         colorAttachments: {
             view: GPUTextureView;
+            resolveTarget?: GPUTextureView;
             clearValue: { r: number; g: number; b: number; a: number };
             loadOp: 'clear' | 'load';
             storeOp: 'store' | 'discard';
         }[];
+        depthStencilAttachment?: {
+            view: GPUTextureView;
+            depthClearValue: number;
+            depthLoadOp: 'clear' | 'load';
+            depthStoreOp: 'store' | 'discard';
+        };
     }): GPURenderPassEncoder;
     finish(): GPUCommandBuffer;
 }
