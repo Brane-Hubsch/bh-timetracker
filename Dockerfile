@@ -67,5 +67,6 @@ ENV PHP_OPCACHE_ENABLE=1 \
 COPY --chown=www-data:www-data --from=vendor /var/www/html/vendor ./vendor
 COPY --chown=www-data:www-data . .
 COPY --chown=www-data:www-data --from=assets /var/www/html/public/build ./public/build
+COPY --chown=www-data:www-data --from=assets /var/www/html/public/favicon.ico ./public/favicon.ico
 
 RUN composer dump-autoload --no-dev --optimize

@@ -476,7 +476,7 @@ Klar. Byggt:
 
 - **PWA:**
   - Egen ikon (vitt T med klockvisare på lila botten) som SVG, ICO (16, 32, 48 px), Apple Touch (120, 152, 167, 180 px) och PWA-ikoner (192 och 512 px, även maskbara).
-  - Apple Touch- och PWA-ikonerna genereras från `public/favicon.svg` och får nya filnamn när grafiken ändras.
+  - ICO-, Apple Touch- och PWA-ikonerna genereras från `public/favicon.svg`. Ikonlänkarna versioneras vid bygget, och ICO-filen finns även på `/favicon.ico`.
   - `site.webmanifest` på svenska, `theme-color` och fristående läge.
   - Ingen offline-funktion, enligt planen.
 - **Felhantering:**

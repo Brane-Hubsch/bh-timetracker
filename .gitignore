@@ -2,6 +2,7 @@
 /bootstrap/ssr
 /node_modules
 /public/build
+/public/favicon.ico
 /resources/app-icons
 /public/fonts-manifest.dev.json
 /public/hot
