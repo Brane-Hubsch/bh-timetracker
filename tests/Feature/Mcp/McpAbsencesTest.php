@@ -167,9 +167,12 @@ it('deletes absence for those allowed, never another organization\'s', function 
         ->assertOk()
         ->assertStructuredContentPath('deleted.id', $own->id);
 
-    expect($own->fresh())->toBeNull()
-        ->and($colleagues->fresh())->not->toBeNull()
-        ->and($foreign->fresh())->not->toBeNull();
+    $this->assertSoftDeleted($own);
+    $this->assertNotSoftDeleted($colleagues);
+    $this->assertNotSoftDeleted($foreign);
+    TimetrackerServer::actingAs($this->member)
+        ->tool(DeleteAbsenceTool::class, ['id' => $own->id])
+        ->assertHasErrors(['No absence with id '.$own->id]);
 });
 
 it('includes absence days per member and type in the report', function () {

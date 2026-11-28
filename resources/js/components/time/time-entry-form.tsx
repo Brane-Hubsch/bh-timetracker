@@ -2,8 +2,8 @@ import {
     Alert,
     Avatar,
     Button,
-    Description,
     Dropdown,
+    FieldError,
     Label,
     Tabs,
     TextArea,
@@ -28,6 +28,7 @@ import { ABSENCE_FORM_ID, AbsenceForm } from '@/components/time/absence-dialog';
 import type { AbsenceOptions } from '@/components/time/absence-dialog';
 import { ProjectPicker } from '@/components/time/project-picker';
 import { TimeScrubLabel } from '@/components/time/time-scrub-label';
+import { useFormErrors } from '@/hooks/use-form-errors';
 import { useInitials } from '@/hooks/use-initials';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -143,7 +144,7 @@ export function TimeEntryForm({
     const [values, setValues] = useState<TimeEntryDraft | null>(draft);
     const [duration, setDuration] = useState(draft ? durationOf(draft) : '');
     const [hasTyped, setHasTyped] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const { errors, setErrors, clearErrors } = useFormErrors();
     const [processing, setProcessing] = useState(false);
     const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
@@ -214,16 +215,24 @@ export function TimeEntryForm({
 
     const changeStart = (start: string) => {
         const seconds = parseDuration(duration);
-        set({
-            start,
-            end:
-                seconds && start
-                    ? minutesToTime(timeToMinutes(start) + seconds / 60)
-                    : current?.end,
-        });
+        const end =
+            seconds && start
+                ? minutesToTime(timeToMinutes(start) + seconds / 60)
+                : current?.end;
+
+        if (start !== current?.start) {
+            clearErrors('start', 'ended_at');
+        }
+        if (end !== current?.end) {
+            clearErrors('end', 'duration', 'ended_at');
+        }
+        set({ start, end });
     };
 
     const changeEnd = (end: string) => {
+        if (end !== current?.end) {
+            clearErrors('end', 'duration', 'ended_at');
+        }
         set({ end });
         setDuration(
             end && current?.start
@@ -233,6 +242,9 @@ export function TimeEntryForm({
     };
 
     const changeDuration = (value: string) => {
+        if (value !== duration) {
+            clearErrors('end', 'duration', 'ended_at');
+        }
         setHasTyped(true);
         setDuration(value);
         const seconds = parseDuration(value);
@@ -278,6 +290,9 @@ export function TimeEntryForm({
 
     const changeProject = (projectId: string) => {
         const project = projects.find((option) => option.value === projectId);
+        if (projectId !== current?.projectId) {
+            clearErrors('project_id');
+        }
         // New entries inherit "billable" from the project; edits keep their own value.
         set({
             projectId,
@@ -465,6 +480,9 @@ export function TimeEntryForm({
                             if (keys !== 'all') {
                                 const [userId] = keys;
                                 if (userId !== undefined) {
+                                    if (String(userId) !== memberId) {
+                                        clearErrors('user_id');
+                                    }
                                     set({ userId: Number(userId) });
                                 }
                             }
@@ -744,7 +762,10 @@ export function TimeEntryForm({
                                 type: 'vacation',
                                 startsOn: current.date,
                                 endsOn: current.date,
-                                hoursPerDay: '',
+                                hoursPerDay:
+                                    source?.openedFrom === 'calendar'
+                                        ? durationOf(source)
+                                        : '',
                                 note: '',
                             }}
                             userId={current.userId}
@@ -828,7 +849,10 @@ export function TimeEntryForm({
                                     <DatePickerField
                                         label={t('Date')}
                                         value={current.date}
-                                        onChange={(date) => set({ date })}
+                                        onChange={(date) => {
+                                            clearErrors('date', 'ended_at');
+                                            set({ date });
+                                        }}
                                         relativeLabel={dateLabel}
                                         error={errors.date}
                                         isRequired
@@ -996,8 +1020,12 @@ export function TimeEntryForm({
 
                             <TextField
                                 value={current.description}
-                                onChange={(description) => set({ description })}
+                                onChange={(description) => {
+                                    clearErrors('description');
+                                    set({ description });
+                                }}
                                 isInvalid={Boolean(errors.description)}
+                                validationBehavior="aria"
                                 className="w-full"
                             >
                                 <Label>{t('Description')}</Label>
@@ -1008,16 +1036,15 @@ export function TimeEntryForm({
                                         placeholder={t('What did you work on?')}
                                     />
                                 </div>
-                                {errors.description && (
-                                    <Description className="text-danger">
-                                        {errors.description}
-                                    </Description>
-                                )}
+                                <FieldError>{errors.description}</FieldError>
                             </TextField>
 
                             <TagInput
                                 value={current.tags}
-                                onChange={(tags) => set({ tags })}
+                                onChange={(tags) => {
+                                    clearErrors('tags');
+                                    set({ tags });
+                                }}
                                 suggestions={tags}
                                 recentTags={recentTags}
                                 error={
