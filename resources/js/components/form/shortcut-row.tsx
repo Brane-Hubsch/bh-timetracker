@@ -51,7 +51,7 @@ export function ShortcutRow({
             ref={viewport}
             role={label ? 'group' : undefined}
             aria-label={label}
-            className="min-w-0 scroll-px-6 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
+            className="min-w-0 scroll-px-6 [scrollbar-width:none] overflow-x-auto overflow-y-hidden"
             style={{
                 maskImage:
                     fadeLeft || fadeRight
