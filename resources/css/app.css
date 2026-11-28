@@ -1123,6 +1123,37 @@
         @apply items-center;
     }
 
+    @media (width < 48rem) {
+        .time-entry-field-frame {
+            @apply relative;
+            --time-entry-field-border: var(--field-border);
+
+            /* Safari can drop native field borders while a nearby shortcut row scrolls. */
+            > :is(.input, .textarea) {
+                border-width: 0;
+                padding-block: calc(var(--spacing) * 2 + 1px);
+                padding-inline: calc(var(--spacing) * 3 + 1px);
+            }
+
+            &::after {
+                @apply pointer-events-none absolute inset-0 rounded-field;
+                border: var(--border-width-field) solid
+                    var(--time-entry-field-border);
+                content: '';
+            }
+
+            @media (hover: hover) {
+                &:has(> :is(.input, .textarea):hover) {
+                    --time-entry-field-border: var(--field-border-hover);
+                }
+            }
+
+            &:has(> :is(.input, .textarea):focus) {
+                --time-entry-field-border: var(--field-border-focus);
+            }
+        }
+    }
+
     /*
      * Date and time fields get the same height and text size as text inputs (HeroUI gives the segmented
      * group a fixed h-9 and small text), so fields line up in a row and stay readable on mobile.
