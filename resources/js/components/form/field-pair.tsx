@@ -25,15 +25,15 @@ export function FieldPair({
                 {secondLabel}
             </legend>
             <div
-                className="grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field focus-within:status-focused-field data-[invalid=true]:status-invalid-field sm:h-[2.375rem]"
+                className="field-pair grid h-[2.625rem] grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] rounded-field border-[length:var(--border-width-field)] border-[color:var(--field-border)] bg-field shadow-field data-[invalid=true]:outline-1 data-[invalid=true]:outline-danger data-[invalid=true]:outline-solid sm:h-[2.375rem]"
                 data-invalid={isInvalid}
             >
-                {firstField}
+                <div className="grid min-w-0">{firstField}</div>
                 <span
                     aria-hidden="true"
-                    className="h-5 bg-[var(--field-border)]"
+                    className="h-5 self-center bg-[var(--field-border)]"
                 />
-                {secondField}
+                <div className="grid min-w-0">{secondField}</div>
             </div>
         </fieldset>
     );
