@@ -608,10 +608,6 @@
     --time-calendar-entry-shift: 0px;
 }
 
-.time-calendar[data-calendar-selection-draft] [data-calendar-haptic-selection] {
-    display: none;
-}
-
 /* Line up the first card with standalone cards, including when it has an overlap. */
 .time-calendar-event-lane
     > :is(
@@ -988,12 +984,6 @@
 }
 
 @media (width < 48rem) {
-    .app-page-scroll:has([data-calendar-native-drag]) {
-        /* Allow panning until the hold, then let Safari track the switch
-           without scrolling or cancelling its touch events. */
-        overflow-y: hidden;
-    }
-
     /* Use the day lane's inline start so the divider follows the measured time axis. */
     .time-calendar[data-view='day'] .time-calendar-day::before {
         position: fixed;
@@ -1498,6 +1488,15 @@
 }
 
 @media (width < 48rem) {
+    /* Keep vertical rubber-banding inside the content region on mobile. */
+    :root:has(.mobile-tab-bar) {
+        overscroll-behavior-y: none;
+    }
+
+    .app-page-scroll {
+        overscroll-behavior-y: contain;
+    }
+
     /* The pinned day header covers the top bar's downward shadow. */
     :root:has([data-time-day-stuck]) .mobile-page-header {
         box-shadow: none;
