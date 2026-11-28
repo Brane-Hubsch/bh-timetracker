@@ -42,7 +42,7 @@ use Laravel\Passport\HasApiTokens;
  * @property list<string>|null $sidebar_hidden_items
  * @property list<string>|null $sidebar_order
  * @property Theme $theme
- * @property Accent|null $accent Own accent colour; null follows the organization
+ * @property Accent|string|null $accent Own accent preset or hex colour; null follows the organization
  * @property ContrastPreference $contrast
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -84,9 +84,17 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             'sidebar_hidden_items' => 'array',
             'sidebar_order' => 'array',
             'theme' => Theme::class,
-            'accent' => Accent::class,
             'contrast' => ContrastPreference::class,
         ];
+    }
+
+    /** @return Attribute<Accent|string|null, Accent|string|null> */
+    protected function accent(): Attribute
+    {
+        return Attribute::make(
+            get: fn (mixed $value): Accent|string|null => is_string($value) ? (Accent::tryFrom($value) ?? $value) : null,
+            set: fn (Accent|string|null $value): ?string => $value instanceof Accent ? $value->value : $value,
+        );
     }
 
     /**

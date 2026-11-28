@@ -20,11 +20,13 @@ class ThemePreferences
     public static function for(?User $user, ?Organization $organization): array
     {
         $organizationAccent = $organization->accent ?? Accent::Violet;
+        $ownAccent = $user?->accent;
+        $ownAccent = $ownAccent instanceof Accent ? $ownAccent->value : $ownAccent;
 
         return [
             'theme' => ($user->theme ?? Theme::Standard)->value,
-            'accent' => ($user->accent ?? $organizationAccent)->value,
-            'ownAccent' => $user?->accent?->value,
+            'accent' => $ownAccent ?? $organizationAccent->value,
+            'ownAccent' => $ownAccent,
             'organizationAccent' => $organizationAccent->value,
             'contrast' => ($user->contrast ?? ContrastPreference::System)->value,
         ];

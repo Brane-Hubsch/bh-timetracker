@@ -4,16 +4,21 @@ import { Building2 } from 'lucide-react';
 import { SegmentedControl } from '@/components/segmented-control';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useTranslation } from '@/lib/i18n';
-import { ACCENTS, THEMES } from '@/lib/theme';
-import type { AccentName, ContrastPreference, ThemeName } from '@/lib/theme';
+import { ACCENTS, THEMES, accentColorsFor, isCustomAccent } from '@/lib/theme';
+import type {
+    AccentColor,
+    AccentName,
+    ContrastPreference,
+    ThemeName,
+} from '@/lib/theme';
 
 const ORGANIZATION = 'organization';
 
 function useAccentColor() {
     const { resolvedAppearance } = useAppearance();
 
-    return (accent: AccentName): string => {
-        const colors = ACCENTS.find(({ id }) => id === accent) ?? ACCENTS[0];
+    return (accent: AccentColor): string => {
+        const colors = accentColorsFor(accent);
 
         return resolvedAppearance === 'dark' ? colors.dark : colors.light;
     };
@@ -34,7 +39,7 @@ export function ThemePicker({
 }: {
     value: ThemeName;
     /** Accent shown in the previews. */
-    accent: AccentName;
+    accent: AccentColor;
     onChange: (theme: ThemeName) => void;
     'aria-describedby'?: string;
 }) {
@@ -155,7 +160,7 @@ export function AccentPicker({
     'data-test': dataTest,
     isDisabled = false,
 }: {
-    value: AccentName | null;
+    value: AccentColor | null;
     onChange: (accent: AccentName | null) => void;
     organizationAccent?: AccentName;
     isDisabled?: boolean;
@@ -175,7 +180,7 @@ export function AccentPicker({
             aria-describedby={describedBy}
             selectionMode="single"
             disallowEmptySelection
-            selectedKeys={new Set<Key>([selected])}
+            selectedKeys={new Set<Key>(isCustomAccent(value) ? [] : [selected])}
             onSelectionChange={(keys) => {
                 const [key] = [...keys];
 

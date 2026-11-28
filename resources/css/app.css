@@ -265,6 +265,67 @@
     --accent-foreground: oklch(0.16 0.03 0);
 }
 
+/* Keep the chosen colour when it has enough contrast for text on the theme's
+ * surfaces. Otherwise mix towards black or white in linear RGB. The weighted
+ * channels are the WCAG relative luminance, which is linear in this space. */
+:root:not(.dark)[data-accent^='#'] {
+    --custom-accent-luminance-limit: 0.13;
+    --accent: color(
+        from var(--custom-accent) srgb-linear
+            calc(
+                r * var(--custom-accent-luminance-limit) /
+                    max(
+                        var(--custom-accent-luminance-limit),
+                        0.2126 * r + 0.7152 * g + 0.0722 * b
+                    )
+            )
+            calc(
+                g * var(--custom-accent-luminance-limit) /
+                    max(
+                        var(--custom-accent-luminance-limit),
+                        0.2126 * r + 0.7152 * g + 0.0722 * b
+                    )
+            )
+            calc(
+                b * var(--custom-accent-luminance-limit) /
+                    max(
+                        var(--custom-accent-luminance-limit),
+                        0.2126 * r + 0.7152 * g + 0.0722 * b
+                    )
+            )
+    );
+    --accent-foreground: white;
+}
+
+:root.dark[data-accent^='#'] {
+    --custom-accent-inverse-luminance-limit: 0.56;
+    --accent: color(
+        from var(--custom-accent) srgb-linear
+            calc(
+                1 - (1 - r) * var(--custom-accent-inverse-luminance-limit) /
+                    max(
+                        var(--custom-accent-inverse-luminance-limit),
+                        1 - 0.2126 * r - 0.7152 * g - 0.0722 * b
+                    )
+            )
+            calc(
+                1 - (1 - g) * var(--custom-accent-inverse-luminance-limit) /
+                    max(
+                        var(--custom-accent-inverse-luminance-limit),
+                        1 - 0.2126 * r - 0.7152 * g - 0.0722 * b
+                    )
+            )
+            calc(
+                1 - (1 - b) * var(--custom-accent-inverse-luminance-limit) /
+                    max(
+                        var(--custom-accent-inverse-luminance-limit),
+                        1 - 0.2126 * r - 0.7152 * g - 0.0722 * b
+                    )
+            )
+    );
+    --accent-foreground: black;
+}
+
 :root:not(.dark)[data-contrast='more'] {
     --muted: oklch(0.4 0.01 286);
     --border: oklch(0.62 0.01 286);
