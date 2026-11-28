@@ -780,7 +780,11 @@ export function TimeCalendar({
                                 })}
                             </span>
                             <span
-                                className={`flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums ${info.isToday ? 'bg-accent text-accent-foreground' : ''}`}
+                                className={cn(
+                                    'time-calendar-day-number flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
+                                    info.isToday &&
+                                        'bg-accent text-accent-foreground',
+                                )}
                             >
                                 {formatDate(day, intlLocale, {
                                     day: 'numeric',
