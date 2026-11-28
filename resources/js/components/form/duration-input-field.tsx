@@ -1,4 +1,4 @@
-import { Description, InputGroup, Label, TextField } from '@heroui/react';
+import { FieldError, InputGroup, Label, TextField } from '@heroui/react';
 import type { ReactNode } from 'react';
 import { useRef } from 'react';
 import { TimePicker, useTimePickerField } from '@/components/form/time-picker';
@@ -97,9 +97,7 @@ export function DurationInputField({
                     />
                 </InputGroup.Suffix>
             </InputGroup>
-            {error && (
-                <Description className="text-danger">{error}</Description>
-            )}
+            <FieldError>{error}</FieldError>
         </TextField>
     );
 }

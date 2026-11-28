@@ -1,4 +1,4 @@
-import { Button, Description, Label, TextArea, TextField } from '@heroui/react';
+import { Button, FieldError, Label, TextArea, TextField } from '@heroui/react';
 import { router } from '@inertiajs/react';
 import { parseDate } from '@internationalized/date';
 import { Trash2 } from 'lucide-react';
@@ -499,15 +499,12 @@ export function AbsenceForm({
                     set({ note });
                 }}
                 isInvalid={Boolean(errors.note)}
+                validationBehavior="aria"
                 className="w-full"
             >
                 <Label>{t('Description')}</Label>
                 <TextArea rows={3} placeholder={t('Optional')} />
-                {errors.note && (
-                    <Description className="text-danger">
-                        {errors.note}
-                    </Description>
-                )}
+                <FieldError>{errors.note}</FieldError>
             </TextField>
 
             <p

@@ -5,14 +5,15 @@ export function useFormErrors() {
 
     const clearErrors = (...fields: string[]) => {
         setErrors((current) => {
-            const remaining = Object.entries(current).filter(
+            const entries = Object.entries(current);
+            const remaining = entries.filter(
                 ([key]) =>
                     !fields.some(
                         (field) => key === field || key.startsWith(`${field}.`),
                     ),
             );
 
-            return remaining.length === Object.keys(current).length
+            return remaining.length === entries.length
                 ? current
                 : Object.fromEntries(remaining);
         });

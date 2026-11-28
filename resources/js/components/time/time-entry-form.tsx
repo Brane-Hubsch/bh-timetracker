@@ -2,8 +2,8 @@ import {
     Alert,
     Avatar,
     Button,
-    Description,
     Dropdown,
+    FieldError,
     Label,
     Tabs,
     TextArea,
@@ -998,6 +998,7 @@ export function TimeEntryForm({
                                     set({ description });
                                 }}
                                 isInvalid={Boolean(errors.description)}
+                                validationBehavior="aria"
                                 className="w-full"
                             >
                                 <Label>{t('Description')}</Label>
@@ -1008,11 +1009,7 @@ export function TimeEntryForm({
                                         placeholder={t('What did you work on?')}
                                     />
                                 </div>
-                                {errors.description && (
-                                    <Description className="text-danger">
-                                        {errors.description}
-                                    </Description>
-                                )}
+                                <FieldError>{errors.description}</FieldError>
                             </TextField>
 
                             <TagInput
