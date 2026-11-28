@@ -154,7 +154,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 - Väljaren visar vald period i huvudet. Idag visas i huvudet när ett annat datum är valt i dagvyn. I veckovyn används snabbvalet Denna vecka. Byt mellan Dag och Vecka i väljaren. I läget Dag väljs ett enskilt datum och i läget Vecka väljs hela veckor. Veckan börjar enligt organisationens inställning. Lista använder samma veckoväljare.
 - I mobilens kalenderhuvud visas bara namnet för de relativa dagarna och veckorna. För övriga perioder visas även datumet.
 - På mobil ligger Igår, Idag och I morgon på en rad i dagväljaren. Svep åt vänster över månadsrutnätet för nästa månad och åt höger för föregående, eller använd månadspilarna.
-- Ett sidledes svep över kalendern på mobil byter dag i dagvyn och vecka i veckovyn.
+- Ett sidledes svep över kalendern på mobil byter dag i dagvyn och vecka i veckovyn. I dagvyn i mobilens webbläsare låser den första tydliga rörelsen gesten till antingen dagbyte eller lodrät scroll tills fingret lyfts.
 - Dra i tom yta för att skapa post → öppnar formulär förifyllt med tid.
 - På pekskärm skapar ett långtryck i tom tidsyta ett entimmesblock med fingret nära blockets mitt, avrundat till närmaste kvart. Flytta blocket i 15-minuterssteg och släpp för att öppna Rapportera tid med vald dag, start- och sluttid. Vid dygnets kanter ryms hela blocket i dagen.
 - På desktop kan du dra för att flytta, dra i kanten för att ändra längd och klicka för att redigera.

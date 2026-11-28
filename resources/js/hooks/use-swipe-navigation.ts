@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import type { TouchEvent } from 'react';
+import {
+    useEffect,
+    useEffectEvent,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from 'react';
+import type { TouchEvent as ReactTouchEvent } from 'react';
 
 type Direction = -1 | 1;
 
@@ -14,6 +20,7 @@ type Gesture = {
 
 type Options = {
     followFinger?: boolean;
+    lockBrowserScroll?: boolean;
     canStart?: (target: Element) => boolean;
     canContinue?: (viewport: HTMLDivElement) => boolean;
     onSwipeIntent?: (direction: Direction) => void;
@@ -22,6 +29,7 @@ type Options = {
 
 export function useSwipeNavigation({
     followFinger = true,
+    lockBrowserScroll = false,
     canStart = () => true,
     canContinue = () => true,
     onSwipeIntent,
@@ -80,7 +88,7 @@ export function useSwipeNavigation({
         animation.current.onfinish = finish;
     }
 
-    function start(event: TouchEvent<HTMLDivElement>) {
+    function start(event: ReactTouchEvent<HTMLDivElement>) {
         const viewport = event.currentTarget;
 
         if (event.touches.length !== 1) {
@@ -110,14 +118,18 @@ export function useSwipeNavigation({
         };
     }
 
-    function move(event: TouchEvent<HTMLDivElement>) {
+    function move(
+        event: TouchEvent,
+        viewport: HTMLDivElement,
+        lockScroll: boolean,
+    ) {
         const current = gesture.current;
-        const viewport = event.currentTarget;
         if (!current || !track.current) {
             return;
         }
 
-        if (!canContinue(viewport)) {
+        // Once the browser owns the scroll, this touch cannot turn into a swipe.
+        if (!canContinue(viewport) || (lockScroll && !event.cancelable)) {
             settle();
             return;
         }
@@ -147,6 +159,10 @@ export function useSwipeNavigation({
             viewport.dataset.swiping = 'true';
         }
 
+        if (lockScroll) {
+            event.preventDefault();
+        }
+
         const direction = x <= 0 ? 1 : -1;
         if (current.direction !== direction) {
             current.direction = direction;
@@ -160,7 +176,30 @@ export function useSwipeNavigation({
         }
     }
 
-    function end(event: TouchEvent<HTMLDivElement>) {
+    const moveFromEffect = useEffectEvent(move);
+
+    useLayoutEffect(() => {
+        const viewport = frame.current;
+        if (!viewport) return;
+
+        const lockScroll =
+            lockBrowserScroll &&
+            !window.matchMedia('(display-mode: standalone)').matches &&
+            !(navigator as Navigator & { standalone?: boolean }).standalone;
+        const onMove = (event: TouchEvent) =>
+            moveFromEffect(event, viewport, lockScroll);
+
+        // React's delegated touchmove listener is passive. The day swipe in a
+        // browser tab needs to cancel native scrolling when horizontal wins.
+        viewport.addEventListener('touchmove', onMove, {
+            capture: true,
+            passive: !lockScroll,
+        });
+
+        return () => viewport.removeEventListener('touchmove', onMove, true);
+    }, [lockBrowserScroll]);
+
+    function end(event: ReactTouchEvent<HTMLDivElement>) {
         const current = gesture.current;
         if (!current) {
             return;
@@ -195,7 +234,6 @@ export function useSwipeNavigation({
         viewportProps: {
             ref: frame,
             onTouchStartCapture: start,
-            onTouchMoveCapture: move,
             onTouchEndCapture: end,
             onTouchCancelCapture: () => {
                 if (gesture.current) settle();

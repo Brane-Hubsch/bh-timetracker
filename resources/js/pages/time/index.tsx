@@ -730,6 +730,7 @@ export default function TimeIndex({
                     ) : isMobile ? (
                         <CalendarSwipe
                             key={periodKey}
+                            lockBrowserScroll={view === 'day'}
                             onSwipeIntent={prefetchPeriod}
                             onSwipe={swipeToPeriod}
                             renderAdjacent={(direction) => {

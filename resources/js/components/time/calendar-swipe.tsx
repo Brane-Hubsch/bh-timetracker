@@ -5,6 +5,7 @@ type Direction = -1 | 1;
 
 type Props = {
     children: ReactNode;
+    lockBrowserScroll: boolean;
     renderAdjacent: (direction: Direction) => ReactNode;
     onSwipeIntent: (direction: Direction) => void;
     onSwipe: (direction: Direction, onFinish: () => void) => void;
@@ -12,11 +13,13 @@ type Props = {
 
 export function CalendarSwipe({
     children,
+    lockBrowserScroll,
     renderAdjacent,
     onSwipeIntent,
     onSwipe,
 }: Props) {
     const { adjacent, track, viewportProps } = useSwipeNavigation({
+        lockBrowserScroll,
         canStart: (target) => {
             const control = target.closest(
                 'button, [role="button"], .time-calendar-resizer',
