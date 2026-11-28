@@ -145,6 +145,7 @@ All åtkomst scopas till **aktiv organisation**. Ingen query mot tenant-data uta
 
 **Lista** – egen post i sidomenyn och under Mer på mobil. Poster för vald vecka grupperas per dag med dagssumma och veckosumma, redigera inline eller i drawer, duplicera post, ta bort med ångra.
 
+- Dagar och tidsposter visas med nyast först. Dagens rubrik är Idag. Kommande dagar utan rapporterad tid eller egen frånvaro visas med dämpade rubriker. Knappen Föregående vecka längst ner byter vecka och visar listan från toppen.
 - På mobil delar Lista kalenderns fasta sidhuvud med veckosumma, periodväljare och personavatar. Listan går kant till kant och dagrubrikerna ligger kvar under sidhuvudet när man scrollar genom dagen. Tidsposterna delar radlayout med den detaljerade rapporten och visar projekt och varaktighet överst, följt av beskrivning, taggar och klockslag med kundnamn. Svep i sidled för att byta vecka. Plusknappen och, när den är tillgänglig, Kopiera föregående vecka ligger nere till höger.
 - Helgdagar visas direkt under dagrubriken på både mobil och desktop, även när dagen saknar tidsposter och frånvaro.
 

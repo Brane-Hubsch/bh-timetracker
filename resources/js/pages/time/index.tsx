@@ -431,15 +431,19 @@ export default function TimeIndex({
     };
     const visit = (
         changes: Parameters<typeof pageData>[0],
-        onFinish?: () => void,
+        {
+            onFinish,
+            preserveScroll,
+        }: { onFinish?: () => void; preserveScroll?: boolean } = {},
     ) => {
         const { href, data } = pageData(changes);
 
         router.get(href, data, {
             preserveScroll:
-                !isMobile ||
-                !changes.view ||
-                (changes.view === 'list') === isList,
+                preserveScroll ??
+                (!isMobile ||
+                    !changes.view ||
+                    (changes.view === 'list') === isList),
             preserveState: true,
             replace: true,
             showProgress: !onFinish,
@@ -450,7 +454,7 @@ export default function TimeIndex({
     const step = view === 'day' ? 1 : 7;
     const adjacentDate = (direction: -1 | 1) => addDays(date, step * direction);
     const swipeToPeriod = (direction: -1 | 1, onFinish: () => void) =>
-        visit({ date: adjacentDate(direction) }, onFinish);
+        visit({ date: adjacentDate(direction) }, { onFinish });
 
     function prefetchPeriod(direction: -1 | 1) {
         const nextDate = adjacentDate(direction);
@@ -709,6 +713,14 @@ export default function TimeIndex({
                             isMobile={isMobile}
                             onSwipe={swipeToPeriod}
                             onSwipeIntent={prefetchPeriod}
+                            onPreviousWeek={() =>
+                                visit(
+                                    { date: adjacentDate(-1) },
+                                    {
+                                        preserveScroll: false,
+                                    },
+                                )
+                            }
                             onEdit={(entry) => setDraft(draftFromEntry(entry))}
                             onEditAbsence={(absence) =>
                                 setAbsenceDraft(draftFromAbsence(absence))
