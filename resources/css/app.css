@@ -1002,8 +1002,44 @@
     border-color: transparent;
 }
 
-.time-calendar-weekend {
+.time-calendar-weekend,
+.time-calendar-body > [role='row']:has(> .time-calendar-absence-header) {
     background-color: color-mix(in oklab, var(--foreground) 1.5%, transparent);
+}
+
+.time-calendar-body > [role='row']:has(> .time-calendar-absence-header) {
+    --fc-classic-today: transparent;
+}
+
+.time-calendar .time-calendar-absence-header-inner {
+    margin-block: 0;
+}
+
+.time-calendar :is(.time-calendar-absence-top, .time-calendar-absence-bottom) {
+    min-height: 2px;
+}
+
+.time-calendar .time-calendar-absence-divider {
+    border: 0;
+    border-block-start: 1px solid var(--separator);
+    padding: 0;
+}
+
+.time-calendar .time-calendar-absence {
+    border: 0;
+    border-radius: 0;
+    margin-block-end: 0;
+    padding-block: 2px;
+}
+
+.time-calendar-absence > .time-calendar-event-inner {
+    padding-block: 0;
+}
+
+/* Keep a keyboard focus indicator inside the block when the dialog restores focus. */
+.time-calendar .time-calendar-absence:focus-visible {
+    outline: none;
+    text-decoration: underline;
 }
 
 .time-calendar[data-holidays] {
