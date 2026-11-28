@@ -31,7 +31,9 @@ import type {
     ColleagueOff,
     RunningTimer,
     TimeEntry,
+    TimeReportMode,
 } from '@/types';
+import { CalendarDayActions } from './time-actions-menu';
 import { useCalendarDragHaptics } from './use-calendar-drag-haptics';
 import {
     CALENDAR_EVENT_LONG_PRESS_DELAY,
@@ -162,6 +164,8 @@ type Props = {
     floatingAction?: ReactNode;
     isPreview?: boolean;
     hasSelectionDraft: boolean;
+    onStartTimer?: () => void;
+    onReportDay: (mode: TimeReportMode, day: string) => void;
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
     /** Drag across days in the all-day row; the first and last day. */
@@ -266,6 +270,8 @@ export function TimeCalendar({
     floatingAction,
     isPreview = false,
     hasSelectionDraft,
+    onStartTimer,
+    onReportDay,
     onSelect,
     onSelectDays,
     onEdit,
@@ -291,6 +297,9 @@ export function TimeCalendar({
     const lastTouchSlot = useRef<{ start: number; end: number } | null>(null);
     const selection = useRef<'idle' | 'selecting' | 'cancelled'>('idle');
     const [dayLanes, setDayLanes] = useState<HTMLElement[]>([]);
+    const [dayHeaders, setDayHeaders] = useState<
+        { element: HTMLElement; day: string }[]
+    >([]);
     const [weekNumberHeader, setWeekNumberHeader] =
         useState<HTMLElement | null>(null);
     const isSwiping = () =>
@@ -734,6 +743,22 @@ export function TimeCalendar({
                     )
                 }
                 dayHeaderClass="time-calendar-day-header"
+                dayHeaderDidMount={({ el, date }) => {
+                    if (!isPreview) {
+                        setDayHeaders((headers) => [
+                            ...headers,
+                            {
+                                element: el,
+                                day: fromCalendarDate(date).slice(0, 10),
+                            },
+                        ]);
+                    }
+                }}
+                dayHeaderWillUnmount={({ el }) =>
+                    setDayHeaders((headers) =>
+                        headers.filter(({ element }) => element !== el),
+                    )
+                }
                 nowIndicatorHeaderClass="time-calendar-now-arrow"
                 nowIndicatorLineClass="time-calendar-now"
                 dayHeaderContent={(info) => {
@@ -741,7 +766,7 @@ export function TimeCalendar({
                     const total = dayTotal(day);
 
                     return (
-                        <span className="flex flex-col items-center gap-1 py-1.5">
+                        <span className="time-calendar-day-label flex flex-col items-center gap-1 py-1.5">
                             <span
                                 className={cn(
                                     'text-xs font-medium first-letter:uppercase',
@@ -1099,6 +1124,22 @@ export function TimeCalendar({
                     }
                 }}
             />
+            {/* FullCalendar hides the custom day label from assistive technology. */}
+            {!isPreview &&
+                !isMobile &&
+                dayHeaders.map(({ element, day }) =>
+                    createPortal(
+                        <CalendarDayActions
+                            dateLabel={formatDate(day, intlLocale, {
+                                dateStyle: 'full',
+                            })}
+                            onStartTimer={onStartTimer}
+                            onReport={(mode) => onReportDay(mode, day)}
+                        />,
+                        element,
+                        day,
+                    ),
+                )}
             {/* FullCalendar marks custom week-number content as aria-hidden. */}
             {!isPreview &&
                 weekNumberHeader &&
