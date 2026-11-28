@@ -172,12 +172,6 @@ export function TimeEntryList({
                                               month: 'short',
                                           })}
                                 </h2>
-                                {isToday && (
-                                    <span
-                                        aria-hidden="true"
-                                        className="h-0.5 grow rounded-full bg-danger"
-                                    />
-                                )}
                                 <span
                                     className={cn(
                                         'shrink-0 font-medium tabular-nums max-md:text-muted',
