@@ -164,7 +164,6 @@ type Props = {
     floatingAction?: ReactNode;
     isPreview?: boolean;
     hasSelectionDraft: boolean;
-    onStartTimer?: () => void;
     onReportDay: (mode: TimeReportMode, day: string) => void;
     /** Drag on an empty slot. */
     onSelect: (start: string, end: string) => void;
@@ -270,7 +269,6 @@ export function TimeCalendar({
     floatingAction,
     isPreview = false,
     hasSelectionDraft,
-    onStartTimer,
     onReportDay,
     onSelect,
     onSelectDays,
@@ -781,7 +779,7 @@ export function TimeCalendar({
                             </span>
                             <span
                                 className={cn(
-                                    'time-calendar-day-number flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
+                                    'flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
                                     info.isToday &&
                                         'bg-accent text-accent-foreground',
                                 )}
@@ -1137,7 +1135,6 @@ export function TimeCalendar({
                             dateLabel={formatDate(day, intlLocale, {
                                 dateStyle: 'full',
                             })}
-                            onStartTimer={onStartTimer}
                             onReport={(mode) => onReportDay(mode, day)}
                         />,
                         element,

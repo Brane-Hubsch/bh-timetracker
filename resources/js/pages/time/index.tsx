@@ -619,7 +619,6 @@ export default function TimeIndex({
         colleaguesOff,
         floatingAction: copyPeriodButton,
         hasSelectionDraft: draft?.openedFrom === 'calendar',
-        onStartTimer,
         onReportDay: openReport,
         onSelectDays: newAbsence,
         onEditAbsence: (absence) => setAbsenceDraft(draftFromAbsence(absence)),

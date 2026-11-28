@@ -93,8 +93,8 @@ export function TimeActionsMenu({
 
 export function CalendarDayActions({
     dateLabel,
-    ...handlers
-}: TimeActionHandlers & { dateLabel: string }) {
+    onReport,
+}: Pick<TimeActionHandlers, 'onReport'> & { dateLabel: string }) {
     const { t } = useTranslation();
 
     return (
@@ -103,7 +103,7 @@ export function CalendarDayActions({
             aria-label={dateLabel}
             className="time-calendar-day-actions"
         >
-            {timeActions(handlers).map(({ id, label, Icon, run }) => (
+            {timeActions({ onReport }).map(({ id, label, Icon, run }) => (
                 <Tooltip key={id} delay={350} closeDelay={0}>
                     <Button
                         isIconOnly
@@ -118,7 +118,7 @@ export function CalendarDayActions({
                             className="size-3 opacity-35 group-hover:opacity-100 group-focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-160 motion-safe:ease-out-soft"
                         />
                     </Button>
-                    <Tooltip.Content placement="left">
+                    <Tooltip.Content placement="bottom">
                         {t(label)}
                     </Tooltip.Content>
                 </Tooltip>

@@ -1067,12 +1067,10 @@
 
     .time-calendar-day-actions {
         position: absolute;
-        inset-block: 0;
-        inset-inline-end: 0.25rem;
-        inline-size: 1.5rem;
+        inset-block-start: 0.25rem;
+        inset-inline: 0.25rem;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
+        justify-content: space-between;
         opacity: 0;
         pointer-events: none;
     }
@@ -1095,30 +1093,14 @@
         pointer-events: auto;
     }
 
-    @container (width < 5.5rem) {
-        .time-calendar-day-label {
-            padding-inline-end: calc(5.5rem - 100cqi);
-        }
-    }
-
-    @container (width < 3.75rem) {
+    @container (width < 5rem) {
         .time-calendar-day-actions {
-            inset-inline-end: 0;
+            inset-block-start: 0;
+            inset-inline: 0;
         }
 
         .time-calendar-day-label {
-            min-block-size: 4.5rem;
-            padding-inline-end: 1.5rem;
-        }
-
-        .time-calendar-day-label > span {
-            font-size: 0.625rem;
-        }
-
-        .time-calendar-day-label > .time-calendar-day-number {
-            width: 1.375rem;
-            height: 1.375rem;
-            font-size: 0.75rem;
+            padding-block-start: 1.5rem;
         }
     }
 }
