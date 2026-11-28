@@ -1,3 +1,4 @@
+import { Button } from '@heroui/react';
 import { CalendarDays, CalendarOff, Clock } from 'lucide-react';
 import { useLayoutEffect } from 'react';
 import { ProjectDot } from '@/components/project-dot';
@@ -27,6 +28,7 @@ type Props = {
     isMobile: boolean;
     onSwipe: (direction: -1 | 1, onFinish: () => void) => void;
     onSwipeIntent: (direction: -1 | 1) => void;
+    onPreviousWeek: () => void;
     onEdit: (entry: TimeEntry) => void;
     onEditAbsence: (absence: Absence) => void;
     onAdd: (date: string) => void;
@@ -45,6 +47,7 @@ export function TimeEntryList({
     isMobile,
     onSwipe,
     onSwipeIntent,
+    onPreviousWeek,
     onEdit,
     onEditAbsence,
     onAdd,
@@ -123,10 +126,10 @@ export function TimeEntryList({
 
     const list = (
         <div ref={track} className="max-md:pb-20 md:grid md:gap-4">
-            {dates.map((date) => {
-                const dayEntries = entries.filter(
-                    (entry) => entry.date === date,
-                );
+            {dates.toReversed().map((date) => {
+                const dayEntries = entries
+                    .filter((entry) => entry.date === date)
+                    .reverse();
                 const total = dayEntries.reduce(
                     (sum, entry) => sum + entry.durationSeconds,
                     0,
@@ -137,13 +140,12 @@ export function TimeEntryList({
                 );
                 const holiday = holidayByDate.get(date);
                 const dayOff = colleaguesOff.filter((off) => covers(off, date));
+                const isToday = date === today;
+                const hasTime = dayEntries.length > 0 || dayAbsences.length > 0;
+                const hasDayRows = hasTime || Boolean(holiday);
+                const isEmptyFuture = date > today && !hasTime;
 
-                if (
-                    dayEntries.length === 0 &&
-                    dayAbsences.length === 0 &&
-                    !holiday &&
-                    date !== today
-                ) {
+                if (date < today && !hasDayRows) {
                     return null;
                 }
 
@@ -154,9 +156,15 @@ export function TimeEntryList({
                         data-test="time-day"
                     >
                         <header className="max-md:sticky max-md:top-0 max-md:z-10 max-md:bg-surface max-md:px-4 max-md:py-1.5 max-md:data-[time-day-stuck]:shadow-[0_1px_4px_#0000000a] md:space-y-2 md:px-1">
-                            <div className="flex items-start justify-between gap-2 text-[13px]/[18px] md:text-sm">
-                                <h2 className="font-semibold first-letter:uppercase md:font-medium">
-                                    {date === today
+                            <div className="flex items-center justify-between gap-2 text-[13px]/[18px] md:text-sm">
+                                <h2
+                                    aria-current={isToday ? 'date' : undefined}
+                                    className={cn(
+                                        'font-semibold first-letter:uppercase md:font-medium',
+                                        isEmptyFuture && 'text-muted',
+                                    )}
+                                >
+                                    {isToday
                                         ? t('Today')
                                         : formatDate(date, intlLocale, {
                                               weekday: 'long',
@@ -164,7 +172,18 @@ export function TimeEntryList({
                                               month: 'short',
                                           })}
                                 </h2>
-                                <span className="shrink-0 font-medium tabular-nums max-md:text-muted">
+                                {isToday && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="h-0.5 grow rounded-full bg-danger"
+                                    />
+                                )}
+                                <span
+                                    className={cn(
+                                        'shrink-0 font-medium tabular-nums max-md:text-muted',
+                                        isEmptyFuture && 'text-muted',
+                                    )}
+                                >
                                     {formatDuration(total)}
                                 </span>
                             </div>
@@ -181,7 +200,10 @@ export function TimeEntryList({
                                 </p>
                             )}
                         </header>
-                        <ul className="md:divide-y md:divide-separator md:overflow-hidden md:rounded-2xl md:bg-surface md:shadow-surface">
+                        <ul
+                            hidden={!hasDayRows && !isToday}
+                            className="md:divide-y md:divide-separator md:overflow-hidden md:rounded-2xl md:bg-surface md:shadow-surface"
+                        >
                             {holiday && (
                                 <li
                                     className="flex items-center gap-2 bg-danger-soft px-4 py-2.5 text-[13px]/[18px] font-medium text-danger-soft-foreground"
@@ -255,23 +277,18 @@ export function TimeEntryList({
                                     )}
                                 </li>
                             ))}
-                            {dayEntries.length === 0 &&
-                                dayAbsences.length === 0 &&
-                                !holiday && (
-                                    <li>
-                                        <button
-                                            type="button"
-                                            onClick={() => onAdd(date)}
-                                            className="flex w-full items-center justify-center gap-2 p-6 text-sm text-muted transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
-                                        >
-                                            <Clock
-                                                className="size-4"
-                                                aria-hidden
-                                            />
-                                            {t('No time reported yet')}
-                                        </button>
-                                    </li>
-                                )}
+                            {isToday && !hasDayRows && (
+                                <li>
+                                    <button
+                                        type="button"
+                                        onClick={() => onAdd(date)}
+                                        className="flex w-full items-center justify-center gap-2 p-6 text-sm text-muted transition-colors hover:bg-surface-secondary focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+                                    >
+                                        <Clock className="size-4" aria-hidden />
+                                        {t('No time reported yet')}
+                                    </button>
+                                </li>
+                            )}
                         </ul>
                     </section>
                 );
@@ -279,7 +296,7 @@ export function TimeEntryList({
             {entries.length === 0 &&
                 absences.length === 0 &&
                 holidays.length === 0 &&
-                !dates.includes(today) && (
+                dates.every((date) => date < today) && (
                     <p className="text-center max-md:flex max-md:flex-col max-md:items-center max-md:gap-3 max-md:px-4 max-md:pt-[min(12.5rem,25svh)] max-md:text-[15px] max-md:font-medium md:rounded-2xl md:bg-surface md:p-8 md:text-sm md:text-muted md:shadow-surface">
                         <span className="grid size-13 place-items-center rounded-full bg-default text-muted md:hidden">
                             <Clock className="size-5" aria-hidden />
@@ -287,6 +304,15 @@ export function TimeEntryList({
                         {t('No time reported this week.')}
                     </p>
                 )}
+            <div className="flex justify-center max-md:pt-4">
+                <Button
+                    variant="tertiary"
+                    size={isMobile ? 'lg' : 'md'}
+                    onPress={onPreviousWeek}
+                >
+                    {t('Previous week')}
+                </Button>
+            </div>
         </div>
     );
 
