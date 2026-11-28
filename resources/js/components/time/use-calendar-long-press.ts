@@ -55,11 +55,6 @@ type Press = {
     timeout: number;
     active: boolean;
     range: ReturnType<typeof rangeAtTouch>;
-    nativeHaptics?: {
-        snap: (start: string, end: string) => void;
-        trackMove: (event: TouchEvent) => boolean;
-        prepareRelease: () => void;
-    };
 };
 
 export function useCalendarLongPress(
@@ -68,10 +63,8 @@ export function useCalendarLongPress(
     calendarKey: string,
     enabled: boolean,
     onSelect: (start: string, end: string) => void,
-    onArmHaptics: (target: Element, touch: Touch) => Press['nativeHaptics'],
 ) {
     const reportTime = useEffectEvent(onSelect);
-    const armHaptics = useEffectEvent(onArmHaptics);
 
     useLayoutEffect(() => {
         const container = containerRef.current;
@@ -84,7 +77,6 @@ export function useCalendarLongPress(
             | undefined;
         let press: Press | null = null;
         let touchId: number | null = null;
-        let reportFrame = 0;
 
         function unselectEvent() {
             // CalendarApi.unselect() only clears date ranges, including the form's draft.
@@ -101,13 +93,7 @@ export function useCalendarLongPress(
 
             press.range = range;
             if (range) {
-                if (withHaptics) {
-                    if (press.nativeHaptics) {
-                        press.nativeHaptics.snap(range.start, range.end);
-                    } else if (isAndroidTouch(true)) {
-                        vibrateLightly();
-                    }
-                }
+                if (withHaptics && isAndroidTouch(true)) vibrateLightly();
                 api?.select(`${range.start}:00Z`, `${range.end}:00Z`);
             } else {
                 api?.unselect();
@@ -120,7 +106,6 @@ export function useCalendarLongPress(
             window.clearTimeout(press.timeout);
             if (press.active) {
                 container?.removeAttribute('data-calendar-editing');
-                container?.removeAttribute('data-calendar-native-drag');
                 if (!keepPreview) api?.unselect();
             }
             press = null;
@@ -150,16 +135,12 @@ export function useCalendarLongPress(
                 origin,
                 active: false,
                 range: null,
-                nativeHaptics: armHaptics(target, origin),
                 timeout: window.setTimeout(() => {
                     if (!press || container.closest('[data-swiping]')) return;
 
                     unselectEvent();
                     press.active = true;
                     container.setAttribute('data-calendar-editing', '');
-                    if (press.nativeHaptics) {
-                        container.setAttribute('data-calendar-native-drag', '');
-                    }
                     preview(origin);
                 }, HOLD_DELAY),
             };
@@ -175,13 +156,7 @@ export function useCalendarLongPress(
 
             if (press.active) {
                 preview(touch);
-                if (press.nativeHaptics?.trackMove(event)) {
-                    // Position the switch for this snap before Safari runs its
-                    // default action or FullCalendar can cancel the move.
-                    event.stopPropagation();
-                } else if (!press.nativeHaptics && event.cancelable) {
-                    event.preventDefault();
-                }
+                if (event.cancelable) event.preventDefault();
             } else if (
                 Math.max(
                     Math.abs(touch.clientX - press.origin.clientX),
@@ -207,24 +182,13 @@ export function useCalendarLongPress(
             }
 
             const range = press?.range;
-            const nativeHaptics = range && press?.nativeHaptics;
-            // FullCalendar did not see this touch start. Suppress its emulated
-            // mouse events unless Safari needs the native switch release.
-            if (!nativeHaptics && event.cancelable) event.preventDefault();
+            // FullCalendar did not see this touch start. Suppress its emulated mouse events.
+            if (event.cancelable) event.preventDefault();
             finish(Boolean(range));
             if (!range) return;
 
-            if (nativeHaptics) {
-                nativeHaptics.prepareRelease();
-                // Opening the form removes the switch. Give WebKit the touch
-                // default action first.
-                reportFrame = requestAnimationFrame(() =>
-                    reportTime(range.start, range.end),
-                );
-            } else {
-                if (isAndroidTouch(true)) vibrateLightly();
-                reportTime(range.start, range.end);
-            }
+            if (isAndroidTouch(true)) vibrateLightly();
+            reportTime(range.start, range.end);
         }
 
         const listeners = new AbortController();
@@ -254,10 +218,7 @@ export function useCalendarLongPress(
         container.addEventListener('touchend', end, { passive: false, signal });
         container.addEventListener(
             'touchcancel',
-            (event) => {
-                if (press?.nativeHaptics && event.cancelable) {
-                    event.preventDefault();
-                }
+            () => {
                 touchId = null;
                 finish();
             },
@@ -299,7 +260,6 @@ export function useCalendarLongPress(
 
         return () => {
             listeners.abort();
-            cancelAnimationFrame(reportFrame);
             finish();
         };
     }, [containerRef, calendarRef, calendarKey, enabled]);

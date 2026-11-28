@@ -8,7 +8,7 @@ import '@fullcalendar/react/skeleton.css';
 import '@fullcalendar/react/themes/classic/theme.css';
 import { Button, Popover, Tooltip } from '@heroui/react';
 import { Banknote, CalendarDays, CalendarOff } from 'lucide-react';
-import { useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Temporal } from 'temporal-polyfill';
@@ -48,46 +48,19 @@ const TOUCH_EVENT_DRAG_MIN_DISTANCE = 16;
 const HAPTIC_SWITCH_CLASS =
     'absolute inset-0 m-auto hidden size-11 max-w-full appearance-auto opacity-0 transition-none [direction:ltr]';
 
-function appendHapticSwitch(
-    parent: Element,
-    testId: string,
-    className: string,
-    kind: 'selection' | 'switch' = 'switch',
-) {
+function appendResizeHapticSwitch(handle: Element) {
     const control = document.createElement('input');
     control.type = 'checkbox';
     control.setAttribute('switch', '');
     control.setAttribute('aria-hidden', 'true');
     control.tabIndex = -1;
-    control.setAttribute(`data-calendar-haptic-${kind}`, '');
-    control.dataset.test = testId;
-    control.className = cn(HAPTIC_SWITCH_CLASS, className);
-    parent.append(control);
-
-    return control;
-}
-
-function mountCreationHapticSwitch(eventLayer: Element) {
-    const control = appendHapticSwitch(
-        eventLayer,
-        'calendar-create-haptic-switch',
-        'z-0 h-full w-1/3 touch-pan-y touch-pinch-zoom max-md:pointer-coarse:supports-[-webkit-touch-callout:none]:block',
-        'selection',
+    control.dataset.calendarHapticSwitch = '';
+    control.dataset.test = 'calendar-resize-haptic-switch';
+    control.className = cn(
+        HAPTIC_SWITCH_CLASS,
+        'z-10 max-h-full pointer-coarse:supports-[-webkit-touch-callout:none]:[.time-calendar-event-touch-selected_&]:block',
     );
-    const resetSwitch = () => {
-        // WebKit's hold timer can retain the first touch coordinates for this
-        // input. Replace it after the native release or cancellation finishes.
-        requestAnimationFrame(() => {
-            if (!control.isConnected) return;
-
-            control.remove();
-            mountCreationHapticSwitch(eventLayer);
-        });
-    };
-    control.addEventListener('touchend', resetSwitch);
-    control.addEventListener('touchcancel', resetSwitch);
-    control.addEventListener('mousedown', (event) => event.stopPropagation());
-    control.addEventListener('click', (event) => event.stopPropagation());
+    handle.append(control);
 }
 
 function ExpectedWeekTimeHint({ duration }: { duration: string }) {
@@ -307,7 +280,6 @@ export function TimeCalendar({
             : formatDuration(expectedWeekSeconds);
     const isMobile = useMediaQuery('(width < 768px)');
     const dragHaptics = useCalendarDragHaptics();
-    const moveHeldSwitch = useEffectEvent(dragHaptics.moveHeldSwitch);
     const timerEnd = useTimerEnd(timer ?? null, timezone);
     const [containerRef, height] = useFillHeight(isMobile);
     const calendarRef = useRef<CalendarRef>(null);
@@ -329,7 +301,7 @@ export function TimeCalendar({
         start: Date | null,
         end: Date | null,
     ) => {
-        const nativeSwitch = dragHaptics.start(jsEvent.target, start, end);
+        dragHaptics.start(jsEvent.target, start, end);
         // FullCalendar can start a resize on the first touchmove.
         const isTouch =
             typeof TouchEvent !== 'undefined' && jsEvent instanceof TouchEvent;
@@ -338,8 +310,6 @@ export function TimeCalendar({
                 ? { start: start.getTime(), end: end.getTime() }
                 : null;
         if (lastTouchSlot.current) vibrateLightly();
-
-        return nativeSwitch;
     };
 
     useLayoutEffect(() => {
@@ -398,9 +368,7 @@ export function TimeCalendar({
 
                 // FullCalendar starts touch drags on long press with no minimum
                 // distance. Keep finger jitter from crossing a snap boundary.
-                // Safari can still track the native switch during this move.
-                if (!moveHeldSwitch(event) && event.cancelable)
-                    event.preventDefault();
+                if (event.cancelable) event.preventDefault();
                 event.stopPropagation();
             },
             { capture: true, passive: false, signal },
@@ -433,7 +401,6 @@ export function TimeCalendar({
         calendarKey,
         !isPreview && !hasSelectionDraft,
         onSelect,
-        dragHaptics.armSelection,
     );
     const holidayByDate = new Map(
         holidays.map(({ date, name }) => [date, name]),
@@ -463,7 +430,6 @@ export function TimeCalendar({
             className="time-calendar relative bg-surface md:overflow-hidden md:rounded-2xl md:border md:border-separator max-md:dark:bg-(--mobile-scroll-background)"
             data-view={view}
             data-holidays={holidays.length > 0 || undefined}
-            data-calendar-selection-draft={hasSelectionDraft || undefined}
         >
             <FullCalendar
                 ref={calendarRef}
@@ -668,21 +634,12 @@ export function TimeCalendar({
                     )
                         return;
 
-                    appendHapticSwitch(
-                        el,
-                        'calendar-drag-haptic-switch',
-                        'z-0 size-full touch-pan-y touch-pinch-zoom pointer-coarse:supports-[-webkit-touch-callout:none]:block',
-                    );
-                    // TimeGrid only exposes classes for its resize handles.
-                    // Put the switch inside each existing pointer target.
+                    // WebKit consumes pans that start on native switches.
+                    // Restrict them to the dedicated resize handles.
                     for (const handle of el.querySelectorAll(
                         ':scope > .time-calendar-resizer',
                     )) {
-                        appendHapticSwitch(
-                            handle,
-                            'calendar-resize-haptic-switch',
-                            'z-10 max-h-full pointer-coarse:supports-[-webkit-touch-callout:none]:[.time-calendar-event-touch-selected_&]:block',
-                        );
+                        appendResizeHapticSwitch(handle);
                     }
                 }}
                 slotLaneClass={(info) => {
@@ -705,17 +662,9 @@ export function TimeCalendar({
                         ? 'time-calendar-day time-calendar-weekend'
                         : 'time-calendar-day'
                 }
-                dayLaneDidMount={({ el }) => {
-                    setDayLanes((lanes) => [...lanes, el]);
-                    if (isPreview) return;
-
-                    // Install the native input with the lane so the first touch
-                    // can target it, like the controls on saved entries.
-                    const eventLayer = el.querySelector(
-                        ':scope > .time-calendar-event-lane',
-                    );
-                    if (eventLayer) mountCreationHapticSwitch(eventLayer);
-                }}
+                dayLaneDidMount={({ el }) =>
+                    setDayLanes((lanes) => [...lanes, el])
+                }
                 dayLaneWillUnmount={({ el }) =>
                     setDayLanes((lanes) => lanes.filter((lane) => lane !== el))
                 }
@@ -976,12 +925,7 @@ export function TimeCalendar({
                             eventSelection.select(event.id);
                         }
                         setEditing(true);
-                        if (startDragHaptics(jsEvent, event.start, event.end)) {
-                            containerRef.current?.setAttribute(
-                                'data-calendar-native-drag',
-                                '',
-                            );
-                        }
+                        startDragHaptics(jsEvent, event.start, event.end);
                     }
                     const lane = el.closest('.time-calendar-event-lane');
                     const calendar = containerRef.current;
@@ -1023,9 +967,6 @@ export function TimeCalendar({
                     lastTouchSlot.current = null;
                     unmovedTouchDrag.current = eventDragOrigin.current !== null;
                     eventDragOrigin.current = null;
-                    containerRef.current?.removeAttribute(
-                        'data-calendar-native-drag',
-                    );
                     setEditing(false);
                     eventSelection.resume();
                     const style = containerRef.current?.style;

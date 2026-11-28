@@ -29,8 +29,7 @@ export function useCalendarDragHaptics() {
     const armSwitch = (
         control: HTMLInputElement,
         touch: Touch,
-        moveTarget: HTMLElement | null,
-        allowReleaseHaptic = false,
+        moveTarget: HTMLElement,
     ) => {
         const listeners = new AbortController();
         const { signal } = listeners;
@@ -90,7 +89,7 @@ export function useCalendarDragHaptics() {
         // tracking this touch. Updating checked during tracking would stop it.
         placeSwitch(touch, SWITCH_OFF_OFFSET);
 
-        moveTarget?.addEventListener(
+        moveTarget.addEventListener(
             'touchmove',
             (move) => {
                 if (
@@ -116,7 +115,7 @@ export function useCalendarDragHaptics() {
                 return;
             }
 
-            if (active.slot !== null && !active.moved && !allowReleaseHaptic) {
+            if (active.slot !== null && !active.moved) {
                 end.preventDefault();
             }
             listeners.abort();
@@ -131,7 +130,7 @@ export function useCalendarDragHaptics() {
                 control.style.removeProperty('rotate');
                 control.style.removeProperty('translate');
                 control.style.removeProperty('visibility');
-                if (active.slot !== null && !allowReleaseHaptic) {
+                if (active.slot !== null) {
                     // A cancelled native release can leave WebKit tracking
                     // this touch. Start the next drag with a fresh switch.
                     control.replaceWith(control.cloneNode());
@@ -141,8 +140,6 @@ export function useCalendarDragHaptics() {
         };
         control.addEventListener('touchend', finish, { signal });
         control.addEventListener('touchcancel', finish, { signal });
-
-        return active;
     };
 
     const arm = (event: ReactTouchEvent<HTMLDivElement>) => {
@@ -161,51 +158,17 @@ export function useCalendarDragHaptics() {
         }
     };
 
-    const armSelection = (target: Element, touch: Touch) => {
-        if (
-            !(target instanceof HTMLInputElement) ||
-            !target.hasAttribute('data-calendar-haptic-selection')
-        ) {
-            return;
-        }
-
-        const active = armSwitch(target, touch, null, true);
-        return {
-            snap: (start: string, end: string) => {
-                if (gesture.current === active) {
-                    snapGesture(
-                        active,
-                        Date.parse(`${start}:00Z`),
-                        Date.parse(`${end}:00Z`),
-                    );
-                }
-            },
-            trackMove: (event: TouchEvent) =>
-                gesture.current === active &&
-                active.slot !== null &&
-                active.trackTouch(event),
-            prepareRelease: () => {
-                // End WebKit's drag tracking so the real touchend can toggle
-                // the switch and confirm the selection even after a snap.
-                if (gesture.current === active) target.checked = true;
-            },
-        };
-    };
-
     const start = (
         target: EventTarget | null,
         start: Date | null,
         end: Date | null,
-    ): boolean => {
+    ) => {
         const active = gesture.current;
-        if (!active || active.control !== target || !start || !end)
-            return false;
+        if (!active || active.control !== target || !start || !end) return;
 
         // The first touchmove tracks this slot for the pickup pulse. If a
         // resize also snaps on that move, it tracks the new slot once.
         active.slot = { start: start.getTime(), end: end.getTime() };
-
-        return true;
     };
 
     const snap = (start: Date, end: Date) => {
@@ -215,13 +178,5 @@ export function useCalendarDragHaptics() {
         }
     };
 
-    const moveHeldSwitch = (event: TouchEvent) => {
-        const active = gesture.current;
-        if (!active || active.slot === null || active.control !== event.target)
-            return false;
-
-        return active.trackTouch(event);
-    };
-
-    return { arm, armSelection, start, snap, moveHeldSwitch };
+    return { arm, start, snap };
 }
