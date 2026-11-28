@@ -86,9 +86,10 @@ export default function AppLayout({
                 />
 
                 <div className="group/page max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col md:pl-(--sidebar-width)">
+                    {/* iOS needs a viewport-attached surface to keep its status-bar blur off the header. */}
                     <div
                         ref={setMobileHeaderHost}
-                        className="relative z-20 shrink-0 bg-surface md:hidden"
+                        className="sticky top-0 z-20 shrink-0 bg-surface md:hidden"
                     />
                     <main
                         scroll-region=""
