@@ -412,6 +412,7 @@ export function TimeEntryForm({
     const memberName = isSelf ? auth.user.name : member?.label;
     const memberAvatar = isSelf ? auth.user.avatar : member?.avatar;
     const canChangeMember = members.length > 1 && !isTimer;
+    const memberControlSize = isEditing ? 'size-10 md:size-9' : 'size-9';
     const memberLabel = memberName
         ? t('Reporting for :name', { name: memberName })
         : t('Member');
@@ -420,6 +421,7 @@ export function TimeEntryForm({
             name={memberName}
             src={memberAvatar}
             title={memberLabel}
+            className={isEditing ? 'size-full' : undefined}
         />
     );
 
@@ -431,7 +433,10 @@ export function TimeEntryForm({
                     type="button"
                     variant="ghost"
                     isIconOnly
-                    className="size-9 min-w-0 shrink-0 rounded-full p-0"
+                    className={cn(
+                        'min-w-0 shrink-0 rounded-full p-0',
+                        memberControlSize,
+                    )}
                     aria-label={
                         memberName
                             ? t('Change member (:name)', {
@@ -485,7 +490,10 @@ export function TimeEntryForm({
             </Dropdown>
         ) : (
             <span
-                className="flex size-9 items-center justify-center"
+                className={cn(
+                    'flex shrink-0 items-center justify-center',
+                    memberControlSize,
+                )}
                 role="img"
                 aria-label={memberLabel}
             >
