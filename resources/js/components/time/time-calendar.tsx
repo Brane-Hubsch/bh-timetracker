@@ -738,6 +738,7 @@ export function TimeCalendar({
                 nowIndicatorLineClass="time-calendar-now"
                 dayHeaderContent={(info) => {
                     const day = fromCalendarDate(info.date).slice(0, 10);
+                    const total = dayTotal(day);
 
                     return (
                         <span className="flex flex-col items-center gap-1 py-1.5">
@@ -760,8 +761,14 @@ export function TimeCalendar({
                                     day: 'numeric',
                                 })}
                             </span>
-                            <span className="text-[11px] font-medium text-muted tabular-nums">
-                                {formatDuration(dayTotal(day))}
+                            <span
+                                className={cn(
+                                    'text-[11px] font-medium text-muted tabular-nums',
+                                    total === 0 &&
+                                        'time-calendar-empty-day-total',
+                                )}
+                            >
+                                {formatDuration(total)}
                             </span>
                         </span>
                     );
