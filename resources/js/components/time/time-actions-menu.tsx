@@ -110,10 +110,13 @@ export function CalendarDayActions({
                         variant="ghost"
                         size="sm"
                         aria-label={t(label)}
-                        className="size-6 min-w-0 rounded-md p-0 text-muted hover:text-foreground focus-visible:ring-inset"
+                        className="group size-6 min-w-0 rounded-md p-0 text-muted hover:text-foreground focus-visible:ring-inset"
                         onPress={run}
                     >
-                        <Icon aria-hidden="true" className="size-3.5" />
+                        <Icon
+                            aria-hidden="true"
+                            className="size-3.5 opacity-35 group-hover:opacity-100 group-focus-visible:opacity-100 motion-safe:transition-opacity motion-safe:duration-160 motion-safe:ease-out-soft"
+                        />
                     </Button>
                     <Tooltip.Content placement="left">
                         {t(label)}
