@@ -39,6 +39,7 @@ export function useSwipeNavigation({
     const track = useRef<HTMLDivElement>(null);
     const gesture = useRef<Gesture | null>(null);
     const animation = useRef<Animation | null>(null);
+    const hasNativeScrollLock = useRef(false);
     const [adjacent, setAdjacent] = useState<Direction | null>(null);
 
     useEffect(() => () => animation.current?.cancel(), []);
@@ -180,23 +181,30 @@ export function useSwipeNavigation({
 
     useLayoutEffect(() => {
         const viewport = frame.current;
-        if (!viewport) return;
+        if (
+            !viewport ||
+            !lockBrowserScroll ||
+            window.matchMedia('(display-mode: standalone)').matches ||
+            (navigator as Navigator & { standalone?: boolean }).standalone
+        ) {
+            return;
+        }
 
-        const lockScroll =
-            lockBrowserScroll &&
-            !window.matchMedia('(display-mode: standalone)').matches &&
-            !(navigator as Navigator & { standalone?: boolean }).standalone;
         const onMove = (event: TouchEvent) =>
-            moveFromEffect(event, viewport, lockScroll);
+            moveFromEffect(event, viewport, true);
 
         // React's delegated touchmove listener is passive. The day swipe in a
         // browser tab needs to cancel native scrolling when horizontal wins.
+        hasNativeScrollLock.current = true;
         viewport.addEventListener('touchmove', onMove, {
             capture: true,
-            passive: !lockScroll,
+            passive: false,
         });
 
-        return () => viewport.removeEventListener('touchmove', onMove, true);
+        return () => {
+            hasNativeScrollLock.current = false;
+            viewport.removeEventListener('touchmove', onMove, true);
+        };
     }, [lockBrowserScroll]);
 
     function end(event: ReactTouchEvent<HTMLDivElement>) {
@@ -234,6 +242,11 @@ export function useSwipeNavigation({
         viewportProps: {
             ref: frame,
             onTouchStartCapture: start,
+            onTouchMoveCapture: (event: ReactTouchEvent<HTMLDivElement>) => {
+                if (!hasNativeScrollLock.current) {
+                    move(event.nativeEvent, event.currentTarget, false);
+                }
+            },
             onTouchEndCapture: end,
             onTouchCancelCapture: () => {
                 if (gesture.current) settle();
