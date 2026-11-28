@@ -17,7 +17,7 @@ export function MobilePageHeader({
         <div
             {...props}
             className={cn(
-                'mobile-page-header max-md:min-h-(--mobile-page-header-height) max-md:flex-nowrap max-md:gap-2 max-md:border-b max-md:border-separator max-md:bg-surface max-md:px-4 max-md:pt-[calc(0.3125rem+env(safe-area-inset-top))] max-md:pb-[9px] max-md:shadow-[0_1px_4px_#0000000a]',
+                'mobile-page-header max-md:min-h-(--mobile-page-header-height) max-md:flex-nowrap max-md:gap-2 max-md:border-b max-md:border-separator max-md:bg-surface max-md:px-4 max-md:pt-[calc(var(--mobile-page-header-top-padding)+env(safe-area-inset-top))] max-md:pb-[9px] max-md:shadow-[0_1px_4px_#0000000a]',
                 className,
             )}
         />

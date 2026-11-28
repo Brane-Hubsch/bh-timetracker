@@ -23,13 +23,21 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">
 
-        {{-- Apply the installed app's viewport limits and system appearance before rendering. --}}
+        {{-- Apply browser and installed-app settings before rendering. --}}
         <script>
             (function() {
+                const { userAgent, maxTouchPoints } = window.navigator;
                 const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                     || window.navigator.standalone === true;
 
-                if (!isStandalone && /Android/i.test(window.navigator.userAgent)) {
+                const isIOS = /iPhone|iPad|iPod/i.test(userAgent)
+                    || (/Macintosh/i.test(userAgent) && maxTouchPoints > 1);
+
+                if (isIOS && !isStandalone) {
+                    document.documentElement.dataset.iosBrowser = '';
+                }
+
+                if (!isStandalone && /Android/i.test(userAgent)) {
                     // Retain the event even if it arrives before the app shell loads.
                     window.addEventListener('beforeinstallprompt', (event) => {
                         event.preventDefault();
