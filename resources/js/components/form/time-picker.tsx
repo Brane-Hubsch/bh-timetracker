@@ -324,7 +324,7 @@ export function TimePicker({
             className={cn(
                 'group/time-trigger h-9 w-8 min-w-0 shrink-0 rounded-field p-0 text-muted [--button-bg-hover:transparent] [--button-bg-pressed:transparent] data-[time-picker-open]:text-accent sm:h-8 sm:w-9',
                 mobileField &&
-                    'absolute inset-0 z-10 size-full justify-end pe-1 active:transform-none data-pressed:transform-none sm:size-full sm:pe-1.5',
+                    'absolute inset-0 z-10 size-full justify-end pe-1 active:transform-none in-[.paired-field-control]:ring-0 data-pressed:transform-none sm:size-full sm:pe-1.5',
             )}
             data-time-picker-open={isOpen || undefined}
         >
