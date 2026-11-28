@@ -478,6 +478,7 @@ Klar. Byggt:
 - **PWA:**
   - Egen ikon (vitt T med klockvisare på lila botten) som SVG, ICO (16, 32, 48 px), Apple Touch (120, 152, 167, 180 px) och PWA-ikoner (192 och 512 px, även maskbara).
   - ICO-, Apple Touch- och PWA-ikonerna genereras från `public/favicon.svg`. Ikonlänkarna versioneras vid bygget, och ICO-filen finns även på `/favicon.ico`.
+  - I webbläsarfliken roterar favikonens visare ett varv medurs när tid eller frånvaro sparas och i loop medan användarens timer pågår. Vid minskad rörelse visas den stillastående ikonen. [Design i Figma](https://www.figma.com/design/KpKv5XyY4IdFjW63GlbyRi/TimeReport?node-id=772-5).
   - `site.webmanifest` på svenska, `theme-color` och fristående läge.
   - Ingen offline-funktion, enligt planen.
 - **Felhantering:**

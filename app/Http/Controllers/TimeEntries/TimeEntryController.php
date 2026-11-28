@@ -178,7 +178,10 @@ class TimeEntryController extends Controller
 
         $createTimeEntry->handle($organization, $data);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Time saved.')]);
+        Inertia::flash([
+            'toast' => ['type' => 'success', 'message' => __('Time saved.')],
+            'faviconSpin' => true,
+        ]);
 
         return back();
     }
@@ -192,7 +195,10 @@ class TimeEntryController extends Controller
 
         $updateTimeEntry->handle($timeEntry, $data);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Time updated.')]);
+        Inertia::flash([
+            'toast' => ['type' => 'success', 'message' => __('Time updated.')],
+            'faviconSpin' => true,
+        ]);
 
         return back();
     }
@@ -216,7 +222,7 @@ class TimeEntryController extends Controller
             ], absolute: false);
         }
 
-        Inertia::flash('toast', $toast);
+        Inertia::flash(['toast' => $toast, 'faviconSpin' => $previous !== null]);
 
         return back();
     }
@@ -235,9 +241,12 @@ class TimeEntryController extends Controller
             ],
         );
 
-        Inertia::flash('toast', $result === null
-            ? ['type' => 'warning', 'message' => __('The time has changed again and could not be undone.')]
-            : ['type' => 'success', 'message' => __('Time change undone.')]);
+        Inertia::flash([
+            'toast' => $result === null
+                ? ['type' => 'warning', 'message' => __('The time has changed again and could not be undone.')]
+                : ['type' => 'success', 'message' => __('Time change undone.')],
+            'faviconSpin' => $result !== null,
+        ]);
 
         return back();
     }
@@ -283,7 +292,10 @@ class TimeEntryController extends Controller
         $targetDay = $request->date('target_day', '!Y-m-d', $user->timezone)?->toImmutable();
         $created = $copyTimeEntries->handle($organization, $sources, $targetDay);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice(':count entry copied.|:count entries copied.', $created->count(), ['count' => $created->count()])]);
+        Inertia::flash([
+            'toast' => ['type' => 'success', 'message' => trans_choice(':count entry copied.|:count entries copied.', $created->count(), ['count' => $created->count()])],
+            'faviconSpin' => $created->isNotEmpty(),
+        ]);
 
         return back();
     }

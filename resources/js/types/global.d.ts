@@ -42,6 +42,7 @@ declare module '@inertiajs/core' {
         };
         flashDataType: {
             toast?: import('@/types/ui').FlashToast;
+            faviconSpin?: boolean;
             importResult?: import('@/types/imports').ImportResult;
             projectImportResult?: import('@/types/imports').ProjectImportResult;
         };

@@ -1,6 +1,7 @@
 import { createInertiaApp, router } from '@inertiajs/react';
 import { AppProviders } from '@/components/providers/app-providers';
 import { initializeTheme } from '@/hooks/use-appearance';
+import { createFaviconAnimation } from '@/lib/favicon-animation';
 import {
     applyThemePreferences,
     DEFAULT_THEME_PREFERENCES,
@@ -15,18 +16,27 @@ import { setUrlDefaults } from '@/wayfinder';
  * Tenant routes are prefixed with the organization slug; Wayfinder fills it in from the current page.
  */
 let currentOrganizationSlug: string | undefined;
+const favicon = createFaviconAnimation();
 setUrlDefaults(() => ({ current_organization: currentOrganizationSlug }));
 // Form posts and partial reloads do not fire "navigate", but can change the theme (e.g. the brand colour).
 router.on('success', ({ detail: { page } }) => {
     applyThemePreferences(page.props.theme ?? DEFAULT_THEME_PREFERENCES);
+    favicon.setTimerRunning(Boolean(page.props.timer));
 });
 router.on('navigate', ({ detail: { page } }) => {
     applyThemePreferences(page.props.theme ?? DEFAULT_THEME_PREFERENCES);
+    favicon.setTimerRunning(Boolean(page.props.timer));
     const slug = page.props.currentOrganization?.slug;
     if (slug !== currentOrganizationSlug) {
         router.flushAll();
     }
     currentOrganizationSlug = slug;
+});
+
+router.on('flash', ({ detail: { flash } }) => {
+    if (flash.faviconSpin) {
+        favicon.playSave();
+    }
 });
 
 router.on('start', ({ detail: { visit } }) => {
@@ -60,6 +70,7 @@ void createInertiaApp({
     strictMode: true,
     withApp(app, { page }) {
         currentOrganizationSlug = page.props.currentOrganization?.slug;
+        favicon.setTimerRunning(Boolean(page.props.timer));
 
         return <AppProviders locale={page.props.locale}>{app}</AppProviders>;
     },

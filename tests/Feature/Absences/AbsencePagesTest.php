@@ -25,7 +25,8 @@ beforeEach(function () {
 it('lets members register their own absence, full days or hours per day', function () {
     $this->actingAs($this->member)
         ->post(route('absences.store', $this->slug), ($this->payload)())
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('faviconSpin', true);
     $this->post(route('absences.store', $this->slug), ($this->payload)(['type' => 'child_care', 'starts_on' => '2026-11-27', 'ends_on' => '2026-11-27', 'hours_per_day' => '4,5']))
         ->assertSessionHasNoErrors();
 
@@ -60,7 +61,8 @@ it('updates and deletes absence for those allowed', function () {
 
     $this->actingAs($this->member)
         ->patch(route('absences.update', [$this->slug, $own]), ($this->payload)(['type' => 'sick', 'ends_on' => '2026-11-26']))
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('faviconSpin', true);
     expect($own->fresh()->type)->toBe(AbsenceType::Sick);
 
     $this->delete(route('absences.destroy', [$this->slug, $owners]))->assertForbidden();
