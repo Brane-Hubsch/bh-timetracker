@@ -1,7 +1,7 @@
 import { Avatar, Button, Tooltip } from '@heroui/react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Copy, Plus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { MobilePageHeader } from '@/components/app-shell/mobile-page-header';
@@ -268,7 +268,7 @@ export default function TimeIndex({
 
     const calendarGrid = useRef<HTMLDivElement>(null);
     const didSetMobileScroll = useRef(false);
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (isList) {
             didSetMobileScroll.current = false;
         }
@@ -288,54 +288,55 @@ export default function TimeIndex({
             return;
         }
 
-        let frame = 0;
         const interaction = new AbortController();
         const stop = () => {
             resizeObserver.disconnect();
             markerObserver.disconnect();
-            cancelAnimationFrame(frame);
             interaction.abort();
         };
         const keepScrollPosition = () => {
             didSetMobileScroll.current = true;
             stop();
         };
-        const scheduleScroll = () => {
-            if (frame) {
-                return;
-            }
-            // Inertia restores scroll regions on the first frame after changing views.
-            frame = requestAnimationFrame(() => {
-                frame = 0;
-                if (scrollRegion.scrollTop === 0) {
-                    const anchor = grid.querySelector<HTMLElement>(
-                        showsToday
-                            ? '.time-calendar-now'
-                            : '.time-calendar-morning',
-                    );
-                    if (
-                        !anchor ||
-                        (showsToday && !anchor.style.top) ||
-                        scrollRegion.clientHeight === 0 ||
-                        scrollRegion.scrollHeight <= scrollRegion.clientHeight
-                    ) {
-                        return;
-                    }
-
-                    const { top, height } = anchor.getBoundingClientRect();
-                    const offset = showsToday
-                        ? (scrollRegion.clientHeight - height) / 2
-                        : 12;
-                    scrollRegion.scrollTop =
-                        top - scrollRegion.getBoundingClientRect().top - offset;
+        const positionScroll = () => {
+            if (scrollRegion.scrollTop === 0) {
+                const anchor = grid.querySelector<HTMLElement>(
+                    showsToday
+                        ? '.time-calendar-now'
+                        : '.time-calendar-morning',
+                );
+                if (
+                    !anchor ||
+                    (showsToday && !anchor.style.top) ||
+                    scrollRegion.clientHeight === 0 ||
+                    scrollRegion.scrollHeight <= scrollRegion.clientHeight
+                ) {
+                    return;
                 }
 
-                keepScrollPosition();
-            });
+                const { top, height } = anchor.getBoundingClientRect();
+                const offset = showsToday
+                    ? (scrollRegion.clientHeight - height) / 2
+                    : 12;
+                scrollRegion.scrollTop =
+                    top - scrollRegion.getBoundingClientRect().top - offset;
+            }
+
+            keepScrollPosition();
         };
 
-        const resizeObserver = new ResizeObserver(scheduleScroll);
-        const markerObserver = new MutationObserver(scheduleScroll);
+        let measured = false;
+        const resizeObserver = new ResizeObserver(() => {
+            // Inertia's scroll restoration runs in requestAnimationFrame. Resize
+            // observers run after that and can set the anchor before the same paint.
+            measured = true;
+            positionScroll();
+        });
+        const markerObserver = new MutationObserver(() => {
+            if (measured) {
+                positionScroll();
+            }
+        });
         // An initial anchor can arrive after the user has already started panning.
         const observe = {
             capture: true,
