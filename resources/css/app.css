@@ -992,6 +992,22 @@
     color: inherit;
 }
 
+@media (width >= 48rem) {
+    .time-calendar .time-calendar-slot {
+        --time-calendar-grid-shade: 2%;
+
+        background-color: color-mix(
+            in srgb,
+            var(--surface),
+            black var(--time-calendar-grid-shade)
+        );
+
+        :where(.dark) & {
+            --time-calendar-grid-shade: 25%;
+        }
+    }
+}
+
 /* Half-hour rules are solid like the hour rules, only lighter. */
 .time-calendar .time-calendar-slot-minor {
     border-style: solid;
