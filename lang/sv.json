@@ -913,6 +913,13 @@
     "Your running timer has no project. Stop or discard it first.": "Din pågående timer saknar projekt. Stoppa eller släng den först.",
     "Your sign-in link for :app": "Din inloggningslänk till :app",
     "… and :count more.": "… och :count till.",
-    "← → to drive · Esc to stop": "← → kör · Esc slutar",
-    "↑↓ to move, Enter to run, Esc to close": "↑↓ för att välja, Enter för att köra, Esc för att stänga"
+    "↑↓ to move, Enter to run, Esc to close": "↑↓ för att välja, Enter för att köra, Esc för att stänga",
+    "Snowman built in :time": "Snögubben klar på :time",
+    "New record!": "Nytt rekord!",
+    "Best time :time": "Bästa tid :time",
+    "Build another": "Bygg en till",
+    "Snowman": "Snögubbe",
+    "Build the snowman": "Bygg snögubben",
+    "← → drive · ↑ ↓ aim the chute · Esc parks. Throw the snow onto the outline.": "← → kör · ↑ ↓ riktar utkastet · Esc parkerar. Kasta snön på konturen.",
+    "Push slowly to pile the snow, flick to throw it onto the outline. Esc puts the shovel back.": "Skjut långsamt för att samla snön, svep för att kasta den på konturen. Esc ställer tillbaka skyffeln."
 }
