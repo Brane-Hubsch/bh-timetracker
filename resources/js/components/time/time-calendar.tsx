@@ -524,7 +524,11 @@ export function TimeCalendar({
                 )}
                 borderless
                 allDaySlot={showAbsenceRow}
-                allDayHeaderClass="items-center justify-center"
+                allDayHeaderClass="time-calendar-absence-header items-center justify-center"
+                allDayHeaderInnerClass="time-calendar-absence-header-inner"
+                dayCellTopClass="time-calendar-absence-top"
+                dayCellBottomClass="time-calendar-absence-bottom"
+                allDayDividerClass="time-calendar-absence-divider"
                 allDayHeaderContent={() => (
                     <Tooltip delay={350} closeDelay={0}>
                         <Tooltip.Trigger
@@ -535,7 +539,7 @@ export function TimeCalendar({
                         >
                             <CalendarOff
                                 aria-hidden="true"
-                                className="size-4"
+                                className="size-3"
                             />
                         </Tooltip.Trigger>
                         <Tooltip.Content placement="right" showArrow>
@@ -800,7 +804,7 @@ export function TimeCalendar({
                         return (
                             <div
                                 className={cn(
-                                    'w-full truncate rounded-md px-2 py-0.5 text-xs/4.5 font-medium',
+                                    'w-full truncate px-2 py-0.5 text-xs/4.5 font-medium',
                                     isOwn
                                         ? 'cursor-pointer border-l-3 border-warning bg-warning-soft text-warning-soft-foreground'
                                         : 'bg-default text-muted',
