@@ -1,7 +1,8 @@
 import { COLUMN_WIDTH, MAX_DEPTH } from './drift';
 import { SNOWMAN_RADII, snowmanCentres } from './geometry';
-import { MODEL_VERTEX_BYTES } from './models';
-import type { SnowModel, ToolPose } from './models';
+import type { ModelPose } from './models';
+import { MODEL_VERTEX_BYTES } from './shapes';
+import type { SnowModel } from './shapes';
 import type { SnowRenderer } from './renderer';
 import {
     INSTANCE_FLOATS,
@@ -23,7 +24,7 @@ type Mesh = {
     /** Scratch space: projected x, y and depth per vertex, and the drawing order. */
     projected: Float32Array;
     depth: Float32Array;
-    order: Uint16Array;
+    order: Uint32Array;
 };
 
 function unpack(model: SnowModel): Mesh {
@@ -36,7 +37,7 @@ function unpack(model: SnowModel): Mesh {
         faces: new Float32Array(triangles * 6),
         projected: new Float32Array(model.vertexCount * 3),
         depth: new Float32Array(triangles),
-        order: new Uint16Array(triangles),
+        order: new Uint32Array(triangles),
     };
     for (let vertex = 0; vertex < model.vertexCount; vertex++) {
         const at = vertex * MODEL_VERTEX_BYTES;
@@ -45,13 +46,11 @@ function unpack(model: SnowModel): Mesh {
                 view.getInt16(at + axis * 2, true) / 32767;
         }
         mesh.parts[vertex] = view.getInt16(at + 6, true);
-        if (vertex % 3 === 0) {
-            const face = (vertex / 3) * 6;
-            for (let axis = 0; axis < 3; axis++) {
-                mesh.faces[face + axis] = view.getInt8(at + 8 + axis) / 127;
-                mesh.faces[face + 3 + axis] =
-                    view.getUint8(at + 12 + axis) / 255;
-            }
+        const face = Math.floor(vertex / 3) * 6;
+        for (let axis = 0; axis < 3; axis++) {
+            // The triangle's normal is the sum of its corners'; the colour is the same at all three.
+            mesh.faces[face + axis] += view.getInt8(at + 8 + axis) / 127;
+            mesh.faces[face + 3 + axis] = view.getUint8(at + 12 + axis) / 255;
         }
     }
 
@@ -71,10 +70,10 @@ export function createCanvasRenderer(
     }
     let width = 1;
     let height = 1;
-    let meshes: { shovel: Mesh; blower: Mesh } | null = null;
+    let meshes: { snowman: Mesh; shovel: Mesh; blower: Mesh } | null = null;
 
-    /** The low-poly tools, painted back to front as flat triangles. */
-    const drawModel = (mesh: Mesh, pose: ToolPose, isDark: boolean) => {
+    /** The snowman and the tools, painted back to front as flat triangles. */
+    const drawModel = (mesh: Mesh, pose: ModelPose) => {
         if (!pose.visible) {
             return;
         }
@@ -102,7 +101,7 @@ export function createCanvasRenderer(
         }
         order.sort((a, b) => depth[a] - depth[b]);
 
-        const ambient = isDark ? 0.46 : 0.52;
+        // The same soft step from light to tinted shade as the WebGPU shader.
         for (const triangle of order) {
             const at = triangle * 9;
             const m = parts[triangle * 3] * 16;
@@ -119,12 +118,12 @@ export function createCanvasRenderer(
             }
             const length = Math.hypot(nx, ny, nz) || 1;
             const facing = nz < 0 ? -1 / length : 1 / length;
-            const light = Math.max(
-                0,
-                (nx * -0.51 + ny * 0.63 + nz * 0.59) * facing,
-            );
-            const shade = (ambient + 0.7 * light) * 255;
-            const color = `rgb(${Math.min(255, faces[face + 3] * shade)}, ${Math.min(255, faces[face + 4] * shade)}, ${Math.min(255, faces[face + 5] * shade)})`;
+            const light = (nx * -0.51 + ny * 0.63 + nz * 0.59) * facing;
+            const lit = Math.max(0, Math.min(1, (light + 0.08) / 0.46));
+            const red = faces[face + 3] * (0.66 + 0.36 * lit) * 255;
+            const green = faces[face + 4] * (0.62 + 0.4 * lit) * 255;
+            const blue = faces[face + 5] * (0.82 + 0.18 * lit) * 255;
+            const color = `rgb(${Math.min(255, red)}, ${Math.min(255, green)}, ${Math.min(255, blue)})`;
             context.fillStyle = color;
             context.strokeStyle = color;
             context.beginPath();
@@ -149,160 +148,25 @@ export function createCanvasRenderer(
         context.arc(x, y, radius, 0, Math.PI * 2);
     };
 
-    const drawSnowman = (simulation: Simulation, isDark: boolean) => {
-        const { x, growth, dressed, outline } = simulation.snowman;
-        const edge = isDark
-            ? 'rgba(148, 163, 184, 0.5)'
-            : 'rgba(100, 116, 139, 0.6)';
-
-        if (outline > 0.01) {
-            const full = snowmanCentres([1, 1, 1]);
-            context.save();
-            context.setLineDash([5, 4]);
-            context.lineWidth = 1.5;
-            context.strokeStyle = isDark
-                ? `rgba(255, 255, 255, ${0.6 * outline})`
-                : `rgba(90, 110, 143, ${0.7 * outline})`;
-            for (let ball = 0; ball < 3; ball++) {
-                context.beginPath();
-                circle(x, height - full[ball], SNOWMAN_RADII[ball]);
-                context.stroke();
-            }
-            context.restore();
-        }
-
-        const centres = snowmanCentres(growth);
-        for (let ball = 0; ball < 3; ball++) {
-            const radius = SNOWMAN_RADII[ball] * growth[ball];
-            if (radius < 0.75) {
-                continue;
-            }
-            const y = height - centres[ball];
-            const shade = context.createRadialGradient(
-                x - radius * 0.4,
-                y - radius * 0.45,
-                radius * 0.1,
-                x,
-                y,
-                radius,
-            );
-            shade.addColorStop(0, '#ffffff');
-            shade.addColorStop(0.6, '#eaf0f8');
-            shade.addColorStop(1, isDark ? '#93a9cf' : '#b3c3de');
-            context.fillStyle = shade;
-            context.strokeStyle = edge;
-            context.lineWidth = 1;
-            context.beginPath();
-            circle(x, y, radius);
-            context.fill();
-            context.stroke();
-        }
-        if (dressed <= 0) {
+    /** A dashed outline of the finished snowman shows where to throw the snow. */
+    const drawOutline = (simulation: Simulation, isDark: boolean) => {
+        const { x, outline } = simulation.snowman;
+        if (outline <= 0.01) {
             return;
         }
-
-        const [, middle, head] = snowmanCentres([1, 1, 1]);
-        const headY = height - head;
-        const bodyY = height - middle;
-        const shown = (from: number, to: number) =>
-            Math.max(0, Math.min(1, (dressed - from) / (to - from)));
-
-        context.strokeStyle = isDark ? '#75512f' : '#543823';
-        context.lineWidth = 2.2;
-        context.lineCap = 'round';
-        const reach = shown(0.5, 0.75);
-        context.beginPath();
-        context.moveTo(x - SNOWMAN_RADII[1] * 0.7, bodyY - 3);
-        context.lineTo(
-            x - SNOWMAN_RADII[1] * 0.7 - 20 * reach,
-            bodyY - 3 - 12 * reach,
-        );
-        context.moveTo(x + SNOWMAN_RADII[1] * 0.7, bodyY - 3);
-        context.lineTo(
-            x + SNOWMAN_RADII[1] * 0.7 + 19 * reach,
-            bodyY - 3 - 13 * reach,
-        );
-        context.stroke();
-
-        context.fillStyle = '#17171c';
-        context.beginPath();
-        const buttons = shown(0.4, 0.6);
-        circle(x - 1, bodyY - 8, 1.6 * buttons);
-        circle(x - 1.4, bodyY - 1, 1.7 * buttons);
-        circle(x - 1, bodyY + 6, 1.6 * buttons);
-        const eyes = shown(0, 0.2);
-        circle(x - 6.4, headY - 2.8, 1.7 * eyes);
-        circle(x + 2.2, headY - 2.8, 1.7 * eyes);
-        const smile = shown(0.3, 0.5);
-        for (let dot = -2; dot <= 2; dot++) {
-            circle(
-                x - 2 + dot * 2.5,
-                headY + 6.3 - dot * dot * 0.6,
-                0.95 * smile,
-            );
-        }
-        context.fill();
-
-        const tied = shown(0.65, 0.85);
-        context.fillStyle = '#c7242e';
-        context.beginPath();
-        context.roundRect(
-            x - SNOWMAN_RADII[2] * 0.95 * tied,
-            bodyY - SNOWMAN_RADII[1] * 0.8 - 3.2,
-            SNOWMAN_RADII[2] * 1.9 * tied,
-            6.4 * tied,
-            3,
-        );
-        context.roundRect(
-            x + SNOWMAN_RADII[2] * 0.3,
-            bodyY - SNOWMAN_RADII[1] * 0.8,
-            6 * tied,
-            18 * tied,
-            2.5,
-        );
-        context.fill();
-
-        const nose = shown(0.15, 0.4);
-        context.fillStyle = '#f08a1c';
-        context.beginPath();
-        context.moveTo(x - 2.5, headY - 1.6);
-        context.lineTo(x - 2.5 - 13.5 * nose, headY + 3.5 * nose);
-        context.lineTo(x - 2.5, headY + 3.4 * nose);
-        context.closePath();
-        context.fill();
-
-        const fitted = shown(0.8, 1);
-        if (fitted > 0) {
-            context.save();
-            context.translate(x + 1.2, headY - SNOWMAN_RADII[2] * 0.7);
-            context.rotate(0.15);
-            context.scale(fitted, fitted);
-            context.fillStyle = isDark ? '#3b3f4a' : '#1c1e25';
+        const full = snowmanCentres([1, 1, 1]);
+        context.save();
+        context.setLineDash([5, 4]);
+        context.lineWidth = 1.5;
+        context.strokeStyle = isDark
+            ? `rgba(255, 255, 255, ${0.6 * outline})`
+            : `rgba(107, 128, 168, ${0.8 * outline})`;
+        for (let ball = 0; ball < 3; ball++) {
             context.beginPath();
-            context.roundRect(
-                -SNOWMAN_RADII[2],
-                -2,
-                SNOWMAN_RADII[2] * 2,
-                4,
-                2,
-            );
-            context.roundRect(
-                -SNOWMAN_RADII[2] * 0.66,
-                -17.5,
-                SNOWMAN_RADII[2] * 1.32,
-                17,
-                1.5,
-            );
-            context.fill();
-            context.fillStyle = '#c7242e';
-            context.fillRect(
-                -SNOWMAN_RADII[2] * 0.66,
-                -5.6,
-                SNOWMAN_RADII[2] * 1.32,
-                3.4,
-            );
-            context.restore();
+            circle(x, height - full[ball], SNOWMAN_RADII[ball]);
+            context.stroke();
         }
+        context.restore();
     };
 
     const drawDrift = (simulation: Simulation, isDark: boolean) => {
@@ -356,6 +220,7 @@ export function createCanvasRenderer(
 
         setModels(models) {
             meshes = {
+                snowman: unpack(models.snowman),
                 shovel: unpack(models.shovel),
                 blower: unpack(models.blower),
             };
@@ -364,12 +229,13 @@ export function createCanvasRenderer(
         render(simulation, _time, isDark) {
             context.clearRect(0, 0, width, height);
             if (simulation.interactive) {
-                drawSnowman(simulation, isDark);
+                drawOutline(simulation, isDark);
                 if (meshes) {
                     context.lineWidth = 0.6;
                     context.lineJoin = 'round';
-                    drawModel(meshes.blower, simulation.blowerPose, isDark);
-                    drawModel(meshes.shovel, simulation.shovelPose, isDark);
+                    drawModel(meshes.snowman, simulation.snowmanPose);
+                    drawModel(meshes.blower, simulation.blowerPose);
+                    drawModel(meshes.shovel, simulation.shovelPose);
                 }
                 drawDrift(simulation, isDark);
             }

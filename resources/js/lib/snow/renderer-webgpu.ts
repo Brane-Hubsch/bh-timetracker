@@ -1,17 +1,14 @@
 import { COLUMN_WIDTH, MAX_DEPTH } from './drift';
-import {
-    MODEL_MAX_PARTS,
-    MODEL_VERTEX_BYTES,
-    SPRITE_DEPTH,
-    SPRITE_HALF,
-} from './models';
-import type { SnowModel, ToolPose } from './models';
+import { MODEL_MAX_PARTS, SPRITE_DEPTH, SPRITE_HALF } from './models';
+import type { ModelPose } from './models';
+import { MODEL_VERTEX_BYTES } from './shapes';
+import type { SnowModel } from './shapes';
 import type { SnowRenderer } from './renderer';
 import {
     DRIFT_SHADER,
     MODEL_SHADER,
+    OUTLINE_SHADER,
     PARTICLE_SHADER,
-    SNOWMAN_SHADER,
     SPRITE_SHADER,
 } from './shaders';
 import { INSTANCE_FLOATS } from './simulation';
@@ -30,7 +27,7 @@ const SPRITE_SAMPLES = 4;
 /** A model's matrices followed by one vec4 of settings. */
 const MODEL_FLOATS = MODEL_MAX_PARTS * 16 + 4;
 
-/** A tool's model on the GPU, with the texture it is drawn into before it is placed on the page. */
+/** A model on the GPU, with the texture it is drawn into before it is placed on the page. */
 type Sprite = {
     vertices: GPUBuffer;
     vertexCount: number;
@@ -126,7 +123,7 @@ export async function createWebGpuRenderer(
         },
         multisample: { count: SPRITE_SAMPLES },
     });
-    const snowmanPipeline = pipeline(SNOWMAN_SHADER, []);
+    const outlinePipeline = pipeline(OUTLINE_SHADER, []);
     const driftPipeline = pipeline(DRIFT_SHADER, []);
     const particlePipeline = pipeline(PARTICLE_SHADER, [
         {
@@ -156,7 +153,7 @@ export async function createWebGpuRenderer(
             layout: target.getBindGroupLayout(0),
             entries: [{ binding: 0, resource: { buffer: globalsBuffer } }],
         });
-    const snowmanBinding = bindGlobals(snowmanPipeline);
+    const outlineBinding = bindGlobals(outlinePipeline);
     const particleBinding = bindGlobals(particlePipeline);
     let driftBinding: GPUBindGroup | null = null;
     let depthTexture: GPUTexture | null = null;
@@ -167,7 +164,8 @@ export async function createWebGpuRenderer(
         magFilter: 'linear',
         minFilter: 'linear',
     });
-    let sprites: { shovel: Sprite; blower: Sprite } | null = null;
+    let sprites: { snowman: Sprite; shovel: Sprite; blower: Sprite } | null =
+        null;
     let spriteSide = 0;
     let destroyed = false;
     let width = 1;
@@ -211,8 +209,9 @@ export async function createWebGpuRenderer(
     const drawSprite = (
         encoder: GPUCommandEncoder,
         sprite: Sprite,
-        pose: ToolPose,
+        pose: ModelPose,
         isDark: boolean,
+        time: number,
     ) => {
         sprite.drawn = pose.visible;
         if (!pose.visible) {
@@ -257,11 +256,13 @@ export async function createWebGpuRenderer(
         sprite.uniforms[MODEL_MAX_PARTS * 16] = SPRITE_HALF;
         sprite.uniforms[MODEL_MAX_PARTS * 16 + 1] = SPRITE_DEPTH;
         sprite.uniforms[MODEL_MAX_PARTS * 16 + 2] = isDark ? 1 : 0;
+        sprite.uniforms[MODEL_MAX_PARTS * 16 + 3] = time;
         device.queue.writeBuffer(sprite.uniformBuffer, 0, sprite.uniforms);
         // Whole device pixels, so the sprite is not blurred when it is placed.
         sprite.rect[0] = Math.round(pose.x * ratio) / ratio;
         sprite.rect[1] = Math.round(pose.y * ratio) / ratio;
         sprite.rect[2] = side / ratio / 2;
+        sprite.rect[3] = 1 / side;
         device.queue.writeBuffer(sprite.rectBuffer, 0, sprite.rect);
 
         const pass = encoder.beginRenderPass({
@@ -305,6 +306,7 @@ export async function createWebGpuRenderer(
 
         setModels(models) {
             sprites = {
+                snowman: createSprite(models.snowman),
                 shovel: createSprite(models.shovel),
                 blower: createSprite(models.blower),
             };
@@ -382,18 +384,11 @@ export async function createWebGpuRenderer(
 
             const encoder = device.createCommandEncoder();
             if (sprites && simulation.interactive) {
-                drawSprite(
-                    encoder,
-                    sprites.blower,
-                    simulation.blowerPose,
-                    isDark,
-                );
-                drawSprite(
-                    encoder,
-                    sprites.shovel,
-                    simulation.shovelPose,
-                    isDark,
-                );
+                const draw = (sprite: Sprite, pose: ModelPose) =>
+                    drawSprite(encoder, sprite, pose, isDark, time);
+                draw(sprites.snowman, simulation.snowmanPose);
+                draw(sprites.blower, simulation.blowerPose);
+                draw(sprites.shovel, simulation.shovelPose);
                 spriteSide = Math.round(SPRITE_HALF * 2 * ratio);
             }
             const pass = encoder.beginRenderPass({
@@ -407,14 +402,14 @@ export async function createWebGpuRenderer(
                 ],
             });
             if (simulation.interactive) {
-                if (snowman.growth[0] > 0 || snowman.outline > 0.01) {
-                    pass.setPipeline(snowmanPipeline);
-                    pass.setBindGroup(0, snowmanBinding);
+                if (snowman.outline > 0.01) {
+                    pass.setPipeline(outlinePipeline);
+                    pass.setBindGroup(0, outlineBinding);
                     pass.draw(6);
                 }
-                // The tools stand in the snow: the drift is drawn in front of them.
+                // They all stand in the snow: the drift is drawn in front of them.
                 for (const sprite of sprites
-                    ? [sprites.blower, sprites.shovel]
+                    ? [sprites.snowman, sprites.blower, sprites.shovel]
                     : []) {
                     if (sprite.drawn && sprite.pageBinding) {
                         pass.setPipeline(spritePipeline);

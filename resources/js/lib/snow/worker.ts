@@ -1,4 +1,4 @@
-import { loadSnowModels } from './models';
+import { buildSnowModels } from './models';
 import type { FromWorker, SnowBackend, ToWorker } from './protocol';
 import type { SnowRenderer } from './renderer';
 import { createCanvasRenderer } from './renderer-canvas';
@@ -139,18 +139,10 @@ async function start(
     started = performance.now();
     post({ type: 'ready', backend: backend ?? 'canvas2d' });
     setRunning(wanted);
-    // The tools' models follow; the snow does not wait for them.
-    const drawsWith = renderer;
-    void loadSnowModels()
-        .then((models) => {
-            if (renderer === drawsWith) {
-                renderer.setModels(models);
-                post({ type: 'tools' });
-            }
-        })
-        .catch(() => {
-            // Without the models there is snow but nothing to move it with.
-        });
+    // The snowman and the tools are built once the snow is falling. Where every triangle is painted
+    // by the canvas they get fewer of them.
+    renderer.setModels(buildSnowModels(backend === 'webgpu' ? 1 : 0.5));
+    post({ type: 'tools' });
 }
 
 scope.onmessage = ({ data }) => {

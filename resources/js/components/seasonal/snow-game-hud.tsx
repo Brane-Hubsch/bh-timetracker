@@ -31,7 +31,7 @@ export function SnowGameHud({
 
     return (
         <div
-            className="pointer-events-none fixed bottom-36 left-1/2 z-40 w-[min(22rem,calc(100vw-2rem))] -translate-x-1/2 animate-enter rounded-xl bg-background-inverse px-3.5 py-3 text-background shadow-overlay"
+            className="pointer-events-none fixed bottom-40 left-1/2 z-40 w-[min(21rem,calc(100vw-2rem))] -translate-x-1/2 animate-enter rounded-3xl border border-border bg-overlay px-4 py-3.5 text-foreground shadow-overlay"
             data-test="snow-game"
         >
             {isDone ? (
@@ -42,7 +42,7 @@ export function SnowGameHud({
                                 time: clock(game.elapsedMs),
                             })}
                         </p>
-                        <p className="text-xs opacity-75">
+                        <p className="text-xs text-muted">
                             {isRecord
                                 ? t('New record!')
                                 : bestMs !== null
@@ -73,15 +73,15 @@ export function SnowGameHud({
                             <span className="font-semibold">
                                 {t('Build the snowman')}
                             </span>
-                            <span className="text-xs tabular-nums opacity-75">
+                            <span className="text-xs text-muted tabular-nums">
                                 {percent} % · {clock(game.elapsedMs)}
                             </span>
                         </div>
-                        <ProgressBar.Track className="h-1.5 bg-background/25">
+                        <ProgressBar.Track className="h-2">
                             <ProgressBar.Fill />
                         </ProgressBar.Track>
                     </ProgressBar>
-                    <p className="mt-2 text-xs opacity-75" aria-hidden="true">
+                    <p className="mt-2 text-xs text-muted" aria-hidden="true">
                         {tool === 'blower'
                             ? t(
                                   '← → drive · ↑ ↓ aim the chute · Esc parks. Throw the snow onto the outline.',

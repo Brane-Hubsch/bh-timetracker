@@ -11,6 +11,7 @@ import {
     createPose,
     poseBlower,
     poseShovel,
+    poseSnowman,
     wheelSpin,
 } from './models';
 import type { BlowerInput, SnowGame, SnowTool } from './protocol';
@@ -87,7 +88,8 @@ export class Simulation {
     };
     /** Set when the page should hear about the game. */
     gameChanged = false;
-    /** The tools as the renderer should draw them. */
+    /** The snowman and the tools as the renderer should draw them. */
+    readonly snowmanPose = createPose();
     readonly shovelPose = createPose();
     readonly blowerPose = createPose();
 
@@ -121,6 +123,13 @@ export class Simulation {
     private blowerTurn = blowerYaw(-1);
     private wheel = 0;
     private blowerLift = 0;
+    private blowerSpeed = 0;
+    private blowerTilt = 0;
+    private tiltSpeed = 0;
+    private squash = 0;
+    private squashSpeed = 0;
+    private lookAcross = -0.3;
+    private lookDown = 0;
     private auger = 0;
     private carried: { x: number; y: number; angle: number } | null = null;
     private pointerX = -1000;
@@ -549,8 +558,21 @@ export class Simulation {
             blower?.x ?? width - SNOW_BLOWER.parkedRight - SNOW_BLOWER.width;
         // The wheels stand on the snow under them: on top of the drift when parked, down in the
         // track it has cleared when it drives.
-        const under = this.drift.depthAt(x + SNOW_BLOWER.width / 2) * 0.8;
+        const under = Math.max(
+            0,
+            this.drift.depthAt(x + SNOW_BLOWER.width / 2) - 2,
+        );
         this.blowerLift += (under - this.blowerLift) * (1 - Math.exp(-dt * 8));
+        // It rocks back when it sets off and nods forward when it stops.
+        const push =
+            (speed * direction - this.blowerSpeed) / Math.max(dt, 0.001);
+        this.blowerSpeed = speed * direction;
+        this.tiltSpeed +=
+            (clampSpeed(push, 900) * 0.0011 -
+                this.blowerTilt * 120 -
+                this.tiltSpeed * 9) *
+            dt;
+        this.blowerTilt += this.tiltSpeed * dt;
         const mouth = poseBlower(this.blowerPose, {
             x,
             ground: height - this.blowerLift,
@@ -558,7 +580,12 @@ export class Simulation {
             elevation: blower?.elevation ?? SNOW_BLOWER.defaultElevation,
             wheel: this.wheel,
             auger: this.auger,
-            shake: blower ? Math.sin(this.time * 75) * 0.45 : 0,
+            tilt: this.blowerTilt,
+            // Putt-putt while the engine runs, a slow doze when parked.
+            bob: blower
+                ? Math.sin(this.time * 26)
+                : 0.4 * Math.sin(this.time * 1.6),
+            blink: blinking(this.time, 1.3),
         });
         this.mouth.x = mouth.x;
         this.mouth.y = mouth.y;
@@ -808,6 +835,7 @@ export class Simulation {
         const needed = Math.max(3400, Math.min(5800, this.width * 3.8));
         this.progress += amount / needed;
         this.leanSpeed += clampSpeed(vx, 400) * 0.012;
+        this.squashSpeed += Math.min(0.5, amount * 0.09);
         if (this.progress >= 1 && this.phase !== 'done') {
             this.progress = 1;
             this.phase = 'done';
@@ -868,6 +896,54 @@ export class Simulation {
                 this.celebrate();
             }
         }
+
+        // Snow landing on it squashes it for a moment, like something soft.
+        this.squashSpeed += (-this.squash * 260 - this.squashSpeed * 13) * dt;
+        this.squash = Math.max(
+            -0.12,
+            Math.min(0.16, this.squash + this.squashSpeed * dt),
+        );
+        // It follows the pointer with its head, and otherwise looks towards the middle of the page.
+        const watching = this.pointerSeen && this.pointerY > -500;
+        // The snowblower is the most interesting thing around while it is driven.
+        const watchedX = this.blower
+            ? this.blower.x + SNOW_BLOWER.width / 2
+            : this.pointerX;
+        const across =
+            watching || this.blower
+                ? Math.max(-0.75, Math.min(0.75, (watchedX - snowman.x) / 420))
+                : -0.3;
+        const down = watching
+            ? Math.max(
+                  -0.3,
+                  Math.min(0.3, (this.pointerY - (this.height - 85)) / 900),
+              )
+            : 0;
+        const turn = 1 - Math.exp(-dt * 5);
+        this.lookAcross += (across - this.lookAcross) * turn;
+        this.lookDown += (down - this.lookDown) * turn;
+        // A happy hop when it is finished.
+        const since = this.phase === 'done' ? this.sinceDone - 1.5 : -1;
+        const hop =
+            since > 0 && since < 0.9
+                ? Math.abs(Math.sin(since * Math.PI * 2.2)) *
+                  14 *
+                  (1 - since / 0.9)
+                : 0;
+        poseSnowman(this.snowmanPose, {
+            x: snowman.x,
+            ground: this.height,
+            growth: snowman.growth,
+            dressed: snowman.dressed,
+            lean: snowman.lean,
+            waving: snowman.waving,
+            lookAcross: this.lookAcross,
+            lookDown: this.lookDown,
+            blink: blinking(this.time, 0),
+            squash: this.squash,
+            hop,
+            time: this.time,
+        });
     }
 
     private celebrate(): void {
@@ -886,6 +962,13 @@ export class Simulation {
             );
         }
     }
+}
+
+/** 0 with open eyes, rising to 1 for a moment every few seconds. */
+function blinking(time: number, offset: number): number {
+    const phase = (time + offset) % 3.7;
+
+    return phase < 0.14 ? Math.sin((phase / 0.14) * Math.PI) : 0;
 }
 
 function clampSpeed(value: number, limit: number): number {
