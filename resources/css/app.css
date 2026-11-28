@@ -1108,31 +1108,32 @@
     }
 
     @media (width < 48rem) {
-        .project-picker-input-group {
-            --project-picker-border: var(--field-border);
+        .time-entry-field-frame {
+            @apply relative;
+            --time-entry-field-border: var(--field-border);
 
-            /* Draw the border independently of the input's layout and state rings. */
-            > .input {
+            /* Safari can drop native field borders while a nearby shortcut row scrolls. */
+            > :is(.input, .textarea) {
                 border-width: 0;
                 padding-block: calc(var(--spacing) * 2 + 1px);
-                padding-inline-start: calc(var(--spacing) * 3 + 1px);
+                padding-inline: calc(var(--spacing) * 3 + 1px);
             }
 
             &::after {
                 @apply pointer-events-none absolute inset-0 rounded-field;
                 border: var(--border-width-field) solid
-                    var(--project-picker-border);
+                    var(--time-entry-field-border);
                 content: '';
             }
 
             @media (hover: hover) {
-                &:has(> .input:hover) {
-                    --project-picker-border: var(--field-border-hover);
+                &:has(> :is(.input, .textarea):hover) {
+                    --time-entry-field-border: var(--field-border-hover);
                 }
             }
 
-            &:has(> .input:focus) {
-                --project-picker-border: var(--field-border-focus);
+            &:has(> :is(.input, .textarea):focus) {
+                --time-entry-field-border: var(--field-border-focus);
             }
         }
     }

@@ -977,10 +977,13 @@ export function TimeEntryForm({
                                 className="w-full"
                             >
                                 <Label>{t('Description')}</Label>
-                                <TextArea
-                                    rows={3}
-                                    placeholder={t('What did you work on?')}
-                                />
+                                <div className="time-entry-field-frame">
+                                    <TextArea
+                                        className="block w-full"
+                                        rows={3}
+                                        placeholder={t('What did you work on?')}
+                                    />
+                                </div>
                                 {errors.description && (
                                     <Description className="text-danger">
                                         {errors.description}

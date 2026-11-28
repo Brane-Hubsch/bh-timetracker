@@ -103,7 +103,7 @@ function ProjectInput({
         state.inputValue === project.label;
 
     return (
-        <ComboBox.InputGroup className="project-picker-input-group">
+        <ComboBox.InputGroup className="time-entry-field-frame">
             <Input
                 placeholder={t('Search projects or clients')}
                 autoFocus={autoFocus}
