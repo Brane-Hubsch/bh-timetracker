@@ -1,6 +1,9 @@
 @php
     $theme = $page['props']['theme'] ?? [];
-    $alwaysDark = \App\Enums\Theme::tryFrom($theme['theme'] ?? '')?->isAlwaysDark() ?? false;
+    $palette = \App\Enums\Theme::tryFrom($theme['theme'] ?? '') ?? \App\Enums\Theme::Standard;
+    $alwaysDark = $palette->isAlwaysDark();
+    $accent = $theme['accent'] ?? 'violet';
+    $customAccent = preg_match('/\A#[0-9a-f]{6}\z/', $accent) === 1 ? $accent : null;
 @endphp
 <!DOCTYPE html>
 <html
@@ -8,13 +11,14 @@
     @class(['dark' => ($appearance ?? 'system') == 'dark' || $alwaysDark])
     @if ($alwaysDark) data-forced-mode="dark" @endif
     data-palette="{{ $theme['theme'] ?? 'standard' }}"
-    data-accent="{{ $theme['accent'] ?? 'violet' }}"
+    data-accent="{{ $accent }}"
+    @if ($customAccent) style="--custom-accent: {{ $customAccent }}" @endif
     data-contrast="{{ ($theme['contrast'] ?? 'system') === 'more' ? 'more' : 'normal' }}"
 >
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <meta name="theme-color" content="#7c3aed">
+        <meta name="theme-color" content="{{ in_array($palette, [\App\Enums\Theme::Terminal, \App\Enums\Theme::Barbie], true) ? '#7c3aed' : ($customAccent ?? '#7c3aed') }}">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}">

@@ -13,7 +13,7 @@ class UpdateAppearance
      * Save the user's theme, accent colour and contrast. Only the given keys change; a null accent
      * follows the organization's colour again.
      *
-     * @param  array{theme?: Theme, accent?: Accent|null, contrast?: ContrastPreference}  $preferences
+     * @param  array{theme?: Theme, accent?: Accent|string|null, contrast?: ContrastPreference}  $preferences
      */
     public function handle(User $user, array $preferences): void
     {
