@@ -36,7 +36,10 @@ class AbsenceController extends Controller
 
         $createAbsence->handle($organization, $data);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Absence saved.')]);
+        Inertia::flash([
+            'toast' => ['type' => 'success', 'message' => __('Absence saved.')],
+            'faviconSpin' => true,
+        ]);
 
         return back();
     }
@@ -50,7 +53,10 @@ class AbsenceController extends Controller
 
         $updateAbsence->handle($absence, $data);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Absence saved.')]);
+        Inertia::flash([
+            'toast' => ['type' => 'success', 'message' => __('Absence saved.')],
+            'faviconSpin' => true,
+        ]);
 
         return back();
     }

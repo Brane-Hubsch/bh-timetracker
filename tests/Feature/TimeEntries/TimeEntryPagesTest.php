@@ -326,7 +326,8 @@ it('stores an entry entered in the user time zone as UTC', function () {
     $this->actingAs($this->member)
         ->post(timeRoute('time.store'), timePayload())
         ->assertRedirect()
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('faviconSpin', true);
 
     $entry = TimeEntry::sole();
 
@@ -361,7 +362,8 @@ it('treats an end before the start as the next day', function () {
 it('validates the input', function (array $overrides, string $field) {
     $this->actingAs($this->member)
         ->post(timeRoute('time.store'), timePayload($overrides))
-        ->assertSessionHasErrors($field);
+        ->assertSessionHasErrors($field)
+        ->assertInertiaFlashMissing('faviconSpin');
 
     expect(TimeEntry::count())->toBe(0);
 })->with([
@@ -401,7 +403,8 @@ it('lets the owner of an entry and admins update it', function () {
 
     $this->actingAs($this->member)
         ->patch(timeRoute('time.update', ['timeEntry' => $entry->id]), timePayload(['description' => 'Ändrad']))
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('faviconSpin', true);
 
     expect($entry->fresh()->description)->toBe('Ändrad')
         ->and($entry->fresh()->user_id)->toBe($this->member->id);
@@ -448,7 +451,8 @@ it('undoes a calendar schedule change with the exact original times and keeps ot
         ])
         ->assertRedirect()
         ->assertSessionHasNoErrors()
-        ->assertInertiaFlash('toast.undo');
+        ->assertInertiaFlash('toast.undo')
+        ->assertInertiaFlash('faviconSpin', true);
 
     $undo = Inertia::getFlashed()['toast']['undo'];
     $moved = $entry->fresh();
@@ -461,7 +465,8 @@ it('undoes a calendar schedule change with the exact original times and keeps ot
 
     $this->post($undo)
         ->assertRedirect()
-        ->assertInertiaFlash('toast.message', __('Time change undone.'));
+        ->assertInertiaFlash('toast.message', __('Time change undone.'))
+        ->assertInertiaFlash('faviconSpin', true);
 
     $restored = $entry->fresh();
     expect($restored->started_at->toDateTimeString())->toBe('2026-11-16 22:45:17')
@@ -589,7 +594,8 @@ it('copies selected entries to the following week', function () {
     $this->actingAs($this->member)
         ->post(timeRoute('time.copy'), ['entry_ids' => [$first->id, $second->id]])
         ->assertRedirect()
-        ->assertSessionHasNoErrors();
+        ->assertSessionHasNoErrors()
+        ->assertInertiaFlash('faviconSpin', true);
 
     $copies = TimeEntry::query()->where('started_at', '>=', '2026-11-16')->orderBy('started_at')->get();
 
