@@ -1026,6 +1026,36 @@
         @apply items-center;
     }
 
+    @media (width < 48rem) {
+        .project-picker-input-group {
+            --project-picker-border: var(--field-border);
+
+            /* Draw the border independently of the input's layout and state rings. */
+            > .input {
+                border-width: 0;
+                padding-block: calc(var(--spacing) * 2 + 1px);
+                padding-inline-start: calc(var(--spacing) * 3 + 1px);
+            }
+
+            &::after {
+                @apply pointer-events-none absolute inset-0 rounded-field;
+                border: var(--border-width-field) solid
+                    var(--project-picker-border);
+                content: '';
+            }
+
+            @media (hover: hover) {
+                &:has(> .input:hover) {
+                    --project-picker-border: var(--field-border-hover);
+                }
+            }
+
+            &:has(> .input:focus) {
+                --project-picker-border: var(--field-border-focus);
+            }
+        }
+    }
+
     /*
      * Date and time fields get the same height and text size as text inputs (HeroUI gives the segmented
      * group a fixed h-9 and small text), so fields line up in a row and stay readable on mobile.

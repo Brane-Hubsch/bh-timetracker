@@ -48,23 +48,28 @@ export function ShortcutRow({
 
     return (
         <div
-            ref={viewport}
-            role={label ? 'group' : undefined}
-            aria-label={label}
-            className="min-w-0 scroll-px-6 [scrollbar-width:none] overflow-x-auto"
+            // Keep the fade on a stationary layer outside the touch scroller.
+            className="min-w-0"
             style={{
                 maskImage:
                     fadeLeft || fadeRight
                         ? `linear-gradient(to right, transparent, black ${leftFadeWidth}, black calc(100% - ${rightFadeWidth}), transparent)`
                         : undefined,
             }}
-            data-test={dataTest}
         >
             <div
-                ref={row}
-                className={cn('flex w-max gap-1.5 p-px', contentClassName)}
+                ref={viewport}
+                role={label ? 'group' : undefined}
+                aria-label={label}
+                className="scroll-px-6 [scrollbar-width:none] overflow-x-auto"
+                data-test={dataTest}
             >
-                {children}
+                <div
+                    ref={row}
+                    className={cn('flex w-max gap-1.5 p-px', contentClassName)}
+                >
+                    {children}
+                </div>
             </div>
         </div>
     );
